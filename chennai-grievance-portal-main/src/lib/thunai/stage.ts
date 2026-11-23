@@ -71,9 +71,13 @@ export type BlockKind = BlockT["kind"];
 export const BLOCK_KINDS = Block.options.map((o) => o.shape.kind.value) as BlockKind[];
 
 // v4 (lane A2, registered at integration): what changed with its drivers, explain one case or one part of a change, a place's situation
+// v17 (22 Nov): "dataset", an answer from one of the Collector's own Data Studio datasets (screens.ts datasetScreen). Code alone builds it:
+// the planner's schema leaves it out (PLANNER_RECIPES), since only code knows which datasets there are (and checkScreen needs its id)
 export const RECIPES = ["cases", "case", "news", "readings", "ranking", "compare", "trend", "why", "performance", "dashboard", "map", "nearby", "brief", "drafts", "answer", "prices", "advise", "insight", "complete",
-  "changed", "explain", "situation", "city", "focus"] as const;
+  "changed", "explain", "situation", "city", "focus", "dataset"] as const;
 export type Recipe = (typeof RECIPES)[number];
+/** the screens a model may name (every recipe but the dataset answer, which code builds from the Collector's own files) */
+export const PLANNER_RECIPES = RECIPES.filter((r): r is Exclude<Recipe, "dataset"> => r !== "dataset") as [Exclude<Recipe, "dataset">, ...Exclude<Recipe, "dataset">[]];
 
 export const Scope = z.object({ period: z.enum(["daily", "weekly", "monthly", "quarterly"]), zone: num.nullable(), dept: str(30).nullable(), cat: str(60).nullable(),
   taluk: str(20).nullable(), sev: z.enum(["Severe", "High", "Medium", "Low"]).nullable() });
@@ -117,7 +121,12 @@ export const StageDoc = z.object({
    * screen's facts by code) or is its fallback (the recipe's own line). The browser then says it and reads no item aloud unless asked;
    * `figures` are the figures the checked answer says (the browser's number gate allows them: the server checked each against its facts)
    */
-  voice: z.object({ by: z.enum(["aide7", "fallback"]), model: str(80).nullable(), figures: z.array(num).max(200) }).optional()
+  voice: z.object({ by: z.enum(["aide7", "fallback"]), model: str(80).nullable(), figures: z.array(num).max(200) }).optional(),
+  /**
+   * v17: a dataset screen's Studio answer as the Data Studio's own analyst column returned it (its plan and chart), so the browser draws it
+   * with the Studio's card and its actions: add it to a dashboard, set an alert, open it in the Studio (StudioAnswer.tsx)
+   */
+  studio: z.object({ id: str(40), name: str(160), q: str(300), a: z.record(z.unknown()) }).optional()
 });
 export type StageDocT = z.infer<typeof StageDoc>;
 

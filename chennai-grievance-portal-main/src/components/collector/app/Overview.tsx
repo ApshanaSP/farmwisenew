@@ -16,7 +16,6 @@ import { ConflictList, DiffBadge, hasConflict } from "./Conflicts";
 import { NextDoorList, nextDoorCount } from "./Nearby";
 import { useEffect, useState } from "react";
 import { AttentionCard } from "./Attention";
-import YourData from "./YourData";
 import AskOverlay from "./askmap/AskOverlay";
 import { useMapChrome } from "./askmap/Chrome";
 import dynamic from "next/dynamic";
@@ -508,8 +507,8 @@ export function EnvPage({ d, ins, c }: { d: OverviewData; ins: Insights | null; 
   let ix = 0;
   const iv = () => ({ "--i": ix++ }) as React.CSSProperties;
   return (
-    // the three readings side by side across the top, each with room for its chart; under them the prices, and the
-    // Collector's own data (charts added from the Data Studio) beside them
+    // the three readings side by side across the top, each with room for its chart; under them the prices, across the
+    // whole width (the Collector's own charts live on the Data Studio's Dashboards tab, not here)
     <section className="p2 env3">
       <div className="env3-top">
         <RainCard d={d} c={c} env={env} style={iv()} />
@@ -518,7 +517,6 @@ export function EnvPage({ d, ins, c }: { d: OverviewData; ins: Insights | null; 
       </div>
       <div className="env3-bot">
         <article className="card mk-card" style={iv()}><MarketsCard ins={ins} c={c} /></article>
-        <YourData c={c} />
       </div>
     </section>
   );

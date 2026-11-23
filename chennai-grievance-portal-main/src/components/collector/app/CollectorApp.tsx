@@ -876,7 +876,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     (r.sources ?? []).forEach((x: Row) => out.push({ g: "Data sources", ic: "sensor", l: String(x.name), s: String(x.kind ?? ""), run: c.openFeeds }));
     // a Data Studio dataset opens on the Data Studio page (Studio remembers which dataset to show)
     (r.datasets ?? []).forEach((d: Row) => out.push({ g: "Data Studio", ic: "spark", l: String(d.name), s: `${Number(d.rows).toLocaleString("en-IN")} rows`,
-      run: () => { try { localStorage.setItem("diq-studio-sel", String(d.id)); } catch { /* not saved */ } setPage("studio"); } }));
+      // the Studio reads the request when it opens; when it is open already, the event switches it at once
+      run: () => { try { localStorage.setItem("diq-studio-sel", String(d.id)); } catch { /* not saved */ } setPage("studio"); window.dispatchEvent(new CustomEvent("diq:studio-open", { detail: String(d.id) })); } }));
     return out;
   };
 
@@ -908,7 +909,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
             { key: "theme", icon: theme === "dark" ? "sun" : "moon", label: theme === "dark" ? "Light mode" : "Dark mode", sub: theme === "dark" ? "Bright, for daylight" : "Easy on the eyes at night", run: toggleTheme },
             { key: "src", icon: "sensor", label: "Data sources", sub: "Feeds and audit log", run: c.openFeeds },
             { key: "sec", icon: "shield", label: "Security", sub: "Sign-ins, sessions, check an email", run: () => setSecOpen(true) }
-          ]} />
+          ]} onDashboards={() => setPage("studio")} />
           <Bell open={pop === "bell"} onToggle={() => setPop((p) => (p === "bell" ? null : "bell"))} unread={bellN} nowMs={ms(ov.now)} period={ov.periodInfo.label}
             onPick={(id) => { setPop(null); c.openInc(id); }} onMarkRead={() => { setBellRead(true); setPop(null); }}
             items={ov.bell.map((i) => ({ id: i.id, title: fullTitle(i), sub: `${i.zone_name ?? "Chennai"} · ${i.sev} · ${rel(i.t, ov.now)}`, sev: String(i.sev), t: ms(i.t), icon: deptIcon(i.dept) }))} />

@@ -106,6 +106,25 @@ export function periodDays(p: Period): number {
   return Number.isFinite(a) && Number.isFinite(b) ? Math.ceil((b - a) / 86_400_000) : Infinity;
 }
 
+/**
+ * "schools within 300 m of flooding": a distance step written the other way round (the facilities kept near the incidents) is
+ * turned round into the incidents within that distance of the facilities, each under its nearest one, as the AI path already
+ * reads it (ai.ts); the rules and Jarvis's map questions stopped at "within needs facilities to measure from". A rule check
+ * (wine shops within 100 m of a school) measures facilities from facilities and is left as it is. Pure: the same plan when
+ * nothing is turned.
+ */
+export function facingIncidents(plan: Plan): Plan {
+  let turned = false;
+  const steps = plan.steps.map((s) => {
+    if (s.op !== "within" || s.near.length !== 1) return s;
+    const ofT = plan.steps.find((y) => y.as === s.of), nearT = plan.steps.find((y) => y.as === s.near[0]);
+    if (ofT?.op !== "take" || ofT.layer === "incidents" || nearT?.op !== "take" || nearT.layer !== "incidents") return s;
+    turned = true;
+    return { ...s, of: nearT.as, near: [ofT.as] };
+  });
+  return turned ? { ...plan, steps } : plan;
+}
+
 /** The names a step reads: its collections (and a nearest step's place, which is not a collection). */
 function reads(s: Step): string[] {
   switch (s.op) {
@@ -156,5 +175,5 @@ export function checkPlan(input: unknown): { ok: true; plan: Plan } | { ok: fals
     if (isCalendar(p) && (p.offset < 0 || p.offset > CALENDAR[p.kind].max)) problems.push(`a ${p.kind} offset is outside 0–${CALENDAR[p.kind].max}`);
     if (p.kind === "range" && p.from > p.to) problems.push("a period ends before it starts");
   }
-  return problems.length ? { ok: false, problems } : { ok: true, plan };
+  return problems.length ? { ok: false, problems } : { ok: true, plan: facingIncidents(plan) };
 }

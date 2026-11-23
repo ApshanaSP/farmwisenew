@@ -10,7 +10,8 @@
  * departments, zones, examples) as the cached system block; then Nova Lite, Groq and Gemini, whatever AI_FORCE_PROVIDER says for the rest of the
  * console. The question, the places it names and the rules' hint are the only per-call text.
  */
-import { generateJson, type CallInfo } from "@/lib/ai/gateway";
+import { featureClaude, featureProviders, generateJson, type CallInfo } from "@/lib/ai/gateway";
+import { claudeConfigured, claudeWarm } from "@/lib/ai/claude";
 import { extractNumbers } from "@/lib/assistant/verify";
 import { deadline } from "@/lib/util/deadline";
 import { z } from "zod";
@@ -278,6 +279,39 @@ function systemFor(ctx: { cats: string[]; depts: string[]; zones?: { zone: numbe
 }
 /** The system block as a plan call sends it (for the cache tests and the eval's token count). */
 export const mapSystemPrompt = systemFor;
+
+/** the prompt cache keeps a prefix five minutes after its last read: one warm-up in four minutes is enough */
+export const WARM_EVERY_MS = 4 * 60_000;
+/** when a plan call last went to Claude (it read the cached prompt, so it is warm for a while) */
+let lastPlanAt = 0;
+let lastWarm: { at: number; p: Promise<MapWarm> } | null = null;
+export interface MapWarm { warmed: boolean; why?: string; ms?: number; model?: string; cacheWrite?: number; cacheRead?: number }
+/** Does a plan call go to Claude first (the map's provider order, a key, room in the owner's spend ceiling)? The free models' small per-minute allowances get no extra calls. */
+export const planOnClaude = (): boolean => (featureProviders("map") ?? [])[0] === "anthropic" && claudeConfigured();
+
+/**
+ * Writes the planner's long fixed prompt into Claude's prompt cache when the Ask the Map panel opens, so the first question reads it
+ * instead of writing it (as /api/jarvis/warm does for Jarvis's planner). It sends the plan call's own system block, schema, model,
+ * effort and thinking. At most once in WARM_EVERY_MS for the whole server (the cache belongs to the account, not to one officer),
+ * and never while questions are keeping the cache warm themselves. Off unless MAP_PLAN_WARM=1: a map plan goes out with the flat
+ * plan's sentinel schema (gateway.ts, `sentinels`), and claudeWarm (lib/ai/claude.ts) must send that same format, or the warm-up
+ * writes a prefix no plan call reads. Never throws.
+ */
+export function warmMapPlanner(w: { cats: string[]; depts: string[]; zones?: { zone: number; name: string; lat: number; lon: number }[]; catLabels?: Map<string, string> }): Promise<MapWarm> {
+  if (process.env.MAP_PLAN_WARM !== "1") return Promise.resolve({ warmed: false, why: "off" });
+  if (!planOnClaude()) return Promise.resolve({ warmed: false, why: "not-claude" });
+  const now = Date.now();
+  if (now - lastPlanAt < WARM_EVERY_MS) return Promise.resolve({ warmed: false, why: "in-use" });
+  if (lastWarm && now - lastWarm.at < WARM_EVERY_MS) return lastWarm.p;
+  const fc = featureClaude("map");
+  // the plan call's request as gateway.ts sends it for the "map" feature; claudeWarm reads the fields it knows
+  const req = { system: systemFor(w), schema: WirePlan, model: fc.model, role: "fast", effort: fc.effort, think: fc.think, sentinels: true, timeoutMs: 10_000 } as Parameters<typeof claudeWarm>[0];
+  const p: Promise<MapWarm> = claudeWarm(req)
+    .then((r): MapWarm => (r ? { warmed: true, ms: r.ms, model: r.model, cacheWrite: r.cacheWrite, cacheRead: r.cacheRead } : { warmed: false, why: "failed" }))
+    .catch((): MapWarm => ({ warmed: false, why: "failed" }));
+  lastWarm = { at: now, p };
+  return p;
+}
 /** The last plan call's provider, model, tokens and time (the eval runner reads it; the app does not). */
 let lastInfo: CallInfo | null = null;
 /** The last plan call's info, cleared as it is read. */
@@ -293,7 +327,9 @@ export async function aiPlan(text: string, prev: Plan | null, ctx: { cats: strin
   /** the categories' labels, for the cached prompt */
   catLabels?: Map<string, string>;
   /** v3: the follow-up as one complete question, as the turn reader read it from the conversation (turn.ts) */
-  meant?: string | null }):
+  meant?: string | null;
+  /** filled with the number of model calls the plan took (one, or two after a refused or second-look plan), for the question log */
+  timing?: { tries: number } }):
   Promise<{ plan: Plan; intent?: "plan" | "brief" | "scorecard" } | { city: "traffic" | "rain" | "forecast" | "flood" | "power" | "metro"; intent: "city"; language: Lang } | { problems: string[] }> {
   const places = ctx.places.length ? `Places named (use these refs): ${ctx.places.map((p) => `${p.name} = ${p.kind} ${p.ref}`).join("; ")}` : "No place was recognised.";
   // the zones are in the cached system block now; the prompt carries only what this question adds
@@ -312,9 +348,12 @@ export async function aiPlan(text: string, prev: Plan | null, ctx: { cats: strin
   const dl = deadline(PLAN_MS, ctx.signal);
   try {
     for (let attempt = 0; attempt < 2; attempt++) {
+      if (ctx.timing) ctx.timing.tries = attempt + 1;
       const r = await generateJson({ role: "fast", name: "map-plan", schema: WirePlan, system: systemFor(ctx), prompt, temperature: 0, maxOutputTokens: 1200, user: ctx.user, abortSignal: dl.signal,
         chat: true, feature: "map", timeoutMs: 12_000 });
       lastInfo = r.info;
+      // a plan call on Claude reads (and so keeps) the cached prompt: no warm-up is needed for a while
+      if (r.info?.provider === "anthropic") lastPlanAt = Date.now();
       if (process.env.MAP_AI_DEBUG === "1") console.log("MAPAI", JSON.stringify(r.object));
       // not a map question: say so, never answer with a guessed plan ("asdf" became "all open incidents")
       if (r.object.intent === "not_map") return { problems: ["not a map question"] };

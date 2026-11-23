@@ -36,6 +36,7 @@ import {
   X
 } from "lucide-react";
 import { CHENNAI_CENTER } from "@/lib/constants";
+import { addBasemap } from "@/components/map/basemap";
 
 export interface LatLng {
   lat: number;
@@ -295,11 +296,9 @@ export default function MapPicker({ value, onChange, footer }: MapPickerProps) {
       const map = L.map(containerRef.current).setView([start.lat, start.lng], value ? 16 : 13);
       mapRef.current = map;
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19
-      }).addTo(map);
+      // A sharp street map (vector tiles, clear on any screen), with OpenStreetMap's
+      // raster tiles as the fallback when it cannot be drawn.
+      addBasemap(L, map, "map", { fallback: "osm" });
 
       const marker = L.marker([start.lat, start.lng], { draggable: true }).addTo(map);
       markerRef.current = marker;

@@ -3,7 +3,9 @@ const isProd = process.env.NODE_ENV === "production";
 /**
  * Content-Security-Policy for every page. Next.js inlines small scripts and styles without nonces, so 'unsafe-inline'
  * stays; everything else is limited to this site plus what the pages really load: Google Maps (map picker, optional),
- * Google Fonts (console pages) and map tiles from any https host (OpenStreetMap, Esri).
+ * Google Fonts (console pages) and map tiles from any https host (OpenStreetMap, Esri). The sharp street map
+ * (components/map/basemap.ts) fetches its style, vector tiles, letters and symbols from OpenFreeMap, and its drawing
+ * worker comes from jsDelivr at the bundled MapLibre version (already allowed below for scripts and workers).
  * Dev mode also needs eval and the hot-reload socket.
  */
 const csp = [
@@ -13,7 +15,7 @@ const csp = [
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
   "media-src 'self' blob:",
-  `connect-src 'self' blob: https://maps.googleapis.com https://cdn.jsdelivr.net${isProd ? "" : " ws: wss:"}`,
+  `connect-src 'self' blob: https://maps.googleapis.com https://cdn.jsdelivr.net https://tiles.openfreemap.org${isProd ? "" : " ws: wss:"}`,
   "worker-src 'self' blob: https://cdn.jsdelivr.net",
   "frame-src 'none'",
   "frame-ancestors 'none'",

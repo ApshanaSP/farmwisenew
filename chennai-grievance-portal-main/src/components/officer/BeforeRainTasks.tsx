@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type * as Leaflet from "leaflet";
 import "@/components/collector/app/rehearsal/rehearsal.css";
+import { addBasemap } from "@/components/map/basemap";
 
 interface Task { id: number; key: string; text: string; lat: number; lon: number; ward: number | null; due: string | null; status: "todo" | "done" | "late"; doneAt: string | null; photo: string | null; photoM: number | null; incident: string | null }
 const fmtT = (t: string | null) => (t ? new Date(t.replace(" ", "T") + "Z").toLocaleString("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "UTC" }) : "as soon as possible");
@@ -106,7 +107,8 @@ export function BeforeRainTasks({ dev }: { dev?: string }) {
       if (!mapRef.current) {
         const map = L.map(el.current, { zoomControl: false, attributionControl: true });
         map.attributionControl.setPrefix(false);
-        L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, attribution: "Map © Esri · roads © OpenStreetMap contributors" }).addTo(map);
+        // the sharp street map: the roads of the visit route are what the officer reads here
+        addBasemap(L, map, "map");
         mapRef.current = { L, map, g: L.layerGroup().addTo(map) };
       }
       const { map, g } = mapRef.current;

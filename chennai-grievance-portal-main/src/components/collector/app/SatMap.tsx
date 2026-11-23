@@ -15,6 +15,9 @@ import { setConsoleMap } from "./thunai/mapbridge";
 import type { RainLayer } from "./rehearsal/rainLayer";
 import "./askmap/askmap.css";
 import GeoTools, { geoBusy } from "./geotools/GeoTools";
+import { onMapCmd } from "./askmap/bridge";
+import { addBasemap, readBaseChoice, saveBaseChoice, type Basemap, type BaseKind, type Tone } from "@/components/map/basemap";
+import { baseAsked, type BaseSeen } from "@/components/map/basemapPlan";
 
 export interface MapStation { id: string; name: string; kind: "aqi" | "rain" | "lake"; lat: number; lon: number; label: string }
 
@@ -81,6 +84,16 @@ const HEAT = [
 ];
 /** taluks: one coordinated set of tones, so neighbours stand apart */
 const TALUK_COL = ["#22B8D0", "#3B82F6", "#34D399", "#F2C94C", "#F0414F", "#FF8466", "#FFA24C", "#F472B6", "#A3E635"];
+/** ward and zone lines, the chosen zone and the veil over the others: pale over imagery and the night map, slate over the light street map */
+const INK: Record<Tone, { ward: string; zone: string; sel: string; veil: string }> = {
+  dark: { ward: "#9FB4D9", zone: "#D6DEEA", sel: "#FFFFFF", veil: "#020814" },
+  light: { ward: "#64748B", zone: "#334155", sel: "#0F172A", veil: "#FFFFFF" }
+};
+/** the Map / Satellite switch shows a small picture of the view it switches to (central Chennai, zoom 13) */
+const THUMB: Record<BaseKind, string> = {
+  satellite: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/13/3796/5921",
+  map: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/13/3796/5921"
+};
 
 interface State {
   L: typeof Leaflet;
@@ -101,8 +114,8 @@ interface State {
   declutter: () => void;
   /** Ask the Map's own layers, above the console's */
   answer: AnswerLayers;
-  streets: Leaflet.TileLayer;
-  sat: Leaflet.TileLayer;
+  /** the base map: the sharp street map or the satellite imagery (components/map/basemap.ts) */
+  base: Basemap;
   overlay: Leaflet.LayerGroup;
   scale: Leaflet.Control.Scale | null;
   /** the camera is moving the map (not the user) */
@@ -114,7 +127,7 @@ interface State {
   rainDots: Leaflet.Renderer;
 }
 
-/** Satellite map of the district: ward heat or taluk colours, zone outlines, incident pins and stations. */
+/** The district map (a sharp street map, or satellite imagery): ward heat or taluk colours, zone outlines, incident pins and stations. */
 export default function SatMap(props: Props) {
   const { geo, zoneCounts, pins, zone, layers, stations, added, mode, taluk, focus } = props;
   const el = useRef<HTMLDivElement>(null);
@@ -122,6 +135,34 @@ export default function SatMap(props: Props) {
   const cb = useRef(props);
   cb.current = props;
   const [ready, setReady] = useState(0);
+
+  // ---- the base map: Map (a sharp street map, like Google Maps; the default) or Satellite. The Collector's choice is kept
+  // in this browser. Rain & flooding draws on the street map while it is open; the choice comes back after.
+  const [view, setView] = useState<BaseKind>("map");
+  const choose = (v: BaseKind) => { setView(v); saveBaseChoice(v); };
+  useEffect(() => { const v = readBaseChoice(); if (v) setView(v); }, []);
+  // Rain & flooding and the live traffic view hand the map "streets" with no Ask the Map (Overview.tsx), before their own
+  // layer arrives: the street map is forced then, not the Collector's choice
+  const forced = !!props.rain || (!props.ask && props.base === "streets");
+  const eff: BaseKind = forced ? "map" : view;
+  /** light or dark under the overlays: the ward and zone lines take their colours from it */
+  const [tone, setTone] = useState<Tone>("light");
+  useEffect(() => { st.current?.base.set(eff); }, [ready, eff]);
+  // Jarvis's "satellite view" / "streets map" (askmap/bridge.ts) works this switch too
+  useEffect(() => onMapCmd(["base"], (_op, a) => {
+    const streets = a.base === "streets";
+    choose(streets ? "map" : "satellite");
+    return { ok: true, state: { base: streets ? "streets" : "sat" } };
+  }), []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Ask the Map's Satellite / Streets (the `base` prop): a change is the Collector's choice, except its first value and a
+  // change made by a forced view opening or closing (basemapPlan baseAsked)
+  const seenBase = useRef<BaseSeen | null>(null);
+  useEffect(() => {
+    const next = { base: props.base, forced };
+    const asked = baseAsked(seenBase.current, next);
+    seenBase.current = next;
+    if (asked) choose(asked);
+  }, [props.base, forced]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---- create the map once the outlines are loaded
   useEffect(() => {
@@ -153,20 +194,11 @@ export default function SatMap(props: Props) {
         }
       };
       map.on("zoomend moveend", declutter);
-      const sat = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-        maxZoom: 19, attribution: "Imagery © Esri, Maxar, Earthstar Geographics"
-      }).addTo(map);
-      // the Streets base map of Ask the Map's tools (added only when chosen)
-      const streets = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
-        maxZoom: 19, attribution: "Map © Esri, HERE, Garmin, OpenStreetMap contributors"
-      });
-      // Road and place names once zoomed in, so the district view stays uncluttered.
-      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}", {
-        maxZoom: 19, minZoom: 13, opacity: 0.55
-      }).addTo(map);
-      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", {
-        maxZoom: 19, minZoom: 13, opacity: 0.9
-      }).addTo(map);
+      // the base map, sharp on any screen: the street map or the imagery with names over it. Its own road and place names wait
+      // for zoom 13, so the district view stays uncluttered under the console's zone names.
+      const base = addBasemap(L, map, cb.current.rain ? "map" : readBaseChoice() ?? "map", { labels: true, namesFrom: 13 });
+      setTone(base.tone);
+      base.onTone(setTone);
 
       const talukName = new Map(geo.taluks.map((t) => [t.code, t.name]));
       const zoneBounds = new Map<number, Leaflet.LatLngBounds>();
@@ -174,7 +206,7 @@ export default function SatMap(props: Props) {
       const grow = <K,>(m: Map<K, Leaflet.LatLngBounds>, k: K, b: Leaflet.LatLngBounds) =>
         m.set(k, m.get(k)?.extend(b) ?? L.latLngBounds(b.getSouthWest(), b.getNorthEast()));
       const wards = geo.wards.map((w) => {
-        const poly = L.polygon(w.rings, { color: "#9FB4D9", weight: 0.6, opacity: 0.35, fillOpacity: 0, className: "wpoly" })
+        const poly = L.polygon(w.rings, { color: INK[base.tone].ward, weight: 0.6, opacity: 0.35, fillOpacity: 0, className: "wpoly" })
           .on("click", () => {
             // Rain & flooding: the streets and reports answer clicks; a ward does not filter the console
             if (cb.current.rain) return;
@@ -196,7 +228,7 @@ export default function SatMap(props: Props) {
         if (w.taluk) grow(talukBounds, w.taluk, b);
         return { zone: w.zone, taluk: w.taluk, poly };
       });
-      const outlines = geo.zones.map((z) => L.polyline(z.lines, { color: "#D6DEEA", weight: 1.4, opacity: 0.75, interactive: false }).addTo(map));
+      const outlines = geo.zones.map((z) => L.polyline(z.lines, { color: INK[base.tone].zone, weight: 1.4, opacity: 0.75, interactive: false }).addTo(map));
       const zoneLabels = new Map<number, Leaflet.Marker>();
       for (const z of geo.zones) {
         zoneLabels.set(z.zone, L.marker([z.lat, z.lon], {
@@ -227,7 +259,7 @@ export default function SatMap(props: Props) {
         stations: L.layerGroup().addTo(map),
         added: L.layerGroup().addTo(map),
         focus: L.layerGroup().addTo(map),
-        answer: createAnswerLayers(L, map), streets, sat, overlay: L.layerGroup().addTo(map), scale: null, prog: false, follow: null,
+        answer: createAnswerLayers(L, map), base, overlay: L.layerGroup().addTo(map), scale: null, prog: false, follow: null,
         rain: L.layerGroup().addTo(map), rainLines: L.svg({ pane: "rainLines" }), rainDots: L.svg({ pane: "rainDots" })
       };
       // the user's hand wins: a drag, a wheel or a pinch while the camera flies stops it, and it stays put
@@ -268,11 +300,10 @@ export default function SatMap(props: Props) {
     };
   }, [geo]);
 
-  // ---- shading, labels and the selected zone or taluk
-  useEffect(() => {
-    const s = st.current;
-    if (!s || !geo) return;
-    const talukIx = new Map(geo.taluks.map((t, k) => [t.code, k]));
+  // ---- shading, labels and the selected zone or taluk (in the colours that read on the base map now)
+  const paint = (s: State, g: MapGeo): Leaflet.LatLngBounds | undefined => {
+    const ink = INK[tone];
+    const talukIx = new Map(g.taluks.map((t, k) => [t.code, k]));
     const mx = Math.max(1, ...Object.values(zoneCounts));
     const level = (z: number) => {
       const c = zoneCounts[z] || 0;
@@ -281,16 +312,16 @@ export default function SatMap(props: Props) {
     for (const w of s.wards) {
       if (mode === "taluks") {
         const col = TALUK_COL[(talukIx.get(w.taluk ?? "") ?? 0) % TALUK_COL.length];
-        if (taluk && w.taluk !== taluk) w.poly.setStyle({ fillColor: "#020814", fillOpacity: 0.55, opacity: 0.15, color: "#9FB4D9", weight: 0.5 });
-        else w.poly.setStyle({ fillColor: col, fillOpacity: taluk ? 0.1 : 0.26, opacity: 0.3, color: "#9FB4D9", weight: 0.5 });
-      } else if (zone && w.zone !== zone) w.poly.setStyle({ fillColor: "#020814", fillOpacity: 0.55, opacity: 0.18 });
-      else if (zone) w.poly.setStyle({ fillColor: "#22B8D0", fillOpacity: 0.1, opacity: 0.55 });
+        if (taluk && w.taluk !== taluk) w.poly.setStyle({ fillColor: ink.veil, fillOpacity: 0.55, opacity: 0.15, color: ink.ward, weight: 0.5 });
+        else w.poly.setStyle({ fillColor: col, fillOpacity: taluk ? 0.1 : 0.26, opacity: 0.3, color: ink.ward, weight: 0.5 });
+      } else if (zone && w.zone !== zone) w.poly.setStyle({ fillColor: ink.veil, fillOpacity: 0.55, opacity: 0.18, color: ink.ward });
+      else if (zone) w.poly.setStyle({ fillColor: "#22B8D0", fillOpacity: 0.1, opacity: 0.55, color: ink.ward });
       else {
         const h = HEAT[level(w.zone)];
-        w.poly.setStyle({ fillColor: h.c, fillOpacity: h.o, opacity: 0.35 });
+        w.poly.setStyle({ fillColor: h.c, fillOpacity: h.o, opacity: 0.35, color: ink.ward });
       }
     }
-    for (const o of s.outlines) o.setStyle({ opacity: mode === "taluks" ? 0.3 : 0.75, weight: mode === "taluks" ? 1 : 1.4 });
+    for (const o of s.outlines) o.setStyle({ color: ink.zone, opacity: mode === "taluks" ? 0.3 : 0.75, weight: mode === "taluks" ? 1 : 1.4 });
     s.zoneLabels.forEach((m, z) => {
       if (mode === "zones") {
         m.addTo(s.map);
@@ -315,14 +346,25 @@ export default function SatMap(props: Props) {
     let target: Leaflet.LatLngBounds | undefined;
     if (mode === "taluks" && taluk) target = s.talukBounds.get(taluk);
     else if (zone) {
-      const g = geo.zones.find((z) => z.zone === zone);
-      if (g) s.L.polyline(g.lines, { color: "#FFFFFF", weight: 2.4, opacity: 0.95, interactive: false }).addTo(s.sel);
+      const z = g.zones.find((x) => x.zone === zone);
+      if (z) s.L.polyline(z.lines, { color: ink.sel, weight: 2.4, opacity: 0.95, interactive: false }).addTo(s.sel);
       target = s.zoneBounds.get(zone);
     }
+    return target;
+  };
+  useEffect(() => {
+    const s = st.current;
+    if (!s || !geo) return;
+    const target = paint(s, geo);
     // (while an answer is on the map, the camera belongs to the answer)
     if (!cb.current.focus && !cb.current.ask?.resp) s.map.flyToBounds(target ?? s.district, { padding: target ? [24, 24] : [8, 8], duration: 0.6 });
     requestAnimationFrame(() => st.current?.declutter());
-  }, [ready, zoneCounts, zone, geo, mode, taluk]);
+  }, [ready, zoneCounts, zone, geo, mode, taluk]); // eslint-disable-line react-hooks/exhaustive-deps
+  // the base map turned light or dark (the theme, Map / Satellite): the same shading in colours that read on it; the camera stays
+  useEffect(() => {
+    const s = st.current;
+    if (s && geo) paint(s, geo);
+  }, [tone]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---- incident pins
   useEffect(() => {
@@ -604,11 +646,6 @@ export default function SatMap(props: Props) {
   useEffect(() => {
     const s = st.current;
     if (!s) return;
-    if (props.base === "streets") { s.streets.addTo(s.map); s.sat.remove(); } else { s.sat.addTo(s.map); s.streets.remove(); }
-  }, [ready, props.base]);
-  useEffect(() => {
-    const s = st.current;
-    if (!s) return;
     s.overlay.clearLayers();
     const rend = s.L.canvas({ padding: 0.3 });
     for (const o of props.overlays ?? []) {
@@ -843,7 +880,7 @@ export default function SatMap(props: Props) {
         <div className="mapload" role="status" aria-label="Loading the map">
           <div className="mapload-grid" />
           <div className="mapload-radar"><i /><b /></div>
-          <p><span>Drawing Chennai&rsquo;s 200 wards</span><em>satellite tiles, wards and today&rsquo;s cases</em></p>
+          <p><span>Drawing Chennai&rsquo;s 200 wards</span><em>the map, wards and today&rsquo;s cases</em></p>
         </div>
       )}
       {canGoBack && focus && (
@@ -858,6 +895,12 @@ export default function SatMap(props: Props) {
         <button onClick={toggleFull} className={full ? "on" : ""} title={full ? "Leave full screen (Esc)" : "Full screen: the map with its pins and key"} aria-label={full ? "Leave full screen" : "Full screen"} aria-pressed={full}>
           <I n={full ? "shrink" : "expand"} />
         </button>
+        {/* Map / Satellite: a small picture of the other view (Rain & flooding keeps the street map while it is open) */}
+        {!forced && (
+          <button type="button" className="bm-switch" onClick={() => choose(view === "map" ? "satellite" : "map")}
+            style={{ backgroundImage: `url(${THUMB[view === "map" ? "satellite" : "map"]})`, backgroundSize: "cover", backgroundPosition: "center" }}
+            title={view === "map" ? "Satellite view" : "Map view"} aria-label={view === "map" ? "Show the satellite view" : "Show the street map"} />
+        )}
         <GeoTools get={() => (st.current ? { L: st.current.L, map: st.current.map } : null)} host={() => el.current} ready={ready} geo={geo} pins={pins}
           onPin={(id) => { exitMapFullscreen(); props.onPin(id); }} ask={props.ask} blocked={!!props.rain || !!props.drawCircle} />
         {props.extraTools}

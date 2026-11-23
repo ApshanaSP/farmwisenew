@@ -24,7 +24,7 @@ import type { SnapFact } from "./v11/snapshot";
 import { figuresIn, stripFigures, zoneLabelsOut } from "./numbergate";
 import { AiStep, checkPlan, codesText, ownWords, stateCard, turnLine, type AiPlan, type Context } from "./plan";
 import { buildScreen, emptySlots, MEASURES, METRICS, safeText, type Hands, type Slots } from "./screens";
-import { figuresOf, figuresOk, RECIPES, type Recipe, type ScopeT, type StageContext, type StageDocT } from "./stage";
+import { figuresOf, figuresOk, PLANNER_RECIPES, RECIPES, type Recipe, type ScopeT, type StageContext, type StageDocT } from "./stage";
 import type { Lang, PeriodKey, ScreenState, Sev, Step, View, World } from "./types";
 import { cityAsk } from "@/lib/city/intent";
 import { periodIn, placesIn, sevIn, statusIn, zonesIn } from "./quick";
@@ -57,7 +57,8 @@ const SEVS = ["Severe", "High", "Medium", "Low"] as const;
 
 // every property present, null where unused: strict structured-output modes accept this shape
 export const Screen = z.object({
-  recipe: z.enum(RECIPES),
+  // (v17: not the dataset answer: code alone knows the Collector's datasets and builds it, round.ts datasetTurn)
+  recipe: z.enum(PLANNER_RECIPES),
   period: z.enum(PERIODS).nullable(),
   zones: z.array(z.number().int()).max(4).describe("zone numbers; 2-4 to compare"),
   dept: z.string().nullable(), depts: z.array(z.string()).max(4).describe("department codes to compare"),
@@ -213,6 +214,15 @@ function compactSlots(s: Record<string, unknown>): Record<string, unknown> {
 
 const clip = (s: unknown, n: number) => (typeof s === "string" ? s.replace(/\s+/g, " ").trim().slice(0, n) : "");
 
+const FILTER_OPS = new Set(["eq", "neq", "in", "contains", "gte", "lte", "open", "closed", "recent_days", "latest"]);
+/** A Studio answer's filters as the browser sends them back (the last answer's, for a follow-up): their shape checked, their size capped. */
+function studioFilters(v: unknown): NonNullable<Slots["filters"]> {
+  if (!Array.isArray(v)) return [];
+  return v.filter((f): f is { col: string; op: string; values: unknown[] } => !!f && typeof f === "object" && typeof (f as { col?: unknown }).col === "string"
+      && FILTER_OPS.has(String((f as { op?: unknown }).op)) && Array.isArray((f as { values?: unknown }).values))
+    .slice(0, 8).map((f) => ({ col: f.col.slice(0, 40), op: f.op as NonNullable<Slots["filters"]>[number]["op"], values: f.values.filter((x) => typeof x === "string" || typeof x === "number").slice(0, 20).map((x) => String(x).slice(0, 80)) }));
+}
+
 /** The model's screen, checked: every code real, every number in range; null when nothing usable is left. */
 export function checkScreen(raw: unknown, w: World, stage: StageContext | null): { recipe: Recipe; slots: Slots } | null {
   if (!raw || typeof raw !== "object") return null;
@@ -270,6 +280,14 @@ export function checkScreen(raw: unknown, w: World, stage: StageContext | null):
     if (s.about === "areas" || s.about === "places" || s.about === "kinds") out.about = s.about;
   }
   if (recipe === "advise" && s.one === true) out.one = true;
+  // v17: a dataset answer names the dataset by its id, asks the Collector's own question as said (its figures are the Studio's to count, never
+  // Jarvis's: the screen says only what the Studio computed), and keeps the last answer's filters for a follow-up
+  if (recipe === "dataset") {
+    if (typeof s.dataset !== "string" || !/^ds_[a-z0-9]{6,24}$/.test(s.dataset)) return null;
+    out.dataset = s.dataset;
+    out.q = clip(s.q, 300) || null;
+    out.filters = studioFilters(s.filters);
+  }
   if (s.fresh === true) out.fresh = true;
   if (typeof s.org === "string" && /^[A-Z]{2,6}$/.test(s.org) && w.depts.some((d) => d.code.startsWith(`${s.org}-`))) out.org = s.org;
   if (recipe === "complete" && Array.isArray(s.ids)) {

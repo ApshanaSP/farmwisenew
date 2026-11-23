@@ -43,6 +43,7 @@ import { cannotLine, NO_MODEL_LINE } from "@/lib/thunai/reach";
 import type { Console } from "../CollectorApp";
 import { byName, clickables, frontRows, press, pressControl, readChart, scroll, spotlight, targetFor, typeInto, verdictFor, visibleControls, type Clickable } from "./dom";
 import { candidates10, itemPick, studioLetsThrough } from "@/lib/thunai/v10/controls10";
+import { OWN_DATA, aboutOpenDataset } from "@/lib/thunai/studiowords";
 import Stage, { type BlockView, type PinnedScreen } from "./Stage";
 import { download, exportPng, fileName } from "./export";
 import { canContinue, continueAnswer, earconEnd, forgetBookmark, hasVoice, loadWakeReplies, nowSaying, pathFor, prewarmVoice, speakAck, speaking, speakLines, speakText, stopVoice, voicePath, wakeReply, warmVoice, warmVoices } from "./mouth";
@@ -1159,7 +1160,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (!sx || gen !== turnGen.current) return;
     setStageBusy(null);
     sx.screen = putStage(doc, sx.lang, null); // eslint-disable-line @typescript-eslint/no-use-before-define
-    pendingScreen.current = { title: doc.title, recipe: doc.recipe, slots: doc.slots };
+    pendingScreen.current = screenCard(doc); // eslint-disable-line @typescript-eslint/no-use-before-define
     // v12 (RC4): this screen is the turn's until its answer is in (showStage confirms it); a newer turn closes it if it never is
     unfinishedScreen.current = gen;
   };
@@ -1250,7 +1251,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
             provenance: doc ? provenanceOf(doc, { by: stageBrainRef.current?.model ? "ai" : "rules", model: stageBrainRef.current?.model ?? null }) : null,
             observations, direct: direct ?? null,
             // v4: the round as events (an older server ignores this and answers in JSON), and how the sentence was heard
-            stream: !direct, heard
+            stream: !direct, heard,
+            // v17: the dataset open on the Studio page, so a question about it that reached the server is still answered from it
+            studioOpen: studioRef.current && hostRef.current.c.page === "studio" ? { id: studioRef.current.id } : null
           }) });
           // console steps the plan runs before it looks again, in order, as they arrive; how they went goes back with the next round
           const ran: Observation[] = [];
@@ -1396,6 +1399,16 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   };
 
   /**
+   * The conversation's card of a screen (a click opens it again). v17: a dataset answer from the server also carries the Studio's own card
+   * (its chart and its actions: add to a dashboard, alert, open in the Studio), and its plan is kept so a follow-up asked on the Studio page
+   * keeps its filters, as an answer from the Studio's own column does.
+   */
+  const screenCard = (doc: StageDocT): NonNullable<JLog["screen"]> => {
+    const studio = doc.studio ? ({ id: doc.studio.id, name: doc.studio.name, q: doc.studio.q, a: doc.studio.a as unknown as StudioReply }) : undefined;
+    if (studio?.a.plan) studioPlan.current = { id: studio.id, plan: studio.a.plan };
+    return { title: doc.title, recipe: doc.recipe, slots: doc.slots, ...(studio ? { studio } : {}) };
+  };
+  /**
    * A screen and its words. `stream`: the turn's stream, when it already put a screen up and said some of the words: the round's
    * whole answer then shows and says only what is left (turnstream.ts settleStream), never the same screen or sentence twice.
    */
@@ -1407,7 +1420,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // only the sentences the voice really said count as said: on the server's voice none was (streamSay), so the whole answer is said now, once
     const plan = settleStream({ screenId: sx?.screen?.id ?? null, said: sx?.speaks ? sx.said : [] }, { stage: doc, say });
     // the conversation keeps a card of this screen (a click opens it again)
-    const scr = { title: doc.title, recipe: doc.recipe, slots: doc.slots };
+    const scr = screenCard(doc);
     // the screen carries its words in both languages, every figure from the data: no translation needed
     if (say) givenAlt.current = { text: say, alt: doc.say[lang === "ta" ? "en" : "ta"] ?? "" };
     // the turn's memory: its recipe and slots, and a line of what it showed (never an incident's own words, only code's figures). A
@@ -2384,7 +2397,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const sd = studioRef.current;
     const pageMove = rules.kind === "do" && rules.steps.length > 0 && rules.steps.every((x) => x.a === "page");
     // v10: a plain console command (a page, a panel, the theme, close, a named console filter) still reaches the console there (controls10.ts)
-    if (sd && hostRef.current.c.page === "studio" && !pageMove && !(rules.kind === "do" && (isReflex(rules.steps, st) || studioLetsThrough(said, rules.steps, rules.confidence)))) {
+    // v17: and a question about the district ("how many severe complaints in Adyar today?") goes to the server, which also knows the open
+    // dataset (studioOpen) and every other one: only a sentence about the open dataset is answered here (studiowords.ts aboutOpenDataset)
+    if (sd && hostRef.current.c.page === "studio" && !pageMove && aboutOpenDataset(said, sd, { afterStudioAnswer: studioPlan.current?.id === sd.id })
+      && !(rules.kind === "do" && (isReflex(rules.steps, st) || studioLetsThrough(said, rules.steps, rules.confidence)))) {
       audit(said, [], `to the dataset ${sd.name}`);
       await askDataset(sd, said, rules.lang); // eslint-disable-line @typescript-eslint/no-use-before-define
       return;
@@ -2523,6 +2539,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // v13 (21 Nov review, finding 0 9): read as the server's fast lane reads it (quick.ts cityQuick, with its bail-outs: a trend, a comparison,
     // the news, a brief, what stands out, "only", "same"), so "the power outage trend this month" and "compare traffic in Adyar and Teynampet"
     // go to the analyst below, never the heavy-rain power screen or the district's live traffic
+    // v17 (23 Nov browser drive): a sentence about the Collector's own Data Studio data ("what does my flood inundation spots data say?")
+    // that the agent gave nothing for (a cold server's first turn) is Ask District IQ's, which answers from the datasets too: never the
+    // city's flood streets read in its words
+    if (OWN_DATA.test(said)) { audit(said, [], "to the analyst (own data, without the agent)"); await askAnalyst(said, rules.lang); return; } // eslint-disable-line @typescript-eslint/no-use-before-define
     const cq = ca ? cityQuick(said, worldRef.current, { lastCity: lastCityNow() }) : null;
     if (ca && cq && (rules.kind === "unknown" || cityAsFilter)) {
       audit(said, [], `the city screen (${ca.topic}${ca.focus ? `, ${ca.focus}` : ""}${ca.rain ? `, ${ca.rain}` : ""}) without the agent`);

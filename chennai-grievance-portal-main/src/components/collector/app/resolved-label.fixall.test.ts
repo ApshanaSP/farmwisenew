@@ -6,7 +6,6 @@ import { describe, expect, it, vi } from "vitest";
 // periodSinceWindow; the owner's design). The tile, the PDF's tile and the period's own label now read one wording from PERIODS.
 vi.mock("./SatMap", () => ({ default: () => null }));
 vi.mock("./askmap/AskOverlay", () => ({ default: () => null }));
-vi.mock("./YourData", () => ({ default: () => null }));
 vi.mock("next/dynamic", () => ({ default: () => () => null }));
 (globalThis as { React?: unknown }).React = React;
 

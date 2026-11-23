@@ -55,10 +55,11 @@
 .dic .alc-admin .ic{width:15px;height:15px;color:var(--high);flex:none;margin-top:2px}
 .dic .alc-admin button{margin-left:auto;border:0;background:none;color:var(--text-3);cursor:pointer}
 
-/* ---- Environment (round 26): three readings across the top, prices and Your data under them */
+/* ---- Environment (round 26): three readings across the top, the prices across the whole width under them
+   (Your data left this page for the Data Studio's Dashboards tab, so the prices table gets the room) */
 .dic .p2.env3{position:relative;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1.22fr);gap:12px}
 .dic .env3-top{min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.dic .env3-bot{min-height:0;display:grid;grid-template-columns:minmax(0,1.85fr) minmax(0,1fr);gap:12px}
+.dic .env3-bot{min-height:0;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 .dic .env3 .env{min-height:0;display:flex;flex-direction:column}
 .dic .env3 .env .ch{padding:10px 14px 4px}
 .dic .env3 .env .ch :is(h2,h3){font-size:14px}
@@ -86,53 +87,6 @@
 .dic:not(.fit) .env3-top>*{height:230px}
 .dic:not(.fit) .env3-bot>*{min-height:420px}
 
-/* ---- Your data (YourData.tsx): folded beside the prices; "Show all" opens it over the whole page */
-.dic .yd{min-height:0;display:flex;flex-direction:column;overflow:hidden}
-.dic .yd.all{position:absolute;inset:0;z-index:40;box-shadow:0 30px 80px -30px rgba(6,40,20,.55);animation:yd-grow .38s cubic-bezier(.16,1,.3,1) both;transform-origin:bottom right}
-@keyframes yd-grow{from{opacity:.4;transform:scale(.6)}}
-.dic .yd-h{flex:none;display:flex;align-items:center;gap:8px;padding:12px 14px 8px}
-.dic .yd-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none;color:#fff;background:linear-gradient(135deg,#15803D,#10B981 60%,#84CC16)}
-.dic .yd-ic .ic{width:16px;height:16px}
-.dic .yd-t{flex:1;min-width:0}
-.dic .yd-t h3{margin:0;font:700 14px/1.2 var(--font-ui);color:var(--text)}
-.dic .yd-t small{display:block;font:500 11.5px var(--font-ui);color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dic .yd-more{flex:none;display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:999px;border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--accent);font:650 12px var(--font-ui);cursor:pointer}
-.dic .yd-more .ic{width:13px;height:13px}
-.dic .yd-more.ghost{width:28px;padding:0;justify-content:center;background:none;border-color:var(--line)}
-.dic .yd-b{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding:0 12px 12px;overflow:auto}
-.dic .yd-acts{list-style:none;margin:0;padding:0;display:grid;gap:5px}
-.dic .yd-acts button{all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:8px;padding:7px 10px;border-radius:10px;background:var(--high-soft,#FFF7ED);cursor:pointer}
-.dic .yd-acts button:hover{box-shadow:0 0 0 1px var(--high,#EA580C)}
-.dic .yd-dot{grid-row:1/3;width:7px;height:7px;margin-top:5px;border-radius:50%;background:var(--high,#EA580C)}
-.dic .yd-acts b{font:650 12.5px/1.3 var(--font-ui);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dic .yd-acts small{font:500 11px var(--font-ui);color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dic .yd-grid{flex:1;min-height:120px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(120px,1fr);gap:8px}
-.dic .yd.all .yd-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));grid-auto-rows:230px;flex:none}
-.dic .yd-p{min-height:0;display:flex;flex-direction:column;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;animation:yd-in .4s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--i,0) * 45ms)}
-@keyframes yd-in{from{opacity:0;transform:translateY(6px)}}
-.dic .yd-p header{flex:none;display:flex;align-items:flex-start;gap:6px;padding:8px 9px 2px}
-.dic .yd-p header>div{flex:1;min-width:0}
-.dic .yd-p h4{margin:0;font:650 12px/1.3 var(--font-ui);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dic .yd-p small button{all:unset;cursor:pointer;font:500 11px var(--font-ui);color:var(--accent)}
-.dic .yd-x{flex:none;width:22px;height:22px;border-radius:6px;border:0;background:none;color:var(--text-3);display:grid;place-items:center;cursor:pointer}
-.dic .yd-x:hover{background:var(--surface-3,var(--line));color:var(--text)}
-.dic .yd-x .ic{width:13px;height:13px}
-.dic .yd-c{flex:1;min-height:0;padding:0 6px 6px}
-.dic .yd-k{height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 6px}
-.dic .yd-k b{font:800 28px/1.1 var(--font-ui);color:var(--text)}
-.dic .yd-k small{font:500 11.5px var(--font-ui);color:var(--text-3)}
-.dic .yd-none{font-size:12px;color:var(--text-3);padding:8px}
-.dic .yd-ph{border-radius:12px;background:linear-gradient(90deg,var(--surface-2),var(--surface-3,var(--line)),var(--surface-2));background-size:200% 100%;animation:yd-shim 1.4s linear infinite;min-height:110px}
-@keyframes yd-shim{to{background-position:-200% 0}}
-.dic .yd-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:14px;color:var(--text-3);font-size:12.5px;border:1.5px dashed var(--line-3);border-radius:12px}
-.dic .yd-empty>.ic{width:22px;height:22px;color:var(--accent)}
-.dic .yd-empty b{color:var(--text);font-size:13.5px}
-.dic .yd-empty em{font-style:normal;font-weight:650;color:var(--accent)}
-.dic .yd-go{margin-top:4px;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;border:0;background:var(--accent);color:#fff;font:650 12.5px var(--font-ui);cursor:pointer}
-.dic .yd-go .ic{width:14px;height:14px}
-@media (prefers-reduced-motion:reduce){.dic .yd.all,.dic .yd-p,.dic .yd-ph{animation:none}}
-
-
 /* the band's top line keeps each chip whole: the data chip gives way first, the alert chip keeps its title short */
 .dic .band-eb>.alc-w{flex:none}
 .dic .band-eb>.daily{flex:0 1 auto;min-width:0;overflow:hidden}
@@ -155,8 +109,6 @@ html[data-lang="ta"] .dic .ptab{padding-left:10px;padding-right:10px;gap:6px}
 html[data-lang="ta"] .dic .ptab span{font-size:13px}
 html[data-lang="ta"] .dic .cmdk{width:150px}
 html[data-lang="ta"] .dic .band h1.roll{letter-spacing:0}
-.dic .yd-c{position:relative;overflow:hidden;border-radius:0 0 10px 10px}
-.dic .yd-acts.wide{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
 /* Tamil: tab rows keep every tab readable (smaller, tighter) */
 html[data-lang="ta"] .dic [role="tab"]{font-size:12px;letter-spacing:0;padding-left:7px;padding-right:7px}
 html[data-lang="ta"] .dic .card [role="tablist"]{gap:2px}

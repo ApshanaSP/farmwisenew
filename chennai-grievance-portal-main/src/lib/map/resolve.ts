@@ -81,6 +81,80 @@ const COMMON = new Set(["school", "schools", "hospital", "hospitals", "complaint
   "water", "stagnation", "drainage", "sewage", "potholes", "pothole", "drains", "fire", "metro", "railway", "vs", "versus", "and", "with", "last", "this",
   "days", "between", "department", "officer", "visits", "plan", "these", "send", "export", "only", "make", "add", "remove", "start", "over", "again"]);
 
+/**
+ * The longest run of plain characters a pattern cannot match without ("velachery" in /\bvelachery\b/i), for a quick
+ * `includes` before the pattern runs; null when the pattern has no such run (an alternation at its top level, a run under
+ * three characters), and the pattern then always runs. Only runs outside groups and classes count, and a character a
+ * quantifier may drop (`?`, `*`, `{0,`) ends the run without it, so the run is always required.
+ */
+export function requiredRun(re: RegExp): string | null {
+  const src = re.source;
+  const runs: string[] = [];
+  let cur = "", depth = 0, inClass = false;
+  const end = () => { if (cur) runs.push(cur); cur = ""; };
+  // a quantifier at `j` that may drop the character before it
+  const optional = (j: number) => src[j] === "?" || src[j] === "*" || (src[j] === "{" && src[j + 1] === "0");
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    if (inClass) { if (c === "\\") i++; else if (c === "]") inClass = false; continue; }
+    if (c === "\\") {
+      const n = src[i + 1] ?? "";
+      let lit: string | null = null, skip = 1;
+      if (n === "u" && /^[0-9a-fA-F]{4}$/.test(src.slice(i + 2, i + 6))) { lit = String.fromCharCode(parseInt(src.slice(i + 2, i + 6), 16)); skip = 5; }
+      else if (n === "x" && /^[0-9a-fA-F]{2}$/.test(src.slice(i + 2, i + 4))) { lit = String.fromCharCode(parseInt(src.slice(i + 2, i + 4), 16)); skip = 3; }
+      // a named back-reference (\k<name>) and a control character (\cJ): their letters are not text the match must hold
+      else if (n === "k" && src[i + 2] === "<" && src.indexOf(">", i + 3) > 0) skip = src.indexOf(">", i + 3) - i;
+      else if (n === "c" && /[A-Za-z]/.test(src[i + 2] ?? "")) skip = 2;
+      // any other letter or digit after a backslash is a class, an anchor, a back-reference or \u{...}: it ends the run (ending one early is always safe)
+      else if (/[A-Za-z0-9]/.test(n)) lit = null;
+      else lit = n;
+      i += skip;
+      if (depth === 0 && lit != null) { if (optional(i + 1)) end(); else cur += lit; }
+      else if (depth === 0) end();
+      continue;
+    }
+    if (c === "[") { inClass = true; if (depth === 0) end(); continue; }
+    if (c === "(") { depth++; if (depth === 1) end(); continue; }
+    if (c === ")") { depth--; continue; }
+    if (depth > 0) continue;
+    if (c === "|") return null;
+    if ("^$.".includes(c)) { end(); continue; }
+    if (c === "{") { end(); const close = src.indexOf("}", i); if (close > i) i = close; continue; }
+    if ("?*+".includes(c)) { end(); continue; }
+    // a character a quantifier may drop is not required
+    if (optional(i + 1)) { end(); continue; }
+    cur += c;
+  }
+  end();
+  // a group anywhere at the top level with an alternation inside it is fine (its literals were never counted); an alternation outside was refused above
+  const best = runs.reduce((a, b) => (b.length > a.length ? b : a), "");
+  return best.length >= 3 ? best : null;
+}
+
+/** One place pattern, compiled once per place list: its global copy, a run it cannot match without, and whether case matters. */
+interface Pat { e: Entry; k: number; g: RegExp; run: string | null; ci: boolean; lead: boolean; primary: boolean }
+const compiled = new WeakMap<ResolverData, { n: number; pats: Pat[] }>();
+function patternsOf(data: ResolverData): Pat[] {
+  const n = data.entries.reduce((t, e) => t + e.res.length, 0);
+  const c = compiled.get(data);
+  if (c && c.n === n) return c.pats;
+  const pats: Pat[] = [];
+  for (const e of data.entries)
+    e.res.forEach((re, k) => {
+      const ci = re.flags.includes("i");
+      let run = requiredRun(re);
+      // a case-blind pattern is pre-checked on the lower-cased text only when its run lower-cases plainly (ASCII, or a script without case)
+      if (run && ci) run = /^[\x20-\x7e]*$/.test(run) || run.toLowerCase() === run.toUpperCase() ? run.toLowerCase() : null;
+      pats.push({ e, k, g: new RegExp(re.source, re.flags.includes("g") ? re.flags : re.flags + "g"), run, ci, lead: re.source.startsWith("(^|"), primary: k < (e.primary ?? e.res.length) });
+    });
+  compiled.set(data, { n, pats });
+  return pats;
+}
+
+/** The last answers per place list: the same question read again (the router, the follow-ups, the AI's place list) costs nothing. */
+const answers = new WeakMap<ResolverData, Map<string, Found[]>>();
+const ANSWERS_KEPT = 300;
+
 export function makeResolver(data: ResolverData) {
   const fuzzyNames = new Map<string, Entry>();
   for (const e of data.entries)
@@ -88,20 +162,38 @@ export function makeResolver(data: ResolverData) {
       const k = e.name_en.toLowerCase().replace(/\./g, "").trim();
       if (k.length >= 5 && !fuzzyNames.has(k)) fuzzyNames.set(k, e);
     }
+  // compiled once per place list, not on every call (12,000 patterns were built three times a question)
+  const pats = patternsOf(data);
+  let memo = answers.get(data);
+  if (!memo) answers.set(data, (memo = new Map()));
+  const kept = memo;
 
-  /** Every place named in `text`, overlapping matches grouped; `verb` says which kind wins a shared name. */
+  /** Every place named in `text`, overlapping matches grouped; `verb` says which kind wins a shared name. Callers must not change what it returns (it is kept). */
   return function resolve(text: string, verb: Verb = null): Found[] {
+    const mk = `${verb ?? ""}\u0000${text}`;
+    const hit = kept.get(mk);
+    if (hit) return hit;
+    const out = read(text, verb);
+    if (kept.size >= ANSWERS_KEPT) kept.delete(kept.keys().next().value!);
+    kept.set(mk, out);
+    return out;
+  };
+
+  function read(text: string, verb: Verb): Found[] {
     const all: Match[] = numbered(text);
-    for (const e of data.entries)
-      e.res.forEach((re, k) => {
-        const g = new RegExp(re.source, re.flags.includes("g") ? re.flags : re.flags + "g");
-        for (let m = g.exec(text); m; m = g.exec(text)) {
-          // a Tamil pattern may start with the character before the name (its word-start guard)
-          const lead = m[1] && /^[^஀-௿]?$/.test(m[1]) && re.source.startsWith("(^|") ? m[1].length : 0;
-          all.push({ entry: e, start: m.index + lead, end: m.index + m[0].length, text: m[0].slice(lead), method: "name", primary: k < (e.primary ?? e.res.length) });
-          if (m[0].length === 0) g.lastIndex++;
-        }
-      });
+    const lower = text.toLowerCase();
+    for (const p of pats) {
+      if (p.run && !(p.ci ? lower : text).includes(p.run)) continue;
+      const g = p.g;
+      g.lastIndex = 0;
+      for (let m = g.exec(text); m; m = g.exec(text)) {
+        // a Tamil pattern may start with the character before the name (its word-start guard)
+        const lead = m[1] && /^[^஀-௿]?$/.test(m[1]) && p.lead ? m[1].length : 0;
+        all.push({ entry: p.e, start: m.index + lead, end: m.index + m[0].length, text: m[0].slice(lead), method: "name", primary: p.primary });
+        if (m[0].length === 0) g.lastIndex++;
+      }
+      g.lastIndex = 0;
+    }
     // GCC street names (no line): word spans with a road word, matched exactly after normalising
     const words = [...text.matchAll(/[A-Za-z0-9.]+/g)];
     for (let i = 0; i < words.length; i++)

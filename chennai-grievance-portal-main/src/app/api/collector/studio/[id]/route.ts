@@ -15,7 +15,8 @@ import { filterRows, runPlan } from "@/lib/studio/engine";
 import { note, stream } from "@/lib/studio/http";
 import { analyse, ask, chooseCandidate, draftNote, drillInto, forceIngest, namesOf, refreshDataset, remap, setSchedule, view } from "@/lib/studio/pipeline";
 import { refs } from "@/lib/studio/refs";
-import { deleteDataset, dropPending, getBoard, getMeta, getPending, getRows, saveBoard, saveMeta, validId } from "@/lib/studio/store";
+import { deleteDataset, dropPending, getDashboards, getMeta, getPending, getRows, saveMeta, validId } from "@/lib/studio/store";
+import { addTiles, createDashboard, kindOfPlan, loadDashboards, removeTile } from "@/lib/studio/dashboards";
 import { ROLES, type Filter, type Plan, type Role } from "@/lib/studio/types";
 import { AiBudgetError } from "@/lib/ai/gateway";
 
@@ -69,7 +70,8 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     const names = namesOf(await refs());
     const rows = getRows(params.id);
     const alerts = v.meta.rules.map((r) => checkRule(r, rows, v.meta.spec, names));
-    const pinned = getBoard().filter((p) => p.datasetId === params.id).map((p) => p.plan.id);
+    // the charts of this dataset that are on any dashboard (the old board of pins was moved into the dashboards)
+    const pinned = [...new Set(getDashboards().flatMap((d) => d.tiles).filter((t) => t.datasetId === params.id && t.plan).map((t) => t.plan!.id))];
     const card = dataCard(v.meta as DatasetMeta, { conn: getConnector(params.id), panels: v.panels.length, lintFixes: v.panels.reduce((s, p) => s + (p.lint?.length ?? 0), 0), family: familyOf(v.meta as DatasetMeta) });
     return NextResponse.json({ ...v, alerts, pinned, card, family: familyOf(v.meta as DatasetMeta) });
   } catch (err) {
@@ -226,11 +228,14 @@ export async function POST(req: NextRequest, ctx: Ctx) {
         return NextResponse.json(await ask(params.id, a.question, s.email, a.context ? { filters: a.context.filters as Filter[] } : null));
       }
       case "pin": {
-        const board = getBoard().filter((p) => !(p.datasetId === meta.id && p.plan.id === a.plan.id));
-        board.unshift({ id: `pin_${Date.now().toString(36)}`, datasetId: meta.id, datasetName: meta.name, plan: a.plan as Plan, at: new Date().toISOString() });
-        saveBoard(board);
-        await note(s.email, "studio:pin", meta.id, { panel: a.plan.title });
-        return NextResponse.json({ ok: true, pins: board.length });
+        // a chart pinned without choosing a dashboard goes on the one used most recently (or a new "Pinned charts")
+        const all = await loadDashboards();
+        const target = [...all].sort((x, y) => y.updatedAt.localeCompare(x.updatedAt))[0] ?? await createDashboard("Pinned charts");
+        const plan = a.plan as Plan;
+        if (!target.tiles.some((t) => t.datasetId === meta.id && t.plan?.id === plan.id))
+          await addTiles(target.id, [{ kind: kindOfPlan(plan), datasetId: meta.id, plan, title: plan.title }]);
+        await note(s.email, "studio:pin", meta.id, { panel: plan.title, dashboard: target.name });
+        return NextResponse.json({ ok: true, dashboard: { id: target.id, name: target.name } });
       }
       case "preview": {
         const names = namesOf(await refs());
@@ -245,7 +250,9 @@ export async function POST(req: NextRequest, ctx: Ctx) {
         return NextResponse.json(n);
       }
       case "unpin": {
-        saveBoard(getBoard().filter((p) => !(p.datasetId === meta.id && (p.plan.id === a.planId || p.id === a.planId))));
+        // the chart comes off every dashboard it is on
+        for (const d of await loadDashboards())
+          for (const t of d.tiles) if (t.datasetId === meta.id && (t.plan?.id === a.planId || t.id === a.planId)) await removeTile(d.id, t.id);
         return NextResponse.json({ ok: true });
       }
       case "add-panel": {

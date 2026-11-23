@@ -1,66 +1,35 @@
 /**
- * Ask District IQ over the Collector's own Data Studio datasets: "list my datasets", and a question that names a dataset
- * ("hospital beds by zone", "desilting works pending in Zone 9", "dengue cases trend") answered by Studio's own analyst
- * (studio/pipeline.ts ask: the model, or its rules, picks a plan; engine.ts computes every number from the rows). The chat
- * model never does the arithmetic. The Collector's datasets only: an officer's console does not reach them.
+ * Ask District IQ over the Collector's own Data Studio datasets: "list my datasets", and a question about any of them ("hospital beds by
+ * zone", "desilting works pending in Zone 9", "summarise my shelters data", then "and by zone?") answered by the Studio's own analyst
+ * (studio/forAssistants.ts: the brief for a summary, else the analyst's plan counted from the rows by code). The chat model never does
+ * the arithmetic. The Collector's datasets only: an officer's console does not reach them.
  */
 import type { AnswerCard, Dataset } from "@/lib/assistant/answer";
 import { spec } from "@/lib/assistant/datasets";
-import { listDatasets, getMeta } from "@/lib/studio/store";
-import type { DatasetCard, PanelData } from "@/lib/studio/types";
+import { pickDataset, uniqueDatasets, type Asker, type StudioAnswerOut } from "@/lib/studio/forAssistants";
+import type { DatasetCard, Filter } from "@/lib/studio/types";
+
+export { uniqueDatasets };
 
 /** "list my datasets", "what data have I added?", "show my Data Studio files". */
 export const LIST_DATASETS = /\b(list|show|what|which|my|our)\b.{0,25}\b(datasets?|data ?sets?|data studio|uploaded (files|data)|studio (data|files)|files i (added|uploaded))\b|\bdata studio\b.{0,20}\b(list|what|show)\b/i;
-/** The question points at the Collector's own data. */
-const OWN_DATA = /\b(dataset|data ?set|my data|uploaded|data studio|studio|my file|spreadsheet|excel|csv)\b/i;
 
-/** Words that do not tell one dataset from another. */
-const GENERIC = new Set(["chennai", "data", "list", "details", "daily", "sample", "corporation", "public", "the", "and", "with", "from", "summary", "feed",
-  "total", "count", "date", "name", "number", "status", "type", "report", "record", "records", "tamil", "headers", "details", "value", "notes"]);
-/** Words of the console's own data (stemmed): never enough on their own to send a question to an uploaded file. */
-const DISTRICT_WORDS = new Set(["complaint", "grievance", "incident", "news", "issue", "civic", "flood", "flooding", "drain", "drainage", "garbage", "road",
-  "accident", "police", "zone", "ward", "department", "case", "open", "pending", "citizen", "chennai", "water", "health", "disaster", "management", "plan",
-  // a department's name ("Storm Water Drain department") is the console's, not an uploaded "Storm-water drain desilting register"
-  "storm", "sewage", "street", "light", "electrical",
-  // market prices are AGMARKNET's, in the console ("onion price today" was once "onion is not present in this dataset")
-  "price", "prices", "rate", "rates", "market", "markets", "commodity", "commodities", "mandi", "vegetable", "vegetables",
-  // dengue and fever are console topics (incidents, deaths): "any dengue deaths" was once "the dataset does not contain deaths"
-  "dengue", "fever", "malaria", "disease", "diseases", "death", "deaths"]);
-const words = (s: string) => s.toLowerCase().split(/[^a-z0-9஀-௿]+/).filter((w) => w.length >= 4 && !GENERIC.has(w));
-const stem = (w: string) => w.replace(/(ies)$/, "y").replace(/(?<!s)s$/, "");
-
-/** One copy of each dataset name (the newest), so an uploaded file added twice is listed once. */
-export function uniqueDatasets(): DatasetCard[] {
-  const seen = new Set<string>();
-  return listDatasets().filter((d) => {
-    const k = d.name.trim().toLowerCase();
-    if (seen.has(k)) return false;
-    seen.add(k);
-    return true;
-  });
+/**
+ * The dataset a question is about (studio/forAssistants.ts pickDataset), or null; `lastId` keeps a follow-up on the last answer's dataset.
+ * `who` defaults to the Collector, as this was always called from the Collector's lane only: an officer's caller passes its own.
+ */
+export function datasetNamed(message: string, o: { who?: Asker; lastId?: string | null } = {}): DatasetCard | null {
+  const p = pickDataset(message, { who: o.who ?? { role: "collector", lockDept: null }, lastId: o.lastId ?? null });
+  return p ? uniqueDatasets().find((d) => d.id === p.id) ?? null : null;
 }
 
-/** The dataset a question names (by its name's words, with a column it mentions or "my data"), or null. */
-export function datasetNamed(message: string): DatasetCard | null {
-  const said = new Set(words(message).map(stem));
-  const own = OWN_DATA.test(message);
-  let best: { d: DatasetCard; score: number } | null = null;
-  for (const d of uniqueDatasets()) {
-    const named = [...new Set(words(d.name).map(stem))].filter((w) => said.has(w));
-    const nameHits = named.length;
-    if (!nameHits) continue;
-    // the district's own words ("complaints", "news", "flooding") name the console's data: an uploaded file called "Public
-    // Grievances and Complaints" answers only when the question says it is about the Collector's own data, or names a word
-    // only that file has ("desilting", "metro", "ration")
-    if (!own && named.every((w) => DISTRICT_WORDS.has(w) || DISTRICT_WORDS.has(stem(w)) || [...DISTRICT_WORDS].some((x) => stem(x) === w))) continue;
-    const meta = getMeta(d.id);
-    const colHits = (meta?.spec.columns ?? []).filter((c) => c.role !== "ignore" && c.role !== "person" && words(c.label).map(stem).some((w) => said.has(w))).length;
-    // a name word and a column it holds ("hospital ... beds"), or the dataset called by name ("my metro stations data")
-    if (!(colHits > 0 || own || nameHits >= 2)) continue;
-    const score = nameHits * 2 + Math.min(colHits, 3) + (own ? 1 : 0);
-    if (!best || score > best.score) best = { d, score };
-  }
-  return best?.d ?? null;
+/** What the last Data Studio answer of this chat was about, from its saved plan, so "and by zone?" stays on it with its filters. */
+export function lastStudioPlan(turns: { role?: unknown; plan?: unknown }[]): { dataset: string; filters: Filter[] } | null {
+  const last = [...turns].reverse().find((t) => t.role === "assistant");
+  const p = last?.plan as { intent?: unknown; dataset?: unknown; filters?: unknown } | null | undefined;
+  if (!p || p.intent !== "studio_query" || typeof p.dataset !== "string") return null;
+  const filters = Array.isArray(p.filters) ? (p.filters as Filter[]).filter((f) => f && typeof f.col === "string" && typeof f.op === "string" && Array.isArray(f.values)).slice(0, 8) : [];
+  return { dataset: p.dataset, filters };
 }
 
 /** "list my datasets": what the Collector has added, newest first. */
@@ -78,22 +47,33 @@ export function datasetsListCard(base: AnswerCard): AnswerCard {
     scope: null, scopeLine: "Data Studio", chips: all.slice(0, 2).map((d) => `Summarise my ${d.name} data`) };
 }
 
-/** A Studio answer as a chat card: the analyst's sentence, its figures as a chart or a KPI, and where they came from. */
-export function datasetAnswerCard(base: AnswerCard, d: DatasetCard, r: { answer?: string | null; panel?: PanelData; note?: string | null; window?: string | null;
-  by: "ai" | "rules"; kind: string }): AnswerCard {
-  const p = r.panel;
-  const card: AnswerCard = { ...base, scope: null, scopeLine: `Data Studio · ${d.name}${r.window ? ` · ${r.window}` : ""}`, intent: "STUDIO_QUERY" };
+/** A Studio answer as a chat card: the analyst's sentence (or the brief's verdict), its figures as a chart or a KPI, and where they came from. */
+export function datasetAnswerCard(base: AnswerCard, a: StudioAnswerOut, lang: string = "en"): AnswerCard {
+  const d = a.dataset, r = a.reply, p = r.panel;
+  // a question in Tamil is answered in Tamil words around the same figures (Tanglish reads the English)
+  const sentence = lang === "ta" ? a.sentence.ta : a.sentence.en;
+  const card: AnswerCard = { ...base, scope: null, scopeLine: `Data Studio · ${d.name}${d.window ? ` · ${d.window}` : ""}`, intent: "STUDIO_QUERY" };
   card.sources.tools.push({ name: "studio_ask", args: { dataset: d.id }, ms: 0 });
-  card.sources.assumptions.push(`Answered from your Data Studio dataset "${d.name}" (${d.rows.toLocaleString("en-IN")} rows); every figure is computed from its rows.`);
+  card.sources.assumptions.push(r.kind === "summary"
+    ? `Summarised from the brief of your Data Studio dataset "${d.name}" (${d.rows.toLocaleString("en-IN")} rows); no AI was asked again.`
+    : `Answered from your Data Studio dataset "${d.name}" (${d.rows.toLocaleString("en-IN")} rows); every figure is computed from its rows.`);
   card.sources.verifier = { checked: 0, unmatched: [], regenerated: false, template: true };
+  card.chips = d.questions.slice(0, 2);
+  if (r.kind === "summary") {
+    card.headline = sentence.split(/(?<=[.!?])\s/)[0].replace(/\.$/, "");
+    card.answerMarkdown = [sentence, ...(r.points ?? []).map((x) => `- ${x}`), r.note ?? ""].filter(Boolean).join("\n");
+    card.kpis = [{ label: `Rows in ${d.name}`.slice(0, 80), value: d.rows, tone: "info" }];
+    card.display = "text";
+    return card;
+  }
   if (!p) {
-    card.headline = r.note || `"${d.name}" cannot answer that with its columns.`;
+    card.headline = sentence || `"${d.name}" cannot answer that with its columns.`;
     card.answerMarkdown = card.headline;
     return card;
   }
   const fmt = (v: number) => (Number.isInteger(v) ? v.toLocaleString("en-IN") : (Math.round(v * 10) / 10).toLocaleString("en-IN"));
-  card.headline = (r.answer ?? p.title).split(/(?<=[.!?])\s/)[0].replace(/\.$/, "");
-  const lines = [r.answer ?? p.title];
+  card.headline = (sentence || p.title).split(/(?<=[.!?])\s/)[0].replace(/\.$/, "");
+  const lines = [sentence || p.title];
   if (p.labels.length > 1) lines.push(...p.labels.slice(0, 5).map((l, k) => `- ${l}: **${fmt(p.values[k])}**${p.unit ? ` ${p.unit}` : ""}`));
   if (r.note) lines.push(r.note);
   card.answerMarkdown = lines.join("\n");
@@ -108,6 +88,6 @@ export function datasetAnswerCard(base: AnswerCard, d: DatasetCard, r: { answer?
     card.kpis = [{ label: p.kpi.label, value: p.kpi.value, tone: "info" }];
     card.display = "kpi";
   }
-  if (r.by === "rules") card.caveats.push("Read by Data Studio's rules (the AI analyst was not available); the figures are computed the same way.");
+  if (a.source === "rules") card.caveats.push("Read by Data Studio's rules (the AI analyst was not available in time); the figures are computed the same way.");
   return card;
 }

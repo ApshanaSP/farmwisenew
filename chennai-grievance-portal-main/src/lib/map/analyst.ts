@@ -43,7 +43,8 @@ export function factPack(r: AskResponse): string[] {
   for (const t of r.trace) lines.push(`Method: ${t.note_en}`);
   if (r.unplaced.length) lines.push(`${r.unplaced.length} have no exact place (counted, not pinned)`);
   const top = r.rows.slice(0, 5).map((x) => `${x.title} (${x.sev}, ${x.status}${x.overdue ? ", past deadline" : ""}, ward ${x.ward ?? "?"}, ${x.deptName})`);
-  if (top.length) lines.push(`Highest priority cases: ${top.join("; ")}`);
+  // a list near a place is in best-match order (priority and distance together, execute.ts localRank), not priority alone
+  if (top.length) lines.push(`${r.rows.some((x) => x.dist != null) ? "Best matches near the place (priority and distance together)" : "Highest priority cases"}: ${top.join("; ")}`);
   return lines;
 }
 

@@ -14,6 +14,10 @@ describe("describePanel", () => {
     const s = describePanel(panel({ labels: ["Adyar", "Anna Nagar", "Teynampet", "Royapuram"], values: [40, 30, 20, 10] }));
     expect(s).toBe("Adyar leads with 40 (40% of the total); the top 3 hold 90%.");
   });
+  it("never names the catch-all bucket as the leader", () => {
+    const s = describePanel(panel({ labels: ["Anna Adarsh College", "Loyola College", "St. Francis School", "Others (5)"], values: [375, 300, 259, 660] }));
+    expect(s).toBe("Anna Adarsh College leads with 375 (24% of the total); the top 3 hold 59%.");
+  });
   it("reads a trend from its first and last points, and says on for a day", () => {
     const s = describePanel(panel({ chart: "area", plan: plan({ by: "time", chart: "area" }), labels: ["1 Jun", "8 Jun", "15 Jun"], values: [100, 140, 120] }));
     expect(s).toBe("From 1 Jun to 15 Jun: 100 to 120, up 20%. Highest was 140 on 8 Jun.");

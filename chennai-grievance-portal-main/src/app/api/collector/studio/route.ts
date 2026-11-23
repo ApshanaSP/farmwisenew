@@ -11,12 +11,13 @@ import { ingest, ingestLink, namesOf } from "@/lib/studio/pipeline";
 import { refs } from "@/lib/studio/refs";
 import { availableSamples, sampleFile } from "@/lib/studio/samples";
 import { listConnectors } from "@/lib/studio/connectors";
-import { getBoard, getDashboards, getMeta, getRows, hiddenDatasets, listDatasets } from "@/lib/studio/store";
+import { listSummaries } from "@/lib/studio/dashboards";
+import { getBoard, getMeta, getRows, hiddenDatasets, listDatasets } from "@/lib/studio/store";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-/** The Collector's datasets, the board of pinned panels (computed live), the samples and whether an AI model is set up. */
+/** The Collector's datasets, their named dashboards, the board of pinned panels (computed live), the samples and whether an AI model is set up. */
 export async function GET() {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
@@ -36,8 +37,9 @@ export async function GET() {
     return NextResponse.json({
       connectors: { count: live.length, attention: live.filter((x) => x.status !== "healthy" && x.status !== "paused").length },
       datasets: listDatasets(), hidden: hiddenDatasets(), board, samples: availableSamples(),
-      // the datasets added as dashboards of their own (newest first); a deleted dataset is left out
-      dashboards: getDashboards().map((x) => x.datasetId).filter((id) => !!getMeta(id)),
+      // the named dashboards (newest first); the first look moves the older files over (lib/studio/dashboards.ts)
+      // (a failure there leaves the datasets listed; the dashboards page reports it on its own)
+      dashboards: await listSummaries().catch((err) => { console.warn("[studio] dashboards could not be listed", (err as Error).message); return []; }),
       ai: { available: ai.available, providers: ai.providers.map((p) => p.name), problem: ai.problem }
     });
   } catch (err) {

@@ -57,7 +57,9 @@ export function describePanel(p: PanelData): string {
   }
   if (p.chart === "table") return p.table?.rows.length ? `${p.table.rows.length} rows, the largest first.` : "No rows.";
   // a ranking or a split: the leader, and how much of the whole the leaders hold
-  const order = p.values.map((v, i) => [v, i] as const).sort((a, b) => b[0] - a[0]);
+  // the catch-all bucket ("Others (5)") is never the leader or the lowest: it is many items added together
+  const named = p.values.map((v, i) => [v, i] as const).filter(([, i]) => !/^others?\b/i.test(p.labels[i] ?? ""));
+  const order = (named.length ? named : p.values.map((v, i) => [v, i] as const)).sort((a, b) => b[0] - a[0]);
   const [v0, i0] = order[0];
   if (p.chart === "donut" || p.chart === "treemap") {
     return addsUp && total > 0 ? `${p.labels[i0]} is the largest part: ${Math.round((v0 / total) * 100)}% of ${f(total)}.` : `${p.labels[i0]} is the largest part (${f(v0)}).`;

@@ -193,10 +193,13 @@ declare global {
   var __diqTrafficNow: { key: string; at: number; v: TrafficNow } | undefined;
 }
 
-/** Live traffic for the whole site. `lockDept`: an officer sees only their own department's records in the clusters. */
-export async function trafficNow(o: { lockDept?: string | null } = {}): Promise<TrafficNow> {
+/**
+ * Live traffic for the whole site. `lockDept`: an officer sees only their own department's records in the clusters.
+ * `world`: the map's world when the caller has it already (Ask the Map), so it is not read a second time.
+ */
+export async function trafficNow(o: { lockDept?: string | null; world?: World } = {}): Promise<TrafficNow> {
   const live = await liveIncidents();
-  const { world: w } = await world();
+  const w = o.world ?? (await world()).world;
   const key = `${live.at}|${w.now}|${live.incidents.length}|${o.lockDept ?? ""}`;
   const c = global.__diqTrafficNow;
   if (c && c.key === key && Date.now() - c.at < 60_000) return c.v;

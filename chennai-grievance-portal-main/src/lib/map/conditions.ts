@@ -126,6 +126,8 @@ export function conditionsNear(w: World, opts: { fams: Set<string>; center: LatL
 /** the live traffic an answer needs (lib/city/traffic.ts TrafficNow, only the fields read here) */
 export interface LiveTraffic { enabled: boolean; at: string | null; spots: { id: string; level: string; name: string; delayMin: number | null; lat: number; lon: number; zoneName: string | null; repeat: { n: number } }[] }
 const ROAD_FAMS = new Set(["FLOOD", "DRAINAGE", "ROADS_TRAFFIC", "PUBLIC_SAFETY", "WORKS", "PUBLIC_ORDER"]);
+/** Does live traffic bear on an answer about these families (every kind, or one that happens on roads)? Ask the Map waits for traffic only then. */
+export const trafficMatters = (fams: Set<string>): boolean => !fams.size || [...fams].some((f) => ROAD_FAMS.has(f));
 
 /**
  * Live traffic where an answer is (TomTom, read every five minutes): the jams, flooded roads and accidents in its area,
@@ -133,7 +135,7 @@ const ROAD_FAMS = new Set(["FLOOD", "DRAINAGE", "ROADS_TRAFFIC", "PUBLIC_SAFETY"
  */
 export function trafficCondition(t: LiveTraffic | null, opts: { fams: Set<string>; box: Bbox; wide: boolean }): Condition | null {
   if (!t?.enabled) return null;
-  if (opts.fams.size && ![...opts.fams].some((f) => ROAD_FAMS.has(f))) return null;
+  if (!trafficMatters(opts.fams)) return null;
   const area = grow(opts.box, 800);
   // worst first: water or an accident, then very congested, then congested; the longest delay first within each
   const rank = (lv: string) => (lv === "flood" || lv === "accident" ? 3 : lv === "very" ? 2 : 1);

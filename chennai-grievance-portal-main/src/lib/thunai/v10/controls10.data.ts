@@ -352,10 +352,6 @@ c("markets.sort.az", "markets", "A", P(".mk-bar [role=group] button:nth-of-type(
 c("markets.sort.rising", "markets", "A", P(".mk-bar [role=group] button:nth-of-type(2)"), "Rising first|prices rising first", "விலை ஏறுபவை முதலில்|ஏறும் விலைகள் முதலில்|விலை ஏறுவது முதலில்", "rising first|vilai yerum first|yerum vilai first");
 c("markets.sort.falling", "markets", "A", P(".mk-bar [role=group] button:nth-of-type(3)"), "Falling first|prices falling first", "விலை இறங்குபவை முதலில்|இறங்கும் விலைகள் முதலில்|விலை இறங்குவது முதலில்", "falling first|vilai irangum first|irangum vilai first");
 c("markets.allMarkets", "markets", "A", P(".mk-back .btn"), "All markets|back to all markets", "எல்லா சந்தைகளும்|எல்லா சந்தைகளுக்கும் திரும்பு", "ella markets|all markets");
-c("yourdata.showAll", "yourdata", "A", P("button.yd-more::show all"), "Show all charts|show all your data", "எல்லா வரைபடங்களையும் காட்டு", "ella charts kaattu", ENV);
-c("yourdata.showFewer", "yourdata", "A", P("button.yd-more::show fewer|குறைவாக"), "Show fewer|fewer charts", "குறைவாகக் காட்டு|குறைந்த வரைபடங்கள்", "konjam kaattu|fewer charts", ENV);
-c("yourdata.openStudio", "yourdata", "A", S(page("studio")), "Open the Data Studio|go to the Data Studio", "தரவு அரங்கத்தைத் திற", "data studio open pannu");
-c("yourdata.remove", "yourdata", NEVER, N("removes a chart from the dashboard"), "Remove from the dashboard|remove this chart", "டாஷ்போர்டிலிருந்து நீக்கு", "dashboard la irundhu remove pannu", ENV);
 
 // ------------------------------------------------------------------------------------------------------------------------- the windows --
 c("modal.close", "window", "A", S(CLOSE), "Close|close the window|close this", "மூடு|சாளரத்தை மூடு|இதை மூடு", "close pannu|window close pannu|close", W(WINDOWS));
@@ -459,8 +455,9 @@ c("studio.add.linkGo", "studio", NEVER, N("reads a link into a new dataset"), "R
 c("studio.add.options", "studio", "A", P(".ds-linkf button.alt"), "Sign-in and refresh options|link options", "உள்நுழைவு மற்றும் புதுப்பிப்பு விருப்பங்கள்", "sign in refresh options|link options", ST);
 c("studio.add.connect", "studio", "A", P(".ds-connect-cta"), "Connect with sign-in or schedule|connect a source", "உள்நுழைவு அல்லது அட்டவணையுடன் இணை|மூலத்தை இணை", "source connect pannu|connect with sign in", ST);
 c("studio.add.sample", "studio", NEVER, N("adds a dataset"), "Add the sample|add a sample dataset", "மாதிரியைச் சேர்", "sample add pannu", ST);
-c("studio.list.board", "studio", "A", P("button.ds-li.board:nth-of-type(1)"), "On the dashboard|charts on the dashboard", "டாஷ்போர்டில் உள்ளவை|டாஷ்போர்டு வரைபடங்கள்", "dashboard la irukkuradhu|dashboard charts", ST);
-c("studio.list.connectors", "studio", "A", P("button.ds-li.board:nth-of-type(2)"), "Live Connectors|live connectors list", "நேரலை இணைப்பிகள்", "live connectors", ST);
+c("studio.list.board", "studio", "A", P(".ds-top-tabs [role=tab]:nth-of-type(1)"), "My dashboards|open the dashboards|dashboards tab", "என் டாஷ்போர்டுகள்|டாஷ்போர்டுகளைத் திற", "en dashboards|dashboards open pannu", ST);
+c("studio.list.datasets", "studio", "A", P(".ds-top-tabs [role=tab]:nth-of-type(2)"), "My datasets|datasets tab|show the datasets", "என் தரவுத்தொகுப்புகள்", "en datasets|datasets kaattu", ST);
+c("studio.list.connectors", "studio", "A", P(".ds-top-tabs [role=tab]:nth-of-type(3)"), "Live Connectors|live connectors list", "நேரலை இணைப்பிகள்", "live connectors", ST);
 c("ds.refetch", "dataset", NEVER, N("fetches the link again into the dataset"), "Fetch the link again|refetch", "இணைப்பை மீண்டும் எடு", "link thirumba edu", ST);
 c("ds.download.csv", "dataset", "A", P("a.ds-icon[href*=\"export=csv\"]"), "Download the cleaned data|download CSV", "சுத்தமான தரவைப் பதிவிறக்கு|சிஎஸ்வி பதிவிறக்கு", "clean data download pannu|csv download", ST);
 c("ds.download.xlsx", "dataset", "A", P("a.ds-icon[href*=\"export=xlsx\"]"), "Download as Excel|Excel", "எக்செல் ஆகப் பதிவிறக்கு|எக்செல்", "excel ah download pannu|excel", ST);
@@ -488,7 +485,7 @@ c("ds.spot.close", "dataset", "A", P(".ds-spot .ds-ghost"), "Close the large cha
 // the large chart's pin is a toggle ("Add to dashboard" / "On the dashboard"): only its unpinned state adds; "Add to this dashboard" is a .ds-btn
 // (v10 review 2, finding 31: a yes unpinned a chart already on the dashboard, and the second was never found)
 c("ds.spot.toDashboard", "dataset", "B", P(".ds-spot .ds-ghost::add to dashboard"), "Add the large chart to the dashboard|large chart to dashboard", "பெரிய வரைபடத்தை டாஷ்போர்டில் சேர்", "large chart dashboard la podu", ST);
-c("ds.spot.addHere", "dataset", "B", P(".ds-spot .ds-btn::add to this dashboard"), "Add to this dashboard|add it here", "இந்த டாஷ்போர்டில் சேர்", "indha dashboard la podu", ST);
+c("ds.spot.addHere", "dataset", "B", P(".ds-spot .ds-btn::add to this page"), "Add to this page|keep it with the charts", "இந்தப் பக்கத்தில் சேர்", "indha page la podu", ST);
 c("drill.back", "drill", "A", P(".ds-drill-h > .ds-icon:first-child"), "Back in the details|details back", "விவரங்களில் பின்னால்", "details la back", ST);
 c("drill.close", "drill", "A", P(".ds-drill-h > .ds-icon:last-child"), "Close the details|close details", "விவரங்களை மூடு", "details close pannu", ST);
 c("drill.focus", "drill", "A", P(".ds-drill-acts .ds-btn"), "Focus the dashboard on this|focus on this", "டாஷ்போர்டை இதில் கவனி", "dashboard idhula focus pannu", ST);
@@ -617,7 +614,7 @@ export const SKIP10: Record<string, string> = {
   "bb.keypoint.open": ROW, "bb.critical.open": ROW, "bb.dept.toggle": ROW, "bb.dept.death": ROW, "bb.dept.item": ROW, "bb.story.open": ROW, "bb.newsOnly.row": ROW,
   "bp.decision.open": ROW, "bp.rise.open": ROW, "bp.added.item": ROW, "bp.stories.thread": ROW, "bp.newsOnly.row": ROW, "bp.followups.dept": ROW, "bp.followups.item": ROW,
   "bp.followups.filter": "a department line's own: 'filter to <department>'", "trends.rising.row": ROW, "trends.taluk.row": ROW, "trends.rise.open": ROW,
-  "trends.hotspot.open": ROW, "trends.review.row": ROW, "env.lake.sourceLink": LINK, "markets.market.open": ROW, "yourdata.act.open": ROW, "yourdata.dataset.link": ROW,
+  "trends.hotspot.open": ROW, "trends.review.row": ROW, "env.lake.sourceLink": LINK, "markets.market.open": ROW,
   "list.row.open": ROW, "zones.row.filter": "a zone's row: 'filter to zone 7'", "zones.row.noZone": ROW, "depts.row.filter": "a department's row: 'filter to <department>'",
   "contacts.gccLink": LINK, "newsAll.card": ROW, "workspace.version.open": "a saved version: 'open the workspace <name>'", "workspace.rename": "a workspace's own: 'show numbers' and its number",
   "added.card": ROW, "item.openSource": LINK, "stories.list.pick": ROW, "stories.link": LINK, "pattern.incident": ROW, "gaps.row": ROW, "review.row.open": ROW,

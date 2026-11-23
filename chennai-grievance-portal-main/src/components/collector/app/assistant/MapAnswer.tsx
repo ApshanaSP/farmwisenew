@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Map answers, in the console map's style (Leaflet over Esri imagery, white zone outlines):
- * zones shaded by a value (one hue, light to dark), located points, or hotspots sized by how
- * many incidents they hold. Hover shows the value; clicking a zone filters the console.
+ * Map answers on a quiet grey street map, sharp on any screen and night-dark in the night theme
+ * (components/map/basemap.ts): zones shaded by a value (one hue, light to dark), located points,
+ * or hotspots sized by how many incidents they hold. Hover shows the value; clicking a zone filters the console.
  */
 import { useEffect, useRef } from "react";
 import type * as Leaflet from "leaflet";
@@ -12,8 +12,14 @@ import { fmtValue } from "@/lib/assistant/chartspec";
 import type { ChartSpec, Dataset } from "@/lib/assistant/answer";
 import { esc } from "../SatMap";
 import { hardenLeaflet } from "../askmap/leafletSafe";
+import { addBasemap, type Tone } from "@/components/map/basemap";
 
 const RAMP = ["#CDE2FB", "#86B6EF", "#3987E5", "#4C8DFF", "#8DB6FF"];
+/** ward lines, zone lines, the leading zone and strong outlines: pale over the night map, slate over the light one */
+const INK: Record<Tone, { ward: string; zone: string; top: string; strong: string }> = {
+  dark: { ward: "#9FB4D9", zone: "#C9D7F2", top: "#2BD4E6", strong: "#FFFFFF" },
+  light: { ward: "#94A3B8", zone: "#475569", top: "#0E7490", strong: "#334155" }
+};
 
 export default function MapAnswer({ spec, ds, geo, height, onZone }: {
   spec: ChartSpec; ds: Dataset; geo: MapGeo | null; height: number; onZone?: (zone: number) => void;
@@ -32,9 +38,13 @@ export default function MapAnswer({ spec, ds, geo, height, onZone }: {
       if (dead || !el.current) return;
       map = L.map(el.current, { zoomControl: true, attributionControl: true, minZoom: 9, maxZoom: 17, scrollWheelZoom: false });
       map.attributionControl.setPrefix(false);
-      L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-        maxZoom: 19, attribution: "Imagery © Esri, Maxar, Earthstar Geographics"
-      }).addTo(map);
+      // the quiet street map; its names wait for street zoom, so the shaded zones read first
+      const base = addBasemap(L, map, "map", { quiet: true, namesFrom: 13 });
+      // every line below keeps its role, so a change of theme recolours it where it is (the view stays put)
+      const lines: { l: Leaflet.Path; role: keyof (typeof INK)["dark"] }[] = [];
+      const line = <T extends Leaflet.Path>(l: T, role: keyof (typeof INK)["dark"]): T => { lines.push({ l, role }); return l; };
+      const ink = () => INK[base.tone];
+      base.onTone(() => { for (const x of lines) x.l.setStyle({ color: ink()[x.role] }); });
       const y = spec.y[0];
       const f = ds.fields.find((x) => x.key === y);
       const fmt = (v: number | null) => fmtValue(v, f?.format ?? "integer", f?.unit ?? null);
@@ -48,14 +58,14 @@ export default function MapAnswer({ spec, ds, geo, height, onZone }: {
         for (const w of geo.wards) {
           const v = byZone.get(w.zone) ?? 0;
           const step = v <= 0 ? -1 : Math.min(RAMP.length - 1, Math.floor((v / max) * RAMP.length - 1e-9));
-          const poly = L.polygon(w.rings, { color: "#9FB4D9", weight: 0.4, opacity: 0.35, fillColor: step < 0 ? "#FFFFFF" : RAMP[step], fillOpacity: step < 0 ? 0.05 : 0.62 })
+          const poly = line(L.polygon(w.rings, { color: ink().ward, weight: 0.4, opacity: 0.35, fillColor: step < 0 ? "#FFFFFF" : RAMP[step], fillOpacity: step < 0 ? 0.05 : 0.62 }), "ward")
             .bindTooltip(`<b>${esc(name.get(w.zone) ?? `Zone ${w.zone}`)}</b>${esc(f?.label ?? y)}: ${esc(fmt(v))}<br><span style="opacity:.7">Click to filter the console</span>`,
               { sticky: true, className: "dtip", direction: "top", offset: [0, -8] })
             .on("click", () => cb.current?.(w.zone))
             .addTo(map);
           bounds.extend(poly.getBounds());
         }
-        for (const z of geo.zones) L.polyline(z.lines, { color: z.zone === top ? "#2BD4E6" : "#C9D7F2", weight: z.zone === top ? 2.6 : 1.3, opacity: 0.8, interactive: false }).addTo(map);
+        for (const z of geo.zones) line(L.polyline(z.lines, { color: z.zone === top ? ink().top : ink().zone, weight: z.zone === top ? 2.6 : 1.3, opacity: 0.8, interactive: false }), z.zone === top ? "top" : "zone").addTo(map);
         // the leading zone carries its value as a label
         const tz = geo.zones.find((z) => z.zone === top);
         if (tz) L.marker([tz.lat, tz.lon], { interactive: false, icon: L.divIcon({ className: "aq-maplabel", html: `<b>${esc(name.get(top!) ?? "")}</b>${esc(fmt(byZone.get(top!) ?? 0))}`, iconSize: [0, 0] }) }).addTo(map);
@@ -68,17 +78,17 @@ export default function MapAnswer({ spec, ds, geo, height, onZone }: {
         for (const w of geo.wards) {
           const v = byWard.get(w.ward);
           const step = v == null || v <= 0 ? -1 : Math.min(RAMP.length - 1, Math.floor((v / max) * RAMP.length - 1e-9));
-          const poly = L.polygon(w.rings, { color: "#9FB4D9", weight: 0.5, opacity: 0.4, fillColor: step < 0 ? "#FFFFFF" : RAMP[step], fillOpacity: step < 0 ? 0.05 : 0.66 })
+          const poly = line(L.polygon(w.rings, { color: ink().ward, weight: 0.5, opacity: 0.4, fillColor: step < 0 ? "#FFFFFF" : RAMP[step], fillOpacity: step < 0 ? 0.05 : 0.66 }), "ward")
             .bindTooltip(`<b>Ward ${w.ward}</b>${esc(f?.label ?? y)}: ${esc(v == null ? "no data" : fmt(v))}<br><span style="opacity:.7">Zone ${w.zone} · click to filter the console</span>`,
               { sticky: true, className: "dtip", direction: "top", offset: [0, -8] })
             .on("click", () => cb.current?.(w.zone))
             .addTo(map);
           bounds.extend(poly.getBounds());
         }
-        for (const z of geo.zones) L.polyline(z.lines, { color: "#FFFFFF", weight: 1.6, opacity: 0.9, interactive: false }).addTo(map);
+        for (const z of geo.zones) line(L.polyline(z.lines, { color: ink().strong, weight: 1.6, opacity: 0.9, interactive: false }), "strong").addTo(map);
         addLegend(L, map, fmt, max, f?.label ?? y);
       } else {
-        for (const z of geo.zones) L.polyline(z.lines, { color: "#FFFFFF", weight: 1.6, opacity: 0.85, interactive: false }).addTo(map);
+        for (const z of geo.zones) line(L.polyline(z.lines, { color: ink().strong, weight: 1.6, opacity: 0.85, interactive: false }), "strong").addTo(map);
         const vals = ds.rows.map((r) => Number(r[y] ?? 1));
         const max = Math.max(1, ...vals);
         const label = spec.x ?? ds.fields.find((x) => x.kind === "category")?.key ?? "";

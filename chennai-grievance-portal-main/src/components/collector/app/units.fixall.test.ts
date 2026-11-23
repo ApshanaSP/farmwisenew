@@ -7,7 +7,6 @@ import { describe, expect, it, vi } from "vitest";
 // incident count in one sentence ("N incidents are open; S severe and H high").
 vi.mock("./SatMap", () => ({ default: () => null }));
 vi.mock("./askmap/AskOverlay", () => ({ default: () => null }));
-vi.mock("./YourData", () => ({ default: () => null }));
 vi.mock("next/dynamic", () => ({ default: () => () => null }));
 (globalThis as { React?: unknown }).React = React;
 

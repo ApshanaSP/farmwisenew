@@ -35,7 +35,7 @@ import { understand } from "./understand";
 import { planRisk } from "./risk";
 import { NEVER_REPLY, PRIVACY_REPLY, redact } from "./privacy";
 import { lineProblem, turnRecords } from "./exitgate";
-import { recordText, stepsAskedFor } from "./injection";
+import { echoesRecords, recordText, stepsAskedFor } from "./injection";
 import { asksCount, catIn, intentMarker, periodIn, placesIn, quickScreen, reservoirIn, sevIn, zonesIn, type IntentMarker } from "./quick";
 import { riskOf } from "./risk";
 import { spanScreen } from "./spanned";
@@ -59,6 +59,7 @@ import { fallbackLines } from "./aide7/writer";
 import { asks7, whoHas } from "./asks7";
 import { focusAsk } from "./v15/focus";
 import { fits, focusSlots, readerOn, readSentence, stageFits, type ReadFn, type Reading } from "./v16/reader";
+import { OWN_DATA, followUp } from "./studiowords";
 import { understandV8 } from "./v8/flag8";
 import { placeWord, replyLang8, wordsLang } from "./v8/lang8";
 import { deepModel, deepTurn, escalate } from "./v8/deep8";
@@ -103,7 +104,9 @@ export const RoundBody = AgentBody.extend({
   /** answer as NDJSON events (events.ts) instead of one JSON reply */
   stream: z.boolean().optional(),
   /** the last answer's provenance (register.ts provenanceOf on the screen the browser showed), for "how do you know?" and the register */
-  provenance: ProvenanceBody.nullable().optional()
+  provenance: ProvenanceBody.nullable().optional(),
+  /** v17: the Data Studio dataset open on the Studio page, when that page is showing (its id only: the server reads the dataset itself) */
+  studioOpen: z.object({ id: z.string().regex(/^ds_[a-z0-9]{6,24}$/) }).nullable().optional()
 });
 export type RoundBodyT = z.infer<typeof RoundBody>;
 
@@ -230,6 +233,8 @@ export function safeHands(h: Hands, signal?: AbortSignal, o: { spec?: boolean } 
     news: (s) => h.news(s).then((r) => redact(r)),
     map: (q) => h.map(q).then((r) => redact(r)),
     dataset: h.dataset ? (name) => h.dataset!(name).then((r) => redact(r)) : undefined,
+    // v17: the Collector's own datasets, stopped with the turn (the Studio's answer is its own data, shown as the Studio shows it)
+    studio: h.studio ? { ...h.studio, ask: (q, o) => (signal?.aborted ? Promise.reject(new DOMException("aborted", "AbortError")) : h.studio!.ask(q, o)) } : undefined,
     // the span hands read incident titles and places as the list does (QA pass 7): redacted, and stopped with the turn
     span: h.span ? (spec, s, f) => (signal?.aborted ? Promise.reject(new DOMException("aborted", "AbortError")) : h.span!(spec, s, f).then((r) => redact(r))) : undefined,
     compare: h.compare ? (key, s, f) => (signal?.aborted ? Promise.reject(new DOMException("aborted", "AbortError")) : h.compare!(key, s, f).then((r) => redact(r))) : undefined
@@ -972,10 +977,60 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
   // (`out` applies the reading to every way out of the round, every lane's included: withReading above)
   const outR = (o: RoundOut): RoundOut => o;
 
+  /**
+   * v17 (22 Nov): the Collector's own Data Studio datasets, any of them, not only the one open on the Studio page. The dataset is the one the
+   * reader named (its digest tag), else the one the words name (forAssistants.ts pickDataset), else, for a follow-up ("and by zone?"), the one
+   * whose answer is open. With no reading, only a clear match is taken, so a question about the district is never sent to an upload. The
+   * answer is the Studio's, counted from the rows (screens.ts datasetScreen), within what is left of the turn's budget.
+   */
+  const datasetTurn = async (r: Reading | null): Promise<RoundOut | null> => {
+    const st = hands.studio;
+    if (!st) return null;
+    const lastId = datasetOnScreen(stage, b.turns ?? []);
+    const openId = b.studioOpen?.id ?? null;
+    let id: string | null = null, why = "words";
+    if (r?.ask === "dataset") {
+      why = "reader";
+      id = (r.dataset ? st.byTag(r.dataset) : null) ?? st.pick(b.text, { openId, lastId })?.id ?? lastId ?? openId;
+    } else if (lastId && r?.ask === "follow_up") {
+      why = "follow";
+      id = lastId;
+    } else if (!r || r.ask === "other" || r.ask === "follow_up" || OWN_DATA.test(b.text)) {
+      // a sentence that says it is about the Collector's own data ("what does my flood inundation spots data say?") goes to that dataset
+      // even when the reader heard a district topic in it ("flood" read as the city's flood streets, 23 Nov browser drive)
+      const p = st.pick(b.text, { openId, lastId });
+      if (p?.strong) id = p.id;
+    }
+    if (!id) {
+      if (r?.ask !== "dataset") return null;
+      // the reader heard a question about the Collector's own data, but which dataset is not clear: asked, never guessed
+      const none = !st.digest();
+      const say = none
+        ? (lang === "ta" ? "தரவுக் கூடத்தில் நீங்கள் இன்னும் எந்தத் தரவையும் சேர்க்கவில்லை." : "You have not added any datasets to the Data Studio yet.")
+        : (lang === "ta" ? "உங்கள் எந்தத் தரவைப் பற்றிக் கேட்கிறீர்கள்? அதன் பெயரைச் சொல்லுங்கள்." : "Which of your Data Studio datasets do you mean? Say its name.");
+      return out(plainReply("chat", lang, say, t0, "studio:which"), "studio");
+    }
+    // a follow-up on the open answer is asked as the reader put it in full ("and by zone?" is "the shelters by zone"), with that answer's
+    // filters kept (the Studio itself keeps them only for "and…", "only…": screens.ts datasetScreen asks it to keep them); a new question
+    // to the same dataset starts afresh
+    const follow = id === lastId && (why === "follow" || followUp(b.text));
+    const q = follow && r?.request ? r.request : b.text;
+    const filters = follow && stage?.recipe === "dataset" && Array.isArray(stage.slots?.filters) ? stage.slots.filters : [];
+    const left = Math.max(1500, t0 + budget - 1200 - Date.now());
+    const hx: Hands = { ...hands, studio: { ...st, ask: (qq, o) => st.ask(qq, { ...o, deadlineMs: o.deadlineMs ?? left }) } };
+    const res = served(await timed(lang === "ta" ? "உங்கள் தரவில் கணக்கிடுகிறேன்" : "Counting it in your Data Studio data",
+      () => spanScreen("dataset", { dataset: id, q, filters }, state, world, hx, b.text, lang)));
+    return res.kind === "do" && res.stage ? out({ ...res, note: `studio:${why}` }, "studio") : null;
+  };
+
   if (b.round === 0) {
 
+    // (v17: the digest the reader read: file content, so a reply of the reader's that repeats it is the file speaking, not Jarvis)
+    let studioDigest: string | null = null;
     if (reader) {
-      const got = await timed(lang === "ta" ? "நீங்க சொன்னதைப் புரிஞ்சுக்கிறேன்" : "Understanding what you asked", () => reader({ text: b.text, turns: b.turns ?? [], screen: b.stageDigest ?? null, stageTitle: stage?.title ?? null, lastPlace: b.state.lastPlace ?? null }, world, { user, until: t0 + budget, signal }))
+      // (v17: with the Collector's own Data Studio datasets, when there are any, so "what does my shelters data say" is read as theirs)
+      studioDigest = hands.studio ? (() => { try { return hands.studio!.digest(); } catch { return null; } })() : null;
+      const got = await timed(lang === "ta" ? "நீங்க சொன்னதைப் புரிஞ்சுக்கிறேன்" : "Understanding what you asked", () => reader({ text: b.text, turns: b.turns ?? [], screen: b.stageDigest ?? null, stageTitle: stage?.title ?? null, lastPlace: b.state.lastPlace ?? null, studio: studioDigest }, world, { user, until: t0 + budget, signal }))
         .catch((e) => { if ((e as Error).name === "AbortError") throw e; return null; });
       rd = got?.reading ?? null;
       telemetry("reader", { ask: rd?.ask ?? null, zones: rd?.zones.length ?? 0, lenses: rd?.lenses.join("+") ?? "", about: rd?.about ?? null, one: rd?.one ?? false, ms: got?.ms ?? null, model: got?.model ?? null, turn: b.turnId });
@@ -999,6 +1054,11 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
     // a move that also asks something ("Go to the trends page and tell me which areas are getting worse", read as navigate in the browser
     // drive): not a move alone; the lanes answer it and the page step goes with the answer (outR)
     if (rd?.ask === "navigate" && asksBeyondMove(b.text)) rd = { ...rd, ask: "other" };
+    // v17 (22 Nov): a question about one of the Collector's own Data Studio datasets, any of them, answered from it (datasetTurn); with no
+    // datasets to reach (not the Collector's hands), the lanes try it as they would any other request
+    if (rd?.ask === "dataset" && !hands.studio) rd = { ...rd, ask: "other" };
+    const ds = await datasetTurn(rd);
+    if (ds) return ds;
     if (rd) {
       const reading = lang === "ta" ? "தரவைப் படிக்கிறேன்" : "Reading the data";
       // one place's picture ("Adyar la enna problem adhigama irukku?" went to the planner, 9.1 s), unless the brief lane reads it as the
@@ -1009,7 +1069,8 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
       }
       // small talk, and questions about Jarvis itself ("why did you stop now?"): the reader's own short line, never a screen
       // (in the language the reply is in: "Why are you speaking in Tamil all of a sudden?" is answered in English)
-      if ((rd.ask === "chat" || rd.ask === "meta") && rd.reply) return outR(out(plainReply("chat", /[஀-௿]/.test(rd.reply) ? "ta" : "en", rd.reply, t0, `reader:${rd.ask}`), "reader"));
+      // (v17: never a line that repeats a dataset's own wording from the digest: an uploaded file's title or column cannot speak through it)
+      if ((rd.ask === "chat" || rd.ask === "meta") && rd.reply && !(studioDigest && echoesRecords(rd.reply, studioDigest.split("\n").slice(1)))) return outR(out(plainReply("chat", /[஀-௿]/.test(rd.reply) ? "ta" : "en", rd.reply, t0, `reader:${rd.ask}`), "reader"));
       // a ranking by what the Collector named ("which department has the most overdue complaints": the open count was ranked, 22 Nov)
       if ((rd.ask === "ranking" || rd.ask === "performance") && rd.measure) {
         // (a backlog past its deadline is the whole backlog, not the last 24 hours' reports: the browser drive ranked only today's)
@@ -1080,7 +1141,8 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
     const frame = resolveFrame({ text: b.text, stage, turns: b.turns ?? [], lastPlace: b.state.lastPlace ?? null, lastText: b.lastText ?? null, world, register: reg, now: Date.now() });
     // "how do you know?" (the screen's own provenance read aloud) and "several of these are about X": a line code wrote, said as it is
     if (frame.kind === "reply" && stageFits(rd)) return outR(out(plainReply("chat", lang, frame.text[lang], t0, `frame:${frame.why}`), "frame"));
-    if (frame.kind === "screen" && fits(rd, frame.recipe)) {
+    // (a dataset answer's follow-ups are datasetTurn's, asked of the Studio afresh: the frame would only build the last question again)
+    if (frame.kind === "screen" && fits(rd, frame.recipe) && frame.recipe !== "dataset") {
       const r = await screenFrom(frame.recipe, frame.slots, lang === "ta" ? "முந்தைய கேள்வியைத் தொடர்கிறேன்" : "Following on from the last request");
       if (r.kind === "do" && r.stage) return outR(out({ ...r, note: `frame:${frame.why}` }, "frame"));
     }
@@ -1357,6 +1419,14 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
     planCache.set(key, { at: nowMs, plan });
   }
   return outR({ ...res, hops: r.hops });
+}
+
+/** v17: the dataset the answer on screen came from (an open dataset screen, else the last turn's), for its follow-ups. */
+export function datasetOnScreen(stage: StageContext | null, turns: { recipe?: string | null; slots?: Record<string, unknown> | null }[]): string | null {
+  const ok = (v: unknown): v is string => typeof v === "string" && /^ds_[a-z0-9]{6,24}$/.test(v);
+  if (stage?.recipe === "dataset" && ok(stage.slots?.dataset)) return stage.slots.dataset;
+  const last = turns[turns.length - 1];
+  return last?.recipe === "dataset" && ok(last.slots?.dataset) ? last.slots.dataset : null;
 }
 
 /** v16: the one zone the open screen or the last turn was about: its single zone, else the first of a focus screen's list */

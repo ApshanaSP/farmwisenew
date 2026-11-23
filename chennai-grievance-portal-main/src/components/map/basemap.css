@@ -1,0 +1,23 @@
+/* The base map (basemap.ts): its pane, the paper colour while it loads, and what the console's maps draw over a light street map. */
+
+/* while the sharp map loads, the map box shows the map's own paper colour rather than a dark backdrop */
+.leaflet-container.bm-on.bm-map.bm-light{background:#F2EFE9}
+.leaflet-container.bm-on.bm-map.bm-dark{background:#0C0C0C}
+.leaflet-container.bm-on.bm-sat{background:#0B1220}
+/* MapLibre's box brings a font and a tap colour of its own; Leaflet's are kept */
+.leaflet-diqbase-pane .maplibregl-map{font:inherit;-webkit-tap-highlight-color:transparent}
+.leaflet-diqbase-pane canvas{outline:none}
+
+/* Rain & flooding: the street map steps back, as rainview.css does for raster tiles, so the flooded streets stand out */
+.dic .rain-on .leaflet-diqbase-pane{filter:saturate(.3) brightness(1.04) contrast(.92)}
+.dic .rain-on.bm-dark .leaflet-diqbase-pane{filter:saturate(.35) brightness(1.15) contrast(.9)}
+
+/* the console map's zone and taluk names over the light street map: dark letters with a white edge (white suits imagery) */
+.dic .bm-light .zlbl{color:#1E293B;text-shadow:0 0 2px #fff,0 0 4px #fff,0 0 8px rgba(255,255,255,.9)}
+.dic .bm-light .zlbl.tlbl{color:#1E293B}
+.dic .bm-light .zlbl.zsel{color:#0F172A}
+
+/* the Map / Satellite switch in the map's tool column: a small picture of the view it switches to, as Google Maps does */
+.dic .map-tools button.bm-switch{box-shadow:inset 0 0 0 2px rgba(255,255,255,.9),inset 0 0 0 3px rgba(15,23,42,.25)}
+.dic .map-tools button.bm-switch:hover{filter:brightness(1.1) saturate(1.1)}
+.dic .map-tools button.bm-switch:focus-visible{outline:2px solid var(--accent,#2563EB);outline-offset:-2px}

@@ -624,10 +624,16 @@ function Trace({ r, w, lang, ask, on, setOn }: { r: AskResponse; w: Words; lang:
 
 const FEW = 6;
 function List({ r, w, lang, ask, actions, listRef }: { r: AskResponse; w: Words; lang: "en" | "ta"; ask: MapAsk; actions: PanelActions; listRef: React.RefObject<HTMLUListElement> }) {
-  const rows = useMemo(() => (ask.spot ? r.rows.filter((x) => ask.spot!.ids.includes(x.id)) : r.rows), [r, ask.spot]);
+  // a list near a place comes best match first (the server weighs priority and distance); the officer may put the nearest first
+  const near = r.rows.some((x) => x.dist != null);
+  const [order, setOrder] = useState<"best" | "nearest">("best");
+  const rows = useMemo(() => {
+    const base = ask.spot ? r.rows.filter((x) => ask.spot!.ids.includes(x.id)) : r.rows;
+    return near && order === "nearest" ? [...base].sort((a, b) => (a.dist ?? Infinity) - (b.dist ?? Infinity) || a.id.localeCompare(b.id)) : base;
+  }, [r, ask.spot, near, order]);
   // a few rows in the chat; all of them on request, or when a pin clicked on the map is further down
   const [all, setAll] = useState(false);
-  useEffect(() => { setAll(false); }, [r]);
+  useEffect(() => { setAll(false); setOrder("best"); }, [r]);
   useEffect(() => { if (ask.focus && rows.findIndex((x) => x.id === ask.focus) >= FEW) setAll(true); }, [ask.focus, rows]);
   if (!r.total) return null;
   const shown = all ? rows : rows.slice(0, FEW);
@@ -642,6 +648,20 @@ function List({ r, w, lang, ask, actions, listRef }: { r: AskResponse; w: Words;
   return (
     <div>
       <div className="amp-sec" style={{ cursor: "default" }}>{w.list}<span className="n">{(ask.spot ? ask.spot.ids.length : r.total).toLocaleString("en-IN")}</span></div>
+      {near && rows.length > 1 && (
+        <div className="amp-by amp-sort" role="group" aria-label={lang === "ta" ? "வரிசைப்படுத்து" : "Sort the list"}>
+          <span className="lbl">{lang === "ta" ? "வரிசை" : "Sort"}</span>
+          {([["best", "Best match", "சிறந்த பொருத்தம்"], ["nearest", "Nearest", "அருகில் உள்ளவை முதலில்"]] as const).map(([k, en, ta]) => (
+            <button key={k} type="button" aria-pressed={order === k} className={order === k ? "on" : ""} onClick={() => setOrder(k)}
+              title={k === "best" ? (lang === "ta" ? "முன்னுரிமையும் தூரமும் சேர்த்து" : "Priority and distance together") : (lang === "ta" ? "இடத்திலிருந்து தூரம் மட்டும்" : "Distance from the place only")}>
+              {lang === "ta" ? ta : en}
+            </button>
+          ))}
+        </div>
+      )}
+      {near && order === "nearest" && r.total > r.rows.length && !ask.spot && (
+        <p className="amp-sortnote">{lang === "ta" ? `காட்டப்படும் ${r.rows.length} இல் அருகில் உள்ளவை முதலில்.` : `Nearest first among the ${r.rows.length.toLocaleString("en-IN")} listed.`}</p>
+      )}
       {r.news && r.news.articles > 0 && (
         <p className="amp-newsnote"><I n="news" />
           {lang === "ta"
@@ -665,6 +685,7 @@ function List({ r, w, lang, ask, actions, listRef }: { r: AskResponse; w: Words;
                   {!x.pinnable && ` · ${w.noPlace}`}
                 </div>
                 <div className="s">
+                  {x.dist != null && <span className="nr" title={lang === "ta" ? "இடத்திலிருந்து தூரம் (நேர்கோடு)" : "Straight-line distance from the place"}>{fmtDistance(x.dist, lang)} · </span>}
                   {x.near && <span className="nr">{fmtDistance(x.near.m, lang)} {lang === "ta" ? `${x.near.name ?? LAYER_WORD[x.near.layer].ta_one} ${w.from}`
                     : `from ${x.near.name ?? `a ${LAYER_WORD[x.near.layer].one}`}`} · </span>}
                   {age === 0 ? (lang === "ta" ? "இன்று" : "today") : lang === "ta" ? `${age} நாள் முன்` : `${age} d ago`} · {x.deptName}

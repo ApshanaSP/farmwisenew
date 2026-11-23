@@ -50,8 +50,8 @@ import { deptFromWords } from "@/lib/assistant/deptwords";
 import { knownWord, unresolvedInput } from "@/lib/assistant/unresolved";
 import { heldPeriod, windowIn } from "@/lib/windowspan";
 import { notDone, shareAsked } from "@/lib/assistant/cannot";
-import { LIST_DATASETS, datasetAnswerCard, datasetNamed, datasetsListCard } from "@/lib/assistant/studiolink";
-import { ask as studioAsk } from "@/lib/studio/pipeline";
+import { LIST_DATASETS, datasetAnswerCard, datasetsListCard, lastStudioPlan } from "@/lib/assistant/studiolink";
+import { pickDataset, studioAsk } from "@/lib/studio/forAssistants";
 import { planFromDecision, type Decision } from "@/lib/assistant/decide";
 import { agentSchemas, agentSystem, narrowToNamed, onlyNumbersFrom, runAgent, type AgentOutcome } from "@/lib/assistant/agent";
 import { PolishSchema, checkPolish, polishPrompt, polishSystem } from "@/lib/assistant/polish";
@@ -84,6 +84,8 @@ export interface ChatInput {
   insightKey?: string | null;
   /** a department officer's console: every answer is for this department only (from the database, never the request) */
   lockDept?: string | null;
+  /** the session's role; absent, an officer is told by lockDept (the Data Studio lane is the Collector's alone) */
+  role?: "collector" | "department_officer";
   signal?: AbortSignal;
   stage: (s: Stage) => void;
 }
@@ -1315,18 +1317,24 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
     if (m) return finish(m, { intent: "map", tool: "ask_the_map" });
   }
 
-  // the Collector's own Data Studio datasets: listed, or one of them asked about (Studio's analyst computes the figures)
+  // the Collector's own Data Studio datasets: listed, or any of them asked about (Studio's analyst computes the figures; a summary is the
+  // dataset's brief). Never on an officer's console: forAssistants.ts refuses anyone but the Collector as well
   if (!i.lockDept && !i.pinId && !i.insightKey) {
+    const who = { role: i.role ?? "collector", lockDept: i.lockDept ?? null };
     if (LIST_DATASETS.test(message)) return finish(datasetsListCard(card0(null)), { intent: "studio_list" });
     // hospital beds over a threshold or right now are the console's live readings ("hospital beds above 90% occupancy" was once
     // answered "3 of 1,620" rows of an upload); a breakdown by zone or over time is the uploaded dataset's
     const live = /\b(hospital|hospitals|beds?|occupancy)\b/i.test(message) && /\b(above|over|more than|below|less than|under)\s*\d+\s*(%|percent)|\b(today|now|right now|currently|latest|overload\w*|over-?crowd\w*|crowded|full|capacity|shortage|available)\b/i.test(message)
       && !/\b(by|per|each)\s+(zone|taluk|ward|month|week|day)|\b(trend|over time)\b/i.test(message);
-    const ds = live || aboutTheData(message) ? null : datasetNamed(message); // "is the hospital data real?" asks about the data, not for the rows of an upload named like it (RC-11, PB-014)
+    // a follow-up on the last Data Studio answer ("and by zone?", "only the pending ones") stays on its dataset, with its filters
+    const prev = lastStudioPlan(turns);
+    const ds = live || aboutTheData(message) ? null : pickDataset(message, { who, lastId: prev?.dataset ?? null }); // "is the hospital data real?" asks about the data, not for the rows of an upload named like it (RC-11, PB-014)
     if (ds) {
       i.stage("fetching");
-      const r = await studioAsk(ds.id, message, i.user).catch((e) => { console.warn("[assistant] Data Studio answer failed:", (e as Error).message); return null; });
-      if (r) return finish(datasetAnswerCard(card0(null), ds, { ...r, kind: r.kind } as Parameters<typeof datasetAnswerCard>[2]), { intent: "studio_query", dataset: ds.id });
+      const context = prev?.dataset === ds.id ? { filters: prev.filters } : null;
+      const r = await studioAsk(message, { who, datasetId: ds.id, user: i.user, context, deadlineMs: 8000 })
+        .catch((e) => { console.warn("[assistant] Data Studio answer failed:", (e as Error).message); return null; });
+      if (r) return finish(datasetAnswerCard(card0(null), r, lang), { intent: "studio_query", dataset: ds.id, why: ds.why, filters: r.reply.plan?.filters ?? [] });
     }
   }
 

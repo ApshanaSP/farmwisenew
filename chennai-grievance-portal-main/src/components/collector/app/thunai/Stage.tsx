@@ -16,6 +16,7 @@ import { ZONE_NAMES } from "@/lib/thunai/lexicon";
 import StudioMap from "../studio/StudioMap";
 import { I, type IconName } from "../icons";
 import StageChart from "./StageChart";
+import { StudioActions, type StudioMsg } from "./StudioAnswer";
 import { chartHeight, chartSpecOf } from "./chartspec";
 import { UNIT_TA } from "@/lib/thunai/stagelocal";
 import "leaflet/dist/leaflet.css";
@@ -526,6 +527,10 @@ function BlockBody(p: BP) {
           <dl className="st-facts">
             {b.facts.map((f, i) => <div key={i}><dt>{f.label}</dt><dd>{fmt(f.value)}{f.unit ? <small> {f.unit}</small> : null}</dd></div>)}
           </dl>
+        )}
+        {/* v17: an answer from the Collector's own dataset keeps the Studio's actions: add it to a dashboard, alert, open it in the Studio */}
+        {p.doc.recipe === "dataset" && p.doc.studio && b.id === "studio" && (
+          <div className="st-studio-acts"><StudioActions s={p.doc.studio as unknown as StudioMsg} /></div>
         )}
       </>
     );

@@ -13,8 +13,8 @@ export interface JLog {
   lang: "en" | "ta";
   via?: "voice" | "typed";
   at: number;
-  /** an insight screen this answer opened (a click opens it again) */
-  screen?: { title: string; recipe: string; slots: Record<string, unknown> };
+  /** an insight screen this answer opened (a click opens it again); v17: a dataset answer's screen carries the Studio's own card too */
+  screen?: { title: string; recipe: string; slots: Record<string, unknown>; studio?: StudioMsg };
   /** an analyst answer (charts, table, sources) */
   card?: AnswerCard;
   /** an answer from the dataset open in the Data Studio */
@@ -33,8 +33,15 @@ function load() {
   try { const j = JSON.parse(localStorage.getItem(KEY) ?? "[]"); if (Array.isArray(j)) list = j as JLog[]; } catch { /* starts empty */ }
 }
 function save() {
-  // the chart cards are large and rebuilt by asking again: only the words and the screen are kept
-  try { localStorage.setItem(KEY, JSON.stringify(list.map(({ card: _c, studio: _s, ...x }) => x))); } catch { /* not kept */ }
+  // the chart cards are large and rebuilt by asking again: only the words and the screen are kept (a dataset screen's own Studio card
+  // too: its chart's labels and values, sixty times over, would fill the browser's storage and then nothing more would be kept)
+  try {
+    localStorage.setItem(KEY, JSON.stringify(list.map(({ card: _c, studio: _s, ...x }) => {
+      if (!x.screen?.studio) return x;
+      const { studio: _st, ...screen } = x.screen;
+      return { ...x, screen };
+    })));
+  } catch { /* not kept */ }
 }
 
 export const jarvisLog = {

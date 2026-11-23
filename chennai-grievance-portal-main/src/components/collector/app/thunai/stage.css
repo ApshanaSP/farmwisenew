@@ -287,6 +287,15 @@
 .st-facts dt { font-size: 12px; color: var(--text-2); }
 .st-facts dd { margin: 2px 0 0; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .st-facts dd small { font-size: 12px; font-weight: 500; color: var(--text-3); }
+/* v17: a dataset answer's Studio actions under it (add to a dashboard, alert, open in the Studio) */
+.st-studio-acts { margin-top: 12px; }
+.st-studio-acts .ds-a-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.st-studio-acts .ds-chip-b, .st-studio-acts .ds-btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 999px; font: 600 13px var(--st-font, inherit);
+  color: var(--text-2); border: 1px solid var(--line-3, var(--line)); background: var(--panel); cursor: pointer; transition: color .15s, border-color .15s, background .15s; }
+.st-studio-acts .ds-chip-b:hover:not(:disabled), .st-studio-acts .ds-btn:hover:not(:disabled) { color: var(--text); border-color: var(--accent); background: var(--accent-soft); }
+.st-studio-acts .ds-chip-b:disabled, .st-studio-acts .ds-btn:disabled { opacity: .7; cursor: default; }
+.st-studio-acts svg { width: 13px; height: 13px; }
+.st-studio-acts .ds-muted { margin: 6px 0 0; font-size: 12.5px; color: var(--text-3); }
 .st-drafts { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .st-drafts li { display: grid; grid-template-columns: 24px 1fr; gap: 2px 10px; padding: 11px 13px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); }
 .st-drafts small { grid-column: 2; color: var(--text-3); }

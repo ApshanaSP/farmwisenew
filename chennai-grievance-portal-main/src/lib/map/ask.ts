@@ -9,10 +9,10 @@ import path from "path";
 import { AiUnavailableError, AiBudgetError, AiBusyError, aiStatus } from "@/lib/ai/gateway";
 import { deptFromWords } from "@/lib/assistant/deptwords";
 import { refNames } from "@/lib/assistant/scope";
-import { aiPlan, aiReword } from "./ai";
+import { aiPlan, aiReword, planOnClaude, warmMapPlanner, type MapWarm } from "./ai";
 import { readTurn, type TurnHistory, type TurnReading } from "./turn";
 import type { Insight } from "./insights";
-import { conditionsNear, familiesOf, spreadOf, trafficCondition, type Condition, type LiveTraffic } from "./conditions";
+import { conditionsNear, familiesOf, spreadOf, trafficCondition, trafficMatters, type Condition, type LiveTraffic } from "./conditions";
 import { cityNow, cityTopic, type CityRow, type CityTopic } from "@/lib/city/now";
 import { peakWords, rainForecast } from "./forecast";
 import { trafficNow } from "@/lib/city/traffic";
@@ -20,9 +20,9 @@ import { compose, topicOf, type Answer } from "./answer";
 import { areaBrief, type Brief } from "./brief";
 import { cameraFor, type CameraInput, type Shot } from "./camera";
 import { planChips, type PlanChip } from "./chips";
-import { PlanError, areaLabel, periodRange, runMapPlan, drawnRadius, wardName, type Ctx, type Place, type RunResult, type StepOut } from "./execute";
+import { PlanError, areaLabel, byPriority, periodRange, runMapPlan, drawnRadius, wardName, type Ctx, type Place, type RunResult, type StepOut } from "./execute";
 import { bboxOf, circlePolygon, type Bbox, type LatLon, type Pair } from "./geom";
-import { OPEN_FILTER, checkPlan, type AreaRef, type Plan } from "./plan";
+import { OPEN_FILTER, checkPlan, facingIncidents, type AreaRef, type Plan } from "./plan";
 import { makeResolver, type Found, type ResolverData } from "./resolve";
 import { fitModelPlan, freshPlan, keepAreas, mapLang, type ModelWords, mapVocabulary, mapVocabularyTa, parse, rulesRoute, type RouteEnv } from "./route";
 import { makeSpeller, type Fix } from "./spell";
@@ -58,6 +58,8 @@ export interface Row {
   id: string; title: string; sev: string; status: string; open: boolean; cat: string; catLabel: string; dept: string; deptName: string;
   ward: number | null; zone: number | null; zoneName: string | null; first: string; place: string | null; pinnable: boolean; prec: number | null;
   priority: number; reasons: string | null; near: { name: string | null; m: number; layer: LayerId } | null; overdue: boolean; citizen: boolean;
+  /** metres from the place a "near X" list is about (null on other lists): the panel shows it and sorts by it */
+  dist: number | null;
   /** reported by a news outlet; `press` = its newest articles (headline, outlet, link: public reporting only) */
   news: boolean; press: Press[]
 }
@@ -368,9 +370,33 @@ export async function askMap(asked: AskInput): Promise<AskResponse> {
   }
 }
 
+/** Where one question's time went, for the question log (ms; null for a stage the question did not have). */
+export interface Stages {
+  world_ms: number; turn_ms: number | null; plan_ms: number; plan_tries: number; exec_ms: number; followups_ms: number; traffic_ms: number | null;
+  /** a follow-up's plan made beside the turn reader: used (the reader called it a new question meaning what it says) or not */
+  parallel: "used" | "unused" | null; cached: boolean;
+}
+
+/** Two wordings of one question: the same words, whatever the case, spacing and punctuation. */
+export function sameQuestion(a: string, b: string): boolean {
+  const k = (s: string) => s.normalize("NFC").toLowerCase().replace(/[^\p{L}\p{N}\p{M}]+/gu, " ").trim();
+  return k(a) === k(b);
+}
+
+/** The fixed part of every plan call, from the world (ai.ts system block: the categories, departments and zones, in the world's order). */
+const promptOf = (w: World) => ({ cats: [...w.cats.keys()], depts: [...w.depts.keys()], zones: w.zones, catLabels: catLabels(w) });
+
+/** Warm the planner's prompt cache for the first question (when the Ask the Map panel opens; ai.ts warmMapPlanner). Never throws. */
+export async function warmPlanner(): Promise<MapWarm> {
+  try { const { world: w } = await world(); return await warmMapPlanner(promptOf(w)); }
+  catch { return { warmed: false, why: "no-world" }; }
+}
+
 async function askMapInner(asked: AskInput): Promise<AskResponse> {
   const t0 = Date.now();
+  const st: Stages = { world_ms: 0, turn_ms: null, plan_ms: 0, plan_tries: 0, exec_ms: 0, followups_ms: 0, traffic_ms: null, parallel: null, cached: false };
   const { world: w, resolver: data } = await world();
+  st.world_ms = Date.now() - t0;
   const resolve = resolverFor(data);
   // a hurried officer's slips, read as a person would ("hospitls near adayar"); a chip's plan or a follow-up's edit words are read as typed
   // v2 (the owner, 21 Nov 2026: "AI powered, no rules"): Claude reads every typed question as typed and decides what it asks; the word rules
@@ -380,13 +406,27 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
   const input: AskInput = sp ? { ...asked, text: sp.text } : asked;
   const lang: Lang = input.plan?.language ?? (input.text ? mapLang(input.text, resolve(input.text, null)) : input.prev?.language ?? "en");
   const lock = input.user.role === "department_officer" ? input.user.lockDept : null;
+  // live traffic, read where it is already fresh (TomTom every five minutes), for "On the ground now" beside an answer: started
+  // here so it is read while the AI plans, and waited for only when the answer is about roads (trafficMatters below)
+  const liveTraffic: Promise<LiveTraffic | null> | null = input.text || input.plan || input.context.incidentId
+    ? Promise.race([trafficNow({ lockDept: lock, world: w }).catch(() => null), new Promise<null>((r) => setTimeout(() => r(null), 2500))]) as Promise<LiveTraffic | null>
+    : null;
   const ctx: Ctx = { place: placeLookup(w, data, lock), lang, lockDept: lock };
   const names = await refNames().catch(() => null);
   const env: RouteEnv = { resolve, dept: (t) => (names ? deptFromWords(t, names)?.code ?? null : null), lang, now: w.now };
   let forecastAsk = false;
   let plan: Plan | null = null, defaults: string[] = [], places: Found[] = [], edited: string | null = null, aiUsed = false, unread: string[] = [];
   const out = emptyResponse(lang, w);
-  const done = (r: AskResponse) => { r.ms = Date.now() - t0; r.spelled = sp?.fixes ?? []; logQuestion(asked, r); return r; };
+  const done = (r: AskResponse) => { r.ms = Date.now() - t0; r.spelled = sp?.fixes ?? []; logQuestion(asked, r, st); return r; };
+  /** one plan call, timed for the log; a failed call is null (the rules answer), as before */
+  type Planned = Awaited<ReturnType<typeof aiPlan>> | null;
+  const planTimed = (text: string, prev: Plan | null, c: Parameters<typeof aiPlan>[2], warn = false): Promise<{ a: Planned; ms: number; tries: number }> => {
+    const tp = Date.now(), timing = { tries: 0 };
+    return aiPlan(text, prev, { ...c, timing }).catch((e): Planned => { if (warn) console.warn("[map] AI plan failed:", (e as Error).message); return null; })
+      .then((a) => ({ a, ms: Date.now() - tp, tries: timing.tries }));
+  };
+  const took = (x: { a: Planned; ms: number; tries: number }): Planned => { st.plan_ms += x.ms; st.plan_tries += x.tries; return x.a; };
+  const timedFollowUps = (...a: Parameters<typeof followUps>): string[] => { const tf = Date.now(); const f = followUps(...a); st.followups_ms += Date.now() - tf; return f; };
   /** A ward's scorecard, with its brief under it (v2). */
   const scorecardOut = (ward: number): AskResponse => {
     out.ai_used = aiOnly;
@@ -400,7 +440,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     out.context.areas = [{ key: areaKey(area), ref: area, ...areaLabel(area, w, ctx), circle: null }];
     const box = areaBox(area, w, ctx);
     out.camera = { shape: "area", areas: box ? [{ id: areaKey(area), box, label: sc.label.en, label_ta: sc.label.ta }] : [], points: [], line: null, focus: null, tour: [], district: w.district };
-    out.followups = followUps(out, null, { w, env, ctx, lock, role: input.user.role });
+    out.followups = timedFollowUps(out, null, { w, env, ctx, lock, role: input.user.role });
     return done(out);
   };
   /** What is happening in one area: the area brief (every department's open issues there, the worst, the change, the places in and around it). */
@@ -416,27 +456,37 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     const box = areaBox(area, w, ctx);
     if (box) out.conditions = conditionsNear(w, { fams: new Set(), center: p ?? { lat: (box.s + box.n) / 2, lon: (box.w + box.e) / 2 }, box, wide: false });
     out.camera = { shape: "area", areas: box ? [{ id: areaKey(area), box, label: out.brief.label.en, label_ta: out.brief.label.ta }] : [], points: [], line: null, focus: null, tour: [], district: w.district };
-    out.followups = followUps(out, null, { w, env, ctx, lock, role: input.user.role });
+    out.followups = timedFollowUps(out, null, { w, env, ctx, lock, role: input.user.role });
     return done(out);
   };
 
   // ---- AI only: Claude reads the question as typed and says what kind of answer it needs; the server answers it
   if (aiOnly) {
     const typed = asked.text!;
+    // the places the question names, looked up as typed and as the speller reads them (the place list only gives the model their refs; it decides nothing)
+    const reading = spellerFor(data)(typed).text;
+    // places are looked up in the officer's own words only (the reading's words found a school named "A School" in "a school")
+    const own = placesForAi([...resolve(typed, null), ...(reading !== typed ? resolve(reading, null) : [])], 12);
+    const planCtx = (places: typeof own, meant: string | null) => ({ ...promptOf(w), places, user: input.user.email, lang, signal: input.signal, meant });
+    const followUp = !!(asked.prev && input.history?.length);
+    // speed: on a follow-up, the plan of the message read as a new question starts beside the turn reader (about 2 s), and is
+    // used when the reader says it is a new question that means what it says: that is the very call the planner would make next.
+    // Otherwise it is left to finish unused (an aborted call is still billed, at its worst case). Only on Claude (a free model's
+    // per-minute allowance is not spent twice); MAP_PARALLEL_PLAN=0 turns it off.
+    const early = followUp && process.env.MAP_PARALLEL_PLAN !== "0" && planOnClaude() ? planTimed(typed, null, planCtx([...own], null), true) : null;
     // v3: a message after other questions: Claude first reads the conversation and says whether it is a follow-up or a new
     // question, and writes it as one complete question (turn.ts). A new question is planned on its own: nothing of the old
     // one (its kind of problem, its places) is carried over. No reading (no key, busy): the planner decides, as before.
-    const turn: TurnReading | null = asked.prev && input.history?.length
-      ? await readTurn(typed, input.history, input.prevTop ?? [], { user: input.user.email, signal: input.signal }) : null;
+    const tt = Date.now();
+    const turn: TurnReading | null = followUp
+      ? await readTurn(typed, input.history!, input.prevTop ?? [], { user: input.user.email, signal: input.signal }) : null;
+    if (followUp) st.turn_ms = Date.now() - tt;
     out.turn = turn ? { relation: turn.relation, standalone: turn.standalone, points_to: turn.points_to } : null;
     const prev = turn?.relation === "new_question" ? null : asked.prev;
-    // the places the question names, looked up as typed and as the speller reads them (the place list only gives the model their refs; it decides nothing)
-    const reading = spellerFor(data)(typed).text;
     // the reading goes to the planner either way: for a new question it is the question itself; when the reader called a
     // follow-up new, its complete reading still carries the meaning ("which school is the worst" = road accidents within 200 m)
     const meant = turn?.standalone && turn.standalone.trim().toLowerCase() !== typed.trim().toLowerCase() ? turn.standalone : null;
-    // places are looked up in the officer's own words only (the reading's words found a school named "A School" in "a school")
-    const found = placesForAi([...resolve(typed, null), ...(reading !== typed ? resolve(reading, null) : [])], 12);
+    const found = [...own];
     // v3: the last answer's first places, so a follow-up can point at them ("what is happening there", "the second one")
     for (const p of prev ? input.earlier ?? [] : []) if ((ctx.place(p.ref) || /^(ward|zone|taluk):/.test(p.ref)) && !found.some((f) => f.ref === p.ref)) found.push({ ref: p.ref, kind: "a place an earlier question asked about", name: ctx.place(p.ref)?.name ?? p.name });
     // v3: when the reading says the message points at the last answer's number N, only that place is offered as the previous
@@ -444,8 +494,15 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     const pointed = prev && turn && turn.points_to >= 1 ? input.prevTop?.[Math.round(turn.points_to) - 1] ?? null : null;
     for (const [i, p] of (prev ? input.prevTop ?? [] : []).entries()) if ((ctx.place(p.ref) || /^(ward|zone|taluk):/.test(p.ref)) && (!pointed || pointed.ref === p.ref))
       found.push({ ref: p.ref, kind: pointed ? "the place the follow-up points at (the previous answer's number " + (i + 1) + ")" : `the previous answer's number ${i + 1}`, name: p.name });
-    const a = await aiPlan(typed, prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
-      zones: w.zones, catLabels: catLabels(w), meant: pointed && meant ? `${meant} (it points at ${pointed.name}: use ref ${pointed.ref})` : meant }).catch((e) => { console.warn("[map] AI plan failed:", (e as Error).message); return null; });
+    const sequential = () => planTimed(typed, prev, planCtx(found, pointed && meant ? `${meant} (it points at ${pointed.name}: use ref ${pointed.ref})` : meant), true);
+    let a: Planned;
+    if (early && turn?.relation === "new_question" && sameQuestion(turn.standalone, typed)) {
+      st.parallel = "used";
+      a = took(await early) ?? took(await sequential());
+    } else {
+      if (early) st.parallel = "unused";
+      a = took(await sequential());
+    }
     if (a && "problems" in a && a.problems.includes("not a map question")) {
       out.say = { en: "That does not look like a question about the map. Ask about a place, a kind of problem, or a facility, for example:", ta: "அது வரைபடக் கேள்வியாகத் தெரியவில்லை. இவற்றைப் போலக் கேளுங்கள்:",
         chips: lang === "ta" ? EXAMPLES_TA : ["what is happening near the schools", "which area needs my attention now", "garbage complaints in zone 9", "which zone is resolving complaints fastest"] };
@@ -498,8 +555,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     const seen = new Set<string>();
     const found = [input.text!, ...tie.options.map((o) => o.text)].flatMap((t) => resolve(t, null)).map((f) => ({ ref: f.pick.entry.ref, kind: f.pick.entry.kind, name: f.pick.entry.name_en }))
       .filter((f) => !seen.has(f.ref) && seen.add(f.ref)).slice(0, 8);
-    const a = await aiPlan(input.text!, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
-      unread: [tie.word], zones: w.zones, catLabels: catLabels(w) }).catch(() => null);
+    const a = took(await planTimed(input.text!, input.prev, { ...promptOf(w), places: found, user: input.user.email, lang, signal: input.signal, unread: [tie.word] }));
     if (a && "plan" in a) {
       plan = fitModelPlan(a.plan, input.text!, w.now, input.prev, modelWords(w, lang, found));
       // the first reading's rules plan holds the place kinds and puts back a place the model left out ("severe flooding in ambatur")
@@ -514,8 +570,6 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     return done(out);
   }
   const fe = { w, env, ctx, lock, role: input.user.role };
-  // live traffic, read where it is already fresh (TomTom every five minutes): for "On the ground now" beside an answer
-  const liveTraffic = Promise.race([trafficNow({ lockDept: lock }).catch(() => null), new Promise<null>((r) => setTimeout(() => r(null), 2500))]) as Promise<LiveTraffic | null>;
 
   // ---- the city now: live traffic, the rain, the streets that flood, power and trains in heavy rain. The same answer the
   // chatbot and Jarvis give (lib/city/now.ts), and the console opens the view that shows it (the Traffic view or a Rain tab)
@@ -557,7 +611,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
       const box = areaBox(area, w, ctxD);
       if (box) out.conditions = conditionsNear(w, { fams: new Set(), center: { lat: (box.s + box.n) / 2, lon: (box.w + box.e) / 2 }, box, wide: false });
       out.camera = { shape: "area", areas: box ? [{ id: areaKey(area), box, label: out.brief.label.en, label_ta: out.brief.label.ta }] : [], points: [], line: null, focus: null, tour: [], district: w.district };
-      out.followups = followUps(out, null, fe);
+      out.followups = timedFollowUps(out, null, fe);
       return done(out);
     }
     if (c.incidentId) {
@@ -585,15 +639,15 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
       const box = areaBox(r.area, w, ctx);
       if (box) out.conditions = conditionsNear(w, { fams: new Set(), center: p ?? { lat: (box.s + box.n) / 2, lon: (box.w + box.e) / 2 }, box, wide: false });
       out.camera = { shape: "area", areas: box ? [{ id: areaKey(r.area), box, label: out.brief.label.en, label_ta: out.brief.label.ta }] : [], points: [], line: null, focus: null, tour: [], district: w.district };
-      out.followups = followUps(out, null, fe);
+      out.followups = timedFollowUps(out, null, fe);
       return done(out);
     }
     // v2 (owner, 21 Nov 2026): the AI reads every typed question first; the rules' plan goes with it as a suggestion only, and answers when
     // the AI cannot (no key, busy, a refused plan). The rules' guards above (no such ward, no forecast, out of scope) and the commands stay.
     if (process.env.AI_MAP_FIRST !== "0" && aiStatus("map").available) {
       const found = placesForAi(resolve(input.text, null));
-      const a = await aiPlan(input.text, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
-        hint: r?.kind === "plan" ? r.plan : null, unread: r?.kind === "plan" ? r.unread : [], suggest: true, typed: asked.text, zones: w.zones, catLabels: catLabels(w) }).catch(() => null);
+      const a = took(await planTimed(input.text, input.prev, { ...promptOf(w), places: found, user: input.user.email, lang, signal: input.signal,
+        hint: r?.kind === "plan" ? r.plan : null, unread: r?.kind === "plan" ? r.unread : [], suggest: true, typed: asked.text }));
       if (a && "plan" in a) {
         plan = fitModelPlan(a.plan, input.text, w.now, input.prev, modelWords(w, lang, found));
         // the rules' reading of "in X" as an area, and a place the model left out (keepAreas)
@@ -614,8 +668,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
       if (r.unread?.length && aiStatus("map").available) {
         const found = placesForAi(resolve(input.text, null));
         // a new question (the rules did not read it as an edit), so the AI reads it fresh, not as an edit of the last answer
-        const a = await aiPlan(input.text, null, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal,
-          hint: r.plan, unread: r.unread, zones: w.zones, catLabels: catLabels(w) }).catch(() => null);
+        const a = took(await planTimed(input.text, null, { ...promptOf(w), places: found, user: input.user.email, lang, signal: input.signal, hint: r.plan, unread: r.unread }));
         if (a && "plan" in a) { plan = fitModelPlan(a.plan, input.text, w.now, null, modelWords(w, lang, found)); aiUsed = true; defaults = []; }
         else unread = r.unread;
       } else if (r.unread?.length) unread = r.unread;
@@ -623,7 +676,9 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
       // the AI fills the same plan; without it, the kinds of questions the rules answer
       try {
         const found = placesForAi(resolve(input.text, null));
-        const a = await aiPlan(input.text, input.prev, { cats: [...w.cats.keys()], depts: [...w.depts.keys()], places: found, user: input.user.email, lang, signal: input.signal, zones: w.zones, catLabels: catLabels(w) });
+        const tp = Date.now(), timing = { tries: 0 };
+        const a = await aiPlan(input.text, input.prev, { ...promptOf(w), places: found, user: input.user.email, lang, signal: input.signal, timing })
+          .finally(() => { st.plan_ms += Date.now() - tp; st.plan_tries += timing.tries; });
         aiUsed = true;
         if ("plan" in a) plan = fitModelPlan(a.plan, input.text, w.now, input.prev, modelWords(w, lang, found));
         else { out.say = { en: "I could not turn that into a map question. Try one of these:", ta: "அதை வரைபடக் கேள்வியாக மாற்ற முடியவில்லை. இவற்றில் ஒன்றை முயலுங்கள்:", chips: lang === "ta" ? EXAMPLES_TA : EXAMPLES_EN.slice(0, 4) }; out.ai_used = true; return done(out); }
@@ -635,8 +690,10 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     }
   }
   if (!plan) return done(out);
-  // a date range is counted and labelled for this run's now (a saved view, a chip edit, Turn again)
-  plan = freshPlan(plan, w.now);
+  const tx = Date.now();
+  // a date range is counted and labelled for this run's now (a saved view, a chip edit, Turn again); "schools within 300 m of
+  // flooding" from the rules is measured from the schools, as the AI reads it (plan.ts facingIncidents)
+  plan = freshPlan(facingIncidents(plan), w.now);
 
   // "compare with Adyar" after a district-wide answer: compare the zone holding most of the current answer
   for (const s of plan.steps) if (s.op === "compare" && s.a.kind === "zone" && s.a.id === -1) {
@@ -657,12 +714,18 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
   if (cached && Date.now() - cached.at < 60_000) {
     // v3: this question's own reading of the conversation, not the one cached with the answer
     const copy: AskResponse = { ...structuredClone(cached.res), edited, ai_used: aiUsed || cached.res.ai_used, turn: out.turn ?? null };
+    st.cached = true;
+    st.exec_ms = Date.now() - tx;
     return done(copy);
   }
   let r: RunResult;
   try { r = runMapPlan(plan, w, ctx, lock); }
   catch (e) {
-    if (e instanceof PlanError) { out.say = { en: e.message, ta: "அந்தக் கேள்விக்கு வரைபடத்தில் பதில் காண முடியவில்லை.", chips: [] }; out.plan = plan; return done(out); }
+    if (e instanceof PlanError) {
+      out.say = { en: e.message, ta: "அந்தக் கேள்விக்கு வரைபடத்தில் பதில் காண முடியவில்லை.", chips: [] }; out.plan = plan; out.ai_used = aiUsed;
+      st.exec_ms = Date.now() - tx;
+      return done(out);
+    }
     throw e;
   }
   if (unread.length) r.steps.push({ as: "unread", op: "take", count: 0, layer: null, ids: [],
@@ -692,14 +755,20 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     const spread = place && !pts.length ? { center: place, box: { s: place.lat - 0.01, n: place.lat + 0.01, w: place.lon - 0.01, e: place.lon + 0.01 }, wide: false } : spreadOf(pts, w.district);
     const fams = familiesOf(f?.category, f?.family, w);
     res.conditions = conditionsNear(w, { fams, ...spread });
-    const tc = trafficCondition(await liveTraffic, { fams, box: spread.box, wide: spread.wide });
-    if (tc) res.conditions = [tc, ...res.conditions].slice(0, 4);
+    // the traffic read started with the question; waited for only when it can say something about this answer
+    if (liveTraffic && trafficMatters(fams)) {
+      const tw = Date.now();
+      const tc = trafficCondition(await liveTraffic, { fams, box: spread.box, wide: spread.wide });
+      st.traffic_ms = Date.now() - tw;
+      if (tc) res.conditions = [tc, ...res.conditions].slice(0, 4);
+    }
   }
-  res.followups = followUps(res, r, fe);
+  res.followups = timedFollowUps(res, r, fe);
   // v2: Play the period: the answer's incidents day by day (the server's counts; the panel only shows them)
   const tl = r.hits.length ? timelineOf(r.hits, w.now) : null;
   if (tl) res.extra.timeline = tl;
   if (forecastAsk) await withForecast(res, r, w, lang);
+  st.exec_ms = Date.now() - tx - st.followups_ms - (st.traffic_ms ?? 0);
   const store = answerCache();
   if (!forecastAsk) store.set(cacheKey, { at: Date.now(), res: structuredClone(res) });
   if (store.size > 120) store.delete(store.keys().next().value!);
@@ -748,7 +817,7 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
     dept: h.inc.dept, deptName: deptName(h.inc.dept), ward: h.inc.ward, zone: h.inc.zone, zoneName: w.zones.find((z) => z.zone === h.inc.zone)?.name ?? null,
     first: h.inc.first, place: h.inc.place, pinnable: h.inc.pinnable, prec: h.inc.prec, priority: h.inc.priority, reasons: h.inc.reasons,
     near: h.near ? { name: h.near.name, m: Math.round(h.near.m), layer: h.near.layer } : null, overdue: h.inc.breached && h.inc.open, citizen: h.inc.citizen > 0,
-    news: (h.inc.outlets ?? 0) > 0, press: pressFor(w, h.inc.id)
+    dist: h.m == null ? null : Math.round(h.m), news: (h.inc.outlets ?? 0) > 0, press: pressFor(w, h.inc.id)
   }));
   const feat = (h: (typeof hits)[number], k: number): Feat => ({ id: h.inc.id, lat: h.inc.lat, lon: h.inc.lon, sev: h.inc.sev, open: h.inc.open, cat: h.inc.cat,
     pinnable: h.inc.pinnable, prec: h.inc.prec, title: h.inc.title, rank: k, citizen: h.inc.citizen > 0, news: (h.inc.outlets ?? 0) > 0 });
@@ -756,7 +825,9 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   // v2: a speed answer (how fast areas close their cases) draws only the cases of its first 15 rows: the other thousands would bury the map
   const speedIds = r.show.type === "speed" ? new Set(r.show.rows.slice(0, 15).flatMap((x) => x.ids)) : null;
   const pinnedHits = hits.filter((h) => h.inc.pinnable && (!speedIds || speedIds.has(h.inc.id)));
-  out.features = pinnedHits.slice(0, FEATURE_CAP).map(feat);
+  // a "near X" list is in local-search order (execute.ts localRank): past the cap, the map still draws the highest priority, as it says
+  const drawn = pinnedHits.length > FEATURE_CAP && hits.some((h) => h.m != null) ? [...pinnedHits].sort(byPriority) : pinnedHits;
+  out.features = drawn.slice(0, FEATURE_CAP).map(feat);
   out.hidden = Math.max(0, pinnedHits.length - FEATURE_CAP);
   if (out.hidden && !r.show.type.startsWith("group")) {
     const byWard = new Map<number, { n: number; ids: string[] }>();
@@ -928,12 +999,21 @@ export function newsFor(w: World, ids: string[]): { pins: NewsPin[]; unplaced: n
 }
 
 /** One line per question for evaluation: no names, no email, only the role. Never committed (data/aws-cache is ignored). */
-function logQuestion(input: AskInput, r: AskResponse) {
-  try {
-    const line = JSON.stringify({ at: new Date().toISOString(), text: input.text, chip: !!input.plan, plan: r.plan, kind: r.kind, lang: r.lang, ms: r.ms, ai_used: r.ai_used,
-      count: r.answer?.count ?? r.brief?.open.n ?? null, role: input.user.role });
-    fs.appendFile(path.join(process.cwd(), "data", "aws-cache", "map-questions.jsonl"), line + "\n", () => undefined);
-  } catch { /* logging never fails a question */ }
+/**
+ * With where the time went (Stages) and the answer's size in bytes, measured after the response has gone (setImmediate: the route
+ * has serialised it by then). Test runs write nothing: their frozen, rules-only answers would skew the timings read from it.
+ */
+function logQuestion(input: AskInput, r: AskResponse, st: Stages) {
+  if (process.env.VITEST) return;
+  const at = new Date().toISOString();
+  setImmediate(() => {
+    try {
+      const bytes = Buffer.byteLength(JSON.stringify(r));
+      const line = JSON.stringify({ at, text: input.text, chip: !!input.plan, plan: r.plan, kind: r.kind, lang: r.lang, ms: r.ms, ai_used: r.ai_used,
+        count: r.answer?.count ?? r.brief?.open.n ?? null, role: input.user.role, ...st, bytes });
+      fs.appendFile(path.join(process.cwd(), "data", "aws-cache", "map-questions.jsonl"), line + "\n", () => undefined);
+    } catch { /* logging never fails a question */ }
+  });
 }
 
 // ------------------------------------------------------------------ actions --
@@ -952,7 +1032,7 @@ export async function answerRows(plan: Plan, user: AskInput["user"]): Promise<{ 
     dept: h.inc.dept, deptName: deptName(h.inc.dept), ward: h.inc.ward, zone: h.inc.zone, zoneName: w.zones.find((z) => z.zone === h.inc.zone)?.name ?? null,
     first: h.inc.first, place: h.inc.place, pinnable: h.inc.pinnable, prec: h.inc.prec, priority: h.inc.priority, reasons: h.inc.reasons,
     near: h.near ? { name: h.near.name, m: Math.round(h.near.m), layer: h.near.layer } : null, overdue: h.inc.breached && h.inc.open, citizen: h.inc.citizen > 0,
-    news: (h.inc.outlets ?? 0) > 0, press: pressFor(w, h.inc.id)
+    dist: h.m == null ? null : Math.round(h.m), news: (h.inc.outlets ?? 0) > 0, press: pressFor(w, h.inc.id)
   }));
   const feats = new Map(r.hits.map((h, k) => [h.inc.id, { id: h.inc.id, lat: h.inc.lat, lon: h.inc.lon, sev: h.inc.sev, open: h.inc.open, cat: h.inc.cat, pinnable: h.inc.pinnable,
     prec: h.inc.prec, title: h.inc.title, rank: k, citizen: h.inc.citizen > 0, news: (h.inc.outlets ?? 0) > 0 }]));

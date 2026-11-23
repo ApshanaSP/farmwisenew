@@ -1,8 +1,8 @@
 "use client";
 /**
- * The top bar's tools in one labelled menu (the bar used to carry five bare icons): Export, Workspaces, Customize,
- * light or dark, and the language. Each row says what it does, so nothing has to be guessed from an icon. The language
- * also has its own one-tap switch next to the menu (LangSwitch), since a Tamil reader looks for it first.
+ * The top bar's tools in one labelled menu (the bar used to carry five bare icons): My dashboards, Export, Workspaces,
+ * Customize, light or dark, and the language. Each row says what it does, so nothing has to be guessed from an icon.
+ * The language also has its own one-tap switch next to the menu (LangSwitch), since a Tamil reader looks for it first.
  */
 import { useEffect, useRef } from "react";
 import { I, type IconName } from "./icons";
@@ -10,7 +10,19 @@ import { useLang } from "@/lib/i18n/lang";
 
 export interface TopMenuItem { key: string; icon: IconName; label: string; sub?: string; on?: boolean; run: () => void }
 
-export function TopMenu({ open, onToggle, items }: { open: boolean; onToggle: () => void; items: TopMenuItem[] }) {
+/**
+ * "My dashboards": the Data Studio opened on its Dashboards tab. The Studio reads the tab it opens on from storage when
+ * it opens, and listens for "diq:studio-view" when it is open already. `go` goes to the Studio page (the console's
+ * setPage); without it the Data Studio page tab is pressed.
+ */
+export function openMyDashboards(go?: () => void) {
+  try { localStorage.setItem("diq-studio-tab", "dashboards"); } catch { /* not kept in this browser: the event still switches an open Studio */ }
+  window.dispatchEvent(new CustomEvent("diq:studio-view", { detail: "dashboards" }));
+  if (go) go();
+  else document.querySelector<HTMLButtonElement>('.dic .ptabs button[data-key="studio"]')?.click();
+}
+
+export function TopMenu({ open, onToggle, items, onDashboards }: { open: boolean; onToggle: () => void; items: TopMenuItem[]; onDashboards?: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   const [lang, setLang] = useLang();
   useEffect(() => {
@@ -23,11 +35,14 @@ export function TopMenu({ open, onToggle, items }: { open: boolean; onToggle: ()
   const on = items.filter((i) => i.on).length;
   return (
     <div className="rel" ref={box}>
-      <button className={`tbtn tm-btn${open ? " on" : ""}`} data-pop onClick={onToggle} aria-haspopup="menu" aria-expanded={open} title="Export, workspaces, customize, theme and language">
+      <button className={`tbtn tm-btn${open ? " on" : ""}`} data-pop onClick={onToggle} aria-haspopup="menu" aria-expanded={open} title="My dashboards, export, workspaces, customize, theme and language">
         <I n="grid" /><span>Menu</span><I n="chevd" className="tm-chev" />{on > 0 && <em className="tm-dot" aria-hidden="true" />}
       </button>
       {open && (
         <div className="pop tm-pop" role="menu" data-pop>
+          <button role="menuitem" data-key="dashboards" className="pop-i tm-i" onClick={() => { onToggle(); openMyDashboards(onDashboards); }}>
+            <span className="tm-ic"><I n="grid" /></span><span><b>My dashboards</b><small>Your own dashboards, in the Data Studio</small></span>
+          </button>
           {items.map((it) => (
             <button key={it.key} role="menuitem" data-key={it.key} className={`pop-i tm-i${it.on ? " on" : ""}`} onClick={() => { onToggle(); it.run(); }}>
               <span className="tm-ic"><I n={it.icon} /></span><span><b>{it.label}</b>{it.sub && <small>{it.sub}</small>}</span>

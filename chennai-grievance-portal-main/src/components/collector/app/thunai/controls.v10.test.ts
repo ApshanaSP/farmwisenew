@@ -231,7 +231,7 @@ describe("v10 review 2: the console's side of the controls' findings", () => {
 describe("v10 review 2: a registry press on a page (linkedom)", () => {
   const HTML = `<html><body>
     <div class="ds-spot" role="dialog"><header><button class="ds-ghost" aria-label="Close">x</button></header>
-      <footer><button class="ds-ghost">On the dashboard</button><button class="ds-btn">Add to this dashboard</button></footer></div>
+      <footer><button class="ds-ghost">On the dashboard</button><button class="ds-btn">Add to this page</button></footer></div>
     <div class="ta"><div class="ta-f grow"><textarea>Inspect the drain.</textarea></div></div>
     <div class="modal"><div class="filters"><input type="search" value="adyar"></div></div>
   </body></html>`;
@@ -266,10 +266,10 @@ describe("v10 review 2: a registry press on a page (linkedom)", () => {
     await dom.pressControl(spec("ds.spot.toDashboard"), { yes: true });
     expect(clicked).not.toContain("On the dashboard");
   });
-  it("the large chart's 'Add to this dashboard' is found and pressed", async () => {
+  it("the large chart's 'Add to this page' is found and pressed", async () => {
     clicked.length = 0;
     const r = await dom.pressControl(spec("ds.spot.addHere"), { yes: true });
-    expect(r.ok ? clicked : r.why).toEqual(["Add to this dashboard"]);
+    expect(r.ok ? clicked : r.why).toEqual(["Add to this page"]);
   });
 
   // v10 review 2, finding 28: a value typed into Take action's message cleared the draft first (the model's draft and the Collector's edits lost)

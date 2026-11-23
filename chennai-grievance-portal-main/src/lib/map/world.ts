@@ -1,8 +1,9 @@
 /**
  * Builds Ask the Map's World on the server: the store's incidents, wards, facilities and hotspots (fixed queries, never
  * built from a plan), the OpenStreetMap layers in data/layers, and the resolver's place list. The heavy part is cached
- * for the life of a store build; the Collector's decisions (which close or reopen incidents) are laid on top at every
- * question, with the same rule as the console (effective.ts), so a resolved incident leaves the map at once.
+ * for the life of a store build; the Collector's decisions (which close or reopen incidents) are laid on top with the same
+ * rule as the console (effective.ts), read again whenever a decision moves the data epoch (so a resolved incident leaves the
+ * map at once) and at most OVERLAY_MS apart otherwise.
  */
 import fs from "fs";
 import path from "path";
@@ -16,7 +17,8 @@ import { EFFECT_KEYS, effectiveSql, effectiveStatus, officerStepsOn } from "@/li
 import { bboxOf, haversineM, lineLengthM, type Bbox, type Pair } from "./geom";
 import { normText } from "./execute";
 import { myListPoints } from "./uploads";
-import type { Entry, ResolverData } from "./resolve";
+import { makeResolver, type Entry, type ResolverData } from "./resolve";
+import { dataEpoch } from "@/lib/collector/epoch";
 import { CAT_TA } from "./words";
 import { COLLECTOR_LAYERS, POINT_LAYERS, type CondPlace, type Hotspot, type Inc, type LayerMeta, type LineFeat, type LineLayer, type NewsDoc, type PointFeat, type PointLayer, type PolyFeat, type Sev, type WardGeo, type Work, type World } from "./types";
 
@@ -35,7 +37,20 @@ interface Base {
 declare global {
   // eslint-disable-next-line no-var
   var __askMapBase: { at: number; key: string; base: Promise<Base> } | undefined;
+  // eslint-disable-next-line no-var
+  var __askMapKey: { at: number; epoch: number; key: Promise<string> } | undefined;
+  // eslint-disable-next-line no-var
+  var __askMapNow: { key: string; at: number; incidents: Promise<Inc[]> } | undefined;
+  // eslint-disable-next-line no-var
+  var __askMapWorld: { incidents: Inc[]; lists: PointFeat[]; value: { world: World; resolver: ResolverData } } | undefined;
 }
+
+/**
+ * How long one reading of the Collector's decisions is used for the questions that follow (and the store build key with it).
+ * A decision, an officer's closing step or a new build moves the data epoch (lib/collector/epoch.ts), which starts a new reading
+ * at once; only a change that does not move it (a routing) waits up to this long.
+ */
+export const OVERLAY_MS = 15_000;
 
 const LAYER_DIR = () => path.join(process.cwd(), "data", "layers");
 /** raised when the way the world is built changes, so a running server rebuilds it */
@@ -192,6 +207,8 @@ async function loadBase(key: string): Promise<Base> {
   const taluks = geo.taluks.map((t) => ({ ...t, name_ta: null as string | null }));
 
   const resolver = await resolverData(points, lines, water);
+  // the resolver's patterns are compiled here, with the rest of the build, not on the first question (resolve.ts)
+  makeResolver(resolver);
   const nameTa = new Map(resolver.entries.filter((e) => e.kind === "taluk").map((e) => [e.ref.slice(6), e.name_ta]));
   for (const t of taluks) t.name_ta = nameTa.get(t.code) ?? null;
   const dataAsOf = asOfRows[0]?.v ? String(asOfRows[0].v).slice(0, 19).replace("T", " ") : "";
@@ -396,14 +413,46 @@ async function resolverData(points: Record<PointLayer, PointFeat[]>, lines: Reco
 /** The department's latest officer step after the latest decision with an effect (effective.ts), built when read: the step table may be off. */
 const laterStep = () => effectiveSql(ops("collector_decisions")).laterStep;
 
+/** The store build key, read again once the data epoch moves or OVERLAY_MS has passed (it was a query on every question). */
+async function currentKey(): Promise<string> {
+  const e = dataEpoch();
+  const g = global.__askMapKey;
+  if (g && g.epoch === e && Date.now() - g.at < OVERLAY_MS) return g.key;
+  const key = buildKey();
+  global.__askMapKey = { at: Date.now(), epoch: e, key };
+  try { return await key; } catch (err) { global.__askMapKey = undefined; throw err; }
+}
+
+/**
+ * The world for one question. Consecutive questions share one reading of the decisions (the same build, data epoch and console
+ * "now", within OVERLAY_MS) and get the same World object, so the caches kept per world (categories, localities, grids, news)
+ * hold across questions.
+ */
 export async function world(): Promise<{ world: World; resolver: ResolverData }> {
-  const key = await buildKey();
+  const key = await currentKey();
   const g = global.__askMapBase;
   if (!g || g.key !== key) global.__askMapBase = { at: Date.now(), key, base: loadBase(key) };
   let base: Base;
   try { base = await global.__askMapBase!.base; } catch (e) { global.__askMapBase = undefined; throw e; }
-  const [now, decided, routedRows, stepRows] = await Promise.all([
-    asOf(),
+  const now = await asOf();
+  const ck = `${key}|${dataEpoch()}|${now}`;
+  const c = global.__askMapNow;
+  if (!c || c.key !== ck || Date.now() - c.at >= OVERLAY_MS) global.__askMapNow = { key: ck, at: Date.now(), incidents: overlay(base, now) };
+  const pending = global.__askMapNow!;
+  let incidents: Inc[];
+  try { incidents = await pending.incidents; } catch (e) { if (global.__askMapNow === pending) global.__askMapNow = undefined; throw e; }
+  // the officers' approved lists (uploads.ts), laid on at every question: an approval shows at once
+  const lists = myListPoints();
+  const v = global.__askMapWorld;
+  if (v && v.incidents === incidents && v.lists === lists && v.value.resolver === base.resolver) return v.value;
+  const value = { world: { ...base.world, points: { ...base.world.points, my_list: lists }, now, incidents }, resolver: base.resolver };
+  global.__askMapWorld = { incidents, lists, value };
+  return value;
+}
+
+/** The Collector's latest decisions, the routings and the officers' steps laid on the base's incidents, at the console's `now`. */
+async function overlay(base: Base, now: string): Promise<Inc[]> {
+  const [decided, routedRows, stepRows] = await Promise.all([
     // the decisions with an effect only (effective.ts): an escalate or a note after a resolve must not hide the resolve (RC-26, RC-27)
     q(`SELECT incident_id, decision FROM ${ops("collector_decisions")} WHERE decision IN (${EFFECT_KEYS}) ORDER BY decision_id`).catch(() => [] as Row[]),
     q(`SELECT DISTINCT incident_id FROM ${ops("dept_assignments")}`).catch(() => [] as Row[]),
@@ -418,7 +467,7 @@ export async function world(): Promise<{ world: World; resolver: ResolverData }>
   const stepOf = new Map(stepRows.filter((r) => r.step).map((r) => [String(r.incident_id), String(r.step)]));
   const routed = new Set(routedRows.map((r) => String(r.incident_id)));
   // past its deadline is one rule (metrics.ts pastDueSql): the store's flag, or the due time gone by the console's now (RC-34)
-  const incidents = base.incidents.map((i) => {
+  return base.incidents.map((i) => {
     const late = i.breached || (!!i.slaDue && i.slaDue < now);
     const d = latest.get(i.id);
     const r = routed.has(i.id);
@@ -427,6 +476,4 @@ export async function world(): Promise<{ world: World; resolver: ResolverData }>
     const e = effectiveStatus(i.open ? 1 : 0, i.status, d ?? null, step);
     return { ...i, open: e.open === 1, status: e.status, routed: r, breached: late };
   });
-  // the officers' approved lists (uploads.ts), laid on at every question: an approval shows at once
-  return { world: { ...base.world, points: { ...base.world.points, my_list: myListPoints() }, now, incidents }, resolver: base.resolver };
 }

@@ -57,7 +57,7 @@ export default function JarvisLogView({ geo, onClose }: { geo: MapGeo | null; on
             <div className="aq-col">
               <p className="jl-a" lang={m.lang}>{m.text}</p>
               {m.screen && <button className="jl-open" onClick={() => again(m.screen!)}><I n="expand" /><span>{m.screen.title}</span></button>}
-              {m.studio && <div className="dic jl-card"><StudioAnswer s={m.studio} /></div>}
+              {(m.studio ?? m.screen?.studio) && <div className="dic jl-card"><StudioAnswer s={(m.studio ?? m.screen?.studio)!} /></div>}
               {m.card && <div className="jl-card"><AnswerCard card={m.card} geo={geo} onAsk={ask} onAction={(a) => { onClose(); window.dispatchEvent(new CustomEvent("jarvis:card-action", { detail: a })); }} expanded={false} onExpand={() => undefined} /></div>}
             </div>
           </div>

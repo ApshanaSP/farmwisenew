@@ -13,6 +13,8 @@ import { countIncidents, windowRows, type IncidentFilters } from "@/lib/assistan
 import { compareOf, prevOf, spanOf, type Comparison, type PeriodKey, type PeriodSpec, type Span, type Words } from "@/lib/period/read";
 import type { ToolResult } from "@/lib/assistant/types";
 import { datasetIds, getMeta, getRows } from "@/lib/studio/store";
+import { datasetOfTag, mayUse, pickDataset, studioAsk, studioDigest } from "@/lib/studio/forAssistants";
+import type { StudioHands } from "./screens";
 import { loadWardDataset, resolveWard } from "@/lib/wards";
 import { referenceLeads } from "./world";
 import { studioRow, type Lookups, type InRow } from "./complete";
@@ -110,6 +112,8 @@ export interface Hands {
   span?: (spec: PeriodSpec, s: ScopeT, f: SpanFilters) => Promise<SpanOut | null>;
   /** a window against the one before it ("up or down from last month") */
   compare?: (key: PeriodKey, s: ScopeT, f: { sev: string | null; status: "open" | "overdue" | null }) => Promise<CompareOut | null>;
+  /** v17: the Collector's own Data Studio datasets (absent for anyone else) */
+  studio?: StudioHands;
 }
 
 /** ward -> zone from the GCC ward boundaries, the point's ward by polygon, the gazetteer, each category's lead department. */
@@ -157,7 +161,22 @@ async function studioDataset(name: string): Promise<{ name: string; rows: InRow[
   return { name: String(meta.name ?? name), rows, total: all.length };
 }
 
+/**
+ * v17 (22 Nov): the Collector's own Data Studio datasets, for any question about them (not only the one open on the Studio page). Only the
+ * Collector's hands carry them: an officer's are made without (forAssistants.ts refuses anyone else as well).
+ */
+export function studioHands(user: MapUser): StudioHands | undefined {
+  const who = { role: user.role, lockDept: user.lockDept };
+  if (!mayUse(who)) return undefined;
+  return {
+    digest: () => studioDigest(who),
+    byTag: (tag) => datasetOfTag(tag, who),
+    pick: (text, o) => pickDataset(text, { who, openId: o.openId ?? null, lastId: o.lastId ?? null }),
+    ask: (q, o) => studioAsk(q, { who, datasetId: o.datasetId, user: user.email, context: o.context ?? null, deadlineMs: o.deadlineMs, keep: o.keep })
+  };
+}
+
 export function serverHands(user: MapUser, signal?: AbortSignal): Hands {
   return { tool: (n, a) => runTool(n, a), severe: consoleSevere, list: consoleList, news: consoleNews, map: (q) => mapAnswer(q, user, signal), dataset: studioDataset, lookups,
-    span: (spec, s, f) => consoleSpan(spec, s, f, user.lockDept), compare: (key, s, f) => consoleCompare(key, s, f, user.lockDept) };
+    span: (spec, s, f) => consoleSpan(spec, s, f, user.lockDept), compare: (key, s, f) => consoleCompare(key, s, f, user.lockDept), studio: studioHands(user) };
 }

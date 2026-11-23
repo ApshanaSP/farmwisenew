@@ -10,7 +10,9 @@
  *   <id>.auth           a link's sign-in and browser session, encrypted (connect/vault.ts)
  *   <id>.pending.json   a run the Relevance gate stopped, waiting for "Use anyway"
  *   <id>.pickof         the picker's token a dataset was made from: deleting the dataset removes that token's saved list and sign-in too
- *   board.json          panels pinned to the Studio board
+ *   board.json          panels pinned to the Studio board (older pages; moved into a dashboard of its own, see below)
+ *   dashboards.json     the Collector's named dashboards and their tiles ({ v: 2, dashboards }); an older file (one
+ *                       dashboard per dataset) is moved over by dashboards.ts, with a copy kept as *.v1-backup
  * Writes go to a temporary file first and are renamed into place, so a crash never leaves half a file.
  */
 import crypto from "crypto";
@@ -18,6 +20,7 @@ import fs from "fs";
 import path from "path";
 import zlib from "zlib";
 import type { DRow } from "@/lib/studio/clean";
+import { MAX_DASHBOARDS, MAX_TILES, type Dashboard, type Tile, type TileKind } from "@/lib/studio/dashtypes";
 import type { Table } from "@/lib/studio/parse";
 import type { AuthInput, Candidate, DatasetCard, DatasetMeta, Pin, PickSet, Spec } from "@/lib/studio/types";
 
@@ -162,8 +165,27 @@ export function deleteDataset(id: string) {
   rowCache.delete(id);
   const b = getBoard();
   saveBoard(b.filter((x) => x.datasetId !== id));
-  const d = getDashboards();
-  if (d.some((x) => x.datasetId === id)) saveDashboards(d.filter((x) => x.datasetId !== id));
+  // its tiles leave every dashboard (the dashboards themselves stay, even when emptied); the dataset is already gone, so
+  // a dashboards file that cannot be read just now only leaves tiles that say "The dataset was deleted"
+  try {
+    const d = readDashFile();
+    if (d.kind === "v2") {
+      const now = new Date().toISOString();
+      let changed = false;
+      const next = d.dashboards.map((x) => {
+        const tiles = x.tiles.filter((t) => t.datasetId !== id);
+        if (tiles.length === x.tiles.length) return x;
+        changed = true;
+        return { ...x, tiles, updatedAt: now };
+      });
+      if (changed) saveDashboards(next);
+    } else if (d.kind === "v1" && d.entries.some((x) => x.datasetId === id)) {
+      // not moved over yet: the older list loses the dataset, so the move does not bring it back
+      write(dashFile(), JSON.stringify(d.entries.filter((x) => x.datasetId !== id)));
+    }
+  } catch (err) {
+    console.warn("[studio] dashboards not tidied after a dataset was deleted", id, (err as Error).message);
+  }
 }
 
 /** The sha256 of a dataset's saved original (cached by modification time), or null when it has none. */
@@ -248,16 +270,75 @@ export function saveBoard(pins: Pin[]) {
   write(f, JSON.stringify(pins.slice(0, 24)));
 }
 
-/** Datasets the Collector added as a dashboard of their own ("Add to dashboard"), newest first. */
+/** The older dashboards.json: datasets the Collector added as a dashboard of their own, newest first. */
 export interface DashEntry { datasetId: string; at: string }
-export function getDashboards(): DashEntry[] {
+
+/**
+ * dashboards.json as found: the named dashboards (v2), the older list still to be moved over (v1), no file yet, or a
+ * file that cannot be read. The move itself is in dashboards.ts (it needs each dataset's view, which needs this file).
+ */
+export type DashFile =
+  | { kind: "v2"; dashboards: Dashboard[] }
+  | { kind: "v1"; entries: DashEntry[] }
+  | { kind: "none" }
+  | { kind: "damaged" };
+
+const dashFile = () => path.join(DIR, "dashboards.json");
+const TILE_KINDS: TileKind[] = ["kpi", "chart", "map", "insight", "brief"];
+const isLayout = (l: unknown): boolean => !!l && typeof l === "object" && ["x", "y", "w", "h"].every((k) => Number.isFinite((l as Record<string, unknown>)[k]));
+const isTile = (t: unknown): t is Tile => {
+  const x = t as Tile;
+  return !!x && typeof x.id === "string" && TILE_KINDS.includes(x.kind) && typeof x.datasetId === "string" && isLayout(x.layout);
+};
+
+export function readDashFile(): DashFile {
+  let raw: string;
+  try { raw = fs.readFileSync(dashFile(), "utf8"); }
+  catch (err) {
+    // only a missing file is "no file yet": a file that is there but could not be read just now (held by another
+    // program, too many files open) must not be taken as none, or the next save would replace every dashboard
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return { kind: "none" };
+    throw err;
+  }
   try {
-    const v = JSON.parse(fs.readFileSync(path.join(DIR, "dashboards.json"), "utf8"));
-    return Array.isArray(v) ? v.filter((x) => x && typeof x.datasetId === "string" && validId(x.datasetId)) : [];
-  } catch { return []; }
+    const v = JSON.parse(raw);
+    if (Array.isArray(v)) return { kind: "v1", entries: v.filter((x) => x && typeof x.datasetId === "string" && validId(x.datasetId)) };
+    if (v && v.v === 2 && Array.isArray(v.dashboards)) {
+      // a hand-edited or half-understood entry is left out rather than breaking every dashboard
+      const dashboards = (v.dashboards as Dashboard[]).filter((d) => d && typeof d.id === "string" && typeof d.name === "string" && Array.isArray(d.tiles))
+        .map((d) => ({ ...d, tiles: d.tiles.filter(isTile) }));
+      return { kind: "v2", dashboards };
+    }
+  } catch { /* cut short or not JSON */ }
+  return { kind: "damaged" };
 }
-export function saveDashboards(list: DashEntry[]) {
-  write(path.join(DIR, "dashboards.json"), JSON.stringify(list.slice(0, 40)));
+
+/** The named dashboards as saved; [] until the older files have been moved over (dashboards.ts loadDashboards). */
+export function getDashboards(): Dashboard[] {
+  const f = readDashFile();
+  return f.kind === "v2" ? f.dashboards : [];
+}
+export function saveDashboards(list: Dashboard[]) {
+  const f = dashFile();
+  // as with the board (RC-51): a file that is there but cannot be read is copied aside before it is replaced
+  if (readDashFile().kind === "damaged") try { fs.copyFileSync(f, `${f}.damaged-${Date.now()}`); } catch { /* nothing to keep */ }
+  write(f, JSON.stringify({ v: 2, dashboards: list.slice(0, MAX_DASHBOARDS).map((d) => ({ ...d, tiles: d.tiles.slice(0, MAX_TILES) })) }));
+}
+
+/**
+ * Before the older files are rewritten: dashboards.json and board.json copied aside as they were (*.v1-backup; a backup
+ * already there is never overwritten). Returns the copies made.
+ */
+export function backupOldDashboards(): string[] {
+  const made: string[] = [];
+  for (const name of ["dashboards.json", "board.json"]) {
+    const f = path.join(DIR, name);
+    if (!fs.existsSync(f)) continue;
+    const to = fs.existsSync(`${f}.v1-backup`) ? `${f}.v1-backup-${Date.now()}` : `${f}.v1-backup`;
+    fs.copyFileSync(f, to);
+    made.push(to);
+  }
+  return made;
 }
 
 /** A dataset's most pressing findings, for the Briefing ("From your datasets"): read from its saved brief, no model. */

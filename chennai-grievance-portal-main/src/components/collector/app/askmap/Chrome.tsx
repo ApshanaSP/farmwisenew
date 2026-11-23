@@ -88,9 +88,7 @@ export function useMapChrome(ask: MapAsk | null) {
       <button className={drawCircle ? "on" : ""} onClick={() => setDrawCircle((v) => !v)} aria-pressed={drawCircle}
         title="Draw a circle: what is happening here? (or right-click any spot)" aria-label="Draw a circle to ask what is happening there"><I n="scan" /></button>
       <button className={menu ? "on" : ""} onClick={() => setMenu((v) => !v)} aria-expanded={menu} title="Layers" aria-label="Layers"><I n="layers" /></button>
-      <button onClick={() => setBase((b) => (b === "sat" ? "streets" : "sat"))} title={base === "sat" ? "Streets map" : "Satellite"} aria-label={base === "sat" ? "Switch to the streets map" : "Switch to satellite"}>
-        <I n={base === "sat" ? "map" : "globe"} />
-      </button>
+      {/* the Map / Satellite choice is the map's own switch (SatMap, components/map/basemap.ts); Jarvis's voice still sets `base` */}
     </>
   );
   const layersMenu = menu ? (

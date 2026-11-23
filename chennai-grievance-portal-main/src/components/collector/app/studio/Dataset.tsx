@@ -1,20 +1,24 @@
 "use client";
 
 /**
- * One dataset in the Studio: its dashboard (headline cards, the map and charts, all computed from the rows; clicking a
- * zone on the map or a zone bar focuses every chart on that zone), the Data Detective's report, the AI's reading of
- * the columns (change a meaning and rebuild), the cleaned rows and its alerts. Questions about it go to Jarvis, which
- * answers from the same engine; the Studio tells Jarvis which dataset is open (window.__diqStudio, event "diq:studio").
+ * One dataset in the Studio: what was taken from it, its AI summary, headline numbers, insights and charts (all
+ * computed from the rows; clicking a zone on the map or a zone bar focuses every chart on that zone), the Data
+ * Detective's report, the AI's reading of the columns (change a meaning and rebuild), the cleaned rows and its alerts.
+ * The summary, every number, insight and chart has a "Pin" that puts it on a dashboard (DashPicker), and "Add to
+ * dashboard" puts the whole dataset on one. Questions about it go to Jarvis, which answers from the same engine; the
+ * Studio tells Jarvis which dataset is open (window.__diqStudio, event "diq:studio").
  */
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ROLES, ROLE_LABEL, fmtNum, type Detective, type Filter, type Issue, type PanelData, type Plan, type Role, type RuleStatus } from "@/lib/studio/types";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import type { DashboardSummary } from "@/lib/studio/dashtypes";
+import { ROLES, ROLE_LABEL, fmtNum, type BriefItem, type Detective, type Filter, type Issue, type PanelData, type Plan, type Role, type RuleStatus } from "@/lib/studio/types";
 import type { DatasetView } from "@/lib/studio/pipeline";
 import type { Console } from "../CollectorApp";
 import { I, type IconName } from "../icons";
 import { api, reduced } from "./client";
 import { AlertsTab, LinkCard } from "./Analyst";
 import Drill from "./Drill";
+import DashPicker, { quickPin, type PinWhat } from "./DashPicker";
 import { BriefCard, InsightGrid } from "./Insights";
 import SourceBar from "./Source";
 import DataCardTab from "./DataCard";
@@ -44,11 +48,27 @@ export interface StudioContext { id: string; name: string; questions: string[]; 
 /** a question about this dataset, asked of Jarvis (it opens and answers from the dataset's engine) */
 const askJarvis = (q: string) => window.dispatchEvent(new CustomEvent("jarvis:show", { detail: q }));
 
-export default function Dataset({ id, c, inDash, onDash, onOpenDash, onRemap, onRefresh, onChoose, onDeleted, onPinned, onFindMore }: {
+/**
+ * A chart's or a number's tile: the plan it is drawn from, as a kpi, a map or a chart. The title is cut to the tiles
+ * route's 120 characters (a detail's pin joins the chart's title and the bar's name), so a long one is not refused.
+ */
+const tileOf = (datasetId: string, plan: Plan): PinWhat =>
+  ({ tiles: [{ kind: plan.chart === "kpi" ? "kpi" : plan.chart === "map" ? "map" : "chart", datasetId, plan: { ...plan, title: plan.title.slice(0, 120) } }] });
+/**
+ * An insight's tile, found again after the next analysis as the server's own refOf does (lib/studio/dashboards.ts):
+ * the headline falls back to the rules title, and both fit the route's limits (a longer key is then found by its headline).
+ */
+const insightTile = (datasetId: string, x: BriefItem): PinWhat => ({
+  tiles: [{ kind: "insight", datasetId, insight: {
+    label: x.label, key: typeof x.key === "string" ? x.key.slice(0, 80) : x.key ?? null, planId: x.plan?.id ?? null, headline: (x.headline || x.title).slice(0, 300)
+  } }]
+});
+
+export default function Dataset({ id, c, dashboards, onDashes, onOpenDash, onDashChanged, onRemap, onRefresh, onChoose, onDeleted, onFindMore }: {
   id: string; c: Console; onRemap: (changes: { key: string; role: Role; label?: string }[]) => void; onRefresh: () => void; onChoose: (candidate: string) => void;
-  onDeleted: () => void; onPinned: () => void; onFindMore?: (url: string) => void;
-  /** the dataset is one of the Collector's dashboards ("Add to dashboard"), and how to add, remove or open it */
-  inDash: boolean; onDash: (on: boolean) => void; onOpenDash: () => void;
+  onDeleted: () => void; onFindMore?: (url: string) => void;
+  /** every dashboard (for the pin's list), the ones this dataset is on, how to open one, and that one changed */
+  dashboards: DashboardSummary[]; onDashes: DashboardSummary[]; onOpenDash: (id: string) => void; onDashChanged: () => void;
 }) {
   const [data, setData] = useState<DatasetData | null>(null);
   // the dashboard's filters, each added by focusing on a mark (a zone, a type, a week); every panel follows them
@@ -96,17 +116,10 @@ export default function Dataset({ id, c, inDash, onDash, onOpenDash, onRemap, on
       setSpot({ panel: r.panel, answer });
     } catch (e: any) { c.toast(e.message, "alert"); }
   }, [id, c]);
-  const pin = useCallback(async (plan: Plan, on: boolean) => {
-    try {
-      await api(`/api/collector/studio/${id}`, { json: on ? { action: "pin", plan } : { action: "unpin", planId: plan.id } });
-      c.toast(on ? `Pinned "${plan.title}": it is on the Overview under Your data, and in Dashboards › Pinned charts.` : "Unpinned.");
-      refresh(); onPinned();
-    } catch (e: any) { c.toast(e.message, "alert"); }
-  }, [id, c, refresh, onPinned]);
   const addPanel = useCallback(async (plan: Plan) => {
     try {
       await api(`/api/collector/studio/${id}`, { json: { action: "add-panel", plan } });
-      c.toast(`Added "${plan.title}" to this dashboard.`);
+      c.toast(`Added "${plan.title}" to this dataset's charts.`);
       setSpot(null); setTab("dash"); refresh();
     } catch (e: any) { c.toast(e.message, "alert"); }
   }, [id, c, refresh]);
@@ -141,20 +154,24 @@ export default function Dataset({ id, c, inDash, onDash, onOpenDash, onRemap, on
   const shownIns = allIns ? data.brief.items : data.brief.items.slice(0, INS_SHOWN);
   const kpis = data.panels.filter((p) => p.chart === "kpi");
   const charts = data.panels.filter((p) => p.chart !== "kpi");
-  const pinned = new Set(data.pinned);
   const issuesN = m.detective.issues.filter((i) => i.action !== "info").length;
   const zf = extra.find((f) => f.col === "_z" && f.op === "in");
   const focusZone = zf ? Number(zf.values[0]) || null : null;
   // a chart's mark opens its drill; a map area opens its zone
   const pick = (p: PanelData) => (key: string | number) =>
     open(p.chart === "map" ? { ...p.plan, by: "zone", byCol: null, chart: "hbar", limit: 15 } : p.plan, key);
+  // a Pin: the summary, a number, an insight or a chart, to any dashboard (or a new one named after the dataset)
+  const pinBtn = (what: PinWhat, title: string, className = "ds-pinbtn", label = "Pin", icon: IconName = "bookmark"): ReactNode => (
+    <DashPicker c={c} dashboards={dashboards} what={what} name={m.name} label={label} icon={icon} title={title} className={className} onOpen={onOpenDash} onDone={onDashChanged} />
+  );
 
   return (
     <>
       <section className="ds-ws card ds-span">
         <Head data={data} tab={tab} setTab={setTab} issuesN={issuesN} c={c} onRefresh={onRefresh} onDeleted={onDeleted} onRenamed={refresh}
-          inDash={inDash} onDash={onDash} onOpenDash={onOpenDash} />
-        <SourceBar meta={m as DatasetData["meta"]} c={c} onChoose={onChoose} onRefresh={onRefresh} onChanged={() => { refresh(); onPinned(); }} />
+          onDashes={onDashes} onOpenDash={onOpenDash}
+          addToDash={pinBtn({ datasetId: id }, "Put this dataset's summary, numbers, insights and charts on a dashboard", "ds-dashbtn", "Add to dashboard", "plus")} />
+        <SourceBar meta={m as DatasetData["meta"]} c={c} onChoose={onChoose} onRefresh={onRefresh} onChanged={() => { refresh(); onDashChanged(); }} />
         {m.relevance?.forced && (
           <p className="ds-warnbar" role="note"><I n="alert" /><span><b>Not Chennai&apos;s data: added anyway.</b> {m.relevance.why} Its numbers are not the district&apos;s; read them as outside data.</span></p>
         )}
@@ -179,16 +196,23 @@ export default function Dataset({ id, c, inDash, onDash, onOpenDash, onRemap, on
                 </div>
               )}
               <TookCard t={took} />
-              <BriefCard brief={data.brief} stale={data.briefStale} busy={analysing} c={c} onReanalyse={reanalyse} />
+              <BriefCard brief={data.brief} stale={data.briefStale} busy={analysing} c={c} onReanalyse={reanalyse}
+                pin={pinBtn({ tiles: [{ kind: "brief", datasetId: id }] }, "Pin this summary to a dashboard")} />
               {kpis.length > 0 && (
                 <div className="ds-kpis" style={{ gridTemplateColumns: `repeat(${kpis.length}, minmax(0,1fr))` }}>
-                  {kpis.map((p, i) => <Kpi key={p.id} p={p} i={i} onOpen={() => open(p.plan, null)} />)}
+                  {kpis.map((p, i) => (
+                    <div key={p.id} className="ds-kpi-w">
+                      <Kpi p={p} i={i} onOpen={() => open(p.plan, null)} />
+                      {pinBtn(tileOf(id, { ...p.plan, chart: "kpi" }), `Pin “${p.kpi?.label ?? p.title}” to a dashboard`, "ds-kpin", "")}
+                    </div>
+                  ))}
                 </div>
               )}
-              <h5 className="ds-sec"><I n="bulb" />What matters<small>{data.brief.items.length ? `${shownIns.length} of ${data.brief.items.length} insights · each with its chart · “See the records” opens the rows behind it` : "insights found in the rows"}</small></h5>
+              <h5 className="ds-sec"><I n="bulb" />Insights<small>{data.brief.items.length ? `${shownIns.length} of ${data.brief.items.length} · each with its chart · “See the records” opens the rows behind it · “Pin” puts it on a dashboard` : "found in the rows"}</small></h5>
               {data.brief.items.length ? (
                 <>
-                  <InsightGrid items={shownIns} onOpen={open} />
+                  <InsightGrid items={shownIns} onOpen={open}
+                    pin={(x) => pinBtn(insightTile(id, x), "Pin this insight to a dashboard")} />
                   {data.brief.items.length > INS_SHOWN && (
                     <button className="ds-more" onClick={() => setAllIns((x) => !x)} aria-expanded={allIns}>
                       <I n="chevd" className={allIns ? "ds-rot" : ""} />{allIns ? "Show the top 4 only" : `Show ${data.brief.items.length - INS_SHOWN} more ${data.brief.items.length - INS_SHOWN === 1 ? "insight" : "insights"}`}
@@ -199,11 +223,12 @@ export default function Dataset({ id, c, inDash, onDash, onOpenDash, onRemap, on
                 <div className="ds-noins"><I n="info" /><div><b>No insights available</b><span>{charts.length ? "Nothing in the rows stands out enough to call out. The charts below show what the data holds." : "The data was read, but it has nothing to count, compare or place on the map (no numbers, dates, places or types)."}</span></div></div>
               )}
               {m.link && <div className="ds-story ds-linkwrap"><LinkCard l={m.link} c={c} /></div>}
-              {charts.length > 0 && <h5 className="ds-sec"><I n="chart" />The evidence<small>{charts.length} live {charts.length === 1 ? "chart" : "charts"} · click a bar, slice or zone to open it</small></h5>}
+              {charts.length > 0 && <h5 className="ds-sec"><I n="chart" />Charts<small>{charts.length} live {charts.length === 1 ? "chart" : "charts"} · click a bar, slice or zone to open it · “Pin” puts a chart on a dashboard</small></h5>}
               <div className={`ds-grid${charts.some((p) => p.chart === "map") ? " has-map" : ""}${(charts.length + (charts.some((p) => p.chart === "map") ? 1 : 0)) % 2 ? " odd" : ""}`}>
                 {charts.map((p, i) => (
-                  <PanelCard key={p.id} p={p} i={i} c={c} zone={focusZone} onPick={pick(p)} pinned={pinned.has(p.plan.id)}
-                    onPin={(on) => pin(p.plan, on)} onExpand={() => setSpot({ panel: p })} onRemove={p.id.startsWith("q_") ? () => removePanel(p.plan) : undefined} />
+                  <PanelCard key={p.id} p={p} i={i} c={c} zone={focusZone} onPick={pick(p)}
+                    pin={pinBtn(tileOf(id, { ...p.plan, chart: p.chart }), `Pin “${p.title}” to a dashboard`, "ds-todash")}
+                    onExpand={() => setSpot({ panel: p })} onRemove={p.id.startsWith("q_") ? () => removePanel(p.plan) : undefined} />
                 ))}
               </div>
             </div>
@@ -225,14 +250,15 @@ export default function Dataset({ id, c, inDash, onDash, onOpenDash, onRemap, on
             <div className="ds-spot-b">{renderChart(spot.panel, c, focusZone, pick(spot.panel), "100%")}</div>
             <footer>
               {spot.panel.note && <small>{spot.panel.note}</small>}
-              <button className="ds-ghost" onClick={() => pin(spot.panel.plan, !pinned.has(spot.panel.plan.id))}><I n={pinned.has(spot.panel.plan.id) ? "check" : "bookmark"} />{pinned.has(spot.panel.plan.id) ? "Pinned" : "Pin this chart"}</button>
-              {!m.panels.some((x) => x.id === spot.panel.plan.id) && <button className="ds-btn" onClick={() => addPanel(spot.panel.plan)}><I n="plus" />Add to this dashboard</button>}
+              {pinBtn(tileOf(id, { ...spot.panel.plan, chart: spot.panel.chart }), "Pin this chart to one of your dashboards", "ds-ghost", "Add to dashboard")}
+              {!m.panels.some((x) => x.id === spot.panel.plan.id) && <button className="ds-btn" onClick={() => addPanel(spot.panel.plan)} title="Keep this chart with the other charts of this dataset"><I n="plus" />Add to this page</button>}
             </footer>
           </div>
         )}
         {drill && (
           <Drill key={drill.n} id={id} start={drill} extra={extra} c={c} onClose={() => setDrill(null)} onFocus={focusOn}
-            onAsk={(q) => { setDrill(null); askJarvis(q); }} onPin={(p) => pin(p, true)} />
+            // the details' pin goes straight to the last dashboard used (the toast says which, with "Open")
+            onAsk={(q) => { setDrill(null); askJarvis(q); }} onPin={(p) => { void quickPin(c, dashboards, tileOf(id, p), m.name, onOpenDash).then((d) => { if (d) onDashChanged(); }); }} />
         )}
       </section>
     </>
@@ -241,9 +267,11 @@ export default function Dataset({ id, c, inDash, onDash, onOpenDash, onRemap, on
 
 // ------------------------------------------------------------------ header --
 
-function Head({ data, tab, setTab, issuesN, c, onRefresh, onDeleted, onRenamed, inDash, onDash, onOpenDash }: {
+function Head({ data, tab, setTab, issuesN, c, onRefresh, onDeleted, onRenamed, onDashes, onOpenDash, addToDash }: {
   data: DatasetData; tab: string; setTab: (t: Tab) => void; issuesN: number; c: Console;
-  onRefresh: () => void; onDeleted: () => void; onRenamed: () => void; inDash: boolean; onDash: (on: boolean) => void; onOpenDash: () => void;
+  onRefresh: () => void; onDeleted: () => void; onRenamed: () => void;
+  /** the dashboards it is on (each opens in one click), and the "Add to dashboard" button */
+  onDashes: DashboardSummary[]; onOpenDash: (id: string) => void; addToDash: ReactNode;
 }) {
   const m = data.meta;
   const [edit, setEdit] = useState<string | null>(null);
@@ -274,18 +302,17 @@ function Head({ data, tab, setTab, issuesN, c, onRefresh, onDeleted, onRenamed, 
           {m.spec.deptName && <span>{m.spec.deptName}</span>}
           <span className={`ds-by ${m.spec.by}`} title={m.spec.model ?? "Read by rules"}><I n="spark" />{m.spec.by === "ai" ? "AI-read" : "Rules-read"}</span>
           {m.sample && <span className="ds-tag warn">Sample · synthetic</span>}
+          {onDashes.length > 0 && (
+            <span className="ds-ondash">
+              <I n="grid" />On
+              {onDashes.slice(0, 2).map((d) => <button key={d.id} type="button" onClick={() => onOpenDash(d.id)} title={`Open the dashboard “${d.name}”`}>{d.name}</button>)}
+              {onDashes.length > 2 && <em title={onDashes.slice(2).map((d) => d.name).join(", ")}>+{onDashes.length - 2}</em>}
+            </span>
+          )}
         </div>
       </div>
       <div className="ds-acts">
-        {inDash ? (
-          <span className="ds-dashbtn on">
-            <button onClick={onOpenDash} title="Open its dashboard" data-jarvis-never><I n="checkc" />On dashboard</button>
-            <button onClick={() => onDash(false)} title="Remove from the dashboards (the dataset is kept)" aria-label="Remove from the dashboards"><I n="x" /></button>
-          </span>
-        ) : (
-          <button className="ds-dashbtn" onClick={() => onDash(true)} title="Make a simple dashboard of this data: headline, key numbers and charts with what each shows" data-jarvis-never>
-            <I n="plus" />Add to dashboard</button>
-        )}
+        {addToDash}
         {m.source.kind === "link" && <button className="ds-icon" onClick={onRefresh} title="Fetch the link again" data-jarvis-never><I n="refresh" /></button>}
         <a className="ds-icon" href={`/api/collector/studio/${m.id}?export=csv`} onClick={viaConfirm(`/api/collector/studio/${m.id}?export=csv`)} title="Download the cleaned data (CSV)" aria-label="Download the cleaned data (CSV)"><I n="download" /></a>
         <a className="ds-icon" href={`/api/collector/studio/${m.id}?export=xlsx`} onClick={viaConfirm(`/api/collector/studio/${m.id}?export=xlsx`)} title="Download as Excel, with a What changed sheet" aria-label="Download as Excel"><I n="table" /></a>
@@ -381,8 +408,8 @@ export function asRows(p: PanelData): PanelData {
   return { ...p, chart: "table", table: { cols: [{ key: "l", label }, { key: "v", label: p.subtitle.split(" · ")[0] || "Value" }], rows: p.labels.map((l, i) => ({ l, v: p.values[i] })), bar: "v" } };
 }
 
-function PanelCard({ p: drawn, i, c, zone, onPick, pinned, onPin, onExpand, onRemove }: {
-  p: PanelData; i: number; c: Console; zone: number | null; onPick: (key: string | number) => void; pinned: boolean; onPin: (on: boolean) => void; onExpand: () => void; onRemove?: () => void;
+function PanelCard({ p: drawn, i, c, zone, onPick, pin, onExpand, onRemove }: {
+  p: PanelData; i: number; c: Console; zone: number | null; onPick: (key: string | number) => void; pin: ReactNode; onExpand: () => void; onRemove?: () => void;
 }) {
   const [rowsView, setRowsView] = useState(false);
   const canTable = drawn.chart !== "table" && drawn.chart !== "kpi" && drawn.values.length > 0;
@@ -395,10 +422,9 @@ function PanelCard({ p: drawn, i, c, zone, onPick, pinned, onPin, onExpand, onRe
         <div className="ds-p-t"><h4>{p.title}</h4><small>{p.subtitle}{hint}</small></div>
         <div className="ds-p-acts">
           {canTable && <button className={rowsView ? "on" : ""} aria-pressed={rowsView} onClick={() => setRowsView((x) => !x)} title={rowsView ? "Show as a chart" : "Show as a table"} aria-label={rowsView ? "Show as a chart" : "Show as a table"}><I n={rowsView ? "chart" : "table"} /></button>}
-          <button className={`ds-todash${pinned ? " on" : ""}`} onClick={() => onPin(!pinned)} title={pinned ? "Pinned (Overview, under Your data, and Dashboards › Pinned charts): click to unpin" : "Pin this one chart to the Overview (Your data) and Dashboards › Pinned charts"} aria-pressed={pinned}>
-            <I n={pinned ? "check" : "bookmark"} /><span>{pinned ? "Pinned" : "Pin"}</span></button>
+          {pin}
           <button onClick={onExpand} title="Open large" aria-label="Open large"><I n="expand" /></button>
-          {onRemove && <button onClick={onRemove} title="Remove from this dashboard" aria-label="Remove"><I n="x" /></button>}
+          {onRemove && <button onClick={onRemove} title="Remove from this page" aria-label="Remove"><I n="x" /></button>}
         </div>
       </header>
       <div className="ds-p-b" role="img" aria-label={drawn.alt ?? p.title}>{renderChart(p, c, zone, onPick, "100%")}</div>

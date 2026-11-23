@@ -1,7 +1,7 @@
 /**
  * Runs a checked Plan over a World. Pure and deterministic: the same plan on the same store gives the same output,
- * byte for byte (rows sort by priority, then newest first, then id). Every step returns its features, its count and a
- * line for "How this was worked out" in English and Tamil.
+ * byte for byte (rows sort by priority, then newest first, then id; a list near a point by localRank, which weighs the
+ * distance too). Every step returns its features, its count and a line for "How this was worked out" in English and Tamil.
  *
  * Membership rules (so the map agrees with the Overview):
  * - inside a ward, zone or taluk: the record's ward_no / zone_no / taluk_code, the console's own rule;
@@ -10,7 +10,7 @@
  */
 import { GridIndex, M_PER_DEG_LAT, CHENNAI_LAT, distToLineM, expandBboxM, haversineM, inBbox, mPerDegLon, pointInPolygon, type LatLon, type Pair } from "./geom";
 import { checkSpec, spanOf } from "@/lib/period/read";
-import { isCalendar, type AreaRef, type Filter, type Period, type Plan, type Step } from "./plan";
+import { facingIncidents, isCalendar, type AreaRef, type Filter, type Period, type Plan, type Step } from "./plan";
 import type { Hotspot, Inc, LayerId, LineFeat, PointFeat, PolyFeat, World } from "./types";
 import { CAT_TA, FAMILY_WORD, LAYER_WORD, SEV_WORD, STATUS_WORD, inPeriodWords, isTa, nOf, periodWords, type Lang, zoneTa } from "./words";
 import { fmtDistance } from "./geom";
@@ -18,13 +18,14 @@ import { fmtDistance } from "./geom";
 // ------------------------------------------------------------- results --
 
 export interface Near { id: string; name: string | null; name_ta: string | null; layer: LayerId; m: number; lat: number; lon: number }
-export interface Hit { inc: Inc; near: Near | null }
+/** `m`: metres from the place a "near X" list is about (an inside step at a point or a drawn circle) */
+export interface Hit { inc: Inc; near: Near | null; m?: number }
 export interface Place { ref: string; name: string; name_ta: string | null; lat: number; lon: number; kind: string }
-/** v3: the nearest named neighbourhood (OpenStreetMap place) within 2 km of a point, cached per world */
-const localities = new WeakMap<World, Map<string, { en: string; ta: string } | null>>();
+/** v3: the nearest named neighbourhood (OpenStreetMap place) within 2 km of a point, cached per neighbourhood list (the store build's, the same for every question) */
+const localities = new WeakMap<PointFeat[], Map<string, { en: string; ta: string } | null>>();
 export function localityOf(w: World, lat: number, lon: number): { en: string; ta: string } | null {
-  let m = localities.get(w);
-  if (!m) localities.set(w, (m = new Map()));
+  let m = localities.get(w.points.osm_places);
+  if (!m) localities.set(w.points.osm_places, (m = new Map()));
   const k = `${lat.toFixed(5)},${lon.toFixed(5)}`;
   if (m.has(k)) return m.get(k)!;
   let best: { en: string; ta: string } | null = null, bd = 2000;
@@ -104,9 +105,23 @@ export interface Ctx {
 export class PlanError extends Error {}
 
 const SEV_ORDER = { Severe: 0, High: 1, Medium: 2, Low: 3 } as const;
-/** priority first, then newest, then id: the order of every list */
+/** priority first, then newest, then id: the order of every list (a "near X" list: localRank below) */
 export function byPriority(a: Hit, b: Hit): number {
   return b.inc.priority - a.inc.priority || (a.inc.first < b.inc.first ? 1 : a.inc.first > b.inc.first ? -1 : 0) || (a.inc.id < b.inc.id ? -1 : a.inc.id > b.inc.id ? 1 : 0);
+}
+
+/**
+ * A "near X" list in the order a local search puts places (Google's published local ranking weighs relevance, distance and
+ * prominence; its weights are not published): every case on the list is relevant already, so each one's score is its prominence
+ * (its priority score against the list's highest) times a fall with distance, 1 / (1 + d / d0) with d0 half the radius (a case at
+ * the edge needs three times the priority of one at the centre to rank level). Then the newest, then the id. Pure; `m` set on each.
+ */
+export function localRank(hits: Hit[], radiusM: number): Hit[] {
+  const top = hits.reduce((x, h) => Math.max(x, h.inc.priority), 0);
+  const d0 = Math.max(1, radiusM / 2);
+  const score = (h: Hit) => ((1 + Math.max(0, h.inc.priority)) / (1 + Math.max(0, top))) / (1 + (h.m ?? 0) / d0);
+  const s = new Map(hits.map((h) => [h, score(h)]));
+  return [...hits].sort((a, b) => s.get(b)! - s.get(a)! || (a.inc.first < b.inc.first ? 1 : a.inc.first > b.inc.first ? -1 : 0) || (a.inc.id < b.inc.id ? -1 : a.inc.id > b.inc.id ? 1 : 0));
 }
 
 // -------------------------------------------------------------- time --
@@ -432,7 +447,9 @@ function pct(sorted: number[], q: number): number {
  * Runs the plan. `lockDept` (an officer's department, from the database) is forced into every take of incidents,
  * whatever the plan says.
  */
-export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | null = null): RunResult {
+export function runMapPlan(plan0: Plan, w: World, ctx: Ctx, lockDept: string | null = null): RunResult {
+  // "schools within 300 m of flooding": measured from the schools, as the AI path reads it (plan.ts facingIncidents)
+  const plan = facingIncidents(plan0);
   const env = new Map<string, Coll>();
   const idx = new Map<Coll, GridIndex<PointFeat>>();
   const steps: StepOut[] = [];
@@ -560,8 +577,21 @@ export function runMapPlan(plan: Plan, w: World, ctx: Ctx, lockDept: string | nu
           break;
         }
         const src = incHits(s.of);
-        const hits = src.filter((h) => inArea(h.inc, s.area, w, ctx));
-        if (!byRecord(s.area)) {
+        let hits: Hit[];
+        if (byRecord(s.area)) hits = src.filter((h) => inArea(h.inc, s.area, w, ctx));
+        else {
+          // near a point or in a drawn circle: each case carries its distance, and the list is in local-search order (localRank)
+          const area = s.area;
+          const p = area.kind === "point" ? ctx.place(area.ref) : ctx.place(`drawn:${area.id}`);
+          const r = area.kind === "point" ? area.radius_m : drawnRadius(area.id);
+          hits = [];
+          for (const h of src) {
+            if (!h.inc.pinnable) continue;
+            if (!p || r == null) throw new PlanError("The place in the question could not be found on the map.");
+            const m = haversineM(h.inc, p);
+            if (m <= r) hits.push({ inc: h.inc, near: h.near, m });
+          }
+          hits = localRank(hits, r ?? 0);
           const c = src.filter((h) => !h.inc.pinnable).length;
           leftOut += c;
         }

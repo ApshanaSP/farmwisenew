@@ -687,6 +687,10 @@
 .dic .amp-by button.on{background:var(--surface-1,#fff);color:var(--text-1);box-shadow:0 1px 3px rgba(15,23,42,.18)}
 .dic .amp-by button:disabled:not(.on){opacity:.5;cursor:default}
 .dic .amp-by button:focus-visible{outline:2px solid var(--accent,#2563EB)}
+/* a list near a place: best match (priority and distance) or nearest first */
+.dic .amp-sort{align-items:center;margin:2px 0 6px}
+.dic .amp-sort .lbl{font:700 10.5px var(--font-ui,system-ui);color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;padding:0 6px 0 8px}
+.dic .amp-sortnote{margin:0 0 6px;font:500 11px var(--font-ui,system-ui);color:var(--text-3)}
 /* the picked place: what it holds, then this kind of problem here, or the full overview */
 .dic .amp-pick{margin:6px 0 2px;padding:10px;border-radius:12px;border:1px solid rgba(37,99,235,.35);background:linear-gradient(180deg,rgba(37,99,235,.08),rgba(37,99,235,.02));animation:amppick .28s cubic-bezier(.2,.8,.2,1) both}
 .dic .amp-pick header{display:flex;align-items:center;gap:9px}

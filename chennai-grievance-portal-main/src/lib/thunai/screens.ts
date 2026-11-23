@@ -32,6 +32,7 @@ import { explainRecipe } from "./recipes/explain";
 import { situationRecipe } from "./recipes/situation";
 import type { RecipeCtx, RecipePart } from "./recipes/common";
 import { thinLine } from "./persona";
+import type { StudioAnswerOut, StudioPick } from "@/lib/studio/forAssistants";
 
 type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -87,6 +88,27 @@ export interface Slots {
   about?: "areas" | "places" | "kinds" | null;
   /** v16 (22 Nov), advise: only the first case, in full */
   one?: boolean;
+  /** v17 (22 Nov), dataset: the Collector's Data Studio dataset (its id); `q` is the question asked of it */
+  dataset?: string | null;
+  /** v17, dataset: the last answer's filters, kept by a follow-up ("and only the pending ones?") */
+  filters?: StudioFilter[];
+}
+export type StudioFilter = { col: string; op: "eq" | "neq" | "in" | "contains" | "gte" | "lte" | "open" | "closed" | "recent_days" | "latest"; values: string[] };
+
+/**
+ * v17 (22 Nov): Jarvis's hands on the Collector's own Data Studio datasets (data.ts studioHands over studio/forAssistants.ts). Absent for
+ * anyone but the Collector, and in tests that give none: a dataset screen then says it cannot reach them.
+ */
+export interface StudioHands {
+  /** one line per dataset for the reader, marked as file content (null: no datasets) */
+  digest: () => string | null;
+  /** the digest's "D2" as a dataset id */
+  byTag: (tag: string) => string | null;
+  /** the dataset a sentence is about (the one open in the Studio, the one the last answer came from), or null */
+  pick: (text: string, o: { openId?: string | null; lastId?: string | null }) => StudioPick | null;
+  /** the answer: from the brief for a summary, else the Studio's analyst within the deadline, else its rules; `keep`: a follow-up in other
+   *  words, so the context's filters stay */
+  ask: (q: string, o: { datasetId: string; context?: { filters?: StudioFilter[] } | null; deadlineMs?: number; keep?: boolean }) => Promise<StudioAnswerOut | null>;
 }
 
 export const emptySlots = (): Slots => ({ period: null, zones: [], dept: null, depts: [], cat: null, taluk: null, sev: null, status: null, q: null, metric: null,
@@ -107,6 +129,8 @@ export interface Hands {
   span?: (spec: PeriodSpec, s: ScopeT, f: { sev: string | null; status: "open" | "overdue" | null; n: number }) => Promise<{ span: Span; rows: Row[]; total: number; severe: number; open: number; late: number; dead: number; prev: { n: number; label: Words } | null; asOf: string } | null>;
   /** a window against the one before it (data.ts consoleCompare) */
   compare?: (key: PeriodKey, s: ScopeT, f: { sev: string | null; status: "open" | "overdue" | null }) => Promise<{ cmp: Comparison; n: number; prev: number; severe: number; open: number; asOf: string } | null>;
+  /** v17: the Collector's own Data Studio datasets (absent: not the Collector, or a test) */
+  studio?: StudioHands;
 }
 
 export interface Built { doc: StageDocT; runs: string[] }
@@ -301,7 +325,9 @@ async function lateTotal(c: Ctx, sev: Sev | null, q: string | null): Promise<num
 }
 
 /** a screen as a recipe builds it: its title in both languages (a plain string is the same in both: a name, the Collector's own words) */
-type Part = { title: string | Bilingual; takeaway: Bilingual | null; say: Bilingual; blocks: BlockT[]; next?: NextStepT[]; /** v7: facts for the aide beyond the screen (aide7/extras.ts) */ aide?: AideExtras };
+type Part = { title: string | Bilingual; takeaway: Bilingual | null; say: Bilingual; blocks: BlockT[]; next?: NextStepT[]; /** v7: facts for the aide beyond the screen (aide7/extras.ts) */ aide?: AideExtras;
+  /** v17: the dataset screen's Studio answer (stage.ts studio) and the slots it adds (the answer's filters, for a follow-up) */
+  studio?: StageDocT["studio"]; slotsOut?: Partial<Slots> };
 
 /**
  * The analysis recipes (recipes/*.ts, lane A2) take the same context with their notes as plain lines in the screen's language and the
@@ -324,8 +350,64 @@ const RECIPE: Record<Recipe, (c: Ctx) => Promise<Part>> = {
   },
   changed: analysis((c) => changedRecipe(c)), explain: analysis((c) => explainRecipe(c)), situation: analysis((c) => situationRecipe(c)),
   // v15 (22 Nov): where to concentrate, improving, getting worse, repeating (recipes/focus.ts)
-  focus: analysis((c) => focusRecipe(c))
+  focus: analysis((c) => focusRecipe(c)),
+  // v17 (22 Nov): an answer from one of the Collector's own Data Studio datasets
+  dataset: datasetScreen
 };
+
+const CHART_OF: Record<string, "bar" | "hbar" | "line" | "donut"> = { bar: "bar", hbar: "hbar", line: "line", area: "line", donut: "donut", treemap: "hbar", map: "hbar" };
+const TONE_OF: Record<string, "bad" | "good" | "neutral"> = { sev: "bad", high: "bad", low: "good", teal: "good" };
+
+/**
+ * v17 (22 Nov): "what does my shelters data say", "hospital beds by zone", "and only Adyar?": an answer from one of the Collector's own
+ * Data Studio datasets. The Studio counts every figure from the rows (studio/forAssistants.ts studioAsk: the brief for a summary, else its
+ * analyst's plan, else its rules); this screen only lays it out: the answer in words with its figures, the chart or the number, the brief's
+ * points, and the Studio's own card (stage.ts studio) for its actions. Every line cites the dataset; nothing here is a model's.
+ */
+async function datasetScreen(c: Ctx): Promise<Part> {
+  const id = c.slots.dataset ?? null;
+  const st = c.h.studio;
+  const cannot = (en: string, ta: string): Part => ({ title: bi("Your Data Studio data", "உங்கள் தரவுக் கோப்புகள்"), takeaway: null, say: bi(en, ta),
+    blocks: [{ kind: "Note", id: "studio", text: L(c, en, ta) }] });
+  if (!st || !id) return cannot("I can't reach your Data Studio datasets from here.", "உங்கள் தரவுக் கோப்புகளை இங்கிருந்து படிக்க முடியவில்லை.");
+  const q = c.slots.q || c.heard;
+  c.runs.push("studio_ask");
+  // (the slots carry filters only for a follow-up on the last answer, round.ts datasetTurn, or when this screen is built again: kept either way)
+  const keep = !!c.slots.filters?.length;
+  const a = await st.ask(q, { datasetId: id, context: keep ? { filters: c.slots.filters } : null, keep });
+  if (!a) return cannot("That dataset is not in your Data Studio any more.", "அந்தத் தரவு இப்போது தரவுக் கூடத்தில் இல்லை.");
+  const d = a.dataset, r = a.reply, p = r.panel;
+  c.sources.add(clip(`Data Studio: ${d.label}`, 80));
+  if (r.how) c.notes.push(bi(clip(r.how, 300), clip(r.how, 300)));
+  if (a.source === "rules" && r.kind !== "summary") c.notes.push(bi("Read by the Data Studio's rules (the AI analyst did not answer in time); the figures are counted the same way.",
+    "AI பதில் தாமதமானதால் தரவுக் கூடத்தின் விதிகளால் படிக்கப்பட்டது; எண்கள் அதே முறையில் கணக்கிடப்பட்டவை."));
+  const sentence = c.ta ? a.sentence.ta : a.sentence.en;
+  const cite = bi(`From your ${d.label} data`, `உங்கள் ${d.label} தரவிலிருந்து`);
+  // (the answer's text names the dataset, as the spoken line does: a figure in its name is then one the screen holds)
+  const blocks: BlockT[] = [{ kind: "Answer", id: "studio", title: L(c, "From your Data Studio", "உங்கள் தரவுக் கூடத்திலிருந்து"), text: fit(`${cite[c.ta ? "ta" : "en"]}: ${sentence}`, 900),
+    facts: a.facts.slice(0, 12).map((f) => ({ label: clip(f.label, 160), value: f.value, unit: f.unit ? clip(f.unit, 20) : null })) }];
+  if (r.kind === "summary" && r.points?.length) {
+    blocks.push({ kind: "Brief", id: "points", title: L(c, "In brief", "சுருக்கமாக"), points: r.points.slice(0, 8).map((x) => ({ text: clip(x, 400), incidentId: null })) });
+  } else if (p?.kpi && Number.isFinite(p.kpi.value)) {
+    blocks.push({ kind: "Kpis", id: "kpi", title: KEY_NUMBERS(c), items: [{ key: "studio", label: clip(p.kpi.label || p.title, 80), value: p.kpi.value, unit: p.unit ? clip(p.unit, 20) : null,
+      prev: null, delta: Number.isFinite(p.kpi.delta) ? p.kpi.delta : null, tone: TONE_OF[p.kpi.tone] ?? "neutral", spark: (p.kpi.spark ?? []).filter(Number.isFinite).slice(-60) }] });
+  } else if (p && p.labels.length > 1 && CHART_OF[p.chart]) {
+    const n = Math.min(p.labels.length, 40);
+    blocks.push({ kind: "Chart", id: "chart", title: clip(p.title, 160), chart: p.plan.by === "time" ? "line" : CHART_OF[p.chart], unit: p.unit ? clip(p.unit, 30) : null,
+      labels: p.labels.slice(0, n).map((l) => clip(l, 80)), values: p.values.slice(0, n).map((v) => (Number.isFinite(v) ? v : 0)) });
+  }
+  if (r.kind === "unsupported" || (r.kind === "summary" && r.note)) blocks.push({ kind: "Note", id: "note", text: clip(r.kind === "unsupported" ? sentence : L(c, r.note ?? "", "இந்தத் தரவுக்கு இன்னும் சுருக்கம் இல்லை: தரவுக் கூடத்தில் ஒருமுறை திறந்தால் உருவாகும்."), 400) });
+  const title = r.kind === "summary" ? bi(`${d.label}: in brief`, `${d.label}: சுருக்கம்`) : p ? bi(`${d.label}: ${p.title}`, `${d.label}: ${p.title}`) : bi(d.label, d.label);
+  return {
+    title, takeaway: null,
+    // said with the dataset it came from, so a figure is never taken for the console's own
+    say: bi(`${cite.en}: ${a.sentence.en}`, `${cite.ta}: ${a.sentence.ta}`), blocks,
+    // the dataset's own suggested questions, asked as said
+    next: d.questions.slice(0, 2).map((x) => ({ label: bi(clip(x, 200), clip(x, 200)), kind: "ask" as const, recipe: null, slots: null, ids: [], text: clip(x, 200) })),
+    studio: { id: d.id, name: clip(d.label, 160), q: clip(q, 300), a: r as unknown as Record<string, unknown> },
+    slotsOut: { filters: (r.plan?.filters ?? []).slice(0, 8) as StudioFilter[] }
+  };
+}
 
 /**
  * Build a screen. Throws only on a programming error; a tool failure becomes a Note block that says so. `lang` is the turn's language
@@ -356,8 +438,8 @@ export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w:
   // a note with nothing in it is not shown as a blank line
   const notes = c.notes.map((n) => bi(clip(n.en, 300), clip(n.ta, 300))).filter((n) => n[lng]).slice(0, 4);
   const doc: StageDocT = { v: 1, id, recipe, title: clip(titles[lng], 200), takeaway: part.takeaway && fitBi(part.takeaway), say: fitBi(part.say), blocks: part.blocks.slice(0, 6), scope: s,
-    slots: slots as unknown as Record<string, unknown>, sources: [...c.sources].slice(0, 10).map((x) => clip(x, 80)), asOf: c.asOf, notes: notes.map((n) => n[lng]),
-    lang: lng, titles: bi(clip(titles.en, 200), clip(titles.ta, 200)), notesBi: notes };
+    slots: (part.slotsOut ? { ...slots, ...part.slotsOut } : slots) as unknown as Record<string, unknown>, sources: [...c.sources].slice(0, 10).map((x) => clip(x, 80)), asOf: c.asOf, notes: notes.map((n) => n[lng]),
+    lang: lng, titles: bi(clip(titles.en, 200), clip(titles.ta, 200)), notesBi: notes, ...(part.studio ? { studio: part.studio } : {}) };
   doc.next = part.next ?? (part.blocks.some((b) => b.kind === "Note") && part.blocks.length === 1 ? [] : nextSteps(doc));
   if (part.aide) keepExtras(doc, part.aide);
   // the persona pushes back when the data is thin: a finding resting on a handful of cases says so, with code's own count (persona.ts)

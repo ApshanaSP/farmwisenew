@@ -52,6 +52,9 @@ export function aideWanted(r: AgentResult | null | undefined, question: string, 
   // v16 (22 Nov): the focus screen says code's own answer (recipes/focus.ts districtSay and its shapes): the writer's rewrites of 22 Nov lost
   // the point (a roads question answered with backlog counts, "zero areas improving", a gap line for Velachery), and its 1-2 s came on top
   if (r.stage.recipe === "focus") return false;
+  // v17 (22 Nov): a dataset answer is the Data Studio's own sentence over its own count (studio/forAssistants.ts); the writer knows nothing of
+  // the Collector's file and would only add a second model call and a news "gap" line about the district
+  if (r.stage.recipe === "dataset") return false;
   // v16 (the browser drive): "that incident alone" is the case screen with code's own brief of it (screens.ts briefIssue); the writer's rewrite
   // came 3.5 s after the screen (first words at 5.3 s) and said less ("A crime report at Tondiarpet")
   if (r.note === "reader:first_case:one") return false;
