@@ -49,12 +49,14 @@ export function option(s: StageChartSpec, ink: Ink, title: string, reduce: boole
     const cat = { type: "category" as const, data: s.labels, inverse: s.horizontal, axisTick: { show: false }, axisLine: { lineStyle: { color: ink.axis } },
       axisLabel: { ...axisLabel, width: s.horizontal ? 130 : undefined, overflow: s.horizontal ? "truncate" as const : undefined, interval: 0, hideOverlap: !s.horizontal } };
     const neg = s.values.some((v) => v < 0);
+    // the bar that stands out: a ranking's first; across a time (hours, days), the highest
+    const topBar = s.horizontal || !s.values.length ? 0 : s.values.indexOf(Math.max(...s.values));
     return { ...base, tooltip: { ...tip, trigger: "item", valueFormatter: (v: number) => `${fmt(v)}${s.unit ? ` ${s.unit}` : ""}` },
       grid: { left: 4, right: s.horizontal ? 54 : 8, top: s.horizontal ? 4 : 24, bottom: 4, containLabel: true },
       xAxis: s.horizontal ? { ...valAxis, min: neg ? undefined : 0, axisLabel: { show: false } } : cat, yAxis: s.horizontal ? cat : { ...valAxis, min: neg ? undefined : 0 },
       series: [{ type: "bar", barMaxWidth: 18, barMinHeight: 2,
         data: s.values.map((v, i) => {
-          const hot = s.highlight != null ? s.keys[i] === s.highlight : i === 0;
+          const hot = s.highlight != null ? s.keys[i] === s.highlight : i === topBar;
           const color = v < 0 ? ink.low : hot ? series[0] : ink.dark ? "rgba(57,135,229,.42)" : "rgba(42,120,214,.38)";
           return { value: v, itemStyle: { color, borderRadius: s.horizontal ? (v < 0 ? [4, 0, 0, 4] : [0, 4, 4, 0]) : [4, 4, 0, 0] } };
         }),
@@ -104,6 +106,31 @@ export function option(s: StageChartSpec, ink: Ink, title: string, reduce: boole
       itemStyle: { color: series[i % series.length], borderColor: ink.surface, borderWidth: 1.5 } })) };
 }
 
+/** What an ECharts click hands over: which component was hit, its own index and its data item. */
+export type ChartClick = { componentType?: string; dataIndex?: number; data?: unknown };
+
+/**
+ * The point of the chart's own data a click landed on, or null. A series mark reports its own index. A trend's marked
+ * points (the unusual ones and the peak) sit on top of the series dot, so a click there reports the markPoint's index in
+ * the mark list (0 for the first mark), not the point's: the point is read from the mark's coord, [index on the category
+ * axis, value] as option() builds it (a category name there is looked up in the labels). Clicks on anything else (an axis,
+ * the legend, a shaded range) pick nothing.
+ */
+export function pickIndex(p: ChartClick, labels: string[] = []): number | null {
+  const ok = (i: unknown): number | null => (typeof i === "number" && Number.isInteger(i) && i >= 0 ? i : null);
+  if (p.componentType === "series") return ok(p.dataIndex);
+  if (p.componentType === "markPoint") {
+    const d = (p.data ?? null) as { coord?: unknown; xAxis?: unknown } | null;
+    const x = Array.isArray(d?.coord) ? d.coord[0] : d?.xAxis;
+    if (typeof x === "string") { const at = labels.indexOf(x); return at >= 0 ? at : ok(Number(x)); }
+    return ok(x);
+  }
+  return null;
+}
+
+/** The labels a spec's category axis carries, for pickIndex. */
+const axisLabels = (s: StageChartSpec): string[] => (s.type === "group" ? s.categories : s.labels);
+
 function StageChart({ spec, height, title, onPick }: { spec: StageChartSpec; height: number; title: string; onPick?: (i: number) => void }) {
   const box = useRef<HTMLDivElement>(null);
   const ink = useInk(box);
@@ -112,7 +139,7 @@ function StageChart({ spec, height, title, onPick }: { spec: StageChartSpec; hei
   return (
     <div ref={box} className="st-chart" style={{ height }} role="img" aria-label={title}>
       {opt && <ReactEChartsCore echarts={echarts} option={opt} notMerge lazyUpdate style={{ height: "100%", width: "100%" }} opts={{ renderer: "canvas" }}
-        onEvents={onPick ? { click: (p: { dataIndex?: number }) => { if (p.dataIndex != null) onPick(p.dataIndex); } } : undefined} />}
+        onEvents={onPick ? { click: (p: ChartClick) => { const i = pickIndex(p, axisLabels(spec)); if (i != null) onPick(i); } } : undefined} />}
     </div>
   );
 }

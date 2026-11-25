@@ -19,7 +19,7 @@ const provider = () => ((process.env.THUNAI_PROVIDER ?? "").trim() === "bedrock"
 export const AgentBody = PlanBody.extend({
   stage: z.object({
     recipe: z.enum(RECIPES), title: z.string().max(200),
-    blocks: z.array(z.object({ kind: z.string().max(20), ids: z.array(z.string().max(120)).max(30) })).max(6),
+    blocks: z.array(z.object({ kind: z.string().max(20), ids: z.array(z.string().max(120)).max(30) })).max(16),
     slots: z.record(z.unknown()), focus: z.number().int().nullable()
   }).nullable().optional(),
   /** a screen asked for by a Stage control (filter chip, refinement, mission): built by code, no model */

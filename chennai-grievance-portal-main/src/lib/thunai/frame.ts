@@ -118,6 +118,7 @@ function picked(reg: Register, e: RegEntity | null, n: number, explain: boolean,
 function spanSlots(raw: string, recipe: Recipe): Record<string, unknown> | "none" | null {
   const spec = readPeriod(raw);
   if (spec.kind === "none" || spec.kind === "window") return null;
+  if (spec.kind === "day" && spec.back === 0) return { period: "daily" };
   if (spec.kind === "unheld" || !needsDates(spec)) return "none";
   if (spec.kind === "day" && spec.back === 0) return { period: "daily" };
   // a past window (yesterday, last week, last month) said as a follow-up goes on to the planner, as on main: carried onto the last list, the

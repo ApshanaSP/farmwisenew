@@ -39,7 +39,7 @@ describe("a follow-up keeps its command with any 'now' phrase", () => {
   });
   it("a time alone is still a time edit", () => {
     expect(takeOf(planOf("last 30 days", first())?.plan)?.filter?.period).toEqual({ kind: "last_days", days: 30, offset: 0 });
-    expect(takeOf(planOf("show me today's", first())?.plan)?.filter?.period).toEqual({ kind: "day", offset: 0 });
+    expect(takeOf(planOf("show me today's", first())?.plan)?.filter?.period).toEqual({ kind: "last_days", days: 1, offset: 0 });
     expect(takeOf(planOf("right now", first())?.plan)?.filter?.period).toBeNull();
   });
 });

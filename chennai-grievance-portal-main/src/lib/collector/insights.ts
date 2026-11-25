@@ -13,6 +13,7 @@ import { briefingBook } from "@/lib/collector/briefbook";
 import { checkOpening } from "@/lib/collector/opening";
 import { reviewLocations, type Ward } from "@/lib/collector/locreview";
 import { elsewhere } from "@/lib/collector/newsrel";
+import { offDeskIncidents } from "@/lib/collector/newsdesk";
 import { orEmpty } from "@/lib/fallback";
 import { isPastDeadline, pastDueSql, unusualEnough } from "@/lib/reference/metrics";
 import { syncEpoch } from "@/lib/collector/epoch";
@@ -240,7 +241,9 @@ async function insightsFresh(period: Period, zone: number | null, dept: string |
   // unusual is judged on the whole pattern; a department sees it only with a report of its own behind it, and its own count
   // only news about this district (the monitor sometimes links a report from elsewhere to an incident): the written line, the list and the
   // figure are all this one set (PB-064: 77, 60 and 56 on one page)
-  const gaps = gapsAll.filter((g) => !elsewhere(String(g.title ?? "")));
+  // (24 Nov: and not what the news desk read as none of the administration's business, newsdesk.ts)
+  const offDesk = await offDeskIncidents(gapsAll.map((g) => String(g.id)));
+  const gaps = gapsAll.filter((g) => !elsewhere(String(g.title ?? "")) && !offDesk.has(String(g.id)));
   const anomalies = anomaliesAll.filter(unusualEnough).filter((a: Row) => !dept || Number(a.dept_observed) > 0)
     .map((a: Row) => (dept ? { ...a, observed: Number(a.dept_observed) } : a)); // too few reports to call unusual (R-18)
   const zn = new Map<number, string>();

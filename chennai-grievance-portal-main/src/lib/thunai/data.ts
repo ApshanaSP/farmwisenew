@@ -21,6 +21,9 @@ import { studioRow, type Lookups, type InRow } from "./complete";
 import type { World } from "./types";
 import type { ScopeT } from "./stage";
 import { syncEpoch } from "@/lib/collector/epoch";
+import { winHands, type WinHands } from "./v18/window";
+import { runQuery } from "./v19/run";
+import type { AskHand } from "./v19/doc";
 
 type Row = Record<string, unknown>;
 export interface MapUser { email: string; role: "collector" | "department_officer"; lockDept: string | null }
@@ -114,6 +117,10 @@ export interface Hands {
   compare?: (key: PeriodKey, s: ScopeT, f: { sev: string | null; status: "open" | "overdue" | null }) => Promise<CompareOut | null>;
   /** v17: the Collector's own Data Studio datasets (absent for anyone else) */
   studio?: StudioHands;
+  /** v18: reads over any window with its own dates (v18/window.ts) */
+  win?: WinHands;
+  /** v19: one data request of the analyst, run (v19/run.ts) */
+  ask?: AskHand;
 }
 
 /** ward -> zone from the GCC ward boundaries, the point's ward by polygon, the gazetteer, each category's lead department. */
@@ -178,5 +185,8 @@ export function studioHands(user: MapUser): StudioHands | undefined {
 
 export function serverHands(user: MapUser, signal?: AbortSignal): Hands {
   return { tool: (n, a) => runTool(n, a), severe: consoleSevere, list: consoleList, news: consoleNews, map: (q) => mapAnswer(q, user, signal), dataset: studioDataset, lookups,
-    span: (spec, s, f) => consoleSpan(spec, s, f, user.lockDept), compare: (key, s, f) => consoleCompare(key, s, f, user.lockDept), studio: studioHands(user) };
+    span: (spec, s, f) => consoleSpan(spec, s, f, user.lockDept), compare: (key, s, f) => consoleCompare(key, s, f, user.lockDept), studio: studioHands(user),
+    win: winHands(user.lockDept),
+    // v19: the analyst's requests, on the dashboard's own rules; an officer's are locked to the department
+    ask: (q, c) => runQuery(q, { ...c, lockDept: user.lockDept }) };
 }

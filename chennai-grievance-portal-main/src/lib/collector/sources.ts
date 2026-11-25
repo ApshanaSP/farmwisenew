@@ -16,6 +16,9 @@ import intelPool, { ops } from "@/lib/collector/db";
 import { decryptSecret, encryptSecret } from "@/lib/crypto";
 import { classify, resolvePlace } from "@/lib/collector/nlp";
 import { nearChennai, readStored } from "@/lib/collector/sourcemap";
+import { deskOf, isListing } from "@/lib/collector/deskbook";
+import { relevantNews } from "@/lib/collector/newsrel";
+import { isNewsMedia } from "@/lib/collector/newsmedia";
 import { ParseLimitError, pageLimitMessage, readCollector } from "@/lib/studio/parse-pool";
 import { istNow, staleFeeds } from "@/lib/collector/freshness";
 import { assertPublicUrl, safeFetch } from "@/lib/netsafe";
@@ -478,7 +481,7 @@ export async function addedItems(s: ItemScope, limit = 40) {
   if (s.taluk) (where.push("i.taluk_code = ?"), params.push(s.taluk));
   const [rows, pins, count] = await Promise.all([
     q(`SELECT ${ITEM_COLS} ${ITEM_FROM} WHERE ${where.join(" AND ")}
-       ORDER BY i.published_at IS NULL, COALESCE(i.published_at, i.fetched_at) DESC LIMIT ${Math.min(200, limit)}`, params),
+       ORDER BY i.published_at IS NULL, COALESCE(i.published_at, i.fetched_at) DESC LIMIT ${Math.min(400, limit * 4)}`, params),
     q(`SELECT ${ITEM_COLS} ${ITEM_FROM} WHERE ${where.join(" AND ")} AND i.lat IS NOT NULL
        ORDER BY COALESCE(i.published_at, i.fetched_at) DESC LIMIT 150`, params),
     q(`SELECT COUNT(*) AS n, SUM(i.is_incident) AS civic, SUM(i.lat IS NOT NULL) AS placed ${ITEM_FROM} WHERE ${where.join(" AND ")}`, params)
@@ -487,9 +490,15 @@ export async function addedItems(s: ItemScope, limit = 40) {
     ...r, title: unent(String(r.title)), body: r.body == null ? null : unent(String(r.body)),
     lat: r.lat == null ? null : Number(r.lat), lon: r.lon == null ? null : Number(r.lon), is_incident: Number(r.is_incident) === 1
   }) as Row;
+  // the news feeds the live lane reads carry everything their outlets publish: what the news desk left out (a film, a game, a business
+  // deal, petty crime) is not shown, nor what the rules would leave out until it is read. Any other link the Collector added shows all it holds.
+  const feed = (r: Row) => r.kind === "rss" && isNewsMedia(null, r.source_url);
+  const off = (r: Row) => { if (!feed(r)) return false; const v = deskOf(r.title); return v ? v.v === "skip" : isListing(r.title) || !relevantNews({ title: r.title, report_type: null }, String(r.title)); };
+  const keep = rows.filter((r) => !off(r)), keepPins = pins.filter((r) => !off(r));
   return {
-    days: s.days, items: rows.map(shape), pins: pins.map(shape),
-    count: Number(count[0]?.n ?? 0), civic: Number(count[0]?.civic ?? 0), placed: Number(count[0]?.placed ?? 0)
+    days: s.days, items: keep.slice(0, Math.min(200, limit)).map(shape), pins: keepPins.map(shape),
+    count: Math.max(keep.length, Number(count[0]?.n ?? 0) - (rows.length - keep.length)), civic: Number(count[0]?.civic ?? 0),
+    placed: Math.max(keepPins.length, Number(count[0]?.placed ?? 0) - (pins.length - keepPins.length))
   };
 }
 export type AddedItems = Awaited<ReturnType<typeof addedItems>>;
@@ -569,7 +578,12 @@ async function agm(date: string, district: number[]) {
       state: 31, district, grades: [4, 100011], limit: 60, format: "json" }),
     signal: AbortSignal.timeout(30000)
   });
-  if (r.status >= 400) throw new Error(`AGMARKNET HTTP ${r.status}`);
+  if (r.status >= 400) {
+    const body = await r.text().catch(() => "");
+    // v18 round 2: say what is wrong, so the Sources page does not show "timeout" for a CAPTCHA wall
+    if (/captcha/i.test(body)) throw new Error("AGMARKNET now asks for a CAPTCHA on its API: set DATA_GOV_API_KEY (free, data.gov.in) to read market prices from the Open Government Data API instead.");
+    throw new Error(`AGMARKNET HTTP ${r.status}`);
+  }
   const j = await r.json();
   return j?.data?.records as Row[] | undefined;
 }
@@ -579,6 +593,32 @@ const num = (v: unknown) => (v == null || v === "" ? null : Number(v));
 
 /** Last 30 days of prices: each call returns three days, so step back three days at a time. */
 async function collectMandi() {
+  // v18 round 2 (24 Nov): AGMARKNET's API now asks for a CAPTCHA on every report, so nothing has been read since early October. With a
+  // data.gov.in key the Chennai markets' daily prices come from the Open Government Data API instead (ogdprices.ts): the last 14 days, the
+  // last three again (markets report late)
+  const ogd = await import("@/lib/collector/ogdprices");
+  if (ogd.ogdKey()) {
+    let seen = 0, added = 0, calls = 0;
+    // v18 round 3: a day that cannot be read (a timeout, an HTTP error) is skipped and the run goes on to the next; only a refused key ends it
+    let firstError: string | null = null;
+    const today = new Date(Date.now() + 330 * 60_000);
+    const want = new Set(await ogd.missingDays(iso(new Date(today.getTime() - 14 * 864e5)), iso(today), 14));
+    for (let back = 0; back <= 14; back++) {
+      const day = iso(new Date(today.getTime() - back * 864e5));
+      if (back > 3 && !want.has(day)) continue;
+      calls++;
+      try {
+        const r = await ogd.ogdMarketDay(day);
+        seen += r.seen; added += r.added;
+      } catch (e) {
+        const msg = (e as Error)?.message ?? String(e);
+        if (ogd.isOgdKeyError(e)) throw new Error(`data.gov.in: ${msg}`);
+        firstError ??= `data.gov.in, ${day}: ${msg}`;
+      }
+    }
+    return { ok: seen > 0, seen, items_new: added, attempts: calls,
+      error: seen ? null : firstError ?? "data.gov.in returned no Chennai market prices for the last 14 days." };
+  }
   let seen = 0, added = 0, calls = 0;
   const today = new Date();
   for (const sc of SCOPES) {

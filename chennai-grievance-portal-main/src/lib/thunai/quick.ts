@@ -467,6 +467,8 @@ export const asksCount = (text: string): boolean => /\b(how many|how much|count|
  * never answered with the nearest window.
  */
 function withSpan(q: Quick, spec: PeriodSpec): Quick | null {
+  // ("today" is the dashboard's Daily window: lib/period/read.ts)
+  if (spec.kind === "day" && spec.back === 0) return { ...q, slots: { ...q.slots, period: "daily" } };
   if (!needsDates(spec)) return q;
   // what changed, explain and a place's situation compare a window with the one before it: a day ("since yesterday", "today") is the last 24 hours
   // against the 24 before, a week or a month its window; a span they cannot hold is left to the planner (v4, the analysis recipes)
@@ -522,7 +524,7 @@ function readScreen(text: string, w: World, o: { noBail?: boolean; analysis?: bo
   // (the severity is read without the time phrase: "குறைந்ததா", "did it fall", in a comparison is not the level "low")
   // (v12: a broad word, "roads", "traffic", "water", is a category here only beside a word for the records: catIn strict; a noBail reader,
   // the frame's or the rules' after a planner miss, still gets its best reading)
-  const zones = zonesIn(t, w), cat = catIn(t, { strict: !o.noBail }), sev = sevIn(periodWordsOut(t)), period = spec.kind === "window" ? spec.key : needsDates(spec) ? keyOf(spec) : null;
+  const zones = zonesIn(t, w), cat = catIn(t, { strict: !o.noBail }), sev = sevIn(periodWordsOut(t)), period = spec.kind === "window" ? spec.key : spec.kind === "day" && spec.back === 0 ? "daily" as const : needsDates(spec) ? keyOf(spec) : null;
   // "explain the flooding complaint in Velachery", "what's going on with the garbage in Adyar": one issue, retold
   if ((EXPLAIN.test(t) || EXPLAIN_TA.test(t)) && !NOT_ONE.test(t) && (cat || zones.length) && !isComparing(t)) {
     // a topic the rules cannot read ("the power cut complaint in Ambattur"): the zone's top case would be a confident answer about something else (BUG-032)
@@ -699,7 +701,7 @@ function changedScreen(text: string, t: string, w: World, spec: PeriodSpec): Qui
   // two places or a comparison is another question; a window no lane holds ("two weeks ago") was refused before this
   const zones = zonesIn(t, w);
   if (zones.length > 1 || isComparing(t)) return null;
-  const period = spec.kind === "window" ? spec.key : needsDates(spec) ? keyOf(spec) : null;
+  const period = spec.kind === "window" ? spec.key : spec.kind === "day" && spec.back === 0 ? "daily" as const : needsDates(spec) ? keyOf(spec) : null;
   // v5 A4: one metric named in code sets metricId; two named: the planner decides (no screen from the rules); none: the incidents change
   const metric = metricNamedIn(text);
   // (review planner-quota-1) two metrics named: no screen from the rules at all, so the planner decides (not this window's cases list)

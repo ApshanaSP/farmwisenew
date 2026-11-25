@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useGrowFrom } from "./Shell";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
 import { I } from "./icons";
-import { OfficerCard, StoryLink } from "./Overview";
+import { DeskTags, OfficerCard, StoryLink } from "./Overview";
 import { Empty, SEVS, SevChip, Sources, StChip, fmtShort, fullTitle, listScopeWords, rel, reportOpt, type Row } from "./lib";
 import type { Console, ListPreset } from "./CollectorApp";
 
@@ -307,19 +307,78 @@ export function ExportBody({ c }: { c: Console }) {
   );
 }
 
+type NewsFilter = "all" | "act" | "know" | "left";
+interface LeftOut { total: number; items: { id: string; title: string; original: string | null; publisher: string | null; url: string | null; t: string; reason: string }[] }
+
+/**
+ * Every news story of the period as the news desk read it: all, those needing action, those for information, one area of work, and what
+ * was left out with the reason, so nothing disappears unseen.
+ */
 export function NewsAllBody({ d, c }: { d: OverviewData; c: Console }) {
+  const [show, setShow] = useState<NewsFilter>("all");
+  const [area, setArea] = useState("");
+  const [left, setLeft] = useState<LeftOut | null | "error">(null);
+  useEffect(() => {
+    if (!d.allNews) return;
+    let live = true;
+    fetch(`/api/collector/news?left=1&period=${c.period}`).then(async (r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((j) => live && setLeft(j), () => live && setLeft("error"));
+    return () => { live = false; };
+  }, [c.period, d.allNews]);
   if (d.allNews) {
-    if (!d.allNews.length) return <Empty>No news in this period.</Empty>;
+    const n = { act: d.allNews.filter((i) => i.desk?.v === "act").length, know: d.allNews.filter((i) => i.desk?.v !== "act").length };
+    const areas = new Map<string, number>();
+    for (const i of d.allNews) if (i.desk?.area) areas.set(i.desk.area, (areas.get(i.desk.area) ?? 0) + 1);
+    const list = d.allNews.filter((i) => (show === "all" || show === "left" || (show === "act") === (i.desk?.v === "act")) && (!area || i.desk?.area === area));
+    const tab = (k: NewsFilter, label: string, count: number | null) => (
+      <button role="tab" aria-selected={show === k} className={show === k ? "on" : ""} onClick={() => setShow(k)}>{label}{count != null && <b>{count}</b>}</button>
+    );
     return (
-      <div className="ngrid">
-        {d.allNews.map((i) => (
-          <button key={i.id} className="ncard" onClick={() => c.openStory(i)}>
-            <div className="nout">{(i.outletNames.length ? i.outletNames : ["News"]).slice(0, 4).map((n) => <span key={n}>{n}</span>)}{i.outletNames.length > 4 && <span>+{i.outletNames.length - 4}</span>}</div>
-            <h4 title={i.original ?? undefined}>{i.title}</h4>
-            <div className="nmeta"><span>{i.loc ?? "Chennai"}</span><span>{rel(i.t, d.now)}</span>{i.sev && <SevChip s={i.sev} />}</div>
-            <StoryLink i={i} />
-          </button>
-        ))}
+      <div className="nwall">
+        <div className="nwall-h">
+          <div className="nw-seg" role="tablist" aria-label="Which news">
+            {tab("all", "All", d.allNewsTotal || d.allNews.length)}{tab("act", "Needs action", n.act)}{tab("know", "For information", n.know)}
+            {tab("left", "Left out", left && left !== "error" ? left.total : null)}
+          </div>
+          {show !== "left" && areas.size > 1 && (
+            <select value={area} onChange={(e) => setArea(e.target.value)} aria-label="Area of work">
+              <option value="">Every area</option>
+              {[...areas.entries()].sort((a, b) => b[1] - a[1]).map(([a, k]) => <option key={a} value={a}>{a} ({k})</option>)}
+            </select>
+          )}
+          <span className="nwall-n">{show === "left" ? "Read by AI and not the district administration's business" : "Read by AI from official news media, newest first"}</span>
+        </div>
+        {show === "left" ? (
+          left === "error" ? <Empty>The list could not be loaded just now.</Empty> : !left ? <Empty>Loading…</Empty> : !left.items.length ? <Empty>Nothing was left out in this period.</Empty> : (
+            <ul className="nw-left">
+              {left.items.map((x) => {
+                const url = x.url && /^https?:/i.test(x.url) ? x.url : null;
+                return (
+                  <li key={x.id}>
+                    <span className="nw-t skip">{x.reason}</span>
+                    <span className="nw-left-t" title={x.original ?? undefined}>{url ? <a href={url} target="_blank" rel="noopener noreferrer">{x.title}</a> : x.title}</span>
+                    <small>{x.publisher ?? "News"} · {rel(x.t, d.now)}</small>
+                  </li>
+                );
+              })}
+            </ul>
+          )
+        ) : list.length ? (
+          <div className="ngrid">
+            {list.map((i) => (
+              <button key={i.id} className={`ncard nw${i.desk?.v === "act" ? " act" : ""}`} onClick={() => c.openStory(i)}>
+                <div className="nw-tags"><DeskTags i={i} />{i.sev && <SevChip s={i.sev} />}</div>
+                <h4 title={i.original ?? undefined}>{i.title}</h4>
+                {i.desk?.gist && <p>{i.desk.gist}</p>}
+                {i.desk?.why && <p className="nw-why"><b>Why it matters</b>{i.desk.why}</p>}
+                <div className="nout" aria-label="Sources">{(i.sources?.length ? i.sources.map((s) => s.name) : i.outletNames.length ? i.outletNames : ["News"]).slice(0, 5).map((nm) => <span key={nm}>{nm}</span>)}
+                  {i.outletNames.length > 5 && <span>+{i.outletNames.length - 5}</span>}</div>
+                <div className="nmeta"><span>{i.loc ?? "Chennai"}</span><span>{rel(i.t, d.now)}</span></div>
+                <StoryLink i={i} />
+              </button>
+            ))}
+          </div>
+        ) : <Empty>{d.allNews.length ? "No news of this kind in this period." : "No news in this period."}</Empty>}
       </div>
     );
   }

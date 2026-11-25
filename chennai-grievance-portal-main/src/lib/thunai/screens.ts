@@ -25,6 +25,8 @@ import { CAT_LABEL_TA, closedAs, factSheet, idam, plainWhat, plainWho, spokenPla
 import { briefIssue, latestOf, roleWords, timeOf } from "./brief6";
 import { keepExtras, type AideExtras } from "./aide7/extras";
 import { isNewsMedia } from "@/lib/collector/newsmedia";
+import type { Plan } from "./v19/shape";
+import { askRecipe, type AskHand } from "./v19/doc";
 // the analysis recipes import helpers from this file: a cycle that is safe because RECIPE calls them only when a screen is built
 import { changedRecipe } from "./recipes/changed";
 import { focusRecipe } from "./recipes/focus";
@@ -33,6 +35,14 @@ import { situationRecipe } from "./recipes/situation";
 import type { RecipeCtx, RecipePart } from "./recipes/common";
 import { thinLine } from "./persona";
 import type { StudioAnswerOut, StudioPick } from "@/lib/studio/forAssistants";
+// v18 (24 Nov): any window, everything about one subject, and a way into every insight
+import { summaryRecipe, type SummaryPart } from "./recipes/summary";
+import { spanCompare, spanNews, spanPrices, spanRanking, spanReadings, spanTraffic, spanTrend } from "./recipes/window18";
+import { MAX_BLOCKS } from "./stage";
+import { OutsideRecords, beforeRecords, isToday, isWindowSpec, istWall, overWords } from "./v18/when";
+import { withAbout, withDrills } from "./v18/drills";
+import { spanOf } from "@/lib/period/read";
+import type { WinHands } from "./v18/window";
 
 type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -84,6 +94,8 @@ export interface Slots {
   rain?: string | null;
   /** 23 Nov, city: a ranked list of live traffic ("top three most congested roads", "areas with the least traffic") */
   rank?: { n: number; order: "most" | "least"; by: "road" | "area" } | null;
+  /** v18 round 2, city: traffic over a window from the readings the website keeps every 10 minutes (lib/city/history.ts), not the live picture */
+  past?: boolean;
   /** 23 Nov, cases: the count asked for ("open the top three cases"): exactly that many, by priority, with why each ranks there */
   top?: number | null;
   /** v16 (22 Nov), focus: what the reader understood was asked (attention, improving, worsening, repeat), in order */
@@ -96,6 +108,16 @@ export interface Slots {
   dataset?: string | null;
   /** v17, dataset: the last answer's filters, kept by a follow-up ("and only the pending ones?") */
   filters?: StudioFilter[];
+  /** v18 (24 Nov), summary: a locality that is not a zone ("Velachery", "Shanthi Colony"), matched on the incidents' place */
+  place?: string | null;
+  /** v18 round 2: the place is a locality exactly as the summary's "By locality" ranking counts it (a ranking item clicked) */
+  exact?: boolean;
+  /** v18, summary: a group of kinds ("crimes": v18/topics.ts), counted together */
+  family?: string | null;
+  /** v18, summary: "cases" when a tile was clicked: the records behind the number, then the map */
+  view?: "cases" | null;
+  /** v19, ask: the analyst's plan (v19/plan.ts), so a click, Back or a refresh runs it again with no model */
+  plan?: Plan;
 }
 export type StudioFilter = { col: string; op: "eq" | "neq" | "in" | "contains" | "gte" | "lte" | "open" | "closed" | "recent_days" | "latest"; values: string[] };
 
@@ -135,7 +157,17 @@ export interface Hands {
   compare?: (key: PeriodKey, s: ScopeT, f: { sev: string | null; status: "open" | "overdue" | null }) => Promise<{ cmp: Comparison; n: number; prev: number; severe: number; open: number; asOf: string } | null>;
   /** v17: the Collector's own Data Studio datasets (absent: not the Collector, or a test) */
   studio?: StudioHands;
+  /** v18: reads over any window with its own dates (v18/window.ts); absent (a test's hands), the summary says it cannot read them */
+  win?: WinHands;
+  /** v19: one data request of the analyst, run (v19/run.ts); absent (a test's hands), the analyst is off */
+  ask?: AskHand;
+  /** v18: the window the turn named (v18/when.ts turnWhen), set by the round once it is read; every screen of the turn counts it */
+  turnSpan?: PeriodSpec | null;
 }
+/** v18: screens that are about one thing now or one record, never a window: a turn's window is not given to them */
+// (focus too: where to concentrate is read over weeks of its own, and its period carries the window asked)
+// (ask: its requests carry their own window, as the analyst read it)
+const NO_TURN_SPAN = new Set<Recipe>(["nearby", "case", "explain", "dataset", "drafts", "complete", "answer", "focus", "ask"]);
 
 export interface Built { doc: StageDocT; runs: string[] }
 
@@ -331,7 +363,36 @@ async function lateTotal(c: Ctx, sev: Sev | null, q: string | null): Promise<num
 /** a screen as a recipe builds it: its title in both languages (a plain string is the same in both: a name, the Collector's own words) */
 type Part = { title: string | Bilingual; takeaway: Bilingual | null; say: Bilingual; blocks: BlockT[]; next?: NextStepT[]; /** v7: facts for the aide beyond the screen (aide7/extras.ts) */ aide?: AideExtras;
   /** v17: the dataset screen's Studio answer (stage.ts studio) and the slots it adds (the answer's filters, for a follow-up) */
-  studio?: StageDocT["studio"]; slotsOut?: Partial<Slots> };
+  studio?: StageDocT["studio"]; slotsOut?: Partial<Slots>;
+  /** v18: the window with its own dates the screen counted */
+  when?: StageDocT["when"] };
+
+/** v18: a recipe that reads any window (recipes/summary.ts, recipes/window18.ts), with screens.ts's context */
+const v18 = (run: (c: RecipeCtx) => Promise<SummaryPart>) => async (c: Ctx): Promise<Part> => {
+  const rc: RecipeCtx = { w: c.w, h: c.h, s: c.s, slots: c.slots, heard: c.heard, runs: c.runs, sources: c.sources, notes: [], asOf: c.asOf, ta: c.ta };
+  try {
+    const p = await run(rc);
+    return { title: p.title, takeaway: p.takeaway, say: p.say, blocks: p.blocks, next: p.next, when: p.when, ...(p.aide ? { aide: p.aide } : {}), ...((p as { slotsOut?: Partial<Slots> }).slotsOut ? { slotsOut: (p as { slotsOut?: Partial<Slots> }).slotsOut } : {}) };
+  } catch (e) {
+    // v18 round 2: the window asked lies wholly before the records: said so, never another window's figures
+    if (!(e instanceof OutsideRecords)) throw e;
+    const why = beforeRecords(e.w);
+    return { title: bi(e.w.label.en, e.w.label.ta), takeaway: null, say: bi(why.en, why.ta), blocks: [{ kind: "Note", id: "before", text: clip(c.ta ? why.ta : why.en, 400) }], next: [],
+      when: { en: clip(e.w.label.en, 160), ta: clip(e.w.label.ta, 200), from: e.w.from, to: e.w.to } };
+  } finally {
+    c.asOf ??= rc.asOf;
+    for (const n of rc.notes) c.notes.push(bi(n, n));
+  }
+};
+/** v18: the screens that count a window of their own dates themselves; with the window reads (h.win), any of these honours any window */
+// (lambdas: the recipes import this file's helpers, so their bindings are read at call time, as `analysis` does)
+const SPAN_NATIVE: Partial<Record<Recipe, (c: RecipeCtx) => Promise<SummaryPart>>> = { news: (c) => spanNews(c), readings: (c) => spanReadings(c), prices: (c) => spanPrices(c),
+  ranking: (c) => spanRanking(c), trend: (c) => spanTrend(c), compare: (c) => spanCompare(c),
+  // v18 round 2: traffic over a window, from the readings the website keeps every 10 minutes (lib/city/history.ts)
+  city: (c) => spanTraffic(c) };
+/** v18: the screens whose own reads know only the console's four windows: with a window of its own dates, the summary of that scope answers */
+// (not focus: where to concentrate is read over weeks of its own, recipes/focus.ts)
+const SPAN_TO_SUMMARY = new Set<Recipe>(["brief", "situation", "why", "changed", "insight", "dashboard", "advise", "performance", "map"]);
 
 /**
  * The analysis recipes (recipes/*.ts, lane A2) take the same context with their notes as plain lines in the screen's language and the
@@ -356,7 +417,11 @@ const RECIPE: Record<Recipe, (c: Ctx) => Promise<Part>> = {
   // v15 (22 Nov): where to concentrate, improving, getting worse, repeating (recipes/focus.ts)
   focus: analysis((c) => focusRecipe(c)),
   // v17 (22 Nov): an answer from one of the Collector's own Data Studio datasets
-  dataset: datasetScreen
+  dataset: datasetScreen,
+  // v18 (24 Nov): everything about one area, department, kind or the district, over any window
+  summary: v18((c) => summaryRecipe(c)),
+  // v19 (25 Nov): exactly what was asked, from the analyst's own data request (v19/doc.ts)
+  ask: v18((c) => askRecipe(c))
 };
 
 const CHART_OF: Record<string, "bar" | "hbar" | "line" | "donut"> = { bar: "bar", hbar: "hbar", line: "line", area: "line", donut: "donut", treemap: "hbar", map: "hbar" };
@@ -418,6 +483,10 @@ async function datasetScreen(c: Ctx): Promise<Part> {
  * (agent.ts finish); without it, the language of the words heard (normalise.ts detectLang: Tamil script or Tanglish is Tamil).
  */
 export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w: World, h: Hands, heard: string, id = `st-${Date.now().toString(36)}`, lang?: Lang): Promise<Built> {
+  // v18 (24 Nov): the window the turn named ("last 2 days", "on 20 November", "two days ago"), for every screen the turn builds, whichever lane
+  // chose it (round.ts sets it once a turn, never for a Stage click; the window reads must be there to count it). It replaces a window carried
+  // in the slots of the screen being followed ("and the last 4 days?"); "open now" and "against last month" stay the lanes' own
+  if (h.win && h.turnSpan && !NO_TURN_SPAN.has(recipe) && (!slots.span || isWindowSpec(slots.span))) slots = { ...slots, span: h.turnSpan };
   const s: ScopeT = {
     period: slots.period ?? base.period, zone: slots.zones.length === 1 ? slots.zones[0] : slots.zones.length ? null : base.zone,
     dept: slots.dept ?? (slots.depts.length ? null : base.dept), cat: slots.cat ?? base.cat, taluk: slots.taluk ?? base.taluk, sev: slots.sev ?? null
@@ -426,13 +495,30 @@ export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w:
   // left on by an earlier dashboard) would otherwise turn "today's news" into "today's flooding news"
   // a request that names its own place or topic starts clean (as v1's planner does); one that names nothing keeps the
   // console's filters, so "the severe cases" are the ones the console shows
-  const named = slots.zones.length > 0 || !!slots.dept || !!slots.cat || !!slots.taluk || slots.depts.length > 0;
-  if (recipe === "news" || recipe === "brief" || slots.fresh || named) { s.zone = slots.zones[0] ?? null; s.dept = slots.dept; s.cat = slots.cat; s.taluk = slots.taluk; }
+  const named = slots.zones.length > 0 || !!slots.dept || !!slots.cat || !!slots.taluk || slots.depts.length > 0 || !!slots.family || !!slots.place;
+  if (recipe === "news" || recipe === "brief" || recipe === "summary" || slots.fresh || named) { s.zone = slots.zones[0] ?? null; s.dept = slots.dept; s.cat = slots.cat; s.taluk = slots.taluk; }
   const lng: Lang = (lang ?? detectLang(heard)) === "ta" ? "ta" : "en";
   const c: Ctx = { w, h, s, slots, heard, runs: [], sources: new Set(), notes: [], asOf: null, ta: lng === "ta" };
+  // v18 (24 Nov): a window with its own dates ("last 2 days", "20 November") is honoured by every screen: the ones that count it themselves do,
+  // and the ones whose reads know only the console's four windows hand over to the summary of the same scope over that window. A group of
+  // kinds ("crimes") is the summary's too: the console's list filters one kind at a time
+  const span = slots.span && isWindowSpec(slots.span) ? slots.span : null;
+  if (h.win) {
+    // ("today" is the console's own 24 hours on these: "what are my tasks today" stays the tasks)
+    if (span && !isToday(span) && SPAN_TO_SUMMARY.has(recipe)) { if (recipe === "advise") c.slots = { ...slots, view: "cases" }; recipe = "summary"; }
+    else if (recipe === "cases" && (slots.family || slots.place) && !(slots.span && !span)) { recipe = "summary"; c.slots = { ...slots, view: "cases" }; }
+    // v18 round 2: the cases of dates the console's span reader leaves undated (before the records begin): the summary's list says so
+    else if (recipe === "cases" && span && !spanOf(span, istWall(Date.now()))) { recipe = "summary"; c.slots = { ...slots, view: "cases" }; }
+  }
+  // (a group of kinds or a locality is counted by the window reads too: the console's tools filter one kind, one zone)
+  // (and the prices in one area are its own market's: the console's price tool reads the city's markets together)
+  // (the city: only its traffic has a past, kept by the website; flooding, power and the metro are read live)
+  const native = h.win && SPAN_NATIVE[recipe] && !(recipe === "compare" && slots.zones.length < 2) && (recipe === "city" ? slots.q === "traffic" && (!!span || slots.past === true)
+    : span || (recipe !== "compare" && (!!slots.family || !!slots.place)) || (recipe === "prices" && slots.zones.length === 1));
+  const run = native ? v18(SPAN_NATIVE[recipe]!) : RECIPE[recipe];
   let part: Part;
   try {
-    part = await RECIPE[recipe](c);
+    part = await run(c);
   } catch (e) {
     part = { title: heardTitle(c, bi("Data", "தரவு")), takeaway: null, say: bi("I could not get that data just now.", "அந்தத் தரவை இப்போது பெற முடியவில்லை."),
       blocks: [{ kind: "Note", id: "err", text: L(c, `The data could not be read: ${clip((e as Error).message, 200)}`, "தரவைப் படிக்க முடியவில்லை.") }] };
@@ -441,9 +527,15 @@ export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w:
   const titles = typeof part.title === "string" ? bi(part.title, part.title) : part.title;
   // a note with nothing in it is not shown as a blank line
   const notes = c.notes.map((n) => bi(clip(n.en, 300), clip(n.ta, 300))).filter((n) => n[lng]).slice(0, 4);
-  const doc: StageDocT = { v: 1, id, recipe, title: clip(titles[lng], 200), takeaway: part.takeaway && fitBi(part.takeaway), say: fitBi(part.say), blocks: part.blocks.slice(0, 6), scope: s,
-    slots: (part.slotsOut ? { ...slots, ...part.slotsOut } : slots) as unknown as Record<string, unknown>, sources: [...c.sources].slice(0, 10).map((x) => clip(x, 80)), asOf: c.asOf, notes: notes.map((n) => n[lng]),
-    lang: lng, titles: bi(clip(titles.en, 200), clip(titles.ta, 200)), notesBi: notes, ...(part.studio ? { studio: part.studio } : {}) };
+  // v18: the window with its own dates, shown in place of the four period buttons (a screen that counted it says it; else read from the slots)
+  // (only a screen that counted the span says it: cases and the brief count it themselves, the v18 screens hand theirs back)
+  const sp = span && c.asOf && (recipe === "cases" || recipe === "brief") ? spanOf(span, c.asOf) : null;
+  const when = part.when !== undefined ? part.when : sp ? { en: clip(sp.label.en, 160), ta: clip(sp.label.ta, 200), from: sp.range?.from ?? null, to: sp.range?.to ?? null } : null;
+  const doc0: StageDocT = { v: 1, id, recipe, title: clip(titles[lng], 200), takeaway: part.takeaway && fitBi(part.takeaway), say: fitBi(part.say), blocks: part.blocks.slice(0, MAX_BLOCKS), scope: s,
+    slots: (part.slotsOut ? { ...c.slots, ...part.slotsOut } : c.slots) as unknown as Record<string, unknown>, sources: [...c.sources].slice(0, 10).map((x) => clip(x, 80)), asOf: c.asOf, notes: notes.map((n) => n[lng]),
+    lang: lng, titles: bi(clip(titles.en, 200), clip(titles.ta, 200)), notesBi: notes, ...(part.studio ? { studio: part.studio } : {}), ...(when ? { when } : {}) };
+  // v18: every insight leads to its records (the summary sets its own)
+  const doc = withAbout(withDrills(doc0, w));
   doc.next = part.next ?? (part.blocks.some((b) => b.kind === "Note") && part.blocks.length === 1 ? [] : nextSteps(doc));
   if (part.aide) keepExtras(doc, part.aide);
   // the persona pushes back when the data is thin: a finding resting on a handful of cases says so, with code's own count (persona.ts)
@@ -926,7 +1018,8 @@ async function spanCases(c: Ctx, spec: PeriodSpec): Promise<Part> {
   // what was counted, said with the count: "open now" for the current state, "still open" or "past their deadline" when that was asked
   const state = r.span.now ? bi(status === "overdue" ? " open past their deadline now" : " open now", status === "overdue" ? " இப்போது காலக்கெடு தாண்டி நிலுவையில்" : " இப்போது நிலுவையில்")
     : status === "overdue" ? bi(" past their deadline", " காலக்கெடு தாண்டியவை") : status === "open" ? bi(" still open", " இன்னும் நிலுவையில்") : bi("", "");
-  const whenEn = r.span.now ? "" : ` ${when.en}`, whenTa = r.span.now ? "" : `${when.ta} `;
+  // (v18: a date or a range of dates reads "on 22 Nov", "from 15 Nov to 20 Nov"; the other spans read as they always did)
+  const whenEn = r.span.now ? "" : /^[0-9]/.test(when.en) ? ` ${overWords(when.en)}` : ` ${when.en}`, whenTa = r.span.now ? "" : `${when.ta} `;
   // (the list's title has 160 characters on the catalog: a Tamil zone, department, kind and span ran past it and the screen was refused, review break C27)
   const titles = bi(clip([`${sev ? `${sev} cases` : "Cases"}`, scope.en, r.span.now ? "open now" : when.en].filter(Boolean).join(" · "), 160),
     clip([`${sev ? `${SEV_TA[sev]} சம்பவங்கள்` : "சம்பவங்கள்"}`, scope.ta, r.span.now ? "இப்போது" : when.ta].filter(Boolean).join(" · "), 160));

@@ -453,3 +453,83 @@
 .st-filled td.blank { opacity: .55; }
 .st-src { display: block; font-size: 10.5px; opacity: .8; line-height: 1.35; margin-top: 2px; }
 .st-cannot { margin: 8px 0 0; padding-left: 18px; font-size: 12.5px; }
+
+/* v18 (24 Nov, the owner: "the screen is not properly visible, the Jarvis board and the suggestions hide it, insights overlap, a small scrolling
+   space, I cannot click an insight"): the screen is one page that scrolls in a large area, every part at its natural height, nothing sticky,
+   nothing in a small box of its own; it ends above Jarvis's bar and cards (hud.css sets the room they take); everything with records behind it
+   looks and works like a button */
+.st-grid { padding: 6px 22px 56px; gap: 16px; scroll-padding-top: 12px; }
+.st-block.k-MapView { position: static; }
+.st-grid .st-map, .st-grid:not(.fit) .st-map { height: 400px; }
+.st-tablewrap { max-height: none; }
+.st-cases { max-height: none; overflow: visible; }
+/* Back to the screen this one came from, in words */
+.st-back { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 12px 0 8px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--panel-2); color: var(--text); font-weight: 650; font-size: 13.5px; }
+.st-back:hover { border-color: var(--accent); }
+.st-back svg { width: 15px; height: 15px; }
+.st-home svg { width: 14px; height: 14px; }
+/* the window of its own dates, and the date pickers */
+.st-when { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 999px; background: var(--accent-fill); color: #fff; font-size: 13px; font-weight: 650; white-space: nowrap; }
+.st-when svg { width: 14px; height: 14px; }
+/* v19: a live answer has no window to choose */
+.st-seg[hidden], .st-range[hidden] { display: none; }
+.st-range { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.st-range label { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--text-2); }
+.st-range input { height: 32px; border-radius: 9px; border: 1px solid var(--line-2); background: var(--panel); color: var(--text); padding: 0 8px; font: inherit; font-size: 13px; color-scheme: light dark; }
+.st-root[data-theme="light"] .st-range input { color-scheme: light; }
+.st-root[data-theme="dark"] .st-range input { color-scheme: dark; }
+/* a tile that opens its records */
+.st-kpis-h { margin: 0 0 8px; font-size: 13px; font-weight: 650; color: var(--text-2); }
+button.st-kpi { text-align: left; font: inherit; color: inherit; cursor: pointer; transition: border-color .2s, transform .1s, box-shadow .2s; }
+button.st-kpi:hover { border-color: var(--accent); box-shadow: 0 10px 26px -16px var(--glow); }
+button.st-kpi:active { transform: translateY(1px); }
+.st-kpi .lbl { display: inline-flex; align-items: center; gap: 4px; }
+.st-kpi .lbl svg { width: 13px; height: 13px; color: var(--accent); opacity: .8; }
+/* a point, a finding, a headline that opens */
+.st-point { flex: 1; min-width: 0; display: block; text-align: left; border: 0; background: none; padding: 0; color: inherit; font: inherit; cursor: pointer; }
+.st-point:hover { color: var(--accent); }
+.st-brief .st-point { font-size: 14.5px; line-height: 1.5; }
+.st-brief li.drill { cursor: pointer; }
+.st-brief li.drill:hover { border-color: var(--accent); background: var(--accent-soft); }
+.st-findings li.drill:hover { background: var(--accent-soft); }
+.st-findings .st-link { justify-self: start; margin-top: 2px; }
+.st-news .hl.st-point { display: flex; align-items: flex-start; gap: 6px; font-size: 15px; font-weight: 600; line-height: 1.4; }
+.st-news .hl.st-point svg { flex: none; width: 15px; height: 15px; margin-top: 3px; color: var(--accent); }
+.st-news-sum { margin: 2px 0 4px; font-size: 13.5px; line-height: 1.55; color: var(--text-2); }
+.st-gauge .dt { font-size: 12px; color: var(--text-2); }
+.st-table tr.drill { cursor: pointer; }
+.st-table tr.drill:hover { background: var(--accent-soft); }
+.st-table .st-point { font-weight: 600; }
+/* the area and the window sit on one line that wraps */
+.st-bar.slim { padding: 2px 22px 10px; }
+.st-bar.slim .st-filters { row-gap: 8px; }
+@media (max-width: 640px) {
+  .st-grid { padding: 4px 14px 48px; }
+  .st-range { width: 100%; }
+}
+/* v18: the whole screen is one page that scrolls (the header scrolls away, so the answer gets the full height); a slim bar with Back, Top
+   and Close floats at the top once the header is gone */
+.st-frame { overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: thin; scroll-behavior: auto; }
+.st-frame > .st-grid { flex: none; overflow: visible; min-height: auto; }
+.st-frame > .st-foot { flex: none; }
+.st-float { position: sticky; top: 0; height: 0; z-index: 6; pointer-events: none; }
+.st-float > div { position: absolute; left: 12px; right: 12px; top: 8px; display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 14px; border-radius: 12px;
+  background: var(--elev); border: 1px solid var(--line-2); box-shadow: var(--shadow); opacity: 0; transform: translateY(-8px); transition: opacity .18s, transform .18s; }
+.st-float.on > div { opacity: 1; transform: none; pointer-events: auto; }
+.st-float-t { flex: 1; min-width: 0; font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-float .st-icon { width: 32px; height: 32px; }
+/* a tile's line sits under its figures, never over them (seven tiles in a row are narrow) */
+.st-kpi:has(.st-spark) { padding-right: 15px; }
+.st-kpi .st-spark { position: static; display: block; width: 100%; height: 22px; margin-top: 4px; }
+.st-kpi .dl { flex-wrap: wrap; }
+@media (prefers-reduced-motion: reduce) { .st-float > div { transition: none; } }
+/* v18 round 2: what each part shows, under its title; the index of the screen's parts; room under the floating bar when jumping to a part */
+.st-about { flex-basis: 100%; order: 2; margin: 0; font-size: 13px; line-height: 1.45; color: var(--text-2); }
+.st-bh .st-sub { order: 3; }
+.st-block { scroll-margin-top: 64px; }
+.st-block.k-Kpis > .st-bh { margin-bottom: 8px; }
+.st-index { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 0 22px 10px; }
+.st-index > span { font-size: 12px; font-weight: 650; color: var(--text-3); margin-right: 2px; }
+.st-index button { height: 28px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--panel); color: var(--text-2); font-size: 12.5px; font-weight: 600; }
+.st-index button:hover { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
+@media (max-width: 640px) { .st-index { padding: 0 14px 8px; flex-wrap: nowrap; overflow-x: auto; } .st-index button { flex: none; } }

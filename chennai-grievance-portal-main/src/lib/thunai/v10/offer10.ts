@@ -336,7 +336,10 @@ export function groundScreen(o: { lang: Lang; en: string[]; ta: string[]; rows: 
   const doc = (withRows: boolean) => ({
     v: 1, id: `ground-${(o.now ?? Date.now()).toString(36)}`, recipe: "cases", title: clip(L(o.title.en, o.title.ta), 200), takeaway: null,
     say: { en: clip(o.en.join(" "), 600), ta: clip(o.ta.join(" "), 900) },
-    blocks: withRows && rows.length ? [note, { kind: "CaseList", id: "ground-cases", title: L("Open cases on the console for this story", "இந்தச் செய்திக்கான கன்சோலின் திறந்த புகார்கள்"), source: "list", sev: null, total: rows.length, rows }] : [note],
+    // (v18 review: every part says what it shows, under its title, as the built screens do: drills.ts withAbout)
+    blocks: withRows && rows.length ? [note, { kind: "CaseList", id: "ground-cases", title: L("Open cases on the console for this story", "இந்தச் செய்திக்கான கன்சோலின் திறந்த புகார்கள்"),
+      about: L("The console's own open cases matched to this story by its place and kind. Click a case for its details.", "செய்தியின் இடம், வகை கொண்டு பொருத்திய கன்சோலின் திறந்த புகார்கள். தொட்டால் விவரம்."),
+      source: "list", sev: null, total: rows.length, rows }] : [note],
     scope: { period: "daily", zone: null, dept: null, cat: null, taluk: null, sev: null }, slots: { ground: true }, sources: [], asOf: null,
     notes: [L("Matched by the story's place and kind, from the console's own records; few cases may only mean few were reported.", "செய்தியின் இடம், வகை கொண்டு கன்சோலின் பதிவுகளில் பொருத்தியது; புகார் குறைவு என்றால் பிரச்சினை குறைவு என்று அர்த்தமில்லை.")],
     lang: o.lang, titles: { en: clip(o.title.en, 200), ta: clip(o.title.ta, 200) }

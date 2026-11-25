@@ -11,6 +11,8 @@ import { spokenPart } from "./chunker";
 import { catTaOfLabel } from "./narrate";
 import { OPEN_VERBS, SOFT_VERBS, readPicks, readPositions, tokensOf } from "./ordinal";
 import { understandV8 } from "./v8/flag8";
+import { isWindowSpec } from "./v18/when";
+import { checkSpec, type PeriodSpec } from "@/lib/period/read";
 
 /** does this "only X" name one of the district's zones? Then it is a question about a place (the follow-up frame re-scopes the open screen to it), not a text filter over the rows on show (RC-07) */
 const zoneNamed = (x: string): number | null => {
@@ -95,6 +97,23 @@ export function localStageCommand(raw: string): LocalCmd | null {
     if (pk) return pk.ns.length === 1 ? { op: "draft", n: pk.ns[0], first: false } : { op: "draft", n: pk.ns[0], first: false, ns: pk.ns };
   }
   return null;
+}
+
+/**
+ * v19 (25 Nov): on the analyst's screen, a command that asks for other data goes to the analyst, which counts it ("only the police ones" is a new
+ * count, never a filter over the rows that happen to be shown; "the next one" after the second worst is the third; "sort by newest" of 60 rows
+ * out of 910 is the newest of the 910).
+ */
+export function asksAnalyst(cmd: LocalCmd, doc: StageDocT | null, filtered: boolean): boolean {
+  if (doc?.recipe !== "ask") return false;
+  const list = doc.blocks.find((b) => b.kind === "CaseList"), rank = doc.blocks.find((b) => b.kind === "Ranking");
+  switch (cmd.op) {
+    case "filter": case "everywhere": return true;
+    case "clear": return !filtered;
+    case "next": return rank?.kind === "Ranking" && rank.items.length === 1;
+    case "sort": return list?.kind === "CaseList" && list.total > list.rows.length;
+    default: return false;
+  }
 }
 
 // ------------------------------------------------------------------ the reducer --
@@ -212,11 +231,11 @@ export function stageDigest(m: StageModel, focus: number | null = null): string 
   const items = d.blocks.map((b) => {
     if (b.kind === "CaseList") return `cases(${b.total}): ${b.rows.slice(0, 8).map((r, i) => `${i + 1}=${r.id} ${r.title.slice(0, 40)}`).join("; ")}`;
     if (b.kind === "NewsReader") return `news: ${b.items.slice(0, 6).map((x, i) => `${i + 1}=${x.title.slice(0, 40)}`).join("; ")}`;
-    if (b.kind === "Ranking") return `ranking: ${b.items.slice(0, 6).map((x) => x.label.slice(0, 24)).join(", ")}`;
+    if (b.kind === "Ranking") return `ranking: ${b.items.slice(0, 6).map((x) => `${d.recipe === "ask" ? `#${x.rank} ` : ""}${x.label.slice(0, d.recipe === "ask" ? 40 : 24)}`).join(", ")}`;
     if (b.kind === "Compare") return `compare: ${b.sides.map((s) => s.label).join(" vs ")}`;
     return b.kind;
   }).join(" | ");
-  return JSON.stringify({ recipe: d.recipe, title: d.title.slice(0, 80), slots: Object.fromEntries(Object.entries(d.slots).filter(([, v]) => v != null && !(Array.isArray(v) && !v.length))), filter: m.filter, views: m.views, focus, items }).slice(0, 1400);
+  return JSON.stringify({ recipe: d.recipe, title: d.title.slice(0, 80), slots: Object.fromEntries(Object.entries(d.slots).filter(([k, v]) => k !== "plan" && v != null && !(Array.isArray(v) && !v.length))), filter: m.filter, views: m.views, focus, items }).slice(0, 1400);
 }
 
 /** Lane 1: what Thunai says the moment the request leaves, from the words alone (no figures). */
@@ -403,6 +422,55 @@ export function toCsv(d: StageDocT): string {
     else if (b.kind === "Filled") table(b.title, ["id", "title", ...b.cols.flatMap((c) => [c.label, `${c.label} source`])], b.rows.map((r) => [r.id, r.title, ...r.cells.flatMap((c) => [c.v, c.src])]));
   }
   return out.join("\n");
+}
+
+/**
+ * v18 (review, 24 Nov): the window of a screen that counts its own dates ("last 2 days", "20 Nov": its `when`, or a window span in its slots),
+ * or null for a screen on the console's four windows. The owner's rule: every click opens exactly the records behind what was clicked, in the
+ * screen's own window. A zone or a station clicked with no drill of its own (a map's ward or zone, a Compare side, a gauge) used to open the
+ * console's period with every kind.
+ */
+function ownWindowOf(d: StageDocT | null): { period: StageDocT["scope"]["period"]; span: PeriodSpec | null } | null {
+  if (!d) return null;
+  const span = checkSpec((d.slots as Record<string, unknown>).span);
+  const own = span && isWindowSpec(span) ? span : null;
+  return d.when || own ? { period: d.scope.period, span: own } : null;
+}
+
+/**
+ * A zone clicked on a screen with its own window: that zone's cases (the summary's list view) in the same dates, for the same department, kind
+ * or group of kinds, severity and status. Null on a screen without its own window: the caller opens the zone's cases as before.
+ */
+export function zoneClickSlots(d: StageDocT | null, zone: number): Record<string, unknown> | null {
+  const w = ownWindowOf(d);
+  if (!w || !d) return null;
+  const s = d.slots as Record<string, unknown>;
+  const family = typeof s.family === "string" && s.family ? s.family : null;
+  const status = s.status === "open" || s.status === "overdue" || s.status === "resolved" ? s.status : null;
+  return { zones: [zone], ...(d.scope.dept ? { dept: d.scope.dept } : {}), ...(family ? { family } : d.scope.cat ? { cat: d.scope.cat } : {}),
+    ...(d.scope.sev === "Severe" || d.scope.sev === "High" ? { sev: d.scope.sev } : {}), ...(status ? { status } : {}),
+    period: w.period, ...(w.span ? { span: w.span } : {}), view: "cases", fresh: true };
+}
+
+/**
+ * v19: an area clicked on the analyst's own screen: the same request for that area, as its records (the department, severity, words and window the
+ * question said are kept; live roads stay live). Null when the screen counts nothing an area has.
+ */
+export function askZoneSlots(d: StageDocT | null, zone: number): Record<string, unknown> | null {
+  if (d?.recipe !== "ask") return null;
+  const plan = (d.slots as Record<string, unknown>).plan as { queries?: Record<string, unknown>[] } | undefined;
+  const q = plan?.queries?.find((x) => x.of === "incidents") ?? plan?.queries?.find((x) => x.of === "traffic");
+  if (!plan || !q) return null;
+  const here = Array.isArray(q.zones) && (q.zones as number[]).includes(zone);
+  const base = { ...q, zones: [zone], place: here ? q.place ?? null : null, ward: here ? q.ward ?? null : null, taluk: null, per: null, rank: null, take: null, before: false };
+  return { ...(d.slots as Record<string, unknown>), fresh: true, plan: { ...plan, title: "", title_ta: "", understood: "", queries: [q.of === "traffic" ? { ...base, by: "road", measure: "delay", order: "most" } : { ...base, by: null, list: true, measure: q.measure === "change" || q.measure === "share" ? "count" : q.measure }] } };
+}
+
+/** A station clicked: its readings, in the screen's own window when it has one (the readings screen counts a span itself). */
+export function stationClickSlots(d: StageDocT | null, name: string, metric: string): Record<string, unknown> {
+  const m = ["rain", "aqi", "lakes", "temp", "humidity"].includes(metric) ? metric : "rain";
+  const w = ownWindowOf(d);
+  return { metric: m, name, ...(w ? { period: w.period, ...(w.span ? { span: w.span } : {}) } : {}) };
 }
 
 /** The case ids on the Stage in order, for "open 3" and "draft for the first three". */

@@ -143,7 +143,7 @@ export function provenanceOf(d: StageDocT, by: { by: "rules" | "ai"; model?: str
   const n = list ? list.total : f0 ? f0.n : rank ? rank.items.length : read ? read.items.length : news ? news.total : null;
   const unit: Provenance["unit"] = list ? "cases" : f0 ? "findings" : rank ? "items" : read ? "readings" : news ? "news" : null;
   const caveat = clean(f0?.caveat ?? d.notes[0] ?? "", 240) || null;
-  return { recipe: d.recipe, method, n: n != null && Number.isFinite(n) ? n : null, unit, period: d.scope.period ?? null, span: !!(d.slots as Record<string, unknown>).span, sources: d.sources.slice(0, 4), caveat, asOf: d.asOf, by: by.by, model: by.model ?? null };
+  return { recipe: d.recipe, method, n: n != null && Number.isFinite(n) ? n : null, unit, period: d.scope.period ?? null, span: !!(d.slots as Record<string, unknown>).span || (d.recipe === "ask" && !!d.when), sources: d.sources.slice(0, 4), caveat, asOf: d.asOf, by: by.by, model: by.model ?? null };
 }
 
 const arr = (v: unknown): number[] => (Array.isArray(v) ? v.filter((x): x is number => typeof x === "number" && Number.isFinite(x)) : typeof v === "number" ? [v] : []);

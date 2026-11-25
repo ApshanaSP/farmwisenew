@@ -244,6 +244,9 @@ const STEPS: Record<WarmStep, () => Promise<unknown>> = {
     // v16 (22 Nov): the reader's prefix first: it is every turn's first call now (v16/reader.ts), and a cold one ran past its 2.6 s
     const reader = await import("@/lib/thunai/v16/reader");
     if (reader.readerOn()) await claude.claudeWarm({ system: reader.readerSystem(w), schema: reader.ReadingSchema, timeoutMs: PROMPT_TIMEOUT_MS }).catch(() => null);
+    // v19 (25 Nov): the analyst's, beside it on every turn
+    const analyst = await import("@/lib/thunai/v19/plan");
+    if (analyst.analystOn()) await claude.claudeWarm({ system: analyst.planSystem(w), schema: analyst.PlanSchema, timeoutMs: PROMPT_TIMEOUT_MS }).catch(() => null);
     return claude.claudeWarm({ ...round.plannerWarm(w), timeoutMs: PROMPT_TIMEOUT_MS });
   }
 };

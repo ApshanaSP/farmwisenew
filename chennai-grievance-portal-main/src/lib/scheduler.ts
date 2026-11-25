@@ -22,6 +22,11 @@ export function startJobs(): void {
       // the live lane's IMD warning: read every 10 minutes, laid over the hourly build in memory (lib/live/imd.ts); on its
       // own, so loading it or a slow IMD site never holds up the other jobs
       void import("@/lib/live/imd").then((m) => m.liveImdTick()).catch((e) => console.warn(`[jobs] live IMD skipped: ${(e as Error).message}`));
+      // the news desk: AI reads each new news story once, so the Collector sees only what is the administration's business (newsdesk.ts)
+      void import("@/lib/collector/newsdesk").then((m) => m.deskTick()).catch((e) => console.warn(`[jobs] news desk skipped: ${(e as Error).message}`));
+      // v18 round 2 (24 Nov): live traffic kept, a reading every 10 minutes (lib/city/history.ts): TomTom keeps no history, and the Collector asks
+      // "the most congested roads over the last 30 days"; on its own, so a slow TomTom never holds up the other jobs
+      if (process.env.TRAFFIC_HISTORY !== "off") void import("@/lib/city/history").then((m) => m.recordTraffic()).catch((e) => console.warn(`[jobs] traffic reading skipped: ${(e as Error).message}`));
       runDueRefreshes();
       // Data Studio's Live Connectors: each at its own time (IST), missed runs caught up once
       runDueConnectors();

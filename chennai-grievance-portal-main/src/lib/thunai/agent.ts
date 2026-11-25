@@ -28,6 +28,8 @@ import { figuresOf, figuresOk, PLANNER_RECIPES, RECIPES, type Recipe, type Scope
 import type { Lang, PeriodKey, ScreenState, Sev, Step, View, World } from "./types";
 import { cityAsk } from "@/lib/city/intent";
 import { periodIn, placesIn, sevIn, statusIn, zonesIn } from "./quick";
+import { isTopic } from "./v18/topics";
+import { checkPlan as checkAsk, planFromSlots } from "./v19/shape";
 
 export const AGENT_V = "thunai-agent-v1";
 export const MAX_ROUNDS = 3;
@@ -271,6 +273,7 @@ export function checkScreen(raw: unknown, w: World, stage: StageContext | null):
     const q = String(s.q ?? "").toLowerCase().trim();
     out.q = (CITY_TOPICS_V11 as readonly string[]).includes(q) ? q : (cityAsk(q)?.topic ?? "all");
     if (s.focus === "worst-jam" || s.focus === "repeat") out.focus = s.focus;
+    if (s.past === true && out.q === "traffic") out.past = true;
     if (typeof s.rain === "string" && /^(?:latest|rain-\d{4}-\d{2}-\d{2})$/.test(s.rain.trim())) out.rain = s.rain.trim();
     // 23 Nov: a ranked list of live traffic
     const rk = s.rank as { n?: unknown; order?: unknown; by?: unknown } | null | undefined;
@@ -285,6 +288,11 @@ export function checkScreen(raw: unknown, w: World, stage: StageContext | null):
     if (s.about === "areas" || s.about === "places" || s.about === "kinds") out.about = s.about;
   }
   if (recipe === "advise" && s.one === true) out.one = true;
+  // v18 (24 Nov): a locality that is not a zone, a group of kinds ("crimes"), and the summary's list view (a tile clicked)
+  if (typeof s.place === "string") { const p = words(s.place, 60); if (p && /^[\p{L}\p{M} .,'()-]{2,60}$/u.test(p)) out.place = p; }
+  if (isTopic(s.family)) out.family = s.family;
+  if (recipe === "summary" && s.view === "cases") out.view = "cases";
+  if (out.place && s.exact === true) out.exact = true;
   // v17: a dataset answer names the dataset by its id, asks the Collector's own question as said (its figures are the Studio's to count, never
   // Jarvis's: the screen says only what the Studio computed), and keeps the last answer's filters for a follow-up
   if (recipe === "dataset") {
@@ -292,6 +300,12 @@ export function checkScreen(raw: unknown, w: World, stage: StageContext | null):
     out.dataset = s.dataset;
     out.q = clip(s.q, 300) || null;
     out.filters = studioFilters(s.filters);
+  }
+  // v19: the analyst's plan, checked against the world (a code no one knows is dropped); with none there is nothing to ask
+  if (recipe === "ask") {
+    const p = planFromSlots(s.plan);
+    if (!p) return null;
+    out.plan = checkAsk(p, w, "");
   }
   if (s.fresh === true) out.fresh = true;
   if (typeof s.org === "string" && /^[A-Z]{2,6}$/.test(s.org) && w.depts.some((d) => d.code.startsWith(`${s.org}-`))) out.org = s.org;
@@ -864,7 +878,11 @@ export function answerScreen(plan: AgentPlan, heard: string, results: { name: st
   const asOf = v11 ? v11.turn[0]?.result.asOf ?? newest : results[0]?.result.asOf ?? null;
   const doc: StageDocT = {
     v: 1, id: `st-${Date.now().toString(36)}`, recipe: "answer", title: clip(heard, 200), takeaway: null, say: { en: text, ta: text },
-    blocks: [{ kind: "Answer", id: "answer", title: "What the data says", text, facts: top.map((f) => ({ label: clip(f.label, 160), value: f.value, unit: f.unit ?? null })) }],
+    // (v18 review: the part says what it shows under its title, as the built screens' parts do: v18/drills.ts withAbout)
+    blocks: [{ kind: "Answer", id: "answer", title: "What the data says",
+      about: top.length ? (lang === "ta" ? "கன்சோலின் தரவு இந்தக் கேள்விக்குச் சொல்வது, அது சார்ந்த எண்களுடன்." : "What the console's data says to this question, with the figures it rests on.")
+        : lang === "ta" ? "கன்சோலின் தரவு இந்தக் கேள்விக்குச் சொல்வது." : "What the console's data says to this question.",
+      text, facts: top.map((f) => ({ label: clip(f.label, 160), value: f.value, unit: f.unit ?? null })) }],
     scope: { ...scope, sev: null }, slots: {}, sources: sources.slice(0, 10), asOf,
     notes: ok || !said ? [] : [!cites && figuresOk(plain, allowed) ? "The model's wording stated no figure from the data, so the figures are shown as they are."
       : "The model's wording had a figure the data does not hold, so the figures are shown as they are."]

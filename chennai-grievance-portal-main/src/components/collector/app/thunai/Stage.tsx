@@ -6,7 +6,7 @@
  * department, switch a block between chart, table and map, change the period or the area, pin, export, save.
  * Thunai.tsx owns the document, the narration and the actions; this file draws them.
  */
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, memo, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { MapGeo } from "@/lib/collector/geo";
 import type { PanelData } from "@/lib/studio/types";
@@ -19,6 +19,7 @@ import StageChart from "./StageChart";
 import { StudioActions, type StudioMsg } from "./StudioAnswer";
 import { chartHeight, chartSpecOf } from "./chartspec";
 import { UNIT_TA } from "@/lib/thunai/stagelocal";
+import { WHOLE_SAID } from "@/lib/thunai/v19/whole";
 import "leaflet/dist/leaflet.css";
 import "../studio/studio.css";
 import { CountUp } from "./countup";
@@ -85,8 +86,30 @@ interface Props {
 }
 
 const T = (lang: Lang, en: string, ta: string) => (lang === "ta" ? ta : en);
-const PERIODS = [["daily", "Today", "இன்று"], ["weekly", "Week", "வாரம்"], ["monthly", "30 days", "30 நாள்"], ["quarterly", "90 days", "90 நாள்"]] as const;
-const SCOPED = new Set(["cases", "map", "dashboard", "trend", "why", "news", "performance", "ranking", "compare", "brief"]);
+const PERIODS = [["daily", "24 hours", "24 மணி"], ["weekly", "7 days", "7 நாள்"], ["monthly", "30 days", "30 நாள்"], ["quarterly", "90 days", "90 நாள்"]] as const;
+// v18: the summary and the readings and prices take any window too
+const SCOPED = new Set(["cases", "map", "dashboard", "trend", "why", "news", "performance", "ranking", "compare", "brief", "summary", "ask", "readings", "prices"]);
+/** v19: an analyst's plan asked over another window (its requests' own times replaced), as the window controls set it */
+// (its heading was for the window it was asked over: code's own heading is used)
+const WINDOW_SAID: Record<string, string> = { daily: "last 24 hours", weekly: "last 7 days", monthly: "last 30 days", quarterly: "last 90 days" };
+const planOver = (plan: unknown, time: { said: string | null; from: string | null; to: string | null; hours: null } | null): unknown => {
+  const p = plan as { queries?: Record<string, unknown>[] } | null | undefined;
+  // (live roads and a station's latest reading have no window; the whole district stays the whole district)
+  const live = (q: Record<string, unknown>) => !!time?.said && !q.time && q.of !== "incidents" && q.of !== "news" && q.of !== "rain" && q.of !== "prices";
+  return p && Array.isArray(p.queries) ? { ...p, title: "", title_ta: "", understood: WHOLE_SAID.test(String((p as { understood?: string }).understood ?? "")) ? "the whole district" : "", queries: p.queries.map((q) => (live(q) ? q : { ...q, time })) } : plan;
+};
+/** v18: a drill as the Stage follows it (stage.ts Drill) */
+type DrillT = NonNullable<Extract<BlockT, { kind: "Kpis" }>["items"][number]["drill"]>;
+const go = (a: StageActions, d: DrillT | null | undefined) => { if (d) a.direct(d.recipe, d.slots, d.label); };
+/** "2026-11-20 00:00:00" -> "2026-11-20" (a date input's value); the last whole day of an exclusive bound */
+const dayInput = (t: string | null | undefined, exclusiveEnd = false): string => {
+  if (!t) return "";
+  const ms = Date.parse(`${t.replace(" ", "T")}+05:30`) - (exclusiveEnd ? 1000 : 0);
+  return Number.isFinite(ms) ? new Date(ms + 330 * 60_000).toISOString().slice(0, 10) : "";
+};
+const todayInput = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
+/** a date input's "2026-11-20" as a calendar day of lib/period/read.ts */
+const dayOf = (v: string) => { const [y, m, d] = v.split("-").map(Number); return { day: d, month: m - 1, year: y }; };
 const fmt = (v: number) => (Number.isInteger(v) ? v.toLocaleString("en-IN") : (Math.round(v * 10) / 10).toLocaleString("en-IN"));
 const reduced = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 /** a unit as the screen's language says it (the data's units are English codes: "incidents", "days", "₹/kg") */
@@ -110,6 +133,26 @@ function age(t: string | null, asOf: string | null): string | null {
   return h < 1 ? "under 1 h" : h < 48 ? `${Math.round(h)} h` : `${Math.round(h / 24)} days`;
 }
 
+/**
+ * v18: a summary dashboard's spans: the key numbers and the key points across the page, the kinds and the days side by side, the areas and the
+ * departments side by side, the cases and the map each across the page, the news across, the readings and the prices in pairs. Nothing is
+ * sticky and nothing scrolls inside a box: the screen scrolls as one page.
+ */
+function summarySpans(blocks: BlockT[]): number[] {
+  const n = (k: BlockT["kind"]) => blocks.filter((b) => b.kind === k).length;
+  return blocks.map((b) => {
+    switch (b.kind) {
+      case "Chart": return n("Trend") ? 6 : 12;
+      case "Trend": return n("Chart") ? 6 : 12;
+      case "Ranking": return n("Ranking") >= 2 ? 6 : 12;
+      // (two short sets of readings side by side; a long one, or one alone, across the page)
+      case "Readings": { const rs = blocks.filter((x): x is Extract<BlockT, { kind: "Readings" }> => x.kind === "Readings"); return rs.length === 2 && rs.every((x) => x.items.length <= 4) ? 6 : 12; }
+      case "Answer": return n("Answer") >= 2 || n("Readings") ? 6 : 12;
+      default: return 12;
+    }
+  });
+}
+
 /** Grid spans (of 12) for the blocks, by what sits next to what. */
 function spans(blocks: BlockT[]): number[] {
   // KPI tiles sit on their own row: the layout of the rest is decided without them
@@ -125,7 +168,9 @@ function spans(blocks: BlockT[]): number[] {
       case "Trend": return other.includes("Ranking") && !other.includes("MapView") ? 8 : other.includes("Heat") ? 6 : kinds.length >= 5 ? 5 : 12;
       case "Heat": return other.includes("Trend") ? 6 : 12;
       case "Readings": case "CaseDetail": return other.includes("MapView") ? 8 : 12;
-      case "Chart": case "Answer": return 6;
+      // (a chart alone has the page)
+      case "Chart": return kinds.length === 1 ? 12 : 6;
+      case "Answer": return 6;
       case "Brief": return 12;
       default: return 12;
     }
@@ -181,19 +226,46 @@ function Stage(p: Props) {
     if (!root.current?.contains(document.activeElement) || document.activeElement === document.body) titleRef.current?.focus({ preventScroll: true });
   }, [doc.id]);
 
-  const sp = useMemo(() => spans(doc.blocks), [doc.blocks]);
-  // one row of answer under the key numbers (a list and its map, a ranking, the news): the screen fits the window and
-  // each part scrolls on its own, so the map is never below the fold; more than a row scrolls as a page
-  const fit = useMemo(() => doc.blocks.reduce((n, b, i) => n + (b.kind === "Kpis" ? 0 : sp[i]), 0) <= 12, [doc.blocks, sp]);
+  const sp = useMemo(() => (doc.recipe === "summary" || doc.blocks.length > 6 ? summarySpans(doc.blocks) : spans(doc.blocks)), [doc.blocks, doc.recipe]);
+  // v18 (24 Nov, the owner: "a small scrolling space, insights overlapping; I want a large scrolling space where I can see all the insights one
+  // by one"): the screen always scrolls as one page, each part at its natural height; no part scrolls inside its own small box
+  const fit = false;
+  // v18: the whole screen scrolls as one page (header included, stage.css); once its header has scrolled away, Back, Top and Close float at the top
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => { frameRef.current?.scrollTo({ top: 0 }); setScrolled(false); }, [doc.id]);
+  // v18: the window the screen counts, and the date pickers to set any other
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  useEffect(() => { setFrom(dayInput(doc.when?.from)); setTo(dayInput(doc.when?.to, true)); }, [doc.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const setRange = () => {
+    if (!from) return;
+    const end = to || from;
+    const max = todayInput();
+    const lo = (from <= end ? from : end) > max ? max : from <= end ? from : end, hi = (from <= end ? end : from) > max ? max : from <= end ? end : from;
+    const span = { kind: "days", from: dayOf(lo), to: dayOf(hi) };
+    const rest = { ...(doc.slots as Record<string, unknown>) };
+    delete rest.span;
+    // v19: an analyst's screen asks the same over those days
+    if (doc.recipe === "ask") { a.direct("ask", { ...rest, plan: planOver(rest.plan, { said: null, from: lo, to: hi, hours: null }) }, `${doc.title} (${lo === hi ? lo : `${lo} to ${hi}`})`); return; }
+    a.direct(doc.recipe, { ...rest, span }, `${doc.title} (${lo === hi ? lo : `${lo} to ${hi}`})`);
+  };
   /** the map over the whole answer area ("Enlarge map"), back with "Back to the list" */
   const [bigMap, setBigMap] = useState(false);
   useEffect(() => { setBigMap(false); }, [doc.id]);
   // the map redraws its tiles for its new size (it grows with "Enlarge map" and with the fitted layout)
   useEffect(() => { const t = setTimeout(() => window.dispatchEvent(new Event("resize")), 80); return () => clearTimeout(t); }, [bigMap, doc.id]);
   const slots = doc.slots as Record<string, unknown>;
-  const zones = Array.isArray(slots.zones) ? (slots.zones as number[]) : [];
-  const setPeriod = (period: string) => a.direct(doc.recipe, { ...slots, period }, `${doc.title} (${period})`);
-  const setZone = (z: number | null) => a.direct(doc.recipe, doc.recipe === "compare" ? slots : { ...slots, zones: z ? [z] : [] }, doc.title);
+  // v19: the analyst's screen: its area is its requests' own; a live answer has no window to choose
+  const askQs = doc.recipe === "ask" ? ((slots.plan as { queries?: { zones?: number[]; time?: unknown }[] } | undefined)?.queries ?? []) : [];
+  // (its heading is in the language its parts are in: a Tamil question's Tamil screen had an English heading)
+  const stTitle = (doc.recipe === "ask" ? doc.title : doc.titles?.[lang]) || doc.title;
+  // (nor has one that sets two windows side by side)
+  const liveOnly = doc.recipe === "ask" && ((!!doc.when && !doc.when.from && !doc.when.to) || new Set(askQs.map((q) => JSON.stringify(q.time ?? null))).size > 1);
+  const zones = askQs.length === 1 ? askQs[0].zones ?? [] : Array.isArray(slots.zones) ? (slots.zones as number[]) : [];
+  // (a preset clears a window of its own dates: the four buttons are the console's own windows)
+  const setPeriod = (period: string) => { const rest = { ...slots }; delete rest.span; a.direct(doc.recipe, { ...rest, period, ...(doc.recipe === "ask" ? { plan: planOver(rest.plan, { said: WINDOW_SAID[period] ?? null, from: null, to: null, hours: null }) } : {}) }, `${doc.title} (${period})`); };
+  const setZone = (z: number | null) => doc.recipe === "ask" ? a.direct("ask", { ...slots, fresh: true, plan: { ...(slots.plan as object), title: "", title_ta: "", understood: "", queries: askQs.map((q) => ({ ...q, zones: z ? [z] : [], place: null, ward: null, taluk: null })) } }, doc.title) : a.direct(doc.recipe, doc.recipe === "compare" ? slots : { ...slots, zones: z ? [z] : [] }, doc.title);
   const metric = typeof slots.metric === "string" ? slots.metric : typeof slots.measure === "string" && ["rain", "aqi", "lakes", "temp"].includes(slots.measure as string) ? (slots.measure as string) : null;
   // for screen readers: what the screen is doing, or the answer once it has stopped growing (half a second settled, and never while
   // its words are still streaming in), so an answer is read once, not again with every sentence
@@ -209,15 +281,25 @@ function Stage(p: Props) {
     <div className="st-root" lang={p.lang} data-theme={p.theme} data-busy={p.busy ? "1" : undefined} ref={root} role="dialog" aria-modal="true" aria-labelledby="st-title" data-thunai-ui
       style={{ ...(font ? { ["--st-font" as string]: font } : {}), ...look } as React.CSSProperties}>
       <div className="st-scrim" aria-hidden="true" />
-      <div className="st-frame">
+      <div className="st-frame" ref={frameRef} onScroll={(e) => { const s = (e.currentTarget as HTMLDivElement).scrollTop > 140; if (s !== scrolled) setScrolled(s); }}>
+        {/* v18: Back, Top and Close stay in reach while the page is scrolled */}
+        <div className={`st-float${scrolled ? " on" : ""}`} aria-hidden={!scrolled}>
+          <div>
+            <span className="st-float-t">{stTitle}</span>
+            {a.back && <button className="st-back" onClick={a.back} tabIndex={scrolled ? 0 : -1}><I n="chevl" />{T(lang, "Back", "பின்செல்")}</button>}
+            <button className="st-icon" onClick={() => frameRef.current?.scrollTo({ top: 0, behavior: reduced() ? "auto" : "smooth" })} tabIndex={scrolled ? 0 : -1} aria-label={T(lang, "Back to the top", "மேலே")} title={T(lang, "Back to the top", "மேலே")}><I n="up" /></button>
+            <button className="st-icon st-close" onClick={a.close} tabIndex={scrolled ? 0 : -1} aria-label={T(lang, "Close this screen", "இந்தத் திரையை மூடு")} title={T(lang, "Close this screen", "இந்தத் திரையை மூடு")}><I n="x" /></button>
+          </div>
+        </div>
         <header className="st-head">
           <div className="st-titles">
             <div className="st-crumbs">
-              <button className="st-home" onClick={a.close}><I n="chevl" />{T(lang, "Back to dashboard", "டாஷ்போர்டுக்குத் திரும்பு")}</button>
-              {a.back && <button className="st-icon" onClick={a.back} aria-label={T(lang, "Previous screen", "முந்தைய திரை")} title={T(lang, "Previous screen", "முந்தைய திரை")}><I n="refresh" /></button>}
+              {/* v18: Back to the screen this one was opened from (a tile, a point, a bar clicked), in words */}
+              {a.back && <button className="st-back" onClick={a.back} title={T(lang, "Back to the previous screen", "முந்தைய திரைக்கு")}><I n="chevl" />{T(lang, "Back", "பின்செல்")}</button>}
+              <button className="st-home" onClick={a.close}><I n="x" />{T(lang, "Back to dashboard", "டாஷ்போர்டுக்குத் திரும்பு")}</button>
               <span className="st-kicker"><span className={`st-live${p.narrating ? " on" : ""}`} aria-hidden="true" />Jarvis</span>
             </div>
-            <h2 id="st-title" ref={titleRef} tabIndex={-1}>{doc.titles?.[lang] || doc.title}</h2>
+            <h2 id="st-title" ref={titleRef} tabIndex={-1}>{stTitle}</h2>
             {/* v16 (the browser drive): in the screen's own language, as its title and blocks are (a Tamil screen showed this line in English) */}
             {doc.takeaway && <p className="st-take"><I n="spark" />{doc.takeaway[doc.lang === "ta" || doc.lang === "en" ? doc.lang : lang] || doc.takeaway[lang]}</p>}
             {!!doc.next?.length && (
@@ -266,12 +348,20 @@ function Stage(p: Props) {
         <div className="st-bar slim" hidden={!SCOPED.has(doc.recipe)}>
           {SCOPED.has(doc.recipe) && (
             <div className="st-filters" role="group" aria-label={T(lang, "Filters", "வடிகட்டிகள்")}>
-              <div className="st-seg" role="group" aria-label={T(lang, "Period", "காலம்")}>
-                {PERIODS.map(([k, en, ta]) => (
-                  <button key={k} aria-pressed={doc.scope.period === k} className={doc.scope.period === k ? "on" : ""} onClick={() => setPeriod(k)} disabled={!!p.busy}>{lang === "ta" ? ta : en}</button>
-                ))}
+              <div className="st-seg" role="group" aria-label={T(lang, "Period", "காலம்")} hidden={liveOnly}>
+                {PERIODS.map(([k, en, ta]) => {
+                  const on = !doc.when && doc.scope.period === k;
+                  return <button key={k} aria-pressed={on} className={on ? "on" : ""} onClick={() => setPeriod(k)} disabled={!!p.busy}>{lang === "ta" ? ta : en}</button>;
+                })}
               </div>
-              {doc.recipe !== "compare" && doc.recipe !== "performance" && (
+              {/* v18: the window of its own dates this screen counts ("last 2 days", "20 Nov"), and any other: from, to, Show */}
+              {doc.when && <span className="st-when" title={doc.when.from && doc.when.to ? `${doc.when.from} → ${doc.when.to}` : undefined}><I n="clock" />{lang === "ta" ? doc.when.ta : doc.when.en}</span>}
+              <form className="st-range" hidden={liveOnly} onSubmit={(e) => { e.preventDefault(); setRange(); }} aria-label={T(lang, "Any dates", "எந்தத் தேதியும்")}>
+                <label><span>{T(lang, "From", "முதல்")}</span><input type="date" value={from} max={todayInput()} onChange={(e) => setFrom(e.target.value)} disabled={!!p.busy} /></label>
+                <label><span>{T(lang, "To", "வரை")}</span><input type="date" value={to} max={todayInput()} onChange={(e) => setTo(e.target.value)} disabled={!!p.busy} /></label>
+                <button type="submit" className="st-btn sm" disabled={!!p.busy || !from}>{T(lang, "Show", "காட்டு")}</button>
+              </form>
+              {doc.recipe !== "compare" && doc.recipe !== "performance" && !(doc.recipe === "ask" && askQs.length > 1) && (
                 <select aria-label={T(lang, "Area", "பகுதி")} value={zones.length === 1 ? zones[0] : doc.scope.zone ?? ""} onChange={(e) => setZone(e.target.value ? Number(e.target.value) : null)} disabled={!!p.busy}>
                   <option value="">{T(lang, "All of Chennai", "முழு சென்னை")}</option>
                   {ZONE_NAMES.map((z, i) => <option key={z} value={i + 1}>{i + 1}. {z}</option>)}
@@ -298,11 +388,25 @@ function Stage(p: Props) {
         </div>
 
 
+        {/* v18 round 2 (the owner: "I don't know what all the tiles in the preview are; it is still difficult to scroll down"): every part of
+            the screen by its title, one click to it */}
+        {doc.blocks.filter((b) => b.kind !== "Note").length >= 4 && (
+          <nav className="st-index" aria-label={T(lang, "On this screen", "இந்தத் திரையில்")}>
+            <span>{T(lang, "On this screen", "இந்தத் திரையில்")}</span>
+            {doc.blocks.filter((b) => b.kind !== "Note").map((b) => {
+              const t = ("title" in b ? String((b as { title: string }).title) : b.kind).split(" · ")[0];
+              return <button key={b.id} type="button" onClick={() => document.getElementById(`st-sec-${b.id}`)?.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "start" })}>{t}</button>;
+            })}
+          </nav>
+        )}
+
         <main className={`st-grid${fit ? " fit" : ""}${bigMap ? " bigmap" : ""}`} key={doc.id} aria-busy={!!p.busy}>
           {doc.blocks.map((b, i) => (
-            <section key={`${doc.id}-${b.id}`} className={`st-block k-${b.kind}`} style={{ ["--span" as string]: sp[i], ["--i" as string]: i }} aria-label={"title" in b ? (b as { title: string }).title : b.kind}>
-              <Block b={b} doc={doc} lang={lang} reading={p.reading} view={p.views[b.id] ?? null} geo={p.geo} tray={p.tray} a={a}
-                big={bigMap} setBig={doc.blocks.length > 1 ? setBigMap : undefined} />
+            <section key={`${doc.id}-${b.id}`} id={`st-sec-${b.id}`} className={`st-block k-${b.kind}`} style={{ ["--span" as string]: sp[i], ["--i" as string]: i }} aria-label={"title" in b ? (b as { title: string }).title : b.kind}>
+              <AboutCtx.Provider value={(b as { about?: string | null }).about ?? null}>
+                <Block b={b} doc={doc} lang={lang} reading={p.reading} view={p.views[b.id] ?? null} geo={p.geo} tray={p.tray} a={a}
+                  big={bigMap} setBig={doc.blocks.length > 1 ? setBigMap : undefined} />
+              </AboutCtx.Provider>
             </section>
           ))}
           {p.busy && <div className="st-busy"><span className="st-beat" aria-hidden="true" />{p.busy}</div>}
@@ -327,10 +431,15 @@ interface BP { b: BlockT; doc: StageDocT; lang: Lang; reading: Props["reading"];
   /** the map enlarged over the answer area, and its switch (none when the map is the only block) */
   big?: boolean; setBig?: (v: boolean) => void }
 
+/** v18 round 2: the part's own line of what it shows (stage.ts ABOUT), handed to its heading by the section that holds it */
+const AboutCtx = createContext<string | null>(null);
+
 function Head({ title, icon, children, sub }: { title: string; icon: IconName; children?: React.ReactNode; sub?: string | null }) {
+  const about = useContext(AboutCtx);
   return (
     <header className="st-bh">
       <h3><I n={icon} />{title}</h3>
+      {about && <p className="st-about">{about}</p>}
       {sub && <p className="st-sub">{sub}</p>}
       {children && <div className="st-bh-tools">{children}</div>}
     </header>
@@ -371,18 +480,23 @@ function BlockBody(p: BP) {
   switch (b.kind) {
     case "Kpis": return (
       <>
+        <Head title={b.title || T(lang, "Key numbers", "முக்கிய எண்கள்")} icon="spark" />
         <div className="st-kpis">
-          {b.items.map((k) => (
-            <div key={k.key} className={`st-kpi t-${k.tone}`}>
-              <span className="lbl">{k.label}</span>
+          {b.items.map((k) => {
+            // v18: a tile with records behind it opens them
+            const Tag = k.drill ? "button" : "div";
+            return (
+            <Tag key={k.key} className={`st-kpi t-${k.tone}${k.drill ? " drill" : ""}`} {...(k.drill ? { type: "button" as const, onClick: () => go(a, k.drill), title: T(lang, `Open: ${k.drill.label}`, `திற: ${k.drill.label}`) } : {})}>
+              <span className="lbl">{k.label}{k.drill && <I n="chevr" />}</span>
               <b className="val">{hudOn() ? <CountUp value={k.value} format={fmt} /> : fmt(k.value)}{k.unit && <small>{k.unit === "%" ? "%" : ` ${unitIn(k.unit, lang)}`}</small>}</b>
               {k.delta == null && k.pct != null && k.pct !== 0 && <span className={`dl ${k.pct > 0 ? "up" : "down"}`}><I n={k.pct > 0 ? "up" : "down"} />{`${k.pct > 0 ? "+" : "-"}${Math.abs(k.pct)}%`}<em>{T(lang, " vs the period before", " முந்தைய காலத்துடன்")}</em></span>}
               {k.delta != null && k.delta !== 0 && (
                 <span className={`dl ${k.delta > 0 ? "up" : "down"}`}><I n={k.delta > 0 ? "up" : "down"} />{fmt(Math.abs(k.delta))}{k.pct != null ? ` (${k.pct > 0 ? "+" : "-"}${Math.abs(k.pct)}%)` : ""}{k.prev != null ? <em>{T(lang, ` vs ${fmt(k.prev)}`, ` / ${fmt(k.prev)}`)}</em> : null}</span>
               )}
               {k.spark.length > 2 && <Spark values={k.spark} />}
-            </div>
-          ))}
+            </Tag>
+            );
+          })}
         </div>
       </>
     );
@@ -397,12 +511,13 @@ function BlockBody(p: BP) {
             const pct = b.unit.includes("%") ? Math.max(0, Math.min(100, x.value)) : null;
             const vs = x.mean28 != null && x.mean28 > 0 ? Math.round(((x.value - x.mean28) / x.mean28) * 100) : null;
             return (
-              <button key={x.id} className={`st-gauge${i === 0 ? " first" : ""}${p.reading?.key === x.name ? " reading" : ""}`} onClick={() => a.station(x.name, b.metric)}>
+              <button key={x.id} className={`st-gauge${i === 0 ? " first" : ""}${p.reading?.key === x.name ? " reading" : ""}`} onClick={() => (x.drill ? go(a, x.drill) : a.station(x.name, b.metric))}>
                 {pct != null ? <Ring pct={pct} /> : <span className="big">{fmt(x.value)}<small>{unitIn(b.unit, lang)}</small></span>}
                 <span className="nm">{x.name}</span>
                 {pct != null && <span className="v">{fmt(x.value)}{b.unit.includes("%") ? T(lang, "% full", "% நிரம்பியது") : ` ${unitIn(b.unit, lang)}`}</span>}
                 {vs != null && <span className={`vs ${vs >= 0 ? "up" : "down"}`}>{vs >= 0 ? "+" : "-"}{Math.abs(vs)}% {T(lang, "vs 28-day mean", "28 நாள் சராசரியுடன்")}</span>}
                 {x.anomaly && <span className="flag"><I n="alert" />{T(lang, "Unusual", "வழக்கத்துக்கு மாறானது")}</span>}
+                {x.detail && <span className="dt">{x.detail}</span>}
                 <time>{when(x.t)}</time>
               </button>
             );
@@ -416,10 +531,20 @@ function BlockBody(p: BP) {
       const pick = (i: number) => {
         const x = b.items[i];
         if (!x) return;
-        if (x.action === "zone" && x.zone) a.zone(x.zone);
+        // v18: the item's own records, in this screen's window, when it has them
+        if (x.drill) go(a, x.drill);
+        else if (x.action === "zone" && x.zone) a.zone(x.zone);
         else if (x.action === "dept") a.dept(x.key, x.label);
         else if (x.action === "station") a.station(x.label, String(p.doc.slots.measure ?? p.doc.slots.metric ?? "rain"));
       };
+      // v18 (review, 24 Nov): a zone clicked on the map view is that zone's own item, opened as the list opens it (its drill: its records in this
+      // screen's window); a zone no single item holds opens the zone (Thunai.tsx keeps the screen's own window and subject). A pin is its item.
+      const onMapZone = (z: number) => {
+        const at = b.items.flatMap((x, i) => (x.zone === z ? [i] : []));
+        // (v19: a locality or a road is not its area: on the analyst's screen only an area's own row answers for it)
+        if (at.length === 1 && b.items[at[0]].drill && (p.doc.recipe !== "ask" || b.items[at[0]].action === "zone")) pick(at[0]); else a.zone(z);
+      };
+      const pinned = b.items.flatMap((x, i) => (x.lat != null && x.lon != null ? [i] : []));
       return (
         <>
           <Head title={b.title} icon="barH" sub={b.method}><ViewSwitch id={b.id} views={hasMap ? ["chart", "table", "map"] : ["chart", "table"]} cur={v} a={a} lang={lang} /></Head>
@@ -429,7 +554,7 @@ function BlockBody(p: BP) {
                 const max = Math.max(...b.items.map((y) => Math.abs(y.value)), 1);
                 return (
                   <li key={x.key} className={p.reading?.key === x.key ? "reading" : ""} style={{ ["--w" as string]: `${Math.max(2, (Math.abs(x.value) / max) * 100)}%`, ["--d" as string]: `${i * 60}ms` }}>
-                    <button onClick={() => pick(i)} disabled={x.action === "none"}>
+                    <button onClick={() => pick(i)} disabled={x.action === "none" && !x.drill} title={x.drill ? T(lang, `Open: ${x.drill.label}`, `திற: ${x.drill.label}`) : undefined}>
                       <span className="rk">{x.rank}</span>
                       <span className="nm">{x.label}{x.sub && <small>{x.sub}</small>}</span>
                       <span className="bar" aria-hidden="true"><i /></span>
@@ -442,8 +567,9 @@ function BlockBody(p: BP) {
           )}
           {v === "table" && <Table cols={["#", T(lang, "Name", "பெயர்"), `${T(lang, "Value", "மதிப்பு")}${b.unit ? ` (${unitIn(b.unit, lang)})` : ""}`, T(lang, "Detail", "விவரம்")]} rows={b.items.map((x) => [x.rank, x.label, fmt(x.value), x.sub ?? ""])} />}
           {v === "map" && <MapBox geo={p.geo} title={b.title} shade={b.items.some((x) => x.zone != null && x.lat == null) ? { geo: "zone", label: b.title, values: b.items.filter((x) => x.zone != null).map((x) => ({ key: x.zone as number, value: x.value })) } : null}
-            pins={b.items.filter((x) => x.lat != null && x.lon != null).map((x) => ({ n: x.rank, id: x.key, lat: x.lat as number, lon: x.lon as number, label: `${x.label}: ${fmt(x.value)}`, sev: null, hot: x.rank <= 3 }))}
-            outline={b.items.filter((x) => x.zone != null).slice(0, 3).map((x) => x.zone as number)} onZone={a.zone} />}
+            pins={pinned.map((i) => b.items[i]).map((x) => ({ n: x.rank, id: x.key, lat: x.lat as number, lon: x.lon as number, label: `${x.label}: ${fmt(x.value)}`, sev: null, hot: x.rank <= 3 }))}
+            outline={b.items.filter((x) => x.zone != null).slice(0, 3).map((x) => x.zone as number)} onZone={onMapZone}
+            onPin={(k) => { const i = pinned[k]; if (i != null) pick(i); }} />}
         </>
       );
     }
@@ -462,12 +588,14 @@ function BlockBody(p: BP) {
       const v = p.view ?? "chart";
       return (
         <>
-          <Head title={b.title} icon="line" sub={b.marks.length ? T(lang, `${b.marks.length} marked: ${b.marks[0].why.toLowerCase()}`, `${b.marks.length} குறிக்கப்பட்டவை`) : b.normal ? T(lang, "Shaded: the usual range", "நிழல்: வழக்கமான வரம்பு") : null}>
+          <Head title={b.title} icon="line" sub={[b.marks.length ? T(lang, `${b.marks.length} marked: ${b.marks[0].why.toLowerCase()}`, `${b.marks.length} குறிக்கப்பட்டவை`) : b.normal ? T(lang, "Shaded: the usual range", "நிழல்: வழக்கமான வரம்பு") : null,
+            b.drills?.some(Boolean) ? T(lang, "Click a point to open that day", "அந்த நாளைத் திறக்க ஒரு புள்ளியைத் தொடுங்கள்") : null].filter(Boolean).join(" · ") || null}>
             <ViewSwitch id={b.id} views={["chart", "table"]} cur={v} a={a} lang={lang} />
           </Head>
           {!b.values.length ? <p className="st-empty">{T(lang, "No data for this period.", "இந்தக் காலத்துக்குத் தரவு இல்லை.")}</p>
-            : v === "chart" ? <StageChart spec={{ type: "trend", labels: b.labels, values: b.values, unit: b.unit, marks: b.marks, normal: b.normal }} height={230} title={b.title} />
-              : <Table cols={[T(lang, "Period", "காலம்"), unitIn(b.unit, lang) ?? ""]} rows={b.labels.map((l, i) => [l, fmt(b.values[i])])} />}
+            : v === "chart" ? <StageChart spec={{ type: "trend", labels: b.labels, values: b.values, unit: b.unit, marks: b.marks, normal: b.normal }} height={240} title={b.title}
+              onPick={b.drills?.some(Boolean) ? (i) => go(a, b.drills?.[i]) : undefined} />
+              : <Table cols={[T(lang, "Period", "காலம்"), unitIn(b.unit, lang) ?? ""]} rows={b.labels.map((l, i) => [l, fmt(b.values[i])])} onRow={b.drills?.some(Boolean) ? (i) => go(a, b.drills?.[i]) : undefined} />}
         </>
       );
     }
@@ -476,9 +604,9 @@ function BlockBody(p: BP) {
       // a line chart is a line (chartspec.ts): it was drawn as upright bars
       return (
         <>
-          <Head title={b.title} icon={b.chart === "donut" ? "donut" : b.chart === "line" ? "line" : "barH"}><ViewSwitch id={b.id} views={["chart", "table"]} cur={v} a={a} lang={lang} /></Head>
-          {v === "chart" ? <StageChart spec={chartSpecOf(b)} height={chartHeight(b)} title={b.title} />
-            : <Table cols={["", unitIn(b.unit, lang) ?? ""]} rows={b.labels.map((l, i) => [l, fmt(b.values[i])])} />}
+          <Head title={b.title} icon={b.chart === "donut" ? "donut" : b.chart === "line" ? "line" : "barH"} sub={b.drills?.some(Boolean) ? T(lang, "Click a bar to open it", "திறக்க ஒரு பட்டையைத் தொடுங்கள்") : null}><ViewSwitch id={b.id} views={["chart", "table"]} cur={v} a={a} lang={lang} /></Head>
+          {v === "chart" ? <StageChart spec={chartSpecOf(b)} height={chartHeight(b)} title={b.title} onPick={b.drills?.some(Boolean) ? (i) => go(a, b.drills?.[i]) : undefined} />
+            : <Table cols={["", unitIn(b.unit, lang) ?? ""]} rows={b.labels.map((l, i) => [l, fmt(b.values[i])])} onRow={b.drills?.some(Boolean) ? (i) => go(a, b.drills?.[i]) : undefined} />}
         </>
       );
     }
@@ -508,11 +636,15 @@ function BlockBody(p: BP) {
         <ol className="st-brief">
           {b.points.map((x, i) => {
             const on = p.reading?.key === `brief-${i}`;
+            const text = lang === "ta" ? x.ta || x.text : x.text;
+            // v18: a point opens what it rests on (its case, or the records behind it in this window)
+            const open = x.incidentId ? () => a.openCase(x.incidentId!) : x.drill ? () => go(a, x.drill) : null;
             return (
-              <li key={i} className={on ? "reading" : ""} aria-current={on ? "true" : undefined}>
+              <li key={i} className={`${on ? "reading" : ""}${open ? " drill" : ""}`} aria-current={on ? "true" : undefined}>
                 <span className="n">{i + 1}</span>
-                <p>{on ? <Karaoke text={lang === "ta" ? x.ta || x.text : x.text} char={p.reading?.char ?? null} /> : lang === "ta" ? x.ta || x.text : x.text}</p>
-                {x.incidentId && <button className="st-link" onClick={() => a.openCase(x.incidentId!)}>{T(lang, "Open", "திற")}<I n="chevr" /></button>}
+                {open ? <button className="st-point" onClick={open} title={T(lang, "Open the details", "விவரங்களைத் திற")}>{on ? <Karaoke text={text} char={p.reading?.char ?? null} /> : text}</button>
+                  : <p>{on ? <Karaoke text={text} char={p.reading?.char ?? null} /> : text}</p>}
+                {open && <button className="st-link" onClick={open} tabIndex={-1} aria-hidden="true">{T(lang, "Details", "விவரம்")}<I n="chevr" /></button>}
               </li>
             );
           })}
@@ -539,10 +671,11 @@ function BlockBody(p: BP) {
         <Head title={b.title} icon="bulb" />
         <ul className="st-findings">
           {b.items.map((f, i) => (
-            <li key={i} className={`t-${f.tone}`}>
-              <div className="st-find-h"><b>{f.title}</b>{f.value != null && <span className="st-find-v">{fmt(f.value)}{f.unit ? <small> {f.unit}</small> : null}</span>}</div>
+            <li key={i} className={`t-${f.tone}${f.drill ? " drill" : ""}`}>
+              <div className="st-find-h">{f.drill ? <button className="st-point" onClick={() => go(a, f.drill)}><b>{f.title}</b></button> : <b>{f.title}</b>}{f.value != null && <span className="st-find-v">{fmt(f.value)}{f.unit ? <small> {f.unit}</small> : null}</span>}</div>
               <small className="st-find-m">{f.method} · n = {f.n}</small>
               <small className="st-find-c">{f.caveat}</small>
+              {f.drill && <button className="st-link" onClick={() => go(a, f.drill)}>{T(lang, "Open the records", "பதிவுகளைத் திற")}<I n="chevr" /></button>}
             </li>
           ))}
         </ul>
@@ -662,6 +795,8 @@ function CaseDetail({ b, lang, a, doc }: BP & { b: Extract<BlockT, { kind: "Case
 
 function News({ b, lang, reading, a }: BP & { b: Extract<BlockT, { kind: "NewsReader" }> }) {
   const ref = useRef<HTMLOListElement>(null);
+  // v18: a headline opens in place to its report's own summary
+  const [open, setOpen] = useState<string | null>(null);
   useEffect(() => {
     if (!reading) return;
     ref.current?.querySelector<HTMLElement>(`[data-id="${CSS.escape(reading.key)}"]`)?.scrollIntoView({ block: "nearest", behavior: reduced() ? "auto" : "smooth" });
@@ -676,7 +811,12 @@ function News({ b, lang, reading, a }: BP & { b: Extract<BlockT, { kind: "NewsRe
             <li key={x.id} data-id={x.id} className={on ? "reading" : ""} aria-current={on ? "true" : undefined} style={{ ["--d" as string]: `${Math.min(i, 10) * 45}ms` }}>
               <span className="n">{i + 1}</span>
               <div className="body">
-                <p className="hl">{on ? <Karaoke text={`${reading?.lead ?? ""}${x.title}`} char={reading?.char ?? null} strip={reading?.lead ?? ""} /> : x.title}</p>
+                {x.summary ? (
+                  <button className="hl st-point" aria-expanded={open === x.id} onClick={() => setOpen(open === x.id ? null : x.id)}>
+                    {on ? <Karaoke text={`${reading?.lead ?? ""}${x.title}`} char={reading?.char ?? null} strip={reading?.lead ?? ""} /> : x.title}<I n={open === x.id ? "chevd" : "chevr"} />
+                  </button>
+                ) : <p className="hl">{on ? <Karaoke text={`${reading?.lead ?? ""}${x.title}`} char={reading?.char ?? null} strip={reading?.lead ?? ""} /> : x.title}</p>}
+                {open === x.id && x.summary && <p className="st-news-sum">{x.summary}</p>}
                 <span className="meta">
                   {x.source && <span><I n="news" />{x.source}</span>}
                   {x.t && <span><I n="clock" />{when(x.t)}</span>}
@@ -746,12 +886,12 @@ function Compare({ b, lang, view, a }: BP & { b: Extract<BlockT, { kind: "Compar
   );
 }
 
-function Table({ cols, rows }: { cols: string[]; rows: (string | number)[][] }) {
+function Table({ cols, rows, onRow }: { cols: string[]; rows: (string | number)[][]; onRow?: (i: number) => void }) {
   return (
     <div className="st-tablewrap">
       <table className="st-table">
         <thead><tr>{cols.map((c, i) => <th key={i} scope="col">{c}</th>)}</tr></thead>
-        <tbody>{rows.map((r, i) => <tr key={i}>{r.map((c, j) => (j === 0 ? <th key={j} scope="row">{c}</th> : <td key={j} className={/^[-+]?[\d,.]+%?$/.test(String(c)) ? "num" : ""}>{c}</td>))}</tr>)}</tbody>
+        <tbody>{rows.map((r, i) => <tr key={i} className={onRow ? "drill" : undefined} onClick={onRow ? () => onRow(i) : undefined}>{r.map((c, j) => (j === 0 ? <th key={j} scope="row">{onRow ? <button className="st-point" onClick={(e) => { e.stopPropagation(); onRow(i); }}>{c}</button> : c}</th> : <td key={j} className={/^[-+]?[\d,.]+%?$/.test(String(c)) ? "num" : ""}>{c}</td>))}</tr>)}</tbody>
       </table>
     </div>
   );

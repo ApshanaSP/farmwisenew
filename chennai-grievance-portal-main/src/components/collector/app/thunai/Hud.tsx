@@ -185,6 +185,19 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
     return () => { clearTimeout(t); window.removeEventListener("pointerdown", done, { capture: true }); window.removeEventListener("keydown", done, { capture: true }); };
   }, [powered]);
   const level = useRef<HTMLSpanElement>(null);
+  // v18 (24 Nov, the owner: "the Jarvis board and the suggestions board hide the screen"): the room the bar and the cards over it take, kept
+  // in --hud-dock-h, so an open screen ends above them however tall they grow (hud.css)
+  const dock = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = dock.current;
+    if (!el || typeof ResizeObserver !== "function") return;
+    const root = document.documentElement;
+    const set = () => root.style.setProperty("--hud-dock-h", `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+    return () => { ro.disconnect(); root.style.removeProperty("--hud-dock-h"); };
+  }, []);
   useEffect(() => {
     if (!reducedMotion()) return;
     const t = setInterval(() => { if (level.current) level.current.style.transform = `scaleX(${hud.level().toFixed(2)})`; }, 120);
@@ -231,7 +244,7 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
   return (
     <div className={`hud${stageOpen ? " with-stage" : ""}${powered ? "" : " powering"}`} data-core={s.core} data-visual={vis} data-mic={hot ? "hot" : "off"} data-testid="hud" data-no-i18n lang={lang}>
       {!stageOpen && (s.answer || panel) && <AnswerCorner asked={s.asked} answer={s.answer} p={panel} lang={lang} pill={pill} setPill={setPill} />}
-      <div className="hud-dock">
+      <div className="hud-dock" ref={dock}>
         <div className="hud-cards" lang={lang}>
           {s.interjection && <InterjectionCard x={s.interjection} lang={lang} a={a} />}
           {s.mission && <MissionCard m={s.mission} lang={lang} a={a} />}

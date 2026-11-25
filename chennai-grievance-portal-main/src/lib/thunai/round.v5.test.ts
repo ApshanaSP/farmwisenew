@@ -23,9 +23,12 @@ const h = (s: string) => crypto.createHash("sha256").update(s).digest("hex").sli
 // schema's recipe enum changed, and the planner may call focus_trends (the data prompt's tool list): every schema with the recipe enum and
 // the data prompt changed (screens 355ed987fad5ecfc, console d0f369394d1048a0, stage d2971630576f21a9, data a7d340f79deb22e4 6aa3ffb3f069bceb,
 // memory 66cc9d15538469d4, wide 2397c0edb401b19a)
+// and again on 24 Nov 2026 (v18): the recipe list gained "summary" (everything about one area, department or kind, over any window), so the
+// schemas with the recipe enum changed (screens 1d924780b5a181bd, stage 6066c2489e0cbd1e, data ef4b718c9f76fbf2, wide 737edddcc8afb2cf); every
+// system prompt is unchanged
 const V4: Record<string, [string, string]> = {
-  screens: ["7e0e03294f56a2a2", "1d924780b5a181bd"], console: ["3a3ccf5e6053428a", "df56939f1f40b93a"], stage: ["aa88ea1e48e54905", "6066c2489e0cbd1e"],
-  data: ["17f1a2f05c59df7c", "ef4b718c9f76fbf2"], memory: ["f24163327f5f6aa9", "aa8ab14786548c61"], wide: ["3254755c082a9d6c", "737edddcc8afb2cf"]
+  screens: ["7e0e03294f56a2a2", "507304ac53f04558"], console: ["3a3ccf5e6053428a", "df56939f1f40b93a"], stage: ["aa88ea1e48e54905", "7aeba751d9260fde"],
+  data: ["17f1a2f05c59df7c", "faa404e9d80c378a"], memory: ["f24163327f5f6aa9", "aa8ab14786548c61"], wide: ["3254755c082a9d6c", "3d9d60a1fc20f018"]
 };
 const BUNDLES = ["screens", "console", "stage", "data", "memory", "wide"] as const;
 const LOOKUP_TEXT = "A fact no screen or step shows";

@@ -14,6 +14,10 @@ export interface AideExtras {
   /** other outlets on the same event (v6 related coverage), each a headline and when */
   related?: { outlet: string; title: string; publishedAt: string | null }[];
   /** facts code computed beyond the blocks (a ranked comparison's statements, say) */
+  /** v19: the analyst's results as its writer reads them (v19/doc.ts factsOf) */
+  ask?: string;
+  /** v19: what the answer's sentences are held to (doc.ts checkOf) */
+  askCheck?: import("../v19/doc").AskCheck;
   lines?: { text: string; dir?: "up" | "down" | null; rank?: boolean; ratios?: number[]; cause?: boolean; src?: string }[];
 }
 

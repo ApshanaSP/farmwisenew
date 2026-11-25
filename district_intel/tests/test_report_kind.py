@@ -43,6 +43,11 @@ CASES = [
     ("Will the Northeast monsoon help? Water stock low in Chennai's drinking water lakes!", "roundup"),
     ("Chennai Metrowater Clears 227 Streets, Boosts Sewage Response", "government_action"),
     ("Anti-rabies vaccine administered to 1.50 lakh stray dogs: Chennai Corporation information", "government_action"),
+    # 24 Nov 2026: words that look like an event and are not
+    ("Minister recovers after cardiac arrest", None),
+    ("TV debate moderator dies of cardiac arrest on GST Road", "incident"),
+    ("Back to Vice City: Why GTA 6 is a big deal", None),
+    ("School teacher arrested for misbehaving with college girl in Kotturpuram", "incident"),
 ]
 
 

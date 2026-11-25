@@ -451,21 +451,36 @@ function uniqueNews(rows: Row[]) {
 export type Story = NonNullable<OverviewData["allNews"]>[number];
 
 /**
- * One news story (every outlet's article merged). A story in our records opens its incident, where
- * "How it unfolded" shows the articles and the citizen grievances together; news alone opens the article.
+ * One news story (every outlet's article merged), as the news desk read it: what happened in a line, whether it needs action, the area it
+ * is about, and the outlets it is from. A story in our records opens its incident, where "How it unfolded" shows the articles and the
+ * citizen grievances together; news alone opens the article.
  */
 export function NewsStory({ i, now, c }: { i: Story; now: string; c: Console }) {
   const diff = c.conflicts?.stories.find((s) => s.id === i.id || s.docIds.includes(i.id));
+  const act = i.desk?.v === "act";
   return (
-    <button className="brief" onClick={() => c.openStory(i)} title={i.incident ? "Open the incident: the news and the grievances together" : "Read the story and every outlet's report"}>
-      <span className={`bic ${i.incident ? "t-high" : "t-info"}`}><I n="news" /></span>
+    <button className="brief nw" onClick={() => c.openStory(i)} title={i.desk?.why || (i.incident ? "Open the incident: the news and the grievances together" : "Read the story and every outlet's report")}>
+      <span className={`bic ${act || i.incident ? "t-high" : "t-info"}`}><I n="news" /></span>
       <span style={{ minWidth: 0, flex: 1 }}>
         <b title={i.original ?? undefined}>{i.title}</b>
+        {i.desk?.gist && <span className="nw-g">{i.desk.gist}</span>}
         <span className="loc">{outletLine(i)} · {i.loc ?? "Chennai"} · {rel(i.t, now)}</span>
-        {diff && hasConflict(diff) ? <DiffBadge s={diff} /> : <StoryLink i={i} />}
+        <span className="nw-tags">
+          <DeskTags i={i} />
+          {diff && hasConflict(diff) ? <DiffBadge s={diff} /> : <StoryLink i={i} />}
+        </span>
       </span>
     </button>
   );
+}
+
+/** Why a story is here: needs action or for information, and the area it is about (the news desk's reading). */
+export function DeskTags({ i }: { i: Pick<Story, "desk"> }) {
+  if (!i.desk) return null;
+  return <>
+    <span className={`nw-t ${i.desk.v}`}>{i.desk.v === "act" ? "Needs action" : "For information"}</span>
+    {i.desk.area && <span className="nw-t area">{i.desk.area}</span>}
+  </>;
 }
 
 /** "The Hindu, DT Next +3": the outlets that carried the story. */

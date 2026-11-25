@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { chartHeight, chartSpecOf, type ChartBlock } from "./chartspec";
-import { option, type StageChartSpec } from "./StageChart";
+import { option, pickIndex, type StageChartSpec } from "./StageChart";
 
 const ink = { text: "#111", text2: "#333", text3: "#666", grid: "#eee", axis: "#ccc", surface: "#fff", elev: "#fff", line: "#ddd", accent: "#2a78d6", signal: "#2a78d6",
   sev: "#c00", high: "#e80", low: "#08c", violet: "#80c", teal: "#0aa", dark: false, viz: ["#2a78d6", "#e8743b", "#19a979", "#945ecf"] };
@@ -43,5 +43,28 @@ describe("defect 9: a line chart is drawn as a line", () => {
     expect(chartSpecOf(chart("donut")).type).toBe("donut");
     expect(opt(chartSpecOf(chart("bar"))).series[0].type).toBe("bar");
     expect(chartHeight(chart("hbar", Array.from({ length: 8 }, (_, i) => `x${i}`), Array(8).fill(1)))).toBe(270);
+  });
+});
+
+describe("v18 review: a click opens the point it landed on", () => {
+  // a trend whose peak (index 3) and one unusual point (index 1) are marked: the marks sit on top of the series dots
+  const trend: StageChartSpec = { type: "trend", labels: ["20 Nov", "21 Nov", "22 Nov", "23 Nov"], values: [4, 9, 6, 12], unit: "incidents", marks: [{ i: 1, why: "Unusually high" }], normal: null };
+  const marks = (opt(trend) as unknown as { series: { markPoint: { data: { coord: [number, number] }[] } }[] }).series[0].markPoint.data;
+  it("a series dot reports its own index", () => {
+    expect(pickIndex({ componentType: "series", dataIndex: 2 })).toBe(2);
+  });
+  it("a marked point reports the series point under it, never its place in the mark list (the peak was 0, the first day)", () => {
+    expect(marks.map((m) => m.coord[0])).toEqual([1, 3]);
+    // ECharts hands a markPoint click its own index in the mark list and its data item, coord included
+    expect(pickIndex({ componentType: "markPoint", dataIndex: 1, data: marks[1] })).toBe(3);
+    expect(pickIndex({ componentType: "markPoint", dataIndex: 0, data: marks[0] })).toBe(1);
+    // (a coord given as the category's name is looked up in the labels)
+    expect(pickIndex({ componentType: "markPoint", dataIndex: 0, data: { coord: ["22 Nov", 6] } }, trend.labels)).toBe(2);
+  });
+  it("anything else picks nothing: a shaded range, an axis, a series click with no point", () => {
+    expect(pickIndex({ componentType: "markArea", dataIndex: 0 })).toBeNull();
+    expect(pickIndex({ componentType: "xAxis", dataIndex: 0 })).toBeNull();
+    expect(pickIndex({ componentType: "series" })).toBeNull();
+    expect(pickIndex({ componentType: "markPoint", dataIndex: 0, data: null })).toBeNull();
   });
 });

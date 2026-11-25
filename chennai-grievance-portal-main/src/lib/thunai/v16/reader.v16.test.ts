@@ -20,7 +20,7 @@ import { asksBeyondMove } from "../plan";
 import { browserLaneV8 } from "../v8/browser";
 
 const REAL: World = { ...WORLD, ...referenceWorld() };
-const R = (o: Partial<Reading>): Reading => ({ ask: "other", zones: [], place: null, cat: null, sev: null, period: null, lenses: [], about: null, one: false, page: null, lang_wanted: null, status: null, measure: null, request: "", reply: null, dataset: null, ...o });
+const R = (o: Partial<Reading>): Reading => ({ ask: "other", zones: [], place: null, cat: null, sev: null, period: null, lenses: [], about: null, one: false, page: null, lang_wanted: null, status: null, measure: null, request: "", reply: null, dataset: null, time: null, dept: null, topic: null, ...o });
 
 describe("the reading, checked", () => {
   it("drops unknown zones and kinds, and a reply with a figure", () => {

@@ -73,6 +73,31 @@ IMPACT = re.compile(r"\b(stranded|uprooted|collaps\w*|waterlogg\w*|inundat\w*|fl
 PREVENTED = re.compile(r"\b(?:to\s+)?(?:prevent\w*|avoid\w*|face|tackle|fight|combat|curb|check|reduce|ease|stop|against|ahead of|in view of)\s+(?:\w+\s+){0,3}?\w+", re.I)
 SERVICES = re.compile(r"\bfire\s*(?:personnel|service\w*|fighters?|and rescue|tenders?|station|brigade|department|safety)\b|\bfirefighters?\b|"
                       r"\bflood\s+(?:relief|response|control)\s+(?:teams?|centres?|room)\b", re.I)
+# Words that look like an event and are not (24 Nov 2026; the portal's lib/collector/idioms.ts: keep the two in step): "cardiac arrest" is
+# a death and not an arrest, "GTA" (Grand Theft Auto) a video game and not a theft, a meeting held is nobody held, a civic body no body.
+IDIOMS = [(re.compile(p, re.I), to) for p, to in [
+    (r"\b(?:sudden\s+)?(?:cardiac|cardio-?\s?respiratory|cardio-?\s?pulmonary|respiratory|heart)\s+arrests?\b", "heart failure"),
+    (r"\bheart\s+attacks?\b", "heart failure"),
+    (r"\bdigital(?:ly)?\s+arrest(?:s|ed)?\b", "online fraud"),
+    (r"டிஜிட்டல்\s*(?:அரெஸ்ட்|கைது)", "ஆன்லைன் மோசடி"),
+    (r"\bgrand\s+theft\s+auto\b|\bgta\s*(?:[ivx]+|\d)?\b", "video game"),
+    (r"\b(meetings?|meets?|camps?|talks|rall(?:y|ies)|functions?|events?|drives?|workshops?|consultations?|festivals?|exams?|examinations?|elections?|polls?|"
+     r"protests?|drills?|hearings?|inspections?|fairs?|conferences?|ceremon(?:y|ies)|reviews?|sessions?|programmes?|programs?|celebrations?|demonstrations?)\s+"
+     r"(?:(?:was|were|is|are|being|to be|will be|has been|have been)\s+)?held\b", r"\1 took place"),
+    (r"\b(?:to be|be|being|is|was|were|been|are)\s+held\s+(?=(?:on|at|in|from|across|today|tomorrow|this|next|every|between|during|till|until)\b)", "taking place "),
+    (r"\b(civic|local|student|students'?|governing|general|apex|statutory|trade|industry|regulatory|traders'?|merchants'?|farmers'?|doctors'?|teachers'?|sports|"
+     r"world|international|national|state)\s+bod(y|ies)\b", r"\1 organisation"),
+    (r"\bsit-?ins?\b", "protest"),
+]]
+
+
+def plain_events(text: str) -> str:
+    """The text with every look-alike phrase replaced by what it means."""
+    for rx, to in IDIOMS:
+        text = rx.sub(to, text)
+    return text
+
+
 _ARRESTED = re.compile(r"\b(arrest\w*|held|detained|booked|raid\w*)\b", re.I)
 
 
@@ -81,6 +106,7 @@ def report_kind(*texts: str | None) -> str | None:
     t = " \n ".join(x for x in texts if isinstance(x, str) and x).replace("‘", "'").replace("’", "'")
     if not t.strip():
         return None
+    t = plain_events(t)
     said = SERVICES.sub(" ", PREVENTED.sub(" ", t))
     harm, event = bool(HARM.search(said)), bool(EVENT.search(said))
     hurt = bool(HARM.search(re.sub(r"\bmissing\b", " ", said, flags=re.I)))

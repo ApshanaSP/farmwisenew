@@ -33,7 +33,7 @@ describe("v14 turns 2: the district tour's 'Shall I go on?' takes a plain yes", 
     expect(handle).toMatch(/startsNoTurn\(said\) && !askOnce && !pendingB && !confirmRef\.current && !offerLive\(\) && !newsOffer\.current && !tourAsks\) \{/);
   });
   it("a yes said over the tour's voice is its answer, not a backchannel (the conductor's wantsYes)", () => {
-    expect(src).toContain("wantsYes: () => !!pendingBRef.current || !!confirmRef.current || !!mapSnap10(hostRef.current.c.mapAsk).tourCheck,");
+    expect(src).toContain("wantsYes: () => !!pendingBRef.current || !!confirmRef.current || !!mapSnap10(hostRef.current.c.mapAsk).tourCheck");
   });
 });
 

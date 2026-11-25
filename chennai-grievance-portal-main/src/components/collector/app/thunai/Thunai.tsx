@@ -38,7 +38,7 @@ import { currentSteps, evidenceOf, isListenKey, turnMs } from "./hudview";
 import { followLayout, samePlaces } from "./layoutwatch";
 import { speakableFigures } from "@/lib/thunai/speakable";
 import { spokenPart as spoken } from "@/lib/thunai/chunker";
-import { ackFor, ackTemplated, localStageCommand, narrationOf, stageDigest, stageReducer, toCsv, type LocalCmd, type StageEffect, type StageModel } from "@/lib/thunai/stagelocal";
+import { ackFor, ackTemplated, asksAnalyst, askZoneSlots, localStageCommand, narrationOf, stageDigest, stageReducer, stationClickSlots, toCsv, zoneClickSlots, type LocalCmd, type StageEffect, type StageModel } from "@/lib/thunai/stagelocal";
 import { cannotLine, NO_MODEL_LINE } from "@/lib/thunai/reach";
 import type { Console } from "../CollectorApp";
 import { byName, clickables, frontRows, press, pressControl, readChart, scroll, spotlight, targetFor, typeInto, verdictFor, visibleControls, type Clickable } from "./dom";
@@ -246,6 +246,9 @@ const pct = (st: Station) => {
 };
 const lastOf = (st: Station) => st.series?.[st.series.length - 1] ?? null;
 const whenOf = (iso: string | null | undefined) => (iso ? istDateTime(iso) || "the latest reading" : "the latest reading");
+/** v18 round 2's review: the "Ask this" card answered by voice ("yes", "ask it", "haan", "ஆமா"), or let go ("no", "not you", "illa") */
+const ASK_THIS_YES = /^(?:(?:yes|yeah|yep|yup|ok(?:ay)?|sure|haan|aama|aamaa|aam|seri|sari)\b[\s,.!]*(?:please|jarvis|ask(?: (?:it|that|this))?|go ahead|do it)?|ask (?:it|that|this)|go ahead|that was for you|it was for you)[\s.!]*$|^(?:ஆமா|ஆம்|சரி|கேள்)[\s.!]*$/i;
+const ASK_THIS_NO = /^(?:no|nope|nah|not you|not for you|illa|venda|vendaam)\b[\s,.!]*(?:jarvis|thanks|thank you)?[\s.!]*$|^(?:இல்லை|வேண்டாம்)[\s.!]*$/i;
 
 export default function Thunai({ host }: { host: ThunaiHost }) {
   const hostRef = useRef(host);
@@ -484,6 +487,19 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const missionBarged = useRef(false);
   /** one question offered after a screen (next.ts nextQuestion): a tap or a plain yes builds it */
   const [offer, setOffer] = useState<{ say: { en: string; ta: string }; step: NextStepT; lang: Lang } | null>(null);
+  // v18 round 2 (24 Nov, the owner: "what I speak gets typed in the Jarvis bar and nothing happens"): a line the address gate let go stays on
+  // screen as a card with "Ask this", instead of a two-second flash; a tap asks it as said
+  const [askThis, setAskThis] = useState<{ text: string; at: number } | null>(null);
+  const askThisRef = useRef(askThis);
+  askThisRef.current = askThis;
+  /** v18 round 2's review: when the Collector last touched the open screen (a click, a scroll, a key), so an open screen alone never keeps the conversation going */
+  const stageTouchAt = useRef(0);
+  useEffect(() => {
+    const touch = (e: Event) => { const el = e.target as Element | null; if (el?.closest?.(".st-root")) stageTouchAt.current = Date.now(); };
+    const opts = { capture: true, passive: true } as const;
+    for (const k of ["pointerdown", "wheel", "keydown", "scroll"] as const) window.addEventListener(k, touch, opts);
+    return () => { for (const k of ["pointerdown", "wheel", "keydown", "scroll"] as const) window.removeEventListener(k, touch, opts); };
+  }, []);
   const offerRef = useRef(offer);
   offerRef.current = offer;
   /** the brief (GET /brief): its card, and whether it is being fetched or said (it always comes before any interjection) */
@@ -1869,9 +1885,19 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       c.setPage("overview");
       if (q.incidentId) c.askOnMap?.({ incidentId: q.incidentId }); else if (q.zone) hostRef.current.applyView({ zone: q.zone }); else if (q.text) c.askOnMap?.(q.text);
     },
-    zone: (z: number) => void directStage("cases", { zones: [z], period: stageRef.current?.scope.period ?? null, cat: stageRef.current?.scope.cat ?? null, sort: "priority", n: 15 }, `${ZONE_NAMES[z - 1] ?? `Zone ${z}`}`),
+    // v18 (review, 24 Nov): on a screen with its own dates, a zone opens its cases in those dates and for the screen's own subject (stagelocal.ts)
+    zone: (z: number) => {
+      // v19: on the analyst's own screen, an area opens its own records of what was asked (its own row's, when the ranking is of areas)
+      const st = stageRef.current;
+      const d = st?.recipe === "ask" ? st.blocks.flatMap((b) => (b.kind === "Ranking" ? b.items : [])).find((x) => x.action === "zone" && x.zone === z && x.drill)?.drill : null;
+      if (d) { void directStage(d.recipe, d.slots, d.label); return; }
+      const asked = askZoneSlots(st, z);
+      if (asked) { void directStage("ask", asked, ZONE_NAMES[z - 1] ?? `Zone ${z}`); return; }
+      const own = zoneClickSlots(stageRef.current, z), label = `${ZONE_NAMES[z - 1] ?? `Zone ${z}`}`;
+      void (own ? directStage("summary", own, label) : directStage("cases", { zones: [z], period: stageRef.current?.scope.period ?? null, cat: stageRef.current?.scope.cat ?? null, sort: "priority", n: 15 }, label));
+    },
     dept: (code: string, name: string) => void directStage("cases", { dept: code, status: "open", period: stageRef.current?.scope.period ?? null, sort: "priority", n: 15 }, name),
-    station: (name: string, metric: string) => void directStage("readings", { metric: ["rain", "aqi", "lakes", "temp", "humidity"].includes(metric) ? metric : "rain", name }, name),
+    station: (name: string, metric: string) => void directStage("readings", stationClickSlots(stageRef.current, name, metric), name),
     read: () => readFrom(0, listenLang),
     stop: () => interrupt(),
     pin: () => void applyLocal({ op: "pin" }, listenLang),
@@ -2318,7 +2344,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     }
     // the open Stage: its own commands ("next", "only the Adyar ones", "open 3", "pin this") need no model
     if (stageRef.current && !original) {
-      const lc = localStageCommand(said);
+      const lc0 = localStageCommand(said);
+      // (v19: on the analyst's screen a command that asks for other data is the analyst's)
+      const lc = lc0 && asksAnalyst(lc0, stageRef.current, !!stageFilterRef.current) ? null : lc0;
       // v14 (21 Nov review 13, routing 1): an in-place city screen has no Stage mounted, so its close, back, full screen and table act on its
       // view and its corner card (they dropped the hidden screen, or fullscreened nothing, and nothing anyone could see happened); "details",
       // "full screen" and "expand it" open the Stage on it, as the card's Details tap does (cityopen.ts inPlaceCommand)
@@ -3080,6 +3108,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   /** A sentence that passed the address gate. */
   const onSentence = (h: HeardLine) => {
     lastHeardAt.current = Date.now();
+    // v18 round 2's review: the "Ask this" card is answered by voice too: a yes asks the line it holds, a no lets it go
+    const card = askThisRef.current;
+    setAskThis(null); askThisRef.current = null;
+    if (card && ASK_THIS_NO.test(h.text.trim())) { conductor.current?.answered(h.id); return; }
+    if (card && ASK_THIS_YES.test(h.text.trim())) h = { ...h, text: card.text };
     via.current = "voice";
     if (!onRef.current) switchOn(true); // eslint-disable-line @typescript-eslint/no-use-before-define
     // the ears' own confidence and language go to the rules and the planner (v4, defect 6: it was a fixed 0.95 and the language was dropped)
@@ -3122,7 +3155,14 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       cancelTurn: () => cancelTurn(),
       onReach: (ok) => setOffline(!ok),
       onIgnored: (t, why) => {
-        hud.set({ faint: t }); setTimeout(() => { if (hud.get().faint === t) hud.set({ faint: "" }); }, 2000);
+        // v18 round 2: a whole line let go as not said to Jarvis stays as a card with "Ask this" (20 s); a fragment, a filler or a line said
+        // to someone else by name still only flashes
+        const words = t.trim().split(/\s+/).filter(Boolean).length;
+        if (/^(?:unaddressed|aside|side|unclear)$/.test(why ?? "") && words >= 3 && phaseRef.current !== "thinking" && phaseRef.current !== "acting") {
+          const at = Date.now();
+          setAskThis({ text: t.trim().slice(0, 300), at });
+          setTimeout(() => setAskThis((x) => (x && x.at === at ? null : x)), 20_000);
+        } else { hud.set({ faint: t }); setTimeout(() => { if (hud.get().faint === t) hud.set({ faint: "" }); }, 2000); }
         // v10: a line cut off before its point, said to Jarvis: its rest, said next, is joined to it (handle(): joinCut)
         if (why === "cut-off-held") cutRef.current = { text: t, at: Date.now() };
         // a measuring build only: the line the gate left unanswered, for the real-path spec (the words stay in this page; nothing is logged)
@@ -3175,9 +3215,13 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       vocab: () => vocabOf(stageRef.current),
       // (v10: a name asked back, "Cyclone Akvan?", waits for its yes too)
       // (v14, review turns 2: and the district tour's "Shall I go on?", so a yes said over its voice is its answer, not a backchannel)
-      wantsYes: () => !!pendingBRef.current || !!confirmRef.current || !!mapSnap10(hostRef.current.c.mapAsk).tourCheck,
+      wantsYes: () => !!pendingBRef.current || !!confirmRef.current || !!mapSnap10(hostRef.current.c.mapAsk).tourCheck || !!askThisRef.current,
       // (v12, RC11: only while the offer is fresh, 15 s after the answer that made it)
       offerPending: () => offerLive(),
+      // v18 round 2: the Collector is working with Jarvis: one of its screens is open, or it answered in the last two minutes
+      // (the review: an open screen alone kept every room line in the conversation for as long as it stayed open; now only a screen the
+      // Collector touched in the last two minutes does)
+      conversing: () => (lastTurnAt.current != null && Date.now() - lastTurnAt.current < 120_000) || (!!stageRef.current && Date.now() - stageTouchAt.current < 120_000),
       // v10: the line this page holds for its rest (the wake path's same-breath rest goes straight to handle()): the conductor gates the rest with it
       heldCut: () => cutRef.current,
       onMissed: () => notHeardRef.current(),
@@ -3683,10 +3727,19 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       <div className="row"><button className="primary" onClick={interrupt}>{ta ? "நிறுத்து" : "Stop"}</button></div>
     </div>
   ) : null;
-  const waiting = longCard || askOnce || pendingB || tray.length > 0 || steps || offer || briefShown ? (
+  const waiting = longCard || askOnce || pendingB || tray.length > 0 || steps || offer || briefShown || askThis ? (
     <>
       {longCard}
       {steps}
+      {askThis && !askOnce && !pendingB && (
+        <div className="th-card" role="group" data-testid="ask-this" lang={/[஀-௿]/.test(askThis.text) ? "ta" : listenLang}>
+          <p>{ta ? "நான் கேட்டது: " : "I heard: "}“{askThis.text}”{ta ? " இது எனக்கா?" : " Was that for me?"}</p>
+          <div className="row">
+            <button className="primary" onClick={() => { const t = askThis.text; setAskThis(null); via.current = "typed"; void handle(t, 0.95, undefined, { source: "typed" }); }}>{ta ? "இதைக் கேள்" : "Ask this"}</button>
+            <button onClick={() => setAskThis(null)}>{ta ? "இல்லை" : "No"}</button>
+          </div>
+        </div>
+      )}
       {briefShown && (
         <section className={`th-card${briefFolded ? " folded" : ""}`} role="group" aria-label={ta ? "சுருக்கம்" : "The brief"} data-testid="brief" data-folded={briefFolded ? "1" : undefined} lang={listenLang}>
           {briefShown.bottom && <p><b>{briefShown.bottom}</b></p>}
@@ -3757,8 +3810,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       ))}
 
       {mode !== "off" && (
-        <Hud lang={listenLang} coreRef={orbRef} stageOpen={!!stage && !stageInPlace} onSend={(t) => { via.current = "typed"; void handle(t, 0.95); }} onDismissFirstUse={() => { store.set("jarvis-mode-seen", "1"); hud.set({ firstUse: false }); if (modeRef.current === "on") { setTimeout(() => earcon("open"), 40); openMic(); } }}
-          onStop={interrupt} onMute={() => setMode(mode === "muted" ? "on" : "muted")} onClose={() => setMode("off")}>{waiting}</Hud>
+        <Hud lang={listenLang} coreRef={orbRef} stageOpen={!!stage && !stageInPlace} onSend={(t) => { setAskThis(null); via.current = "typed"; void handle(t, 0.95); }} onDismissFirstUse={() => { store.set("jarvis-mode-seen", "1"); hud.set({ firstUse: false }); if (modeRef.current === "on") { setTimeout(() => earcon("open"), 40); openMic(); } }}
+          onStop={interrupt} onMute={() => setMode(mode === "muted" ? "on" : "muted")} onClose={() => { setAskThis(null); setMode("off"); }}>{waiting}</Hud>
       )}
 
       {on && panel && (

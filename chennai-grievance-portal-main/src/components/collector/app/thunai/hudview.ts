@@ -122,6 +122,8 @@ export function evidenceOf(brain: { by: "rules" | "ai" | "instant"; model: strin
     method: method ? method.trim().slice(0, 120) || null : null,
     n: n != null && Number.isFinite(n) ? n : null,
     period: doc?.scope?.period ?? null,
+    // v18/v19: a window of the screen's own, in its words (the chip said "Today" under "last 2 days")
+    ...(doc?.when ? { when: [doc.when.en, doc.when.ta] as [string, string] } : {}),
     sources: [...new Set(doc?.sources ?? [])],
     asOf: doc?.asOf ?? null
   };
@@ -141,7 +143,8 @@ export function evidenceParts(e: HudEvidence, ta = false): string[] {
   if (e.ms != null) out.push(fmtMs(e.ms, ta));
   if (e.method) out.push(e.method.length > 48 ? `${e.method.slice(0, 47).trimEnd()}…` : e.method);
   if (e.n != null) out.push(`n = ${e.n.toLocaleString("en-IN")}`);
-  if (e.period) out.push(PERIOD[e.period][ta ? 1 : 0]);
+  if (e.when) out.push(e.when[ta ? 1 : 0]);
+  else if (e.period) out.push(PERIOD[e.period][ta ? 1 : 0]);
   const named = e.sources.filter((s) => !tableName(s));
   const rest = e.sources.length - Math.min(2, named.length);
   if (e.sources.length) out.push(named.length ? `${named.slice(0, 2).join(", ")}${rest > 0 ? ` +${rest}` : ""}` : `${ta ? "ஆதாரங்கள்" : "sources"} ${e.sources.length}`);

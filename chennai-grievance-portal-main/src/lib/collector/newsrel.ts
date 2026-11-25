@@ -14,6 +14,7 @@
  * updates, dengue counts) form one group each. Rules only; every group lists all its reports.
  */
 import { cleanTitle, tokens } from "@/lib/collector/threads";
+import { plainEvents } from "@/lib/collector/idioms";
 
 type Row = Record<string, any>;
 
@@ -23,7 +24,8 @@ const OFF_TOPIC = new RegExp(
   "secures?|bags?|wins? (a |an )?(contract|order)|(contract|order) worth|" +
   "real estate|realty|apartments?|villas?|plots?|property (prices|market)|housing project|residential project|" +
   "admissions?|courses?|universit(y|ies)|iit|college fest|scholarships?|exams?|results declared|placements?|recruitment|apprentice\\w*|jobs? fair|" +
-  "movies?|films?|actor|actress|box office|trailer|ott|kollywood|songs?|concert|cricket|ipl|match|tournament|chess|marathon|" +
+  "movies?|films?|actor|actress|box office|trailer|ott|kollywood|songs?|concert|cricket|ipl|match|tournament|chess|marathon|football|isl|fc|draw|" +
+  "video games?|gamers?|gaming|esports|playstation|xbox|bigg? ?boss|tv show|web series|celebrit(y|ies)|wedding reception|book (fair|festival)|exhibition|cuisine|chef|brunch|data cent(er|re)|" +
   "gold (rate|price)|silver (rate|price)|petrol price|diesel price|fuel price|horoscope|recipe|fashion|lifestyle|travel|tourism|hotels?|restaurants?|" +
   "airlines?|flights? to|offers?|discount|sale|showroom|store opening|brand ambassador|award(s|ed)?|expo|summit|conclave|migratory|birdwatch\\w*)\\b", "i");
 const OFF_TOPIC_TA = /திரைப்பட|நடிகர்|நடிகை|படத்தின்|பாடல்|கிரிக்கெட்|தங்கம் விலை|வெள்ளி விலை|ராசி|ஜாதகம்|படிப்புகள்|மாணவர் சேர்க்கை|வேலைவாய்ப்பு|சலுகை|தள்ளுபடி/;
@@ -62,8 +64,10 @@ export function relevantNews(d: Row, english: string): boolean {
   // the headline may name no place ("HC orders return of dowry"): the place and bodies the AI read from the article
   const read = `${d.ai_place ?? ""} ${String(d.ai_orgs ?? "").replace(/\|/g, ", ")}`.trim();
   if (read && elsewhere(read, "")) return false;
+  const t = plainEvents(`${original} ${english}`);
+  // an article about a video game linked to a theft, a match linked to an "attack": the monitor's link does not vouch for it
+  if (/\bvideo game\b|\b(?:fc|football|cricket|isl|ipl)\b.*\b(?:draw|win|beat|match)\b/i.test(t)) return false;
   if (d.linked_incident_id) return true;
-  const t = `${original} ${english}`;
   if (ROUNDUP.test(t)) return false;
   const event = STRONG_EVENT.test(t);
   if (NOT_NEWS_TYPES.has(String(d.report_type ?? "")) && !event) return false;

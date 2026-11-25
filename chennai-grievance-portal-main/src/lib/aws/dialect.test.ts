@@ -18,6 +18,12 @@ describe("dialect functions", () => {
     expect(one(d, "SELECT TIMESTAMP(NULL, '06:00:00')")).toBeNull();
   });
 
+  it("HAS_WORD is a word as a word, with its plural and tense endings (v19)", () => {
+    const d = db();
+    for (const [t, w, want] of [["Gang war in Ward 12", "war", 1], ["Robbery in Ward 12", "war", 0], ["Board meeting", "boar", 0], ["Two robberies", "robbery", 1], ["A dog abused the bus stop", "bus", 1], ["abusive calls", "bus", 0], ["Man stabbed", "stab", 0], ["House raided", "raid", 1], ["Women chased", "chase", 1], ["AIADMK meet", "dmk", 0]] as const)
+      expect([w, one(d, `SELECT HAS_WORD('${t}', '${w}')`)]).toEqual([w, want]);
+  });
+
   it("runs the added-source sweep query", () => {
     const d = db();
     d.exec("CREATE TABLE sources (source_id INT, enabled INT, kind TEXT, last_run_at TEXT, refresh_minutes INT)");

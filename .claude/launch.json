@@ -371,6 +371,149 @@
         "AWS_DURABLE_FILE": "data/aws-cache/dryrun-askmap-v2/durable.sqlite",
         "AWS_STORE_RELOAD_MINUTES": "100000"
       }
+    },
+    {
+      "name": "prod-measure-3012",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "chennai-grievance-portal-main",
+        "run",
+        "start",
+        "--",
+        "-p",
+        "3012"
+      ],
+      "port": 3012,
+      "autoPort": false,
+      "env": {
+        "DATA_BACKEND": "aws",
+        "AWS_STORE_DRY_RUN": "1",
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem",
+        "NEXT_DIST_DIR": ".next-prod",
+        "AWS_DURABLE_FILE": "data/aws-cache/dryrun-r32/durable.sqlite",
+        "AWS_STORE_RELOAD_MINUTES": "100000",
+        "SMTP_HOST": "127.0.0.1",
+        "SMTP_PORT": "1",
+        "AI_PROVIDER": "none",
+        "AI_FALLBACK_PROVIDER": "none"
+      }
+    },
+    {
+      "name": "studio-ds-3017",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "chennai-grievance-portal-main",
+        "run",
+        "start",
+        "--",
+        "-p",
+        "3017"
+      ],
+      "port": 3017,
+      "autoPort": false,
+      "url": "http://127.0.0.1:3017",
+      "env": {
+        "DATA_BACKEND": "aws",
+        "AWS_STORE_DRY_RUN": "1",
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem",
+        "NEXT_DIST_DIR": ".next-ds",
+        "AWS_DURABLE_FILE": "data/aws-cache/dryrun-ds/durable.sqlite",
+        "AWS_STORE_RELOAD_MINUTES": "100000",
+        "STUDIO_DIR": "data/studio-test/real-copy",
+        "SMTP_HOST": "127.0.0.1",
+        "SMTP_PORT": "1"
+      }
+    },
+    {
+      "name": "jarvis-v16-3016",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "chennai-grievance-portal-main",
+        "run",
+        "start",
+        "--",
+        "-p",
+        "3016"
+      ],
+      "port": 3016,
+      "autoPort": false,
+      "url": "http://127.0.0.1:3016",
+      "env": {
+        "DATA_BACKEND": "aws",
+        "AWS_STORE_DRY_RUN": "1",
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem",
+        "NEXT_DIST_DIR": ".next-v16",
+        "AWS_DURABLE_FILE": "data/aws-cache/dryrun-v16/durable.sqlite",
+        "AWS_STORE_RELOAD_MINUTES": "100000",
+        "SMTP_HOST": "127.0.0.1",
+        "SMTP_PORT": "1"
+      }
+    },
+    {
+      "name": "r36-3036",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "chennai-grievance-portal-main",
+        "run",
+        "start",
+        "--",
+        "-H",
+        "127.0.0.1",
+        "-p",
+        "3036"
+      ],
+      "port": 3036,
+      "autoPort": false,
+      "url": "http://127.0.0.1:3036",
+      "env": {
+        "DATA_BACKEND": "aws",
+        "AWS_STORE_DRY_RUN": "1",
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem",
+        "NEXT_DIST_DIR": ".next-r36",
+        "AWS_DURABLE_FILE": "data/aws-cache/dryrun-r36/durable.sqlite",
+        "AWS_STORE_RELOAD_MINUTES": "100000",
+        "STUDIO_DIR": "data/studio-test/real-copy",
+        "SMTP_HOST": "127.0.0.1",
+        "SMTP_PORT": "1",
+        "AI_PROVIDER": "none",
+        "AI_CHAT_PROVIDER": "none",
+        "AWS_STORE_SAVE": ""
+      }
+    },
+    {
+      "name": "jarvis-v18-3018",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "chennai-grievance-portal-main",
+        "run",
+        "start",
+        "--",
+        "-H",
+        "127.0.0.1",
+        "-p",
+        "3018"
+      ],
+      "port": 3018,
+      "autoPort": false,
+      "url": "http://127.0.0.1:3018",
+      "env": {
+        "DATA_BACKEND": "aws",
+        "AWS_STORE_DRY_RUN": "1",
+        "NODE_EXTRA_CA_CERTS": "C:\\ProgramData\\Avast Software\\Avast\\wscert.pem",
+        "NEXT_DIST_DIR": ".next-v18f",
+        "AWS_DURABLE_FILE": "data/aws-cache/dryrun-v18/durable.sqlite",
+        "AWS_STORE_RELOAD_MINUTES": "100000",
+        "STUDIO_DIR": "data/studio-test/real-copy",
+        "SMTP_HOST": "127.0.0.1",
+        "SMTP_PORT": "1",
+        "AWS_STORE_SAVE": "",
+        "JARVIS_KEEPWARM": "0"
+      }
     }
   ]
 }

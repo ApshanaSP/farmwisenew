@@ -36,6 +36,7 @@ eval/v10/real/
 
 # Thunai: per-Collector memory and the audit trail (never committed)
 data/thunai/
+data/thunai-test-*/
 
 # Playwright output
 test-results/

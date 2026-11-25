@@ -41,6 +41,8 @@ export function aideWanted(r: AgentResult | null | undefined, question: string, 
   if (!forced && (process.env.JARVIS_AIDE ?? "").trim() === "0") return false;
   if (!forced && !aideReady()) return false;
   if (lane === "direct" || lane === "refuse") return false;
+  // v19: the analyst's screen always gets its own writer (v19/say.ts), over any window
+  if (r.stage.recipe === "ask") return true;
   // v11: the planner's answer from THE DISTRICT NOW is already the data speaking, checked sentence by sentence (agent.ts keepChecked)
   if (r.note === "v11:district-now") return false;
   // v12 (21 Nov, routing RC5 and RC7): the city screen on one spot or one past rain says code's own line for it (lib/city/pick.ts spotLine and
@@ -58,6 +60,9 @@ export function aideWanted(r: AgentResult | null | undefined, question: string, 
   // v16 (the browser drive): "that incident alone" is the case screen with code's own brief of it (screens.ts briefIssue); the writer's rewrite
   // came 3.5 s after the screen (first words at 5.3 s) and said less ("A crime report at Tondiarpet")
   if (r.note === "reader:first_case:one") return false;
+  // v18 (24 Nov): the summary dashboard, and any screen counted over a window of its own dates, says code's own line: the writer knows only the
+  // console's four windows and would say "this week" over "the last 2 days" (every figure of the line is on the screen, with the window's words)
+  if (r.stage.recipe === "summary" || r.stage.when) return false;
   return ASKED.has(r.stage.recipe) || QUESTION.test(question);
 }
 

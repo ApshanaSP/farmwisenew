@@ -213,3 +213,12 @@ html.jv-hud .st-frame { margin: 14px 14px 88px; max-height: calc(100dvh - 102px)
   .hud-levelbar span { display: block; height: 100%; background: var(--c); transform-origin: left; transform: scaleX(0); }
   .hud-faint { opacity: .75; }
 }
+
+/* v18 (24 Nov): with a screen open it ends above Jarvis's bar and the cards over it (Hud.tsx measures them into --hud-dock-h), so neither the
+   bar nor "Shall I tell you the severe events?" ever covers it; the cards stay short, one line each, while a screen is open */
+html.jv-hud .st-frame { margin: 12px 12px calc(var(--hud-dock-h, 74px) + 24px); max-height: calc(100dvh - var(--hud-dock-h, 74px) - 36px); }
+.hud.with-stage .hud-cards { max-height: 30dvh; }
+.hud.with-stage .hud-cards .th-card { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 12px; }
+.hud.with-stage .hud-cards .th-card > p { margin: 0; flex: 1 1 260px; }
+.hud.with-stage .hud-cards .th-card .row { flex: none; }
+.hud.with-stage .hud-cards .th-card .th-rows { flex-basis: 100%; max-height: 18dvh; overflow: auto; margin: 0; }

@@ -236,7 +236,7 @@ function rangeOf(spec: PeriodSpec, now: string): Period | "unheld" {
 /**
  * Period words: "today", "this week", "last 10 days", "இந்த மாதம்", "indha vaaram". Read by the one reader of Jarvis and Ask District IQ
  * (src/lib/period/read.ts, fixall3-map-today), so a phrase means one window on the whole console:
- * - "today" is the calendar day since midnight IST, "yesterday" the day before, "last week / month / quarter" the calendar one before;
+ * - "today" is the dashboard's Daily window (the last 24 hours), "yesterday" the calendar day before, "last week / month / quarter" the calendar one before;
  * - "this week", "last 7 days", "this month" are the console's rolling windows, "last 10 days" that much back, "last 36 hours" 36 hours back;
  * - "in September", "on 20 Oct", "since 1 October", "the last week of September": those calendar bounds (`now` is the map's clock; without it null);
  * - "right now": the current state (no reporting window); "two weeks ago", "last year": unheld, a time the records cannot answer;
@@ -263,7 +263,8 @@ export function periodOf(text: string, now?: string | null): SaidPeriod {
     case "hours":
       if (s.hours % 24 === 0) return { kind: "last_days", days: Math.min(LIMITS.days, s.hours / 24), offset: 0 };
       return now ? rangeOf(s, now) : null;
-    case "day": return { kind: "day", offset: s.back };
+    // today is the dashboard's Daily window, the last 24 hours (25 Nov 2026): the map's count is the tile's
+    case "day": return s.back === 0 ? { kind: "last_days", days: 1, offset: 0 } : { kind: "day", offset: s.back };
     case "last": return { kind: s.unit, offset: 1 };
     case "now": return NOW_STATE.test(text) ? "now" : null;
     case "month": case "days": case "since": case "holiday": case "lastWeekOf": return now ? rangeOf(s, now) : null;
@@ -284,7 +285,7 @@ export function periodOf(text: string, now?: string | null): SaidPeriod {
   if (n) return { kind: "last_days", days: Math.min(LIMITS.days, Number(n[1] ?? n[2])), offset: 0 };
   const mo = t.match(/\b(?:last|past)\s+(\d{1,2})\s+months?\b/);
   if (mo) return { kind: "last_days", days: Math.min(LIMITS.days, Number(mo[1]) * 30), offset: 0 };
-  if (/\btoday\b|இன்று|innaiki|inniki|indru/.test(t)) return { kind: "day", offset: 0 };
+  if (/\btoday\b|இன்று|innaiki|inniki|indru/.test(t)) return { kind: "last_days", days: 1, offset: 0 };
   if (/\b(last 24 hours|past 24 hours|since yesterday)\b/.test(t)) return { kind: "last_days", days: 1, offset: 0 };
   if (/\blast week\b|கடந்த வாரம்/.test(t)) return { kind: "week", offset: 1 };
   if (/\blast month\b|கடந்த மாதம்/.test(t)) return { kind: "month", offset: 1 };

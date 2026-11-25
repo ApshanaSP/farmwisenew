@@ -16,6 +16,7 @@ describe("v4 review: an order inside a 'how fast ... close' question is still re
   it.each([
     "which department is slowest to close drainage complaints",
     "how long does it take to close a case",
-    "the closing rate of complaints in Adyar"
+    "the closing rate of complaints in Adyar",
+    "how many cases did the fire department close yesterday", "did the corporation close any complaint today", "How many cases has the police close to the deadline"
   ])("a question about the data, not refused: %s", (t) => expect(asksForbiddenOrder(t)).toBe(false));
 });

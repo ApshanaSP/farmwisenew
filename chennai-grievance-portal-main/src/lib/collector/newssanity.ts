@@ -22,6 +22,8 @@
 
 export const STORY_HOURS = 72;
 export const MASS_DEATHS = 10;
+/** a headline whose count is the whole state's or country's, not the district's (25 Nov 2026) */
+export const STATEWIDE_COUNT = /\b(?:across|throughout|all over)\s+(?:the\s+)?(?:tamil\s*nadu|tn|state|country|india)\b|\bstate-?wide\b|\bnation-?wide\b|தமிழகம் முழுவதும்|தமிழ்நாடு முழுவதும்|மாநிலம் முழுவதும்|நாடு முழுவதும்/i;
 
 const HISTORY = /this day in history|on this day|years ago today|today in history|இதே நாளில்|அன்று இதே நாள்|வரலாற்றில் இன்று|இன்றைய வரலாறு/i;
 /** a headline that opens with a date: "13.10.1976:", "13/10/1976 -" */

@@ -9,9 +9,10 @@
  * Rows never carry citizens' details: no complaint text, reporter, phone or email.
  */
 import { z } from "zod";
-import { PERIODS, areaSnapshot, asOf, asOfNow, contactsFor, explain, incident, list, overview, search, type Overview } from "@/lib/collector/intel";
+import { PERIODS, areaSnapshot, asOf, asOfNow, contactsFor, explain, incident, list, overview, periodSince, search, type Overview } from "@/lib/collector/intel";
 import { insights, type Insights } from "@/lib/collector/insights";
-import { threads } from "@/lib/collector/threads";
+import { threads, type Thread } from "@/lib/collector/threads";
+import type { Story } from "@/lib/collector/storyai";
 import { mapGeo } from "@/lib/collector/geo";
 import { resolvePlace } from "@/lib/collector/nlp";
 import { CHENNAI_MARKETS, mandiMarkets, mandiWeekly } from "@/lib/collector/sources";
@@ -1094,8 +1095,13 @@ export const TOOLS = [
       lockDept: z.string().regex(/^[A-Z0-9-]{2,20}$/).nullable().default(null) }),
     async run({ scope, place, lockDept }) {
       const now = await asOf();
-      const r = await threads({ hours: PERIODS[scope.period].hours, zone: scope.zone, dept: scope.dept, cat: scope.cat, taluk: scope.taluk, lockDept }, now);
-      let list = r.threads;
+      const ask = { hours: PERIODS[scope.period].hours, zone: scope.zone, dept: scope.dept, cat: scope.cat, taluk: scope.taluk };
+      // (24 Nov) the Collector hears the same list the console shows (storyai.ts: joined and checked by AI, each event once); a
+      // department's locked view keeps the rules' threads, whose records can be held back
+      const r = lockDept ? await threads({ ...ask, lockDept }, now)
+        : await (await import("@/lib/collector/storyai")).stories({ ...ask, since: periodSince(scope.period, now) }, now, "assistant");
+      let list: Thread[] = r.threads;
+      const stagesOf = (t: Thread): string[] => "events" in t ? (t as Story).events.map((e) => e.label) : t.stages.map((x) => x.stage);
       let resolved = null as Awaited<ReturnType<typeof resolvePlace>>;
       if (place) {
         resolved = await resolvePlace(place);
@@ -1109,7 +1115,7 @@ export const TOOLS = [
         });
       }
       const rows = list.slice(0, 12).map((t) => ({ id: t.id, title: t.title, place: t.place, category: t.catLabel, zones: t.zones, first: t.first, last: t.last,
-        reports: t.reports, outlets: t.outlets, stages: t.stages.map((s) => s.stage), incidents: t.incidents, sev: t.sev, open: t.open,
+        reports: t.reports, outlets: t.outlets, stages: stagesOf(t), incidents: t.incidents, sev: t.sev, open: t.open,
         latest: { t: t.latest.t, title: t.latest.title, publisher: t.latest.publisher, url: t.latest.url } }));
       const facts = [fact("stories.count", "Developing stories found", list.length),
         ...rows.flatMap((t) => [fact(`story.${t.id}.reports`, `Reports in the story "${t.title.slice(0, 60)}"`, t.reports),

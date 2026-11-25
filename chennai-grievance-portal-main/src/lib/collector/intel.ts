@@ -12,6 +12,7 @@ import intelPool, { CLUSTER, OPS_DB, TITLE, ops } from "@/lib/collector/db";
 import "@/lib/collector/derive";
 import { redactText } from "@/lib/thunai/privacy";
 import { clusterNews, isNewsMedia, mediaKind, relevantNews, topicOf, type NewsGroup } from "@/lib/collector/newsrel";
+import { SKIP_LABEL, deskOf, deskOfDocs, headOf, isListing, wantDays, type SkipReason, type Verdict } from "@/lib/collector/deskbook";
 import { addedItems, audit, collectionStatus } from "@/lib/collector/sources";
 import { photoUrl } from "@/lib/officer/photos";
 import { threads } from "@/lib/collector/threads";
@@ -334,25 +335,69 @@ const NEWS_TIERS = "('established', 'regional', 'official')";
 const ROUNDUP = /latest news today|news today live|live updates|top news|news highlights|#gallery/i;
 
 /**
- * News stories in the period that matter to the Collector, newest first: from a real news outlet, linked to an
- * incident in our records or about a category the district handles, and not off-topic or about another district
- * (newsrel.ts). Reports about the same event, from every outlet and in Tamil and English, are one story; routine
- * notices of one kind (power shutdowns, rain updates, dengue counts) are one story each. `incident` is the linked
- * incident (the story opens it); `docIds` are its reports (a news-only story opens them in the news preview);
- * `complaints`/`grievances` say whether citizens also raised it.
+ * The period's articles from recognised news media, split by the news desk (newsdesk.ts): what belongs on the Collector's desk and what
+ * was left out. An article the desk has not read yet follows the rules: linked to an incident or about a category the district handles,
+ * and not off-topic or about another district (newsrel.ts).
  */
-export async function newsStories(period: Period, now: string) {
+async function newsDocs(period: Period, now: string): Promise<{ kept: Row[]; left: Row[] }> {
   const w = periodWindow(period, now, "d.published_at");
+  wantDays(Math.ceil(PERIODS[period].hours / 24));
   const docs = (await q(
     `SELECT d.doc_id, d.story_id, d.story_role, d.title, d.title_en, d.lang, d.url, d.publisher, d.publisher_domain, d.publisher_tier, d.place_text, d.ai_place, d.ai_orgs,
             d.category_code, d.report_type, d.linked_incident_id, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t
-     FROM documents d WHERE d.is_district = 1 AND d.title IS NOT NULL AND d.publisher_tier IN ${NEWS_TIERS}
-       AND (d.linked_incident_id IS NOT NULL OR (d.category_code IS NOT NULL AND d.category_code <> 'OTHER'
-            AND COALESCE(d.report_type, '') NOT IN ('entertainment_sport', 'business')))
-       AND ${w.sql}
-     ORDER BY d.published_at DESC LIMIT 1500`,
+     FROM documents d WHERE d.is_district = 1 AND d.title IS NOT NULL AND d.publisher_tier IN ${NEWS_TIERS} AND ${w.sql}
+     ORDER BY d.published_at DESC LIMIT 6000`,
     w.params
-  )).filter((r) => isNewsMedia(r.publisher, r.publisher_domain, r.publisher_tier) && !ROUNDUP.test(String(r.title)) && relevantNews(r, english(r)));
+  )).filter((r) => isNewsMedia(r.publisher, r.publisher_domain, r.publisher_tier) && !ROUNDUP.test(String(r.title)) && !isListing(r.title, r.title_en));
+  // the verdict of a story is the strongest of its reports': an article still unread follows the ones read
+  const by = new Map<string, Row[]>();
+  for (const r of docs) (by.get(String(r.story_id ?? r.doc_id)) ?? by.set(String(r.story_id ?? r.doc_id), []).get(String(r.story_id ?? r.doc_id))!).push(r);
+  const kept: Row[] = [], left: Row[] = [];
+  for (const g of by.values()) {
+    const v = deskOfDocs(g as { title: unknown; title_en: unknown }[]);
+    if (v) { for (const r of g) ((deskOf(r.title, r.title_en)?.v ?? v.v) === "skip" ? left : kept).push(r); continue; }
+    for (const r of g) {
+      const asked = r.linked_incident_id || (r.category_code && r.category_code !== "OTHER" && !["entertainment_sport", "business"].includes(String(r.report_type ?? "")));
+      if (asked && relevantNews(r, english(r))) kept.push(r);
+    }
+  }
+  return { kept, left };
+}
+
+/** What the news desk left out of the period's news, newest first, each with its reason ("See more" > Left out). */
+export async function newsLeftOut(period: Period, now: string) {
+  const { left } = await newsDocs(period, now);
+  // the reason of a report not read itself is its story's
+  const why = new Map<string, Verdict>();
+  for (const r of left) { const v = deskOf(r.title, r.title_en); if (v?.v === "skip" && !why.has(String(r.story_id ?? r.doc_id))) why.set(String(r.story_id ?? r.doc_id), v); }
+  const seen = new Set<string>();
+  const out: { id: string; title: string; original: string | null; publisher: string | null; url: string | null; t: string; reason: string }[] = [];
+  for (const r of left) {
+    const k = String(r.story_id ?? r.doc_id);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    const v = deskOf(r.title, r.title_en) ?? why.get(k);
+    out.push({ id: String(r.doc_id), title: cleanHeadline((r.lang !== "en" && headOf(r.title)) || english(r)), original: r.lang !== "en" ? redactText(String(r.title)) : null,
+      publisher: r.publisher ?? null, url: r.url ?? null, t: String(r.t), reason: SKIP_LABEL[(v?.skip || "other") as SkipReason] });
+  }
+  return { total: out.length, items: out.slice(0, 200) };
+}
+
+/** A headline the outlet wrote as a teaser, a hashtag line or a "Video | " tag: the desk's plain one is shown instead. */
+const TEASER = /\?\s*$|\?\?|\||#|^\s*(?:video|watch|photos?|in pics?|breaking)\b|\.{3}|…/i;
+/** The headline a story is shown under: the outlet's own words when they are English and plain, else the desk's. */
+const deskHeadline = (r: Row, v: Verdict | null): string => (v?.head && (r.lang !== "en" || TEASER.test(String(r.title)) || String(r.title).length > 120) ? v.head : english(r));
+
+/**
+ * News stories in the period that belong on the Collector's desk, newest first: from recognised news media, read and sorted by the news
+ * desk (newsDocs above). Reports about the same event, from every outlet and in Tamil and English, are one story; routine
+ * notices of one kind (power shutdowns, rain updates, dengue counts) are one story each. `incident` is the linked
+ * incident (the story opens it); `docIds` are its reports (a news-only story opens them in the news preview);
+ * `complaints`/`grievances` say whether citizens also raised it; `desk` says why it is here; `sources` names every outlet, its kind, when
+ * it first reported and its link.
+ */
+export async function newsStories(period: Period, now: string) {
+  const docs = (await newsDocs(period, now)).kept;
   const by = new Map<string, Row[]>();
   for (const r of docs) {
     const k = String(r.story_id ?? r.doc_id);
@@ -378,12 +423,25 @@ export async function newsStories(period: Period, now: string) {
         (RANK[incOf.get(a)?.sev] ?? 9) - (RANK[incOf.get(b)?.sev] ?? 9))[0] ?? null;
     const i = incident ? incOf.get(incident) : undefined;
     // the headline: an English one from the best outlet, the latest of those
-    const lead = [...g].sort((a, b) => Number(b.lang === "en") - Number(a.lang === "en") || (TIER[a.publisher_tier] ?? 9) - (TIER[b.publisher_tier] ?? 9) ||
+    // (routine notices: one of the last 18 hours, whatever its language, for an older one's date is over; one with an account, not a photo's caption)
+    const routine = !incident && topicOf(english(g[0]), String(g[0].title ?? "")) != null;
+    const told = (r: Row) => Number(!!deskOf(r.title, r.title_en)?.gist) * 2 + Number(r.lang === "en");
+    const lead = routine ? [...g].filter((r) => wallMs(g[0].t) - wallMs(r.t) <= 18 * 3600_000).sort((a, b) => told(b) - told(a) || String(b.t).localeCompare(String(a.t)))[0] : [...g].sort((a, b) => Number(b.lang === "en") - Number(a.lang === "en") || (TIER[a.publisher_tier] ?? 9) - (TIER[b.publisher_tier] ?? 9) ||
       String(b.t).localeCompare(String(a.t)))[0];
     const place = g.map((r) => r.ai_place || r.place_text).find((p) => p && !/^\s*chennai( district)?\s*$/i.test(p)) ?? null;
+    const v = deskOf(lead.title, lead.title_en) ?? deskOfDocs(g as { title: unknown; title_en: unknown }[]);
+    const top = deskOfDocs(g as { title: unknown; title_en: unknown }[]);
+    // every outlet once, with its earliest report of the story
+    const outlets = new Map<string, { name: string; kind: string | null; t: string; url: string | null; id: string }>();
+    for (const r of [...g].reverse()) if (r.publisher && !outlets.has(String(r.publisher))) outlets.set(String(r.publisher), { name: String(r.publisher),
+      kind: mediaKind(r.publisher, r.publisher_domain, r.publisher_tier), t: String(r.t), url: r.url ? String(r.url) : null, id: String(r.doc_id) });
     return {
       id: String(lead.doc_id),
-      title: cleanHeadline(english(lead)),
+      // the desk's headline of this very report, else (no English report) of the story
+      title: cleanHeadline(headOf(lead.title) ? deskHeadline(lead, deskOf(lead.title)) : lead.lang !== "en" && v?.head ? v.head : english(lead)),
+      /** the news desk's reading: act or know, its area, what happened and why it matters; null until it is read */
+      desk: v && v.v !== "skip" ? { v: (top?.v === "act" ? "act" : v.v) as "act" | "know", area: v.area, gist: v.gist ? redactText(v.gist) : "", why: v.why ? redactText(v.why) : "", cat: v.cat } : null,
+      sources: [...outlets.values()].slice(0, 12),
       /** the headline as published, when it is not in English */
       original: lead.lang !== "en" ? redactText(String(lead.title)) : null,
       url: lead.url ?? null,
@@ -407,7 +465,7 @@ export async function newsStories(period: Period, now: string) {
 /** A report's headline in English: its own, or the translation of a Tamil headline. */
 const english = (r: Row) => String((r.lang !== "en" && r.title_en) || r.title || "");
 /** Hashtags and a trailing "| Outlet - news" trimmed. */
-const cleanHeadline = (t: string) => redactText(t).replace(/\s*#\S+/g, "").replace(/\s*[|–-]\s*(Dinakaran Chennai\s*-\s*)?news\s*$/i, "").replace(/\s+/g, " ").trim();
+const cleanHeadline = (t: string) => redactText(t).replace(/^\s*(?:video|watch|breaking)\s*[|:]\s*/i, "").replace(/\s*#\S+/g, "").replace(/\s*[|–-]\s*(Dinakaran Chennai\s*-\s*)?news\s*$/i, "").replace(/\s+/g, " ").trim();
 const wallMs = (t: string) => Date.parse(String(t).replace(" ", "T") + "+05:30");
 
 /** The reports of a news story, for the news preview: headline, translation, outlet, full text (or summary), what the AI read. */
@@ -438,7 +496,9 @@ export async function storyDept(cats: (string | null)[], titles: { title: string
   const TOPIC_CAT: Record<string, string> = { power: "STREETLIGHT_ELECTRICAL", weather: "FLOOD_RISK_SIGNAL", dengue: "VECTOR_DISEASE" };
   const n = new Map<string, number>();
   for (const c of cats) if (c && c !== "OTHER") n.set(c, (n.get(c) ?? 0) + 1);
-  const cat = (topic && TOPIC_CAT[topic]) || [...n.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  // (24 Nov: the news desk read the article; the monitor's label is a guess from its words)
+  const desk = deskOfDocs(titles);
+  const cat = (desk?.cat && desk.cat !== "OTHER" ? desk.cat : null) || (topic && TOPIC_CAT[topic]) || [...n.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
   if (!cat) return null;
   const [r] = await q(
     `SELECT c.category_code AS cat, c.label, c.lead_dept AS code, dp.name, dp.head, dp.org

@@ -30,12 +30,12 @@ const at = (first: string) => ({ ...INCIDENTS[0], first });
 
 describe("the map reads period words as Jarvis and Ask District IQ do", () => {
   it.each([
-    ["open incidents today", { kind: "day", offset: 0 }],
-    ["garbage complaints today", { kind: "day", offset: 0 }],
-    ["இன்று வெள்ளம்", { kind: "day", offset: 0 }],
-    ["innaiki garbage", { kind: "day", offset: 0 }],
-    ["inniki flooding", { kind: "day", offset: 0 }],
-    ["this morning", { kind: "day", offset: 0 }],
+    ["open incidents today", { kind: "last_days", days: 1, offset: 0 }],
+    ["garbage complaints today", { kind: "last_days", days: 1, offset: 0 }],
+    ["இன்று வெள்ளம்", { kind: "last_days", days: 1, offset: 0 }],
+    ["innaiki garbage", { kind: "last_days", days: 1, offset: 0 }],
+    ["inniki flooding", { kind: "last_days", days: 1, offset: 0 }],
+    ["this morning", { kind: "last_days", days: 1, offset: 0 }],
     ["flooding yesterday", { kind: "day", offset: 1 }],
     ["incidents last week", { kind: "week", offset: 1 }],
     ["கடந்த வாரம் சம்பவங்கள்", { kind: "week", offset: 1 }],
@@ -59,7 +59,12 @@ describe("the map reads period words as Jarvis and Ask District IQ do", () => {
     expect(periodOf("garbage")).toBeNull();
   });
 
-  it.each(["open incidents today", "flooding yesterday", "incidents last week", "garbage last month", "accidents last quarter", "கடந்த மாதம்"])(
+  it("today is the dashboard's Daily window on the map too", () => {
+    const r = periodRange(periodOf("open incidents today") as Period, NOW);
+    expect(r).toEqual(periodRange(periodOf("open incidents in the last 24 hours") as Period, NOW));
+  });
+
+  it.each(["flooding yesterday", "incidents last week", "garbage last month", "accidents last quarter", "கடந்த மாதம்"])(
     "%s: the map's window is the reader's window", (q) => {
       const p = periodOf(q) as Period;
       const span = spanOf(readPeriod(q), NOW)!;
@@ -145,24 +150,25 @@ describe("the map's answers", () => {
     const r = rulesRoute("open incidents in September", null, env);
     expect(r && r.kind === "plan" ? r.unread : null).toContain("september");
   });
-  it("a model's plan keeps the question's calendar words: 'today' is never its rolling 24 hours", () => {
+  // (25 Nov 2026, the owner: "today" is the dashboard's Daily window, the last 24 hours, everywhere)
+  it("a model's plan for 'today' is the dashboard's 24 hours", () => {
     const model: Plan = { language: "en", show: "a", steps: [{ op: "take", as: "a", layer: "incidents", filter: F({ kind: "last_days", days: 1, offset: 0 }), where: null },
       { op: "take", as: "f1", layer: "schools", filter: null, where: null }] };
     const out = fitModelPlan(model, "flooding near kids' schools today");
-    expect((out.steps[0] as Extract<Plan["steps"][number], { op: "take" }>).filter?.period).toEqual({ kind: "day", offset: 0 });
+    expect((out.steps[0] as Extract<Plan["steps"][number], { op: "take" }>).filter?.period).toEqual({ kind: "last_days", days: 1, offset: 0 });
     expect(out.steps[1]).toEqual(model.steps[1]);
     // no calendar words: the model's period stands
     expect(fitModelPlan(model, "flooding near kids' schools in the last 24 hours")).toEqual(model);
     // no time words at all: the model's period stands
     expect(fitModelPlan(model, "flooding near kids' schools")).toBe(model);
   });
-  it("'open incidents today' is asked as today since midnight, and the answer says so", async () => {
-    expect(takeOf(rulesRoute("open flooding today", null, env))?.filter?.period).toEqual({ kind: "day", offset: 0 });
+  it("'open incidents today' is asked over the dashboard's Daily window, and the answer says so", async () => {
+    expect(takeOf(rulesRoute("open flooding today", null, env))?.filter?.period).toEqual({ kind: "last_days", days: 1, offset: 0 });
     const r = await askMap({ text: "open flooding today", plan: null, prev: null, context: { zone: null, taluk: null, incidentId: null, drawn: null, ward: null },
       user: { email: "collector@example.invalid", role: "collector", lockDept: null } });
     expect(r.kind).toBe("answer");
-    expect(r.answer?.headline ?? "").toMatch(/today, since midnight/);
+    expect(r.answer?.headline ?? "").toMatch(/24 hours|last day|today/i);
     const p = r.chips.find((c) => c.part === "period");
-    expect(p?.en).toMatch(/^Today, since midnight$/);
+    expect(p?.en).toBe("Last 24 hours");
   });
 });

@@ -5,7 +5,9 @@
  * from last month" was a list in one lane and October against September in the other). One phrase now has one meaning, in English, Tamil and
  * Tanglish alike:
  *
- *   "today", "this morning", இன்று, innaiku ........... today's calendar day in India, from midnight to now
+ *   "today", "this morning", இன்று, innaiku ........... the dashboard's own Daily window, the last 24 hours (25 Nov 2026, the owner: the dashboard
+ *                                                         said 7 severe and Jarvis, counting since midnight, said another number). "since
+ *                                                         midnight" is still the calendar day so far
  *   "right now", "currently", "open now", இப்போது, ippo  the current state: what is open now, whatever day it was reported (no reporting window)
  *   "yesterday", நேற்று, nethu ........................ the calendar day before today; "the day before yesterday" the one before that
  *   "last week / month / quarter", கடந்த மாதம், pona maasam   the previous calendar week (Monday to Sunday), month or quarter
@@ -43,7 +45,7 @@ export type PeriodSpec =
   /** "in September": that calendar month (to now when it is this month) */
   | { kind: "month"; month: number; year: number | null }
   /** "on 15 Oct", "between 1 Oct and 15 Oct", "அக்டோபர் 15 அன்று": those calendar days, the last inclusive (p7-merge-04: Ask District IQ alone read them, in fastpath's dayRange) */
-  | { kind: "days"; from: DayOf; to: DayOf }
+  | { kind: "days"; from: DayOf; to: DayOf; end?: "yesterday" }
   /** "since 1 October": from that day to now */
   | { kind: "since"; month: number; day: number }
   /** "since Diwali": from the last time it fell to now */
@@ -103,6 +105,10 @@ const YESTERDAY = /\b(yesterday|yesterday'?s|nethu|netru|neththu|nethaiki|nethik
 const DAY_BEFORE = /\b(day before yesterday|munthaa naal|munthanaal|mundhaa naal|mundhanaal|mundhanaaal)\b|முந்தா ?நாள்|முந்தாநாள்|நேற்று முன்தினம்|நேற்று முந்தைய நாள்/i;
 /** "since yesterday", "from yesterday onwards": the stretch up to now (rolling); "the fires from yesterday" names yesterday itself */
 const SINCE_YESTERDAY = /\bsince yesterday\b|\bfrom yesterday (?:to|till|until|up to|onwards?)\b|நேற்றிலிருந்து|nethu(la)? irundhu/i;
+const SINCE_MIDNIGHT = /\b(?:since|from|after)\s+(?:last\s+)?midnight\b|\bsince 12 ?am\b|நள்ளிரவு(?:க்கு)?\s*(?:முதல்|பிறகு|இலிருந்து)/i;
+/** today's calendar date in India as a one-day range (it runs to now: spanOf) */
+const sinceMidnight = (nowMs: number): PeriodSpec => { const d = new Date(nowMs + 330 * 60_000); const day: DayOf = { day: d.getUTCDate(), month: d.getUTCMonth(), year: d.getUTCFullYear() }; return { kind: "days", from: day, to: day }; };
+const nowForMidnight = (): number => Date.now();
 const TODAY = /\b(today'?s?|todays|tonight|this (morning|afternoon|evening)|so far today|innaiku|innaikku|inniki|innaiki|innikku|innikki|indru|inaiku)\b|இன்று|இன்றைய|இன்னைக்கு|இன்னிக்கு|இன்றிரவு|இன்று காலை/i;
 /** the current state: what is open now. "now" on its own counts ("show severe cases now"); "now" as a sequence word at the start ("now show Adyar") does not */
 const NOW = /\b(right now|just now|as of now|as on now|at (the|this) moment|at present|presently|currently|current(?:ly)? open|open now|now open|still open now)\b|\bnow\b|\b(ippo|ippodhu|ippothu|ipo|ippa|ippove|ipodhu|ipothaikku|ippothaikku)\b|இப்போது|இப்போ(?![஀-௿])|இப்ப(?![஀-௿])|தற்போது|தற்சமயம்|இந்த நேரத்தில்/i;
@@ -136,6 +142,18 @@ const DAY_N = String.raw`(\d{1,2})(?:st|nd|rd|th)?`;
 const YEAR_OPT = String.raw`(?:\s+(20\d{2}))?`;
 /** "between 1 Oct and 15 Oct", "from 1 to 15 October", "1-15 Oct" */
 const DAYS_RANGE = new RegExp(String.raw`\b(?:between|from)\s+${DAY_N}\s*(?:of\s+)?(?:${MON_ALT}${YEAR_OPT})?\s*(?:and|to|till|until|-|–)\s*${DAY_N}\s*(?:of\s+)?${MON_ALT}${YEAR_OPT}\b|\b${DAY_N}\s*(?:-|–)\s*${DAY_N}\s+${MON_ALT}${YEAR_OPT}\b`, "i");
+// v18 round 2 (24 Nov, the review of the owner's "from 30th March to April 30"): the other ways a range is said. Each was read as one day,
+// or as "since" (a span to now): "1 November to 10 November", "1st to 10th november", "from October 1st to 15th", "between 20 November and
+// today", "from 15 Nov to yesterday", "அக்டோபர் 1 முதல் அக்டோபர் 15 வரை", "October 1 la irundhu October 15 varaikkum"
+const OF_ = String.raw`\s*(?:of\s+)?`;
+/** a day on each side, the month on the second side or on both, with or without "from" (without it, "and" joins two days, not a range) */
+const RANGE_ANY = new RegExp(String.raw`\b(?:(between|from)\s+)?${DAY_N}${OF_}(?:${MON_ALT}${YEAR_OPT})?\s*(and|to|till|until|-|–)\s*${DAY_N}${OF_}${MON_ALT}${YEAR_OPT}\b`, "i");
+/** the month on the first side only: "from 1 October to 15th" (the second day is in that month, or the next when it is smaller) */
+const RANGE_FIRST = new RegExp(String.raw`\b(?:between|from)\s+${DAY_N}${OF_}${MON_ALT}${YEAR_OPT}\s*(?:and|to|till|until|-|–)\s*${DAY_N}\b(?!${OF_}${MON_ALT}|\s*(?:days?|hours?|weeks?|months?|am|pm|[:.]\d))`, "i");
+/** to now, or to yesterday: "between 20 November and today", "from 15 Nov to yesterday", "from 1 October to date" */
+const RANGE_NOW = new RegExp(String.raw`\b(?:between|from)\s+${DAY_N}${OF_}${MON_ALT}${YEAR_OPT}\s*(?:and|to|till|until|-|–)\s*(?:the\s+)?(today|now|date|yesterday)\b`, "i");
+/** Tamil and Tanglish: "1 october முதல் 15 october வரை", "1 october la irundhu 15 october varaikkum" (read after englishMonths and the day turned round) */
+const RANGE_TA = new RegExp(String.raw`\b${DAY_N}${OF_}${MON_ALT}${YEAR_OPT}\s*(?:-?\s*(?:la|il|le)?\s*(?:irundhu|irunthu|ilirundhu|lerndhu|mudhal|mudal)\b|முதல்|லிருந்து|இலிருந்து|ிலிருந்து|இருந்து)\s*${DAY_N}(?:${OF_}${MON_ALT}${YEAR_OPT})?\s*(?:varai[a-z]*|வரை)`, "i");
 /** "on 15 Oct", "15 October 2026", "15 october anru", "அக்டோபர் 15 அன்று" ("Oct 15" is turned round first) */
 const DAY_ONE = new RegExp(String.raw`\b(?:on\s+)?${DAY_N}\s*(?:of\s+)?${MON_ALT}${YEAR_OPT}\b`, "i");
 /** Tamil and Tanglish "since a day": "அக்டோபர் 1 முதல்", "1 October-ilirundhu", "October 1 la irundhu" (read after englishMonths and the day turned round) */
@@ -171,9 +189,32 @@ function normal(text: string): string {
   return ` ${text.toLowerCase().replace(/[’`]/g, "'").replace(/\s+/g, " ").trim()} `;
 }
 
+const MONTH_FULL = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+/**
+ * v18 round 2 (24 Nov, the owner's 18:52 IST session with Jarvis): spoken dates as speech-to-text writes them, made readable for this reader.
+ * "From March 30, 2026 to April 30, 2026." (the comma after the day), "from um 20th March 2026 to. 20th April." (a full stop where the speaker
+ * paused, a filler), "30/03/2026 till 30-04-2026", "through", "upto": each was read as one day, or none. Used by every lane (Jarvis, Ask District
+ * IQ, the officer's assistant), so a date means the same everywhere.
+ */
+export function dateWords(text: string): string {
+  let t = ` ${text} `;
+  // numbers written as dates: 30/03/2026, 30-03-2026, 2026-03-30 -> "30 march 2026"
+  t = t.replace(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/g, (m, y, mo, d) => (Number(mo) >= 1 && Number(mo) <= 12 ? `${Number(d)} ${MONTH_FULL[Number(mo) - 1]} ${y}` : m));
+  t = t.replace(/\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{4}|\d{2})\b/g, (m, d, mo, y) => (Number(mo) >= 1 && Number(mo) <= 12 && Number(d) >= 1 && Number(d) <= 31
+    ? `${Number(d)} ${MONTH_FULL[Number(mo) - 1]} ${y.length === 2 ? `20${y}` : y}` : m));
+  // fillers, and a pause written as a stop or a comma inside the dates
+  t = t.replace(/\b(?:um+|uh+|er+|hmm+|ah+)\b[,.]?/gi, " ");
+  t = t.replace(/(\d)(?:st|nd|rd|th)?\s*,\s*(\d{4})/gi, "$1 $2").replace(/([a-z])\s*,\s*(\d{4})\b/gi, "$1 $2");
+  t = t.replace(/\b(to|till|until|upto|up to|through|thru|and)\s*[.,:;]+\s*/gi, "$1 ").replace(/\b(from|between|since|on)\s*[.,:;]+\s*/gi, "$1 ");
+  // "till", "until", "through", "upto" between two dates read as "to"
+  t = t.replace(/\b(?:till|until|through|thru|upto|up to)\b(?=\s+\d|\s+(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept?|oct|nov|dec)\b)/gi, "to");
+  return t.replace(/\s+/g, " ").trim();
+}
+
 /** What time the question names. Pure: no clock. */
 export function readPeriod(text: string): PeriodSpec {
-  const raw = normal(text);
+  // (v18 round 2: dates as speech-to-text writes them, made readable first: "March 30, 2026", "to. 20th April", "30/03/2026")
+  const raw = normal(dateWords(text));
   const t = raw.replace(AGE, " ");
   // 1. a comparison of two periods ("up or down from last month", "than yesterday", "கடந்த மாதத்தை விட", "pona maasatha vida")
   const cmp = compareIn(t);
@@ -212,6 +253,8 @@ export function readPeriod(text: string): PeriodSpec {
   const mm = monthIn(englishMonths(t));
   if (mm) return { kind: "month", month: mm.month, year: mm.year };
   // 8. today, and this week or month (also "till now": up to now is a qualifier of them, not the current state)
+  // the calendar day so far, only when it is said so
+  if (SINCE_MIDNIGHT.test(t)) return sinceMidnight(nowForMidnight());
   if (TODAY.test(t)) return { kind: "day", back: 0 };
   const loc = LOC_TG.exec(t);
   if (loc) return { kind: "window", key: /^vaara/.test(loc[2]) ? "weekly" : "monthly" };
@@ -235,8 +278,59 @@ function dayOf(d: string, m: string, y: string | undefined): DayOf | null {
   const day = Number(d), month = MONTHS.indexOf(m.slice(0, 3).toLowerCase());
   return month >= 0 && day >= 1 && day <= 31 ? { day, month, year: y ? Number(y) : null } : null;
 }
+/** The second day of a range said with one month ("from 1 October to 15th"): that month, or the next when the day is smaller ("25 Oct to 5th") */
+function nextOf(from: DayOf, day: number): DayOf | null {
+  if (!(day >= 1 && day <= 31)) return null;
+  if (day >= from.day) return { day, month: from.month, year: from.year };
+  return { day, month: (from.month + 1) % 12, year: from.year == null ? null : from.month === 11 ? from.year + 1 : from.year };
+}
+/**
+ * The first and last day a "days" spec names (midnight of each, as UTC ms of the IST wall clock), the year a speaker leaves out filled in
+ * one way for every lane. With no year said, the most recent such range that has begun: "from 1 November to 30 November" on 24 November is
+ * this month to date (v18 round 2's review: each side was moved back a year on its own, so it read 30 Nov 2025 to 1 Nov 2026). With one
+ * side's year said, the other side is in the same year, or the next or the year before when the range crosses a new year. Null when a
+ * day does not exist ("31 June") or the range runs backwards.
+ */
+export function daysBounds(spec: Extract<PeriodSpec, { kind: "days" }>, nowWall: number): { a: number; b: number } | null {
+  const year = new Date(nowWall).getUTCFullYear();
+  const f = spec.from, t = spec.to;
+  let ya = f.year ?? t.year ?? year, yb = t.year ?? f.year ?? year;
+  // (a range that crosses a new year, "20 December to 5 January": the months run on past December; "15 Oct to 1 Oct" runs backwards: none)
+  const crosses = f.month - t.month >= 6;
+  if (crosses && Date.UTC(yb, t.month, t.day) < Date.UTC(ya, f.month, f.day)) { if (t.year == null) yb = ya + 1; else if (f.year == null) ya = yb - 1; }
+  if (f.year == null && t.year == null && Date.UTC(ya, f.month, f.day) > nowWall) { ya -= 1; yb -= 1; }
+  const real = (d: DayOf, y: number) => d.day <= new Date(Date.UTC(y, d.month + 1, 0)).getUTCDate();
+  if (!real(f, ya) || !real(t, yb)) return null;
+  const a = Date.UTC(ya, f.month, f.day);
+  const b = spec.end === "yesterday" ? Math.floor(nowWall / 864e5) * 864e5 - 864e5 : Date.UTC(yb, t.month, t.day);
+  return b < a ? null : { a, b };
+}
 /** A day or a range of days the text names, or null. A single day after since / from / after is a span to now (the "since" kind). */
 function daysIn(t: string): PeriodSpec | null {
+  // v18 round 2: Tamil and Tanglish ranges, ranges to now or yesterday, ranges said without "from", the month on the first side only
+  const ta = RANGE_TA.exec(t);
+  if (ta) {
+    const from = dayOf(ta[1], ta[2], ta[3]);
+    const to = ta[5] ? dayOf(ta[4], ta[5], ta[6] ?? ta[3]) : from ? nextOf(from, Number(ta[4])) : null;
+    if (from && to) return { kind: "days", from, to };
+  }
+  const nw = RANGE_NOW.exec(t);
+  if (nw) {
+    const from = dayOf(nw[1], nw[2], nw[3]);
+    if (from) return nw[4].toLowerCase() === "yesterday" ? { kind: "days", from, to: from, end: "yesterday" } : { kind: "since", month: from.month, day: from.day };
+  }
+  const any = RANGE_ANY.exec(t);
+  if (any && (any[1] || any[5].toLowerCase() !== "and")) {
+    const to = dayOf(any[6], any[7], any[8]);
+    const from = dayOf(any[2], any[3] ?? any[7], any[4] ?? (any[3] ? undefined : any[8]));
+    if (from && to) return { kind: "days", from, to };
+  }
+  const first = RANGE_FIRST.exec(t);
+  if (first) {
+    const from = dayOf(first[1], first[2], first[3]);
+    const to = from ? nextOf(from, Number(first[4])) : null;
+    if (from && to) return { kind: "days", from, to };
+  }
   const r = DAYS_RANGE.exec(t);
   if (r) {
     // between 1 Oct and 15 Oct (groups 1-6), or 1-15 Oct (groups 7-10)
@@ -367,8 +461,8 @@ export function spanOf(spec: PeriodSpec, now: string): Span | null {
     case "day": {
       const a = todayMid - spec.back * 864e5;
       const d = dayLabel(a);
-      if (spec.back === 0) return { ...base, key: "daily", range: { from: wall(a), to: toNow }, partial: true,
-        label: { en: `today (${d}, since midnight)`, ta: `இன்று (${dayTa(a)}, நள்ளிரவு முதல்)`, tg: `inniki (${d}, nadu raathiri-lerndhu)` } };
+      // today is the console's Daily window, the last 24 hours: one number for "today" on the tiles, in Jarvis, in the chatbot and on the map
+      if (spec.back === 0) return { ...base, key: "daily", range: null, label: WINDOW_WORDS.daily };
       return { ...base, key: "daily", range: { from: wall(a), to: wall(a + 864e5) },
         label: spec.back === 1 ? { en: `yesterday (${d})`, ta: `நேற்று (${dayTa(a)})`, tg: `nethu (${d})` }
           : { en: `the day before yesterday (${d})`, ta: `நேற்று முன்தினம் (${dayTa(a)})`, tg: `munthaa naal (${d})` } };
@@ -425,17 +519,11 @@ export function spanOf(spec: PeriodSpec, now: string): Span | null {
         note: from > s ? "The records go back about 180 days, so the start of this month is not covered." : null };
     }
     case "days": {
-      // as fastpath's dayRange read them (pass 4, SKG1-25): no year is the most recent such day that has begun; the last day is whole, or runs to now
-      const at = (x: DayOf): number | null => {
-        let y = x.year ?? year;
-        const ok = (yy: number) => x.day <= new Date(Date.UTC(yy, x.month + 1, 0)).getUTCDate();
-        if (!ok(y)) return null;
-        let v = Date.UTC(y, x.month, x.day);
-        if (x.year == null && v > nowWall) { y -= 1; if (!ok(y)) return null; v = Date.UTC(y, x.month, x.day); }
-        return v;
-      };
-      const a = at(spec.from), b0 = at(spec.to);
-      if (a == null || b0 == null || b0 < a) return null;
+      // as fastpath's dayRange read them (pass 4, SKG1-25): no year is the most recent such range that has begun (daysBounds: one rule for
+      // every lane, v18 round 2); the last day is whole, or runs to now
+      const bounds = daysBounds(spec, nowWall);
+      if (!bounds) return null;
+      const a = bounds.a, b0 = bounds.b;
       const b = Math.min(b0 + 864e5, nowWall + 1000);
       if (a >= nowWall || nowWall - a > MAX_HOURS * 3600_000) return null;
       const one = a === b0;
@@ -534,7 +622,7 @@ export function checkSpec(x: unknown): PeriodSpec | null {
     case "days": {
       const day = (v: unknown): DayOf | null => { const x = v as Record<string, unknown> | null; return x && int(x.day, 1, 31) && int(x.month, 0, 11) && (x.year == null || int(x.year, 2000, 2100)) ? { day: x.day as number, month: x.month as number, year: (x.year as number) ?? null } : null; };
       const from = day(s.from), to = day(s.to);
-      return from && to ? { kind: "days", from, to } : null;
+      return from && to ? { kind: "days", from, to, ...(s.end === "yesterday" ? { end: "yesterday" as const } : {}) } : null;
     }
     case "holiday": { const h = HOLIDAYS.find(([, n]) => n === s.name); return h ? { kind: "holiday", name: h[1], dates: h[2] } : null; }
     default: return null;
@@ -568,4 +656,4 @@ export function periodWordsOut(text: string): string {
 }
 
 /** Does the spec need its own dates (a calendar span, the current state, a comparison), rather than one of the console's four windows? */
-export const needsDates = (s: PeriodSpec): boolean => !["none", "window", "unheld"].includes(s.kind);
+export const needsDates = (s: PeriodSpec): boolean => !["none", "window", "unheld"].includes(s.kind) && !(s.kind === "day" && s.back === 0);

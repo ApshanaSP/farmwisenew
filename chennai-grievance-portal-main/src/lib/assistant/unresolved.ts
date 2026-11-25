@@ -10,7 +10,7 @@ import { deptFromWords } from "@/lib/assistant/deptwords";
 import type { RefNames } from "@/lib/assistant/scope";
 import { unheldPhrase, windowIn, type BadRead } from "@/lib/windowspan";
 import { isEnglishWord } from "@/lib/thunai/english";
-import { readPeriod } from "@/lib/period/read";
+import { daysBounds, readPeriod } from "@/lib/period/read";
 import { zoneNosIn } from "@/lib/zone-no";
 
 export interface Unresolved { kind: "zone" | "ward" | "place" | "period" | "date" | "year"; asked: string; say: Record<Lang, string> }
@@ -118,9 +118,30 @@ export function unresolvedInput(message: string, w: UnresolvedWorld): Unresolved
         `${what} oru date illa: andha maasathula ${dim(mi, yr)} naal thaan. Sariyaana date sollunga, illa last 7, 30, 90 naal kelunga.`) };
     }
   }
+  // v18 round 2 (24 Nov, the owner's "from 30th March to April 30, 2026": its year was read alone and answered "not the whole of 2026"):
+  // a range of days wholly before the records is named as such, with the day the records begin (Jarvis says the same in thunai/v18/
+  // when.ts beforeRecords); a single day or a month, past or still to come, is named by the rules below
+  const spoken = readPeriod(message);
+  if (spoken.kind === "days") {
+    const nowMs = Date.parse(`${w.now.replace(" ", "T")}Z`);
+    // (the year left out is filled in as every lane fills it: lib/period/read.ts daysBounds)
+    const bounds = daysBounds(spoken, nowMs);
+    const first = bounds?.a ?? NaN, last = bounds?.b ?? NaN;
+    const heldMs = Math.floor((nowMs - days * 864e5) / 864e5) * 864e5;
+    if (Number.isFinite(last) && first !== last && last < heldMs) {
+      const fmt = (ms: number) => { const d = new Date(ms); return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()][0].toUpperCase()}${MONTHS[d.getUTCMonth()].slice(1)} ${d.getUTCFullYear()}`; };
+      const what = `${fmt(first)} to ${fmt(last)}`;
+      const begin = fmt(heldMs);
+      return { kind: "period", asked: clip(what), say: L(
+        `Nothing is held for ${what}: the district's records begin on ${begin} (the console keeps about ${days} days). Ask for a day or a range from ${begin} on.`,
+        `${what} காலத்துக்கு எந்தப் பதிவும் இல்லை: மாவட்டப் பதிவுகள் ${begin} முதல் மட்டுமே உள்ளன (சுமார் ${days} நாட்கள்). ${begin} முதல் ஒரு நாளையோ காலத்தையோ கேளுங்கள்.`,
+        `${what}-ku records edhuvum illa: district records ${begin} la irundhu thaan irukku (${days} naal). ${begin} la irundhu oru naal illa period kelunga.`) };
+    }
+  }
   // a year on its own ("complaints from 2030", "in 2019"): a window of a whole year is not one the console holds; a month with its year is read elsewhere
+  // (and "March 30, 2026", a day with its year, is a day: v18 round 2)
   const yr = new RegExp(`(?<![\\d./:-])\\b((?:19|20)\\d{2})\\b(?![\\d./:-])`).exec(message);
-  if (yr && !new RegExp(`${MONTH_RE}\\s+${yr[1]}|${yr[1]}\\s*[-/]\\s*\\d{1,2}|\\d{1,2}\\s*[-/]\\s*${yr[1]}|\\d{1,2}(?:st|nd|rd|th)?\\s+${MONTH_RE}\\s+${yr[1]}`, "i").test(message)
+  if (yr && !new RegExp(`${MONTH_RE}\\s+${yr[1]}|${MONTH_RE}\\s+\\d{1,2}(?:st|nd|rd|th)?,?\\s+${yr[1]}|${yr[1]}\\s*[-/]\\s*\\d{1,2}|\\d{1,2}\\s*[-/]\\s*${yr[1]}|\\d{1,2}(?:st|nd|rd|th)?,?\\s+${MONTH_RE},?\\s+${yr[1]}`, "i").test(message)
     && /\b(in|from|of|during|for|since|year|ever|till|until|upto|to)\b|ஆண்டு|வருடம்|\bvarusham\b|\byear\b|\bla\b|இல்/i.test(message)) {
     const y = Number(yr[1]);
     const later = y > nowYear;

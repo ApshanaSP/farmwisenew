@@ -30,10 +30,12 @@ import { placeResolver, type Placed } from "@/lib/collector/nlp";
 import { judgeLocation, landmark, outsidePlace, type Ward } from "@/lib/collector/locreview";
 import { clusterNews, isNewsMedia, type NewsGroup } from "@/lib/collector/newsrel";
 import { cleanTitle } from "@/lib/collector/threads";
+import { plainEvents } from "@/lib/collector/idioms";
 import { NON_INCIDENT_KINDS, reportKind, type ReportKind } from "@/lib/collector/reporttype";
 import { CITY_ONLY, clusterIncidents, placeKey } from "@/lib/collector/cluster";
-import { MASS_DEATHS, animalDeathsOnly, casualties, casualtyMerges, isArchival, labelNumbers, isGasNotDisease, notAnIncident, storyMerges, type NewsIncident } from "@/lib/collector/newssanity";
+import { MASS_DEATHS, STATEWIDE_COUNT, animalDeathsOnly, casualties, casualtyMerges, isArchival, labelNumbers, isGasNotDisease, notAnIncident, storyMerges, type NewsIncident } from "@/lib/collector/newssanity";
 import { websiteCases } from "@/lib/manu/cases";
+import { deskOf, headOf } from "@/lib/collector/deskbook";
 
 type Row = Record<string, any>;
 const istNow = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
@@ -511,6 +513,13 @@ export function newsSanity(db: DB) {
       .filter((r) => animalDeathsOnly(r.title, ...(byInc.get(r.id) ?? []).flatMap((d) => [d.title, d.title_en])));
     for (const r of animals) db.prepare(`UPDATE incidents SET dead_reported = dead, dead = NULL WHERE incident_id = ?`).run(r.id);
 
+    // 5b. a count for the whole state or country ("Over 1,600 injured while bursting crackers across Tamil Nadu over two days"): the report stays,
+    // its dead and injured are not Chennai's (25 Nov: Jarvis said 1,814 people were injured in Chennai's fires in a month)
+    if (!has(db, "incidents", "injured_reported")) db.exec(`ALTER TABLE incidents ADD COLUMN injured_reported REAL`);
+    const wideCount = (db.prepare(`SELECT incident_id AS id, title FROM incidents WHERE media_only = 1 AND (COALESCE(dead, 0) > 0 OR COALESCE(injured, 0) > 0)`).all() as Row[])
+      .filter((r) => STATEWIDE_COUNT.test(String(r.title ?? "")));
+    for (const r of wideCount) db.prepare(`UPDATE incidents SET dead_reported = COALESCE(dead, dead_reported), dead = NULL, injured_reported = injured, injured = NULL WHERE incident_id = ?`).run(r.id);
+
     // 6. a mass death toll from one outlet only: kept, not counted until confirmed
     const hold = (db.prepare(`SELECT i.incident_id AS id, i.dead FROM incidents i WHERE i.media_only = 1 AND COALESCE(i.dead, 0) >= ?`).all(MASS_DEATHS) as Row[])
       .filter((r) => new Set((db.prepare(`SELECT publisher FROM documents WHERE linked_incident_id = ?`).all(r.id) as Row[]).map((d) => d.publisher)).size < 2);
@@ -518,10 +527,54 @@ export function newsSanity(db: DB) {
     for (const r of hold)
       db.prepare(`UPDATE incidents SET dead_reported = dead, dead = NULL${review ? ", needs_review = 1, review_reason = ?" : ""} WHERE incident_id = ?`)
         .run(...(review ? [`${r.dead} deaths reported by one news outlet only: confirm before counting`, r.id] : [r.id]));
+    if (wideCount.length) console.log(`[derive] news: ${wideCount.length} statewide casualty counts not added to Chennai's`);
     if (archival.length || gas.length || groups.size || hold.length || animals.length)
       console.log(`[derive] news: ${archival.length} history, horoscope or obituary items left out, ${gas.length} gas deaths recategorised, ${animals.length} animal deaths not counted as people, `
         + `${[...groups.values()].reduce((s, f) => s + f.length, 0)} same-event incidents merged into ${groups.size}, ${hold.length} death tolls held for confirmation`);
   });
+}
+
+// --------------------------------------------------------------- news desk --
+
+/** What the desk leaves out that cannot be an incident: a match, a film or a game, a feature, a price list. A petty theft, a fraud, a private case is one. */
+const NO_EVENT = new Set(["sport", "entertainment", "feature", "listing"]);
+/** Words of a police case or of harm: an incident whatever the desk's reason (a star booked for fraud, a fire at a film set). */
+const CASE_WORDS = /\b(police|arrest\w*|book(?:ed|s)|case|fir|held|remand\w*|seiz\w*|raid\w*|theft|steal\w*|stole\w*|fraud|cheat\w*|scam|dead|dies|died|death|killed|injur\w*|missing|accident|fire|collaps\w*)\b|போலீஸ்|காவல்|கைது|வழக்கு|மோசடி|திருட்டு|கொலை|பலி|உயிரிழ|காயம்|விபத்து|மாயம்/i;
+
+/**
+ * The news desk's verdicts (newsdesk.ts) on the articles of this build: a Tamil report's machine translation is replaced by
+ * the desk's own English headline ("Alva Box parcel! Modern phone theft in Thiruviga town" was one), and a news-only incident
+ * whose every article is a match, a film, a game, a feature or a listing (a football draw filed as a High incident, an article
+ * about a video game filed as theft) leaves the build. Anything that could be a case the police or a department holds stays,
+ * even when the desk keeps it off the news list (a petty theft): its count is the departments', not the news list's.
+ */
+export function applyDesk(db: DB): { titles: number; dropped: number } {
+  if (!has(db, "documents", "title_en") || !has(db, "documents", "linked_incident_id")) return { titles: 0, dropped: 0 };
+  const docs = db.prepare(`SELECT doc_id AS id, linked_incident_id AS inc, title, title_en AS en, lang FROM documents WHERE source_kind = 'news' AND title IS NOT NULL`).all() as Row[];
+  const titles = new Map<string, string>();
+  const byInc = new Map<string, { judged: number; none: number; n: number }>();
+  for (const d of docs) {
+    const v = deskOf(d.title, d.en);
+    const head = d.lang !== "en" ? headOf(d.title) : "";
+    if (head && head !== d.en) titles.set(String(d.id), head);
+    if (!d.inc) continue;
+    const x = byInc.get(String(d.inc)) ?? byInc.set(String(d.inc), { judged: 0, none: 0, n: 0 }).get(String(d.inc))!;
+    x.n++;
+    if (v) { x.judged++; if (v.v === "skip" && !v.real && NO_EVENT.has(v.skip) && reportKind(d.en, d.title) !== "incident" && !CASE_WORDS.test(plainEvents(`${d.title} ${d.en ?? ""}`))) x.none++; }
+  }
+  const media = has(db, "incidents", "media_only")
+    ? (db.prepare(`SELECT incident_id AS id FROM incidents WHERE media_only = 1`).all() as Row[]).map((r) => String(r.id)) : [];
+  const drop = media.filter((id) => { const x = byInc.get(id); return !!x && x.n > 0 && x.none === x.n; });
+  if (!titles.size && !drop.length) return { titles: 0, dropped: 0 };
+  tx(db, () => {
+    const up = db.prepare(`UPDATE documents SET title_en = ? WHERE doc_id = ?`);
+    for (const [id, t] of titles) up.run(t, id);
+    if (drop.length) dropIncidents(db, drop);
+  });
+  // incidents headed by a machine translation take the better one
+  if (titles.size) newsHeadlines(db);
+  console.log(`[derive] news desk: ${titles.size} Tamil headlines translated again, ${drop.length} news-only incidents that were not events taken out`);
+  return { titles: titles.size, dropped: drop.length };
 }
 
 // --------------------------------------------------------------- clusters --
@@ -567,6 +620,7 @@ onBuild("news-headlines@1", newsHeadlines);
 onBuild("places-from-reports@2", places);
 onBuild("news-media-only@2", newsMedia); // @2: its articles and events are unlinked from the incidents it drops (RC-38)
 onBuild("report-kinds@4", reportKinds); // @2: season death tallies are roundups (R-04); @3-4: drives, statements, lake levels, trade news
-onBuild("news-sanity@6", newsSanity);
+onBuild("news-sanity@7", newsSanity);
+onBuild("news-desk@1", (db) => { applyDesk(db); }); // the AI news desk's verdicts kept so far; later ones are laid over as they come (newsdesk.ts)
 onBuild("website-cases@1", websiteCases); // paper petitions and online complaints (lib/manu/cases.ts): before the clusters, so they group too
 onBuild("incident-clusters@4", clusters);

@@ -23,6 +23,7 @@ import { numbersHold, when } from "@/lib/collector/analysis";
 import type { PatternDetail } from "@/lib/collector/insights";
 import { orEmpty } from "@/lib/fallback";
 import { alertLane, type AlertLane } from "@/lib/collector/alerts";
+import { joinsOccasion } from "@/lib/collector/idioms";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
 const EFF = effectiveSql(ops("collector_decisions"));
@@ -74,6 +75,8 @@ const keyOf = (kind: string, facts: string) => `${kind}|${crypto.createHash("sha
 export async function aiJson<T>(c: {
   kind: string; system: string; facts: string; schema: z.ZodType<T>; user: string;
   text: (o: T) => string; ok?: (o: T) => boolean; maxOutputTokens?: number; temperature?: number;
+  /** a long background read (the whole window's headlines) may take longer than the usual 45 s */
+  timeoutMs?: number;
 }): Promise<{ o: T; model: string; at: string } | null> {
   const key = keyOf(c.kind, c.facts);
   const hit = cache().get(key);
@@ -84,7 +87,7 @@ export async function aiJson<T>(c: {
       try {
         const r = await generateJson({ role: "fast", name: c.kind, schema: c.schema, system: c.system, temperature: k ? 0 : c.temperature ?? 0.2,
           // background work: Gemini, never the chat's Groq allowance (pages show rule text until it is ready)
-          maxOutputTokens: c.maxOutputTokens ?? 1400, user: c.user, prefer: "gemini", background: true, timeoutMs: 45_000,
+          maxOutputTokens: c.maxOutputTokens ?? 1400, user: c.user, prefer: "gemini", background: true, timeoutMs: c.timeoutMs ?? 45_000,
           prompt: k ? `${c.facts}\n\nYour last answer used a number that is not in these facts, or left out what was asked. Use only numbers from the facts.` : c.facts });
         const o = r.object as T;
         if (!numbersHold(c.text(o), c.facts) || (c.ok && !c.ok(o))) continue;
@@ -163,6 +166,9 @@ water), so the Collector needs to read nothing else.
 ${STYLE}
 headline: one sentence that sums up the period (calmer or busier than before, and the single most important thing). When the
 facts start with a "Weather alert" line, the headline names that alert (its name or hazard) and says what the official sources say.
+A weather alert is named only by its hazard, or by a cyclone's own name when the facts give one. A festival, holiday or other occasion
+(Karthigai Deepam, Deepavali, Pongal) is never part of an alert and never its name: do not write a festival beside rain, storm or
+flood as if they were one thing, and leave festivals out of the weather point altogether.
 points: 4 to 7, the most important first. An active alert is the first point (topic Weather & water). Then: lives lost and severe incidents (say what happened and where), then anything
 spreading or unusual, then what citizens complained about most and where, then what the news is reporting that matters to the
 district, then weather or water risk if any, then what waits for the Collector. Merge related facts into one point; never repeat a
@@ -183,7 +189,10 @@ export function alertFacts(lane: AlertLane | null): { lines: string[]; must: str
   const lines = [`Weather alert: ${one(lane.banner.title, 120)}. ${one(lane.agreementText, 300)}`];
   for (const st of lane.stale)
     lines.push(`Not reporting during the alert: ${st.label}${st.hours != null ? `, silent ${Math.round(st.hours)} hours` : ""}.`);
+  // the cyclone's name or the hazard, or the official warning's own words when those lead the banner ("Thunderstorms & Lightning")
   const must = [lane.event?.name, hazard].filter((w): w is string => !!w && w.length > 2);
+  const lead = lane.banner.title.split("·")[0].trim().split(/[ ,&]+/)[0];
+  if (lane.officialLevel && must.length && lead && lead.length > 4 && !must.some((m) => m.toLowerCase().startsWith(lead.toLowerCase().replace(/s$/, "")))) must.push(lead.replace(/s$/, ""));
   return { lines, must };
 }
 /** Whether a headline carries the alert (case-insensitive, whole word). */
@@ -242,14 +251,17 @@ async function dayFacts(s: BriefScope) {
          FROM observations o WHERE o.metric IN ('rainfall_24h_mm', 'aqi', 'lake_pct_full') AND o.observed_at <= ?) x WHERE rn = 1 GROUP BY metric`, [now]).catch(orEmpty("aibrief:182")),
     scopeLabel(s)
   ]);
-  const alert = alertFacts(await alertLane(now).catch((e) => (console.warn(`[aibrief] alerts lane: ${(e as Error).message}`), null)));
+  const lane = await alertLane(now).catch((e) => (console.warn(`[aibrief] alerts lane: ${(e as Error).message}`), null));
+  const alert = alertFacts(lane);
+  const imdSays = lane?.sources.find((x) => x.key === "imd")?.says;
   const zn = new Map((await q(`SELECT DISTINCT zone_no, zone_name FROM ref_wards`)).map((z) => [n(z.zone_no), String(z.zone_name)]));
   const catLabel = new Map(categories().map((c) => [c.code, c.label]));
   const T = tot[0] ?? {};
   const ch = pctChange(n(T.n), n(before[0]?.n)); // none on a small base (metrics.ts)
   const envV = Object.fromEntries(env.map((e) => [e.metric, Number(e.v)]));
   const news = whole ? (await newsStories(s.period, now).catch(() => [] as Awaited<ReturnType<typeof newsStories>>))
-    .sort((a, b) => b.outletNames.length - a.outletNames.length || String(b.t).localeCompare(String(a.t))).slice(0, 8) : [];
+    // what the administration must act on first, then the most covered
+    .sort((a, b) => Number(b.desk?.v === "act") - Number(a.desk?.v === "act") || b.outletNames.length - a.outletNames.length || String(b.t).localeCompare(String(a.t))).slice(0, 10) : [];
   const lines = [
     `Scope: ${scopeName}. Period: ${PERIODS[s.period].label.toLowerCase()} (to ${when(now)}).`,
     ...alert.lines,
@@ -265,10 +277,10 @@ async function dayFacts(s: BriefScope) {
     depts.length ? `By department: ${depts.map((d) => `${d.name ?? "unassigned"} ${n(d.n)}${n(d.severe) ? ` (${n(d.severe)} severe)` : ""}`).join("; ")}.` : "",
     spikes.filter(unusualEnough).length ? `Unusual rises: ${spikes.filter(unusualEnough).map((a) => `${catLabel.get(a.cat) ?? a.cat} in ${zn.get(n(a.zone)) ?? "the district"}: ${n(a.observed)} reports ` +
       `${a.kind === "slow_rise" ? `in ${n(a.rise_days)} days to ${when(a.day)}` : `on ${when(a.day)}`}, ${Math.round(n(a.ratio))} times the usual`).join("; ")}.` : "",
-    news.length ? "In the news (district-relevant stories, most covered first):" : "",
-    ...news.map((x) => `- ${one(x.title, 150)} · ${x.outletNames.length} outlet${x.outletNames.length === 1 ? "" : "s"}${x.loc ? ` · ${x.loc}` : ""}` +
+    news.length ? "In the news (stories the news desk kept for the Collector, those needing action first):" : "",
+    ...news.map((x) => `- ${one(x.title, 150)}${x.desk?.gist ? ` (${one(x.desk.gist, 240)})` : ""} · ${x.outletNames.length} outlet${x.outletNames.length === 1 ? "" : "s"}${x.loc ? ` · ${x.loc}` : ""}` +
       `${x.incident ? ` · in our records [${x.incident}]${x.complaints ? ` with ${x.complaints} citizen complaints` : ""}` : " · news only, no department record"}`),
-    [warn[0] && n(warn[0].value) >= 1 ? `IMD warning: ${one(warn[0].detail, 200)}` : "No IMD warning.",
+    [imdSays && imdSays !== "no reading" ? `IMD for Chennai: ${one(imdSays, 200)}.` : warn[0] && n(warn[0].value) >= 1 ? `IMD warning: ${one(warn[0].detail, 200)}` : "No IMD warning.",
       envV.rainfall_24h_mm != null ? `Rain in 24 h: ${envV.rainfall_24h_mm} mm.` : "", envV.aqi != null ? `Air quality: AQI ${Math.round(envV.aqi)}.` : "",
       envV.lake_pct_full != null ? `Drinking-water reservoirs: ${envV.lake_pct_full}% full.` : ""].filter(Boolean).join(" "),
     `Closed work waiting for the Collector's check in My Tasks (severe incidents and officers' reports): ${n(awaiting[0]?.n)}; other closures verified by the departments: ${n(awaiting[0]?.left)}.`
@@ -289,10 +301,11 @@ async function scopeLabel(s: BriefScope) {
 export async function dayBrief(s: BriefScope, user: string): Promise<DayBrief | null> {
   const { facts, ids, mustName } = await dayFacts(s);
   const r = await aiJson({
-    kind: "day2", system: DAY_SYSTEM, facts, schema: DaySchema, user, maxOutputTokens: 2600,
+    kind: "day3", system: DAY_SYSTEM, facts, schema: DaySchema, user, maxOutputTokens: 2600,
     text: (o) => [o.headline, ...o.points.map((p) => p.text)].join(" "),
     // an active alert leads: the headline names it, or the write-up is asked again
-    ok: (o) => o.points.length >= 3 && o.headline.trim().length > 20 && namesAlert(o.headline, mustName)
+    // and no festival is run together with the weather ("Heavy rain Karthigai Deepam", 24 Nov)
+    ok: (o) => o.points.length >= 3 && o.headline.trim().length > 20 && namesAlert(o.headline, mustName) && !joinsOccasion([o.headline, ...o.points.map((p) => p.text)].join(" "))
   });
   if (!r) return null;
   const ta = r.o.points_ta.length === r.o.points.length ? r.o.points_ta : null;

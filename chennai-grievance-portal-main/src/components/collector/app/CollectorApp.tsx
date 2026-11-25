@@ -499,7 +499,14 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   const [dayState, setDay] = useState<{ key: string; d: { brief: DayBrief | null } } | null>(null);
   useEffect(() => {
     let live = true;
-    api(`/api/collector/stories?${qs}`).then((j) => live && setStories({ key: qs, d: j })).catch(() => {});
+    // the rules' stories come at once; while the AI still joins and explains them (`pending`) the page asks again every few seconds
+    let tries = 0;
+    const getStories = (): Promise<void> => api(`/api/collector/stories?${qs}`).then((j) => {
+      if (!live) return;
+      setStories({ key: qs, d: j });
+      if (j.pending && ++tries < 24) setTimeout(() => live && getStories(), tries < 10 ? 5000 : 15000);
+    }).catch(() => {});
+    void getStories();
     const stop = watchBrief<DayBrief>(`/api/collector/brief?kind=day&${qs}`, (brief) => live && setDay({ key: qs, d: { brief } }));
     return () => { live = false; stop(); };
   }, [qs, reloadKey]);

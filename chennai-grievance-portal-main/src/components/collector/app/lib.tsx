@@ -78,7 +78,7 @@ export function watchBrief<T>(url: string, got: (v: T | null) => void): () => vo
   const go = () => fetch(url).then((r) => r.json()).then((j) => {
     if (!live) return;
     got(j.brief ?? null);
-    if (j.pending && ++tries < 8) setTimeout(go, 4000);
+    if (j.pending && ++tries < 24) setTimeout(go, 4000); // an AI note can take 40 s when its first answer failed a check
   }).catch(() => { if (live) got(null); });
   go();
   return () => { live = false; };

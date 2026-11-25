@@ -344,6 +344,12 @@ const BACKOFF_MS = 5_000;   // the wait after a failed send, doubled after each 
  * POST /store/write with HTTP 429 Too Many Requests; sending again at once, on every write, only kept it over the limit.
  */
 export const retryDelay = (failures: number): number => Math.min(RETRY_MS, BACKOFF_MS * 2 ** Math.max(0, failures - 1));
+/**
+ * v18 round 2's review: whether this copy is the one that saves to AWS (AWS_STORE_SAVE=1, not a dry run, and on the shared durable file, not a
+ * second copy's durable-p<pid> file). A recorder that adds rows of its own (the traffic history) runs only there: two recording copies would
+ * mix their readings, and their rows would clash on the unique keys when the store loads.
+ */
+export const savesToAws = (): boolean => !DRY_RUN && (!g.durable || g.durable.file === DURABLE_FILE);
 // Only the one PC whose .env says AWS_STORE_SAVE=1 sends changes to AWS. Every other copy (a teammate's clone, a test
 // server) keeps them in its own durable.sqlite until it restarts: two saving copies would give new rows the same ids
 // and overwrite each other's rows in DynamoDB. AWS_STORE_DRY_RUN=1 turns saving off even with AWS_STORE_SAVE=1.
@@ -423,6 +429,21 @@ const WEBSITE_TABLES: Doc["schema"] = {
     ddl: [`CREATE TABLE "petition_sms" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "complaint_code" TEXT NOT NULL, "kind" TEXT NOT NULL, "status" TEXT NOT NULL DEFAULT 'waiting', "result" TEXT, "detail" TEXT,
       "attempts" INTEGER NOT NULL DEFAULT 0, "tried_at" TEXT, "sent_at" TEXT, "created_at" TEXT NOT NULL DEFAULT (datetime('now', '+330 minutes')))`,
       `CREATE UNIQUE INDEX "petition_sms__one" ON "petition_sms" ("complaint_code", "kind")`]
+  },
+  // v18 round 2 (24 Nov): live traffic kept, a reading every 10 minutes (lib/city/history.ts): TomTom keeps no history a site can read
+  traffic_snaps: {
+    key: ["id"],
+    ddl: [`CREATE TABLE "traffic_snaps" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "at" TEXT NOT NULL, "spots" INTEGER, "jams" INTEGER, "very" INTEGER, "congested" INTEGER, "slow" INTEGER,
+      "closed" INTEGER, "flooded" INTEGER, "accidents" INTEGER, "works" INTEGER, "delay_min" INTEGER, "zones" TEXT, "created_at" TEXT NOT NULL DEFAULT (datetime('now', '+330 minutes')))`,
+      `CREATE UNIQUE INDEX "traffic_snaps__at" ON "traffic_snaps" ("at")`]
+  },
+  traffic_days: {
+    key: ["id"],
+    ddl: [`CREATE TABLE "traffic_days" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "day" TEXT NOT NULL, "stretch" TEXT NOT NULL, "name" TEXT, "road" TEXT, "zone" INTEGER, "zone_name" TEXT,
+      "ward" INTEGER, "lat" REAL, "lon" REAL, "seen" INTEGER NOT NULL DEFAULT 0, "very" INTEGER NOT NULL DEFAULT 0, "closed" INTEGER NOT NULL DEFAULT 0, "flooded" INTEGER NOT NULL DEFAULT 0,
+      "accidents" INTEGER NOT NULL DEFAULT 0, "max_delay_s" INTEGER, "sum_delay_s" INTEGER NOT NULL DEFAULT 0, "max_len_m" INTEGER, "first_at" TEXT, "last_at" TEXT, "worst" TEXT)`,
+      `CREATE UNIQUE INDEX "traffic_days__one" ON "traffic_days" ("day", "stretch")`,
+      `CREATE INDEX "traffic_days__zone" ON "traffic_days" ("zone", "day")`]
   }
 };
 
@@ -495,7 +516,9 @@ async function fill(db: DB, doc: Doc, track: boolean): Promise<void> {
           have.add(c.toLowerCase());
           console.warn(`[aws-store] ${t}.${c} is not in the stored schema; added it (saved by a newer copy of the app)`);
         }
-      if (!inserts.has(sig)) inserts.set(sig, db.prepare(`INSERT INTO ${q(t)} (${cols.map(q).join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`));
+      // (v18 round 2's review: the traffic history's rows carry unique keys of their own (a reading's time, a stretch's day): one duplicate
+      // never stops the store from loading)
+      if (!inserts.has(sig)) inserts.set(sig, db.prepare(`${t === "traffic_days" || t === "traffic_snaps" ? "INSERT OR IGNORE" : "INSERT"} INTO ${q(t)} (${cols.map(q).join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`));
       inserts.get(sig)!.run(...(cols.map((c) => toSql(row[c])) as any[]));
       await breathe();
     }

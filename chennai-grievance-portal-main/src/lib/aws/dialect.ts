@@ -465,6 +465,22 @@ export function registerFunctions(db: DatabaseSync): void {
   fn("DATEDIFF", (a, b) => { const x = wall(a), y = wall(b); return x && y ? Math.round((Date.UTC(x.getUTCFullYear(), x.getUTCMonth(), x.getUTCDate()) - Date.UTC(y.getUTCFullYear(), y.getUTCMonth(), y.getUTCDate())) / 864e5) : null; });
   fn("UNIX_TIMESTAMP", (a?: unknown) => { const d = a === undefined ? null : wall(a); return Math.floor(((d ? d.getTime() - 330 * 60_000 : Date.now())) / 1000); }, false);
   fn("FROM_UNIXTIME", (s) => (s === null ? null : fmtWall(new Date(Number(s) * 1000 + 330 * 60_000))));
+  // v19 (25 Nov 2026): a word as a word ("rape" is not in "Veeraperumal", "bus" is not in "abusive"), with its plural and tense endings; a Tamil word
+  // anywhere (its endings are its grammar)
+  const wordRe = new Map<string, RegExp>();
+  fn("HAS_WORD", (text, word) => {
+    const t = String(text ?? "").toLowerCase(), w = String(word ?? "").toLowerCase().trim();
+    if (!t || !w) return 0;
+    if (/[^\x00-\x7f]/.test(w)) return t.includes(w) ? 1 : 0;
+    let re = wordRe.get(w);
+    if (!re) {
+      const esc = w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      re = new RegExp(`(?<![a-z0-9])${/y$/.test(w) ? `(?:${esc}|${esc.slice(0, -1)}ies)` : esc}(?:s|es|ed|ing|'s${w.endsWith("e") ? "|d" : ""})?(?![a-z0-9])`);
+      if (wordRe.size > 500) wordRe.clear();
+      wordRe.set(w, re);
+    }
+    return re.test(t) ? 1 : 0;
+  });
   fn("HOUR", (a) => wall(a)?.getUTCHours() ?? null);
   fn("MINUTE", (a) => wall(a)?.getUTCMinutes() ?? null);
   fn("YEAR", (a) => wall(a)?.getUTCFullYear() ?? null);

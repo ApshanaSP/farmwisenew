@@ -40,6 +40,27 @@ import { asksCount, catIn, intentMarker, periodIn, placesIn, quickScreen, reserv
 import { riskOf } from "./risk";
 import { countAsked } from "@/lib/askcount";
 import { spanScreen } from "./spanned";
+import { isToday, istWall, isWindowSpec, turnWhen, windowOnly } from "./v18/when";
+import { isTopic, topicSaid } from "./v18/topics";
+import { checkSpec, WINDOW_WORDS } from "@/lib/period/read";
+import { analystOn, codePlan, followByCode, makePlan, planFromSlots, type Plan, type PlanFn } from "./v19/plan";
+import { planLine } from "./v19/doc";
+import { analystTakes, notHeldReply } from "./v19/route";
+import { askAnswer } from "./v19/answer";
+/** v18 round 2: a city question about traffic (not flooding, power or the metro), and one that asks for the least of it */
+const TRAFFIC_WORDS = /traffic|congest|jam|snarl|gridlock|\blanes?\b|\broads?\b|stretch|போக்குவரத்து|நெரிசல்|டிராஃபிக்/i;
+/** v18 round 2: congestion said in so many words ("most congested", "jams", "traffic"), not the district's traffic reports or accidents */
+const JAM_WORDS = /congest|\bjam(?:s|med|ming)?\b|snarl|gridlock|bottleneck|\btraffic\b|நெரிசல்|போக்குவரத்து|டிராஃபிக்/i;
+const TRAFFIC_REPORTS = /\b(?:accidents?|reports?|complaints?|cases?|incidents?|challans?|violations?|fines?|police)\b|விபத்து|புகார்/i;
+/** the asks a congestion question can be read as (a ranking of roads, a summary of traffic, a trend of jams) */
+const TRAFFIC_PAST_ASKS: ReadonlySet<string> = new Set(["city", "ranking", "summary", "situation", "trend", "brief", "other", "changed", "why", "cases", "performance"]);
+const LEAST_WORDS = /\b(?:least|lowest|fewest|smoothest|free(?:st)?)\b|குறைவான/i;
+/** v19: a sentence that names a time in some way (the analyst's window is then the one the reader read) */
+const TIME_SAID = /\b(?:week|weekend|month|day|night|morning|evening|afternoon|hour|year|since|ago|date|\d{1,2}(?:st|nd|rd|th)|monday|tuesday|wednesday|thursday|friday|saturday|sunday|jan|feb|mar|apr|may|june?|july?|aug|sept?|oct|nov|dec)[a-z]*\b|வார|நாள்|நாட்|மாத|இரவு|காலை|மாலை|நேத்து|நேற்று|naal|vaaram|maasam|nethu|neththu/i;
+/** v18 round 2: the screens a sentence that names only a window rebuilds over it (the rest have no window of their own: a case, a draft) */
+const WINDOWABLE: ReadonlySet<string> = new Set(["summary", "cases", "news", "readings", "prices", "ranking", "trend", "compare", "city", "brief", "situation", "why", "changed", "insight", "dashboard", "performance"]);
+/** v18: a sentence that leans on the last answer ("and Adyar?", "what about yesterday", "only the severe ones", "same for Teynampet") */
+const FOLLOW_ON = /^(?:and|what about|how about|same|now the same|now do the same|only|just(?: the)?|show (?:me )?only|ok(?:ay)?,? (?:and|now))\b/i;
 import { GENERAL_FALLBACK, GENERAL_LABEL, GENERAL_SYSTEM, GeneralSchema, ROUTER_SYSTEM, RouterSchema, routeByRules, type Bundle } from "./router";
 import { checkStage, RECIPES, STAGE_DIGEST_MAX, type Recipe, type StageContext, type StageDocT } from "./stage";
 import { scrubDigest } from "./digestscrub";
@@ -59,7 +80,7 @@ import { openRung, type OpenRung } from "./aide7/stream";
 import { fallbackLines } from "./aide7/writer";
 import { asks7, whoHas } from "./asks7";
 import { focusAsk } from "./v15/focus";
-import { fits, focusSlots, readerOn, readSentence, stageFits, type ReadFn, type Reading } from "./v16/reader";
+import { fits, focusSlots, readerOn, readSentence, stageFits, type Ask, type ReadFn, type Reading } from "./v16/reader";
 import { OWN_DATA, followUp } from "./studiowords";
 import { understandV8 } from "./v8/flag8";
 import { placeWord, replyLang8, wordsLang } from "./v8/lang8";
@@ -89,7 +110,7 @@ export const RoundBody = AgentBody.extend({
    * the screen's own fields, never a case title; untrusted text all the same, read only as the register's data) */
   stage: z.object({
     recipe: z.enum(RECIPES), title: z.string().max(200),
-    blocks: z.array(z.object({ kind: z.string().max(20), ids: z.array(z.string().max(120)).max(30), labels: z.array(z.string().max(60).nullable()).max(30).optional() })).max(6),
+    blocks: z.array(z.object({ kind: z.string().max(20), ids: z.array(z.string().max(120)).max(30), labels: z.array(z.string().max(60).nullable()).max(30).optional() })).max(16), // v18: a summary holds up to 16 (stage.ts MAX_BLOCKS)
     slots: z.record(z.unknown()), focus: z.number().int().nullable()
   }).nullable().optional(),
   turnId: z.string().min(2).max(40),
@@ -238,7 +259,15 @@ export function safeHands(h: Hands, signal?: AbortSignal, o: { spec?: boolean } 
     studio: h.studio ? { ...h.studio, ask: (q, o) => (signal?.aborted ? Promise.reject(new DOMException("aborted", "AbortError")) : h.studio!.ask(q, o)) } : undefined,
     // the span hands read incident titles and places as the list does (QA pass 7): redacted, and stopped with the turn
     span: h.span ? (spec, s, f) => (signal?.aborted ? Promise.reject(new DOMException("aborted", "AbortError")) : h.span!(spec, s, f).then((r) => redact(r))) : undefined,
-    compare: h.compare ? (key, s, f) => (signal?.aborted ? Promise.reject(new DOMException("aborted", "AbortError")) : h.compare!(key, s, f).then((r) => redact(r))) : undefined
+    compare: h.compare ? (key, s, f) => (signal?.aborted ? Promise.reject(new DOMException("aborted", "AbortError")) : h.compare!(key, s, f).then((r) => redact(r))) : undefined,
+    // v19: the analyst's results carry incident titles, places and headlines as the list does: redacted, and stopped with the turn
+    ask: h.ask ? (q, c) => (signal?.aborted ? Promise.reject(new DOMException("aborted", "AbortError")) : h.ask!(q, c).then((r) => redact(r))) : undefined,
+    // v18: the window reads carry incident titles, places and headlines as the list does: redacted, and stopped with the turn
+    win: h.win ? {
+      ...h.win,
+      incidents: (w, s, n) => (signal?.aborted ? Promise.reject(new DOMException("aborted", "AbortError")) : h.win!.incidents(w, s, n).then((r) => redact(r))),
+      news: (w, a, n) => (signal?.aborted ? Promise.reject(new DOMException("aborted", "AbortError")) : h.win!.news(w, a, n).then((r) => redact(r)))
+    } : undefined
   };
 }
 
@@ -691,8 +720,15 @@ export interface RoundDeps {
   snapshot?: () => Promise<Snapshot | null>;
   /** v16: the reader (v16/reader.ts). Absent: the model's when Claude leads and no test model stands in; null: off */
   reader?: ReadFn | null;
+  /** v19: the analyst (v19/plan.ts). Absent: the model's when the reader's is; null: off */
+  analyst?: PlanFn | null;
 }
 type Emit = (e: TurnEvent) => void;
+
+/** v19: the last plan each user's Jarvis answered, for a follow-up after its screen was closed (fifteen minutes; a plan holds no figure) */
+const lastPlans = new Map<string, { plan: Plan; at: number }>();
+const rememberPlan = (user: string, plan: Plan): void => { lastPlans.delete(user); lastPlans.set(user, { plan, at: Date.now() }); while (lastPlans.size > 50) lastPlans.delete(lastPlans.keys().next().value as string); };
+const recallPlan = (user: string): Plan | null => { const x = lastPlans.get(user); return x && Date.now() - x.at < 15 * 60_000 ? x.plan : null; };
 
 /**
  * One round. With `deps.emit` the round is also told as events, in the order events.ts documents: RUN_STARTED, the ack and how it was
@@ -793,6 +829,11 @@ async function withAide(o: RoundOut, b: RoundBodyT, world: World, hands: Hands, 
   const budget = budgetFor(turnSpeed(b.text, world));
   const last = [...(b.turns ?? [])].reverse().find((t) => t.result)?.result ?? null;
   const t0 = Date.now();
+  // v19: the analyst's answer, written from its own results (v19/say.ts), never from the screen's blocks
+  if (r.stage.recipe === "ask") {
+    return askAnswer(o, r as AgentResult & { stage: StageDocT }, { question: b.text, world, user, signal, last, until: Math.max(t0 + 3500, start + Math.max(budget, 14_000) - 600),
+      write: live?.open ? { ...(deps.aide ?? {}), open: live.open } : deps.aide, ready: live?.ready, sentence: live?.sentence });
+  }
   // what reached the browser, so a failure never sends the screen or a sentence twice
   let shown = false, spoke = false;
   try {
@@ -841,6 +882,9 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
   // (v16: the reader may change it: "tell in tamil today's briefing" is answered in Tamil)
   let lang: Lang = replyLang(b.text, b.heard, (b.turns ?? []).map((x) => x.heard));
   const stage = (b.stage ?? null) as StageContext | null;
+  // v18 (24 Nov): the window the sentence names, for every screen of the turn (screens.ts buildScreen): code's reading of the words now, the
+  // reader's once it has read them (round 0). Never for a Stage click: its slots carry their own window
+  if (!b.direct) hands.turnSpan = turnWhen(b.text, null, istWall(Date.now()));
   const trace: TraceItem[] = [];
   // the v5 trace's server stages (6.4), epoch ms: the planner call sent and back, the answer built (timings only, no words)
   const stagesAt: EpochTiming = {};
@@ -906,6 +950,7 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
     served(await timed(label, () => spanScreen(recipe, slots, state, world, hands, b.text, lang)));
 
   if (b.direct) {
+    if (b.direct.recipe === "ask") { const p = planFromSlots(b.direct.slots.plan); if (p) rememberPlan(user, p); }
     if (b.round === 0) bus?.({ ...ids, type: "CUSTOM", name: "heard", value: { lang: b.direct.lang as Lang, lane: "direct", conf: b.heard?.conf ?? null, speed, budgetMs: budget } });
     return out(served(await spanScreen(b.direct.recipe, b.direct.slots, state, world, hands, b.text, b.direct.lang as Lang)), "direct");
   }
@@ -918,7 +963,7 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
       const said = ackTemplated(b.text, lang, world) || ackFor(b.text, lang);
       bus({ ...ids, type: "CUSTOM", name: "ack", value: { text: /\p{Nd}/u.test(said) ? ackFor("", lang) : said, lang } });
     }
-    bus({ ...ids, type: "CUSTOM", name: "heard", value: { lang, lane: route.lane ?? "router", conf: b.heard?.conf ?? null, speed, budgetMs: budget } });
+    bus({ ...ids, type: "CUSTOM", name: "heard", value: { lang, lane: route.lane ?? "router", conf: b.heard?.conf ?? null, speed, budgetMs: hands.ask && analystOn() ? Math.max(budget, 13_500) : budget } });
   }
   if (route.lane === "refuse") return out(plainReply("refuse", lang, route.why === "privacy" ? PRIVACY_REPLY[lang] : NEVER_REPLY[lang], t0, route.why), "refuse");
 
@@ -1028,6 +1073,19 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
 
     // (v17: the digest the reader read: file content, so a reply of the reader's that repeats it is the file speaking, not Jarvis)
     let studioDigest: string | null = null;
+    // v19 (25 Nov): the analyst writes the exact data request the sentence stands for (v19/plan.ts) while the reader reads it, so a data
+    // question is answered as asked (one place's police incidents, the second most congested road, just two areas) and never by the nearest of
+    // the fixed screens. Off with no reader (a test's own model), or JARVIS_ANALYST=0
+    const analyst: PlanFn | null = deps.analyst !== undefined ? deps.analyst : reader && deps.reader === undefined && analystOn() ? makePlan(deps.llm) : null;
+    // (the last turn that had a screen: a "thank you" or a pressed "back to the dashboard" between does not end the subject)
+    const lastTurn = [...(b.turns ?? [])].reverse().find((x) => x.recipe) ?? null;
+    // (the browser's turns keep only plain slots, so the last plan is kept here too: "and the third?" after its screen was closed)
+    const lastPlan = planFromSlots(stage?.recipe === "ask" ? stage.slots.plan : lastTurn?.recipe === "ask" ? lastTurn.slots?.plan : null) ?? (stage?.recipe !== "ask" && lastTurn?.recipe === "ask" ? recallPlan(user) : null);
+    const planP: ReturnType<PlanFn> = analyst && hands.ask
+      ? analyst({ text: b.text, turns: b.turns ?? [], screen: b.stageDigest ?? null, stageTitle: stage?.title ?? null, lastPlan, window: WINDOW_WORDS[state.period].en }, world, { user, until: t0 + budget, signal })
+        .catch((e) => { if ((e as Error).name === "AbortError") throw e; return null; })
+      : Promise.resolve(null);
+    planP.catch(() => undefined);
     if (reader) {
       // (v17: with the Collector's own Data Studio datasets, when there are any, so "what does my shelters data say" is read as theirs)
       studioDigest = hands.studio ? (() => { try { return hands.studio!.digest(); } catch { return null; } })() : null;
@@ -1058,10 +1116,104 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
     // v17 (22 Nov): a question about one of the Collector's own Data Studio datasets, any of them, answered from it (datasetTurn); with no
     // datasets to reach (not the Collector's hands), the lanes try it as they would any other request
     if (rd?.ask === "dataset" && !hands.studio) rd = { ...rd, ask: "other" };
+    // v18 (24 Nov): the window the reader understood (its dates or hours, or its words read by code; a window carried from the turn being
+    // followed), for every screen this turn builds
+    if (rd && !b.direct) hands.turnSpan = turnWhen(b.text, rd.time ?? null, istWall(Date.now()));
+    // v18: a follow-up that names no time of its own keeps the window of the screen it follows ("And Adyar?" after "the last 2 days", the live
+    // probe of 24 Nov: it fell back to the 7 days)
+    if (rd && !b.direct && !hands.turnSpan && (rd.ask === "follow_up" || isElliptical(b.text) || FOLLOW_ON.test(b.text.trim()))) {
+      const carried = checkSpec((stage?.slots ?? (b.turns ?? []).at(-1)?.slots ?? null)?.span);
+      if (carried && isWindowSpec(carried)) hands.turnSpan = carried;
+    }
+    // v18: a group of kinds only when the words name it (the sentence, or the reader's restatement that carries what a follow-up points at)
+    if (rd?.topic && isTopic(rd.topic) && !topicSaid(rd.topic, `${b.text} ${rd.request}`)) rd = { ...rd, topic: null };
     const ds = await datasetTurn(rd);
     if (ds) return ds;
+    // v19: the analyst's answer, for every question the records can answer; a whole ready screen (a brief, a summary, where to concentrate,
+    // the map), a move, a chat or general knowledge stays with the lanes below
+    const onAsk = stage?.recipe === "ask";
+    // (with no model at all, the spend ceiling reached or no key, the words alone still make the exact request: followByCode, codePlan)
+    const lane19 = !!hands.ask && analystOn() && (!!analyst || (deps.analyst === undefined && deps.reader === undefined));
+    if (lane19 && analystTakes(rd, null, b.text, onAsk) !== "never") {
+      const got = await timed(lang === "ta" ? "என்ன தேவை என்று ஆராய்கிறேன்" : "Working out what to look up", () => planP);
+      // (no model could plan it: a plain follow-up of the last plan is still code's to make: "tell me all", "the second", "only two")
+      let plan: Plan | null = got?.plan ?? followByCode(b.text, lastPlan, world) ?? (onAsk && /^\W*(?:and|for the|only|just|in the|not)\b/i.test(b.text) ? null : codePlan(b.text, world));
+      // a time the analyst left out that only the reader could read ("last weekend", "on the 20th")
+      if (got?.plan && rd?.time?.said && plan?.kind === "answer" && TIME_SAID.test(`${b.text} ${plan.understood}`) && plan.queries.every((q) => !q.time)) plan = { ...plan, queries: plan.queries.map((q) => ({ ...q, time: rd!.time })) };
+      telemetry("analyst", { kind: plan?.kind ?? null, view: plan?.view ?? null, plan: plan ? planLine(plan) : null, ms: got?.ms ?? null, model: got?.model ?? null, turn: b.turnId });
+      if (got) { const t = turnOf(b.turnId, leadBundle(route.bundle ?? "screens"), t0, budget); t.tokens += got.tokens; t.calls++; }
+      const takes = plan ? analystTakes(rd, plan, b.text, onAsk) : "no";
+      if (plan && takes === "answer") {
+        rememberPlan(user, plan);
+        const r = await screenFrom("ask", { plan, period: state.period }, lang === "ta" ? "பதிவுகளை எண்ணுகிறேன்" : "Counting the records");
+        if (r.kind === "do" && r.stage && !r.stage.blocks.some((x) => x.kind === "Note" && x.id === "err")) return outR(out({ ...r, steps: [], model: got?.model ?? null, ms: Date.now() - t0, note: `analyst:${planLine(plan)}` }, "analyst"));
+      }
+      if (plan && takes === "not_held") return outR(out(plainReply("chat", lang, notHeldReply(plan, lang), t0, "analyst:not-held"), "analyst"));
+    }
     if (rd) {
       const reading = lang === "ta" ? "தரவைப் படிக்கிறேன்" : "Reading the data";
+      // v18 (24 Nov): everything about one area, locality, department, kind or group of kinds, or the district, over any window (recipes/
+      // summary.ts). The owner: "summary of Anna Nagar should take out all the information: incidents, news, air quality, vegetable prices";
+      // "summary of crimes gave the overall summary". A place's situation and a brief about one subject or a window are the same dashboard;
+      // the day's own briefing (no subject, no window) stays the brief
+      // v18 round 2 (24 Nov, the owner: "which was mostly congested for the past 30 days", "summary of traffic lanes very congested for the past
+      // 4 days or 5 days"): congestion over a window, today included, is the traffic screen over the readings the website keeps every 10
+      // minutes, whatever the reader called the ask (a ranking, a summary). The console's own windows ("past 30 days") count as much as
+      // dates of their own; the browser drive of 24 Nov: "Which roads were most congested in the past 30 days?" opened incident hotspots
+      const jamSaid = rd.ask === "city" ? TRAFFIC_WORDS.test(`${b.text} ${rd.request}`) : TRAFFIC_PAST_ASKS.has(rd.ask) && JAM_WORDS.test(b.text) && !TRAFFIC_REPORTS.test(b.text);
+      if (hands.win && jamSaid && (!!hands.turnSpan || !!rd.period) && !rd.place && !rd.dept && !rd.cat && (!rd.topic || rd.topic === "ROADS_TRAFFIC")) {
+        const topN = Math.min(10, countAsked(b.text) ?? 0);
+        const slots = { zones: rd.zones.slice(0, 4), ...(rd.period ? { period: rd.period } : {}), q: "traffic", past: true,
+          ...(topN ? { n: topN, rank: { n: topN, order: LEAST_WORDS.test(b.text) ? "least" : "most", by: "road" } } : {}), fresh: true };
+        const r = await screenFrom("city", slots, reading);
+        if (r.kind === "do" && r.stage) return outR(out({ ...r, note: "reader:traffic:window" }, "reader"));
+      }
+      const subject = rd.zones.length > 0 || !!rd.place || !!rd.dept || !!rd.topic || !!rd.cat;
+      const ownWindow = !!hands.turnSpan && !isToday(hands.turnSpan);
+      const summaryAsk = rd.ask === "summary" || (rd.ask === "situation" && (rd.zones.length > 0 || !!rd.place)) || (rd.ask === "brief" && (subject || ownWindow));
+      if (summaryAsk && hands.win) {
+        const slots = { zones: rd.zones.slice(0, 4), ...(rd.place ? { place: rd.place } : {}), ...(rd.dept ? { dept: rd.dept } : {}), ...(rd.topic ? { family: rd.topic } : rd.cat ? { cat: rd.cat } : {}),
+          ...(rd.sev ? { sev: rd.sev } : {}), ...(rd.status ? { status: rd.status } : {}), ...(rd.period ? { period: rd.period } : {}), fresh: true };
+        const r = await screenFrom("summary", slots, lang === "ta" ? "எல்லாத் தரவையும் சேர்க்கிறேன்" : "Gathering everything");
+        if (r.kind === "do" && r.stage) return outR(out({ ...r, note: `reader:summary${hands.turnSpan ? ":span" : ""}` }, "reader"));
+      }
+      // v18: the cases, the news or the trend of a whole group of kinds ("crimes", "flooding") or of one department, as understood
+      if (hands.win && (rd.topic || rd.dept || rd.place) && (rd.ask === "cases" || rd.ask === "news" || rd.ask === "trend") && !countAsked(b.text)) {
+        const recipe = rd.ask === "cases" ? "summary" : rd.ask;
+        const slots = { zones: rd.zones.slice(0, 4), ...(rd.place ? { place: rd.place } : {}), ...(rd.dept ? { dept: rd.dept } : {}), ...(rd.topic ? { family: rd.topic } : rd.cat ? { cat: rd.cat } : {}),
+          ...(rd.sev ? { sev: rd.sev } : {}), ...(rd.status ? { status: rd.status } : {}), ...(rd.period ? { period: rd.period } : {}), ...(rd.ask === "cases" ? { view: "cases" } : {}), fresh: true };
+        const r = await screenFrom(recipe, slots, reading);
+        if (r.kind === "do" && r.stage) return outR(out({ ...r, note: `reader:${rd.ask}:group` }, "reader"));
+      }
+      // v18: a question asked over a window of its own dates ("severe cases from two days ago", "air quality on 20 November", "prices in Anna
+      // Nagar last week"), answered on its screen over that window as understood; the word lanes read "two days ago" as a time no one holds
+      // (the live probe of 24 Nov: no lane answered, 8 s). Prices in one area are its market's, with or without a window
+      const windowed = !!hands.turnSpan && !isToday(hands.turnSpan);
+      // (traffic over a window is the route above's; the city's other parts, flooding, power and the metro, are read live)
+      const SPAN_ASK: Partial<Record<Ask, Recipe>> = { cases: "cases", news: "news", trend: "trend", readings: "readings", prices: "prices", performance: "performance", changed: "summary", why: "summary", situation: "summary" };
+      const spanRecipe = SPAN_ASK[rd.ask];
+      const topN = countAsked(b.text);
+      if (hands.win && spanRecipe && (windowed || (rd.ask === "prices" && rd.zones.length > 0)) && !topN) {
+        const metric = rd.ask === "readings" ? (/\b(rain|rainfall|மழை|mazhai)\b|மழை/i.test(b.text) ? "rain" : /\b(lake|reservoir|storage)\b|ஏரி|நீர்த்தேக்க/i.test(b.text) ? "lakes" : /\b(temp|temperature|heat|hot)\b|வெப்ப/i.test(b.text) ? "temp" : "aqi") : null;
+        const slots = { zones: rd.zones.slice(0, 4), ...(rd.place ? { place: rd.place } : {}), ...(rd.dept ? { dept: rd.dept } : {}), ...(rd.topic ? { family: rd.topic } : rd.cat ? { cat: rd.cat } : {}),
+          ...(rd.sev ? { sev: rd.sev } : {}), ...(rd.status ? { status: rd.status } : {}), ...(rd.period ? { period: rd.period } : {}), ...(metric ? { metric } : {}),
+          ...(rd.ask === "prices" ? { q: b.text.slice(0, 120) } : {}), fresh: true };
+        const r = await screenFrom(spanRecipe, slots, reading);
+        if (r.kind === "do" && r.stage) return outR(out({ ...r, note: `reader:${rd.ask}:window` }, "reader"));
+      }
+      // v18 round 2 (24 Nov, the owner's own words in the log: "Give me. From March 30, 2026 to April 30, 2026." was answered "which one do you
+      // mean?"): a sentence that names only a window is the screen on view over that window, or, with no screen on view that has a window,
+      // the district's summary over it (which says so when the window is before the records)
+      if (hands.win && (hands.turnSpan || rd.period) && (rd.ask === "other" || rd.ask === "follow_up" || rd.ask === "brief") && windowOnly(b.text)) {
+        const on = stage && WINDOWABLE.has(stage.recipe) ? stage : null;
+        // (a console window said instead, "this week": the screen's own dates are dropped so the period answers)
+        const kept: Record<string, unknown> = { ...((on?.slots ?? {}) as Record<string, unknown>) };
+        if (!hands.turnSpan) delete kept.span;
+        const when = hands.turnSpan ? {} : { period: rd.period };
+        const r = on ? await screenFrom(on.recipe, { ...kept, ...when, fresh: true }, reading)
+          : await screenFrom("summary", { zones: [], ...when, fresh: true }, lang === "ta" ? "எல்லாத் தரவையும் சேர்க்கிறேன்" : "Gathering everything");
+        if (r.kind === "do" && r.stage) return outR(out({ ...r, note: `reader:window-only${on ? `:${on.recipe}` : ""}` }, "reader"));
+      }
       // one place's picture ("Adyar la enna problem adhigama irukku?" went to the planner, 9.1 s), unless the brief lane reads it as the
       // zone's brief (QA pass 4's open-baseline-46 holds that wording)
       if (rd.ask === "situation" && rd.zones.length === 1 && !briefTurn(b.text, world)) {
@@ -1151,7 +1303,9 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
     // "how do you know?" (the screen's own provenance read aloud) and "several of these are about X": a line code wrote, said as it is
     if (frame.kind === "reply" && stageFits(rd)) return outR(out(plainReply("chat", lang, frame.text[lang], t0, `frame:${frame.why}`), "frame"));
     // (a dataset answer's follow-ups are datasetTurn's, asked of the Studio afresh: the frame would only build the last question again)
-    if (frame.kind === "screen" && fits(rd, frame.recipe) && frame.recipe !== "dataset") {
+    // (nor the analyst's: its place, severity and window are inside its requests, so a frame that edits the outer slots would say Anna Nagar's
+    // figure as Adyar's; the analyst, or followByCode, makes that follow-up)
+    if (frame.kind === "screen" && fits(rd, frame.recipe) && frame.recipe !== "dataset" && frame.recipe !== "ask") {
       const r = await screenFrom(frame.recipe, frame.slots, lang === "ta" ? "முந்தைய கேள்வியைத் தொடர்கிறேன்" : "Following on from the last request");
       if (r.kind === "do" && r.stage) return outR(out({ ...r, note: `frame:${frame.why}` }, "frame"));
     }

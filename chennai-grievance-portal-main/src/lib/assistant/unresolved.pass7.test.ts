@@ -21,6 +21,14 @@ describe("pass4-open-08: an input that cannot be applied is named, whatever its 
     expect(un("complaints in the last zero days")).toMatchObject({ kind: "period" });
     expect(un("complaints in the last zero days")!.say.en).toMatch(/zero/);
   });
+  it("a range before the records says when they begin, never 'the whole of the year' (the owner's sentence of 24 Nov)", () => {
+    const W24 = { ...W, now: "2026-11-24 20:20:00" };
+    const r = unresolvedInput("How many incidents from March 30, 2026 to April 30, 2026?", W24)!;
+    expect(r).toMatchObject({ kind: "period", asked: "30 March 2026 to 30 April 2026" });
+    expect(r.say.en).toBe("Nothing is held for 30 March 2026 to 30 April 2026: the district's records begin on 28 May 2026 (the console keeps about 180 days). Ask for a day or a range from 28 May 2026 on.");
+    expect(unresolvedInput("cases from 1 November to 15 November", W24)).toBeNull();
+    expect(unresolvedInput("complaints on March 30, 2026", W24)?.kind === "year").toBe(false);
+  });
   it("a month still to come, or older than the records, is named", () => {
     expect(un("complaints in December 2026")).toMatchObject({ kind: "period", asked: "December 2026" });
     expect(un("complaints in December 2026")!.say.en).toMatch(/has not started yet/);

@@ -10,7 +10,7 @@ const DOCS = [
     cat: "BUILDING_COLLAPSE", ddept: null, place: null, geo_level: null, lat: null, lon: null, izone: 10, italuk: null, idept: "GCC-ELE", sev: "High", open: 0, t: "2026-11-10 08:00:00" },
   { id: 2, story: "S-B", inc: null, publisher: "DT Next", title: "Contractor arrested after compound wall collapse kills two workers in Chetpet", title_en: null, url: "https://n.example/b", lang: "en",
     cat: "BUILDING_COLLAPSE", ddept: "GCC-ELE", place: null, geo_level: null, lat: null, lon: null, izone: null, italuk: null, idept: null, sev: null, open: null, t: "2026-11-11 09:00:00" },
-  { id: 3, story: "S-C", inc: "INC-OTHER", publisher: "News Today", title: "Compound wall collapse in Chetpet: contractor arrested, two workers killed", title_en: null, url: "https://n.example/c", lang: "en",
+  { id: 3, story: "S-C", inc: "INC-OTHER", publisher: "The Times of India", title: "Compound wall collapse in Chetpet: contractor arrested, two workers killed", title_en: null, url: "https://n.example/c", lang: "en",
     cat: "BUILDING_COLLAPSE", ddept: null, place: null, geo_level: null, lat: null, lon: null, izone: 9, italuk: null, idept: "GCC-ENG", sev: "Severe", open: 1, t: "2026-11-11 12:00:00" }
 ];
 vi.mock("@/lib/collector/db", () => ({

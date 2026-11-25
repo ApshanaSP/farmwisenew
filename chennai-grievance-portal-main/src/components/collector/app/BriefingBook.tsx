@@ -4,9 +4,9 @@ import { useLang } from "@/lib/i18n/lang";
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { Insights } from "@/lib/collector/insights";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
-import type { Story } from "@/lib/collector/storyai";
 import { I, type IconName } from "./icons";
-import { SEV_HEX, deptIcon, fmtDate, rel, reportsOutlets, useFit, watchBrief, type Row } from "./lib";
+import { SEV_HEX, deptIcon, fmtDate, rel, useFit, watchBrief, type Row } from "./lib";
+import { STORY_STATUS, stepColour } from "./Stories";
 import type { Console } from "./CollectorApp";
 import { canSpeak, speak, stopSpeaking } from "./assistant/speech";
 import { api } from "./studio/client";
@@ -333,42 +333,39 @@ function DeptRow({ x, on, toggle, c }: { x: Dept; on: boolean; toggle: () => voi
 
 // ------------------------------------------------------------------------------------------------------- the news --
 
-/** The steps to draw without the AI: the first report, what followed (at most three), else the latest report. */
-function steps(s: Story) {
-  const st = s.stages.length > 4 ? [s.stages[0], ...s.stages.slice(-3)] : [{ stage: "First report", t: s.first }, ...s.stages];
-  return st.length > 1 ? st : [...st, { stage: "Still reported", t: s.last }];
-}
-
 /**
- * Stories that really developed (storyai.ts): reports about one event joined into one story, routine repeats left out,
- * each told as what changed. Until they are joined (a few seconds, once per build) a placeholder.
+ * Stories that really developed (storyai.ts): each told as one short timeline, every event once, oldest first. The card shows how it began
+ * and its last two events; the rest open in the story. Until the AI has read them the rules' own events are shown.
  */
 function Developing({ ins, c }: { ins: Insights; c: Console }) {
   const data = c.stories;
   const threads = data?.threads ?? [];
-  const [ref] = useFit<HTMLUListElement>(threads.map((t) => t.id).join());
+  const [ref] = useFit<HTMLUListElement>(threads.map((t) => `${t.id}:${t.events.length}`).join());
   return (
     <section className="bb-card grow bb-dev">
-      <Head ic="pulse" title="Stories still developing" n={data ? threads.length : undefined} more={threads.length ? () => c.openStories(null) : undefined} />
+      <Head ic="pulse" title="Stories still developing" n={data ? threads.length : undefined} note={data?.pending ? "AI is reading…" : undefined}
+        more={threads.length ? () => c.openStories(null) : undefined} />
       {!data ? (
         <div className="bb-fit"><p className="dp-brief wait" style={{ margin: "2px 14px" }}><I n="ai" />Joining reports about the same event…</p></div>
       ) : threads.length ? (
         <ul ref={ref} className="bb-fit">
           {threads.map((s) => {
-            const ms = s.ai?.milestones ?? [];
-            const latest = ms.length > 1 ? ms[ms.length - 1] : null;
-            const track = ms.length ? ms.map((m, k) => ({ stage: k === 0 ? "First report" : m.label, t: m.t })) : steps(s);
+            const ev = s.events;
+            const shown = ev.length > 3 ? [ev[0], ...ev.slice(-2)] : ev;
+            const hidden = ev.length - shown.length;
             return (
               <li key={s.id}>
-                <button className="bb-story" onClick={() => c.openStories(s.id)} title="Open the story's timeline">
-                  <b>{s.title}</b>
-                  {latest && <span className="sv-latest"><em>Latest</em>{latest.what}</span>}
-                  <span className="bb-track">
-                    {(track.length > 3 ? [track[0], ...track.slice(-2)] : track).map((g, k) => (
-                      <span key={k} className={k === 0 ? "first" : ""}><i />{g.stage}<em>{fmtDate(g.t)}</em></span>
+                <button className="bb-story sl" onClick={() => c.openStories(s.id)} title={s.ai?.now ?? "Open the story's timeline"}>
+                  <span className="sl-h"><b>{s.title}</b>{s.ai && <span className={`sl-st ${s.ai.status}`}>{STORY_STATUS[s.ai.status]}</span>}</span>
+                  <span className="sl-line">
+                    {shown.map((m, k) => (
+                      <span key={k} className={`sl-ev${k === shown.length - 1 ? " last" : ""}${k === 0 && hidden > 0 ? " gap" : ""}`} style={{ "--c": stepColour(m.label) } as React.CSSProperties}
+                        title={`${fmtDate(m.t)}: ${m.what}${k === 0 && hidden > 0 ? ` (${hidden} more before the next)` : ""}`}>
+                        <time>{fmtDate(m.t)}</time><i /><span><em>{m.label}</em>{m.what}</span>
+                      </span>
                     ))}
                   </span>
-                  <small>{ms.length ? `${ms.length} developments · ` : ""}{reportsOutlets(s.reports, s.outlets.length)} · updated {rel(s.last, ins.now)}</small>
+                  <small>{ev.length} events · {s.outlets.slice(0, 2).join(", ")}{s.outlets.length > 2 ? ` +${s.outlets.length - 2}` : ""} · updated {rel(s.last, ins.now)}</small>
                 </button>
               </li>
             );

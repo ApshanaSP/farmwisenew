@@ -29,6 +29,9 @@ import { categories } from "@/lib/collector/nlp";
 import { orEmpty } from "@/lib/fallback";
 import { roughKm } from "@/lib/map/geom";
 import { syncEpochKeys } from "@/lib/collector/epoch";
+import { deskOf } from "@/lib/collector/deskbook";
+import { plainEvents } from "@/lib/collector/idioms";
+import { isNewsMedia } from "@/lib/collector/newsmedia";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
 const OPEN = effectiveSql(ops("collector_decisions")).open;
@@ -46,7 +49,7 @@ export interface ThreadScope {
   lockDept?: string | null;
 }
 
-interface Doc {
+export interface Doc {
   id: string; story: string | null; inc: string | null; itemId: number | null; publisher: string | null; title: string; url: string | null;
   lang: string | null; cat: string | null; dept: string | null; place: string | null; local: boolean; zone: number | null; taluk: string | null;
   sev: string | null; open: boolean | null; t: string; ms: number; w: Map<string, number>; norm: number; tk: string[]; original: string | null;
@@ -101,17 +104,28 @@ export function tokens(s: string) {
 
 // ---------------------------------------------------------------- stages --
 
-const STAGES: [string, RegExp][] = [
-  ["Arrest", /\b(arrest\w*|held|nabbed|detain\w*|custody|surrender\w*)\b|கைது/i],
-  ["Death", /\b(dies|died|dead|death|killed|body|bodies|succumb\w*)\b|பலி|உயிரிழ|சடலம்|மரணம்/i],
-  ["Court", /\b(court|hc|bail|sentenc\w*|convict\w*|plea|pil|verdict|acquit\w*)\b|நீதிமன்ற|ஐகோர்ட்|நீதிபதி/i],
-  ["Probe", /\b(probe|inquiry|investigat\w*|sit|cb-?cid|questioned|summon\w*)\b|விசாரணை/i],
-  ["Protest", /\b(protest\w*|agitation|stir|strike|road roko|demonstrat\w*)\b|போராட்ட|மறியல்|ஆர்ப்பாட்ட/i],
-  ["Action", /\b(seal\w*|remov\w*|demolish\w*|evict\w*|deploy\w*|restor\w*|cleared|drive|vaccinat\w*|desilt\w*|repair\w*|suspend\w*|fined?|penalt\w*|crackdown|rescu\w*)\b|நடவடிக்கை|அகற்ற|சீல்|மீட்/i],
+/**
+ * What kind of step a headline reports, by rules (used until the AI has written the story's timeline, and to check its labels). Read
+ * through plainEvents() first: "dies of cardiac arrest" is a death, "meeting held" is nobody held, "civic body" is not a body
+ * (24 Nov: the Kolathur MLA's death was shown as an arrest).
+ */
+const PERSON = "(?:\\d+|one|two|three|four|five|six|seven|eight|nine|ten|man|men|woman|women|youths?|couple|duo|trio|gang|students?|teachers?|drivers?|officials?|officers?|accused|suspects?|members?|persons?|people|doctors?|techies?|aides?|son|husband|wife|father|mother|brother|migrants?|workers?|boys?|girls?|rowd(?:y|ies)|functionar(?:y|ies)|leaders?)";
+export const STAGES: [string, RegExp][] = [
+  ["Arrest", new RegExp(`\\b(arrest(?:s|ed|ing)?|nabbed|nabs|detain(?:s|ed)|detention|remanded|(?:police|judicial) custody|taken into custody|surrender(?:s|ed))\\b|\\bheld\\s+(?:for|over|in connection|with|after|under)\\b|\\b${PERSON}\\s+held\\b|கைது|சிறையில் அடை`, "i")],
+  ["Death", /\b(dies|died|dead|deaths?|killed|kills|murdered|drown(?:s|ed)|succumb\w*|pass(?:es|ed) away|no more|bod(?:y|ies)\s+(?:of|found|recovered|retrieved|fished))\b|பலி|உயிரிழ|சடலம்|மரண|காலமான|மறைவு|மறைந்த|இறந்த/i],
+  ["Court", /\b(court|hc|bail|sentenc\w*|convict\w*|plea|pil|verdict|acquit\w*|petition)\b|நீதிமன்ற|ஐகோர்ட்|நீதிபதி|ஜாமீன்|ஜாமின்/i],
+  ["Probe", /\b(probe|inquiry|enquiry|investigat\w*|cb-?cid|cbi|questioned|summon\w*|post-?mortem)\b|விசாரணை/i],
+  ["Protest", /\b(protest\w*|agitation|strike|road roko|blockade|demonstrat\w*)\b|போராட்ட|மறியல்|ஆர்ப்பாட்ட|வேலை ?நிறுத்த/i],
+  ["Action", /\b(sealed|seals|removed|removes|demolish\w*|evict\w*|deployed|restor(?:ed|es)|cleared|clears|vaccinat\w*|desilt\w*|repaired|suspended|fined|penalt\w*|crackdown|rescu\w*|seized|booked)\b|அகற்ற|சீல்|மீட்/i],
   ["Warning", /\b(alert|warns?|warning|advisory)\b|எச்சரிக்கை/i],
-  ["Completed", /\b(complet\w*|reopen\w*|resum\w*|finish\w*)\b|நிறைவு|திறப்பு/i]
+  ["Completed", /\b(completed|completes|reopen\w*|resum\w*|called off|withdrawn|ends)\b|நிறைவு|திறப்பு|வாபஸ்/i]
 ];
-const stageOf = (title: string) => STAGES.find(([, re]) => re.test(title))?.[0] ?? "Update";
+/** the Special Investigation Team, only as its capitals ("sit" is also a verb) */
+const SIT = /\bSIT\b/;
+export const stageOf = (title: string): string => {
+  const t = plainEvents(title);
+  return STAGES.find(([k, re]) => re.test(t) || (k === "Probe" && SIT.test(t)))?.[0] ?? "Update";
+};
 
 // ------------------------------------------------------------ geography --
 
@@ -120,6 +134,8 @@ declare global {
   var __threadWards: Row[] | undefined;
   // eslint-disable-next-line no-var
   var __threadCache: Record<string, { at: number; threads: Thread[] }> | undefined;
+  // eslint-disable-next-line no-var
+  var __unitCache: Record<string, { at: number; units: Unit[] }> | undefined;
 }
 async function wards() {
   global.__threadWards ??= await q(`SELECT ward_no, zone_no, taluk_code, centroid_lat AS lat, centroid_lon AS lon FROM ref_wards`);
@@ -137,8 +153,11 @@ function nearestWard(ws: Row[], lat: number, lon: number) {
 // --------------------------------------------------------------- threads --
 
 export interface ThreadStep {
+  /** the article's id (documents.doc_id), or "item-<id>" for one from an added source */ doc?: string;
   t: string; title: string; /** the headline as published, when it is not English */ original: string | null; publisher: string | null; url: string | null; lang: string | null; stage: string;
   incident: string | null; itemId: number | null; added: boolean; also: string[];
+  /** the other outlets that carried this headline, each with its own time and link */
+  also_src?: { publisher: string; url: string | null; t: string; title: string }[];
 }
 export interface Thread {
   id: string; title: string; place: string | null; cat: string | null; catLabel: string | null; zones: number[]; depts: string[]; taluks: string[];
@@ -153,21 +172,29 @@ export interface Thread {
 }
 
 /** Bump when the threading rules change, so a cached result is not reused. */
-const RULES = 13;
+const RULES = 15;
 
 const SCHEDULE = /power (cut|shutdown)|shutdown areas|மின்தடை|மின் தடை|எந்தெந்த வழக்க/i;
 
+/** A feed the site reads itself ("The Hindu - Chennai (RSS)") is the outlet it belongs to, so one outlet is never counted as two. */
+const FEED_OF: [RegExp, string][] = [[/thehindu\.com/i, "The Hindu"], [/timesofindia/i, "The Times of India"], [/dtnext\.in/i, "DT Next"], [/newindianexpress\.com/i, "The New Indian Express"],
+  [/hindustantimes\.com/i, "Hindustan Times"], [/deccanchronicle\.com/i, "Deccan Chronicle"], [/dailythanthi\.com/i, "Daily Thanthi"], [/dinamalar\.com/i, "Dinamalar"], [/dinamani\.com/i, "Dinamani"],
+  [/hindutamil\.in/i, "Hindu Tamil Thisai"], [/ndtv\.com/i, "NDTV"], [/indianexpress\.com/i, "The Indian Express"]];
+export function outletOf(name: string | null, url: string | null): string | null {
+  const known = FEED_OF.find(([re]) => re.test(String(url ?? "")));
+  return known ? known[1] : name?.replace(/\s*[-–]\s*Chennai\b.*$/i, "").replace(/\s*\((?:live|rss)\)\s*$/i, "").trim() || name;
+}
+
 async function load(now: string, days: number): Promise<Doc[]> {
   const [news, added, ws] = await Promise.all([
-    q(`SELECT d.doc_id AS id, d.story_id AS story, d.linked_incident_id AS inc, d.publisher, d.title, d.title_en, d.url, d.lang, d.category_code AS cat,
+    q(`SELECT d.doc_id AS id, d.story_id AS story, d.linked_incident_id AS inc, d.publisher, d.publisher_domain AS dom, d.publisher_tier AS tier,
+              d.title, d.title_en, d.url, d.lang, d.category_code AS cat, d.is_incident AS isinc, d.report_type AS rtype,
               d.department AS ddept, d.place_text AS place, d.geo_level, d.lat, d.lon, i.zone_no AS izone, i.taluk_code AS italuk, i.lead_dept AS idept,
               i.severity_level AS sev, ${OPEN} AS open, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t
        FROM documents d LEFT JOIN incidents i ON i.incident_id = d.linked_incident_id
        WHERE d.source_kind = 'news' AND d.is_district = 1 AND d.published_at > (? - INTERVAL ? DAY) AND d.published_at <= ?
-         AND (d.is_incident = 1 OR d.linked_incident_id IS NOT NULL OR d.report_type IN ('incident', 'crime', 'civic_complaint', 'court')
-              OR d.category_code IS NOT NULL)
        ORDER BY d.published_at`, [now, days, now]),
-    q(`SELECT i.item_id, s.name AS publisher, i.title, i.url, i.lang, i.category_code AS cat, i.dept_code AS ddept, i.place, i.lat, i.lon,
+    q(`SELECT i.item_id, s.name AS publisher, s.url AS feed, i.title, i.url, i.lang, i.category_code AS cat, i.dept_code AS ddept, i.place, i.lat, i.lon,
               i.zone_no AS izone, i.taluk_code AS italuk, DATE_FORMAT(COALESCE(i.published_at, i.fetched_at), '%Y-%m-%d %H:%i:%s') AS t
        FROM ${ops("source_items")} i JOIN ${ops("sources")} s ON s.source_id = i.source_id
        WHERE s.kind IN ('rss', 'html', 'json') AND i.published_at IS NOT NULL
@@ -199,8 +226,20 @@ async function load(now: string, days: number): Promise<Doc[]> {
       w: new Map(), norm: 1, tk: [], original: title !== cleanTitle(r.title) ? cleanTitle(r.title) : null
     });
   };
-  for (const r of news) push(r, String(r.id), null);
-  for (const r of added) push(r, `item-${r.item_id}`, Number(r.item_id));
+  for (const r of news) {
+    // recognised news media only, as everywhere on the console
+    if (!isNewsMedia(r.publisher, r.dom, r.tier)) continue;
+    // the news desk's verdict (newsdesk.ts); an article it has not read yet follows the old rule: an incident, or a labelled category
+    const v = deskOf(r.title, r.title_en);
+    if (v ? v.v === "skip" : !(Number(r.isinc) === 1 || r.inc || ["incident", "crime", "civic_complaint", "court"].includes(String(r.rtype ?? "")) || (r.cat && r.cat !== "OTHER"))) continue;
+    push(v?.cat ? { ...r, cat: v.cat } : r, String(r.id), null);
+  }
+  for (const r of added) {
+    const v = deskOf(r.title);
+    // a news feed's item the desk has not read, or left out, is in no story; another added source's item is
+    if (v?.v === "skip" || (!v && isNewsMedia(null, r.feed))) continue;
+    push({ ...r, publisher: outletOf(r.publisher, r.feed), ...(v?.cat ? { cat: v.cat } : {}) }, `item-${r.item_id}`, Number(r.item_id));
+  }
   docs.sort((a, b) => a.ms - b.ms);
   return docs;
 }
@@ -288,6 +327,7 @@ const mode = <T,>(xs: T[]) => {
   return [...n.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 };
 
+/** Did these reports develop, by the rules? (see the top of the file, 3) */
 function build(m: Doc[], catLabel: Map<string, string>): Thread | null {
   const titles = new Set(m.map((d) => d.title.toLowerCase()));
   const units = new Set(m.map((d) => d.story ?? d.id));
@@ -295,6 +335,19 @@ function build(m: Doc[], catLabel: Map<string, string>): Thread | null {
   const outlets = new Set(m.map((d) => d.publisher).filter(Boolean));
   // two headlines from one outlet are often two different stories: ask for a second outlet or a third report
   if (titles.size < 2 || (units.size < 2 && hours < 6) || (outlets.size < 2 && m.length < 3)) return null;
+  const t = threadOf(m, catLabel);
+  // Developing means something happened after the first report: a later report is a new kind of step (a protest after
+  // a collapse, a court case after a launch, an arrest after a murder), or the story kept being reported for more than
+  // a day. The same event written up by several outlets within hours is coverage, not development, and is not shown.
+  const steps = t.days.flatMap((d) => d.steps);
+  const own = stageOf(steps[0].original ? `${steps[0].title} ${steps[0].original}` : steps[0].title);
+  const moved = steps.slice(1).some((s) => s.stage !== "Update" && s.stage !== own);
+  return moved || (hours >= 24 && t.days.length >= 2) ? t : null;
+}
+
+/** One thread of these reports (oldest first), whatever the rules think of them: the AI chose them (storyai.ts), or the rules did (build). */
+export function threadOf(m: Doc[], catLabel: Map<string, string>): Thread {
+  const hours = (m[m.length - 1].ms - m[0].ms) / 3.6e6;
   // the headline closest to the others, English preferred, names the thread
   const score = (d: Doc) => m.reduce((a, o) => {
     if (o === d) return a;
@@ -309,19 +362,17 @@ function build(m: Doc[], catLabel: Map<string, string>): Thread | null {
   for (const d of m) {
     const k = d.title.toLowerCase();
     const prev = byTitle.get(k);
-    if (prev) { if (d.publisher && d.publisher !== prev.publisher && !prev.also.includes(d.publisher)) prev.also.push(d.publisher); continue; }
-    const st: ThreadStep = { t: d.t, title: d.title, original: d.original, publisher: d.publisher, url: d.url, lang: d.lang, stage: stageOf(d.original ? `${d.title} ${d.original}` : d.title),
+    if (prev) {
+      if (d.publisher && d.publisher !== prev.publisher && !prev.also.includes(d.publisher)) prev.also.push(d.publisher);
+      if (d.publisher) (prev.also_src ??= []).push({ publisher: d.publisher, url: d.url, t: d.t, title: d.title });
+      continue;
+    }
+    const st: ThreadStep = { doc: d.id, t: d.t, title: d.title, original: d.original, publisher: d.publisher, url: d.url, lang: d.lang, stage: stageOf(d.original ? `${d.title} ${d.original}` : d.title),
       incident: d.inc, itemId: d.itemId, added: d.itemId != null, also: [] };
     byTitle.set(k, st);
     steps.push(st);
   }
-  // Developing means something happened after the first report: a later report is a new kind of step (a protest after
-  // a collapse, a court case after a launch, an arrest after a murder), or the story kept being reported for more than
-  // a day. The same event written up by several outlets within hours is coverage, not development, and is not shown.
   const own = steps[0].stage;
-  const moved = steps.slice(1).some((s) => s.stage !== "Update" && s.stage !== own);
-  const dayN = new Set(steps.map((s) => s.t.slice(0, 10))).size;
-  if (!moved && !(hours >= 24 && dayN >= 2)) return null;
   steps[0].stage = "First report";
   const days: Thread["days"] = [];
   for (const s of steps) {
@@ -374,6 +425,48 @@ export function lockedView(t: Thread, dept: string): Thread {
   };
 }
 
+/** One report of the news, with every report that only says it again (the same article's copies, or nearly the same headline within two days). */
+export interface Unit { docs: Doc[]; t: string; title: string; original: string | null; tk: Set<string>; stage: string }
+export function unitsOf(docs: Doc[]): Unit[] {
+  const out: Unit[] = [];
+  const byStory = new Map<string, Unit>();
+  for (const d of docs) {
+    const tk = new Set(tokens(d.title));
+    const stage = stageOf(d.original ? `${d.title} ${d.original}` : d.title);
+    // another kind of step is another report, however alike the words ("contractor arrested after wall collapse kills two"); the monitor's
+    // own story can hold both (a petition about a patient and his death)
+    let u = d.story ? byStory.get(`${d.story}|${stage}`) : undefined;
+    if (!u) {
+      for (let k = out.length - 1; k >= 0 && !u; k--) {
+        if (d.ms - out[k].docs[0].ms > 2 * 864e5) break;
+        if (out[k].stage !== stage) continue;
+        let x = 0;
+        for (const w of tk) if (out[k].tk.has(w)) x++;
+        if (tk.size >= 3 && x / Math.max(1, tk.size + out[k].tk.size - x) >= 0.6) u = out[k];
+      }
+    }
+    if (u) u.docs.push(d);
+    else out.push(u = { docs: [d], t: d.t, title: d.title, original: d.original, tk, stage });
+    if (d.story) byStory.set(`${d.story}|${stage}`, u);
+  }
+  return out;
+}
+
+/** Every kept report of the window, oldest first, repeats folded: what the AI reads to find the stories that developed. */
+export async function newsUnits(hours: number, now: string): Promise<{ days: number; units: Unit[]; catLabel: Map<string, string> }> {
+  const days = Math.min(30, Math.max(14, Math.round(hours / 24)));
+  const key = `${RULES}|${await buildStamp()}|${days}`;
+  syncEpochKeys(global.__unitCache, unitCacheToken);
+  const catLabel = new Map(categories().map((c) => [c.code, c.label]));
+  const had = global.__unitCache?.[key];
+  if (had && Date.now() - had.at < 10 * 60_000) return { days, units: had.units, catLabel };
+  const units = unitsOf(await load(now, days));
+  const keep = Object.fromEntries(Object.entries(global.__unitCache ?? {}).filter(([k]) => k.split("|")[1] === key.split("|")[1]));
+  global.__unitCache = { ...keep, [key]: { at: Date.now(), units } };
+  return { days, units, catLabel };
+}
+const unitCacheToken = {};
+
 /** The pipeline build the stories were threaded from: they only change when a new build is published. */
 async function buildStamp(): Promise<string> {
   const [r] = await q(`SELECT v FROM _export_meta WHERE k = 'exported_at'`).catch(orEmpty("threads:340"));
@@ -381,9 +474,9 @@ async function buildStamp(): Promise<string> {
 }
 
 const threadCacheToken = {};
-/** Developing stories in the scope, most recently updated first. */
-export async function threads(s: ThreadScope, now: string) {
-  const days = Math.min(30, Math.max(14, Math.round(s.hours / 24)));
+/** Every thread of the window, whatever the scope: the AI joins and explains all of them once (storyai.ts), then each scope takes its own. */
+export async function allThreads(hours: number, now: string): Promise<{ days: number; threads: Thread[] }> {
+  const days = Math.min(30, Math.max(14, Math.round(hours / 24)));
   // Keyed on the build, not on "now" (which moves every 30 s): threading a month of news takes seconds, so it runs
   // once per build and period length, and at most every 10 minutes for items from added sources.
   const key = `${RULES}|${await buildStamp()}|${days}`;
@@ -399,6 +492,12 @@ export async function threads(s: ThreadScope, now: string) {
     const keep = Object.fromEntries(Object.entries(global.__threadCache ?? {}).filter(([k]) => k.split("|")[1] === key.split("|")[1]));
     global.__threadCache = { ...keep, [key]: { at: Date.now(), threads: all } };
   }
+  return { days, threads: all };
+}
+
+/** Developing stories in the scope, most recently updated first. */
+export async function threads(s: ThreadScope, now: string) {
+  const { days, threads: all } = await allThreads(s.hours, now);
   const lock = s.lockDept;
   const shown = (lock ? all.map((t) => lockedView(t, lock)) : all).filter((t) => (!s.since || t.last >= s.since) &&
     (!s.zone || t.zones.includes(s.zone)) && (!s.dept || t.depts.includes(s.dept)) && (!s.cat || t.cat === s.cat) && (!s.taluk || t.taluks.includes(s.taluk)));

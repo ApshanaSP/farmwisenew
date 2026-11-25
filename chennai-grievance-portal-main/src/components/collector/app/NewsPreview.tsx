@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { I } from "./icons";
 import { Explained, NewsDetails, useAnalysis } from "./Detail";
-import { OfficerCard } from "./Overview";
+import { DeskTags, OfficerCard } from "./Overview";
 import { ConflictBox, useStoryConflicts } from "./Conflicts";
 import { MEDIA_KIND, deptIcon, fmtDay, fmtShort, fmtTime, plural, rel, type Row } from "./lib";
 import type { Console } from "./CollectorApp";
@@ -74,11 +74,17 @@ export function NewsView({ s, c }: { s: Story; c: Console }) {
     .filter((p, k) => p.length > 1 && !(k === 0 && p.toLowerCase() === String(a.title).trim().toLowerCase()));
   const outlets = [...new Set(rows.map((r) => r.publisher).filter(Boolean))] as string[];
   const times = rows.map((r) => String(r.t)).sort();
+  // each outlet once: its first report, its kind, its link and how many reports it carried
+  const outletRows = outlets.map((name) => {
+    const mine = rows.filter((r) => r.publisher === name).sort((x, y) => String(x.t).localeCompare(String(y.t)));
+    return { name, kind: String(mine[0].kind ?? ""), t: String(mine[0].t), url: mine.find((r) => r.url)?.url ?? null, n: mine.length };
+  }).sort((x, y) => x.t.localeCompare(y.t));
   const ai = rows.find((r) => r.ai)?.ai as Row | undefined;
   const place = rows.map((r) => r.ai?.place || (r.place && !/^chennai( district)?$/i.test(r.place) ? r.place : null)).find(Boolean) ?? "Chennai";
   const lead = rows[0];
-  const rules = { summary: String(lead.summary && lead.summary !== lead.title ? lead.summary : (lead.title_en || lead.title)), facts: [], attention: [],
-    needsYou: false, what: [], why: [], next: null, ai: false } as unknown as Parameters<typeof Explained>[0]["rules"];
+  // until the AI's account is ready, the news desk's line on what happened (it has read the report), else the outlet's summary
+  const rules = { summary: s.desk?.gist || String(lead.summary && lead.summary !== lead.title ? lead.summary : (lead.title_en || lead.title)), facts: [],
+    attention: s.desk?.v === "act" && s.desk.why ? [s.desk.why] : [], needsYou: s.desk?.v === "act" && !!s.desk.why, what: [], why: [], next: null, ai: false } as unknown as Parameters<typeof Explained>[0]["rules"];
 
   // How it unfolded: every report, oldest first, by day
   const order = rows.map((r, k) => ({ r, k })).sort((x, y) => String(x.r.t).localeCompare(String(y.r.t)));
@@ -97,6 +103,7 @@ export function NewsView({ s, c }: { s: Story; c: Console }) {
         <h2>{s.title}</h2>
         {lead.lang !== "en" && lead.title_en && <p className="nv-orig" lang="ta">{lead.title}</p>}
         <div className="iv-where">
+          {s.desk && <span className="nw-tags"><DeskTags i={s} /></span>}
           <span><I n="pin" />{place}</span>
           {dept && <span><I n={deptIcon(dept.code)} />{dept.name}</span>}
           <span><I n="clock" />First reported {fmtShort(times[0])} ({rel(times[0], c.now)})</span>
@@ -110,6 +117,20 @@ export function NewsView({ s, c }: { s: Story; c: Console }) {
           <Explained a={ana.a} busy={ana.busy} rules={rules} open={false} deptName={dept?.name ?? "The department"} needLabel="Why it matters to you" />
           {ana.a?.handled && !ana.a.why.length && <div className="iv-ok"><I n="checkc" /><span>{ana.a.handled}</span></div>}
           {diffs && <ConflictBox items={diffs} />}
+          <div>
+            <div className="iv-t"><I n="news" />Sources<span>{plural(outlets.length, "outlet")}, {plural(rows.length, "report")}</span></div>
+            <ul className="nw-src">
+              {outletRows.map((o) => {
+                const url = o.url && /^https?:/i.test(String(o.url)) ? String(o.url) : null;
+                return (
+                  <li key={o.name}>
+                    <b>{o.name}</b><small>{MEDIA_KIND[o.kind] ?? "News"} · {fmtShort(o.t)}{o.n > 1 ? ` · ${o.n} reports` : ""}</small>
+                    {url && <a href={url} target="_blank" rel="noopener noreferrer" title={`Read at ${o.name}`}>Open<I n="ext" /></a>}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
           <div>
             <div className="iv-t"><I n="doc" />Key facts</div>
             <div className="facts">

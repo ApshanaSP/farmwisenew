@@ -630,18 +630,11 @@ export function understand(input: string, state: ScreenState, world: World, opts
     steps.push({ a: "draft" });
   }
 
-  if (oneDayBack || otherTime) {
-    const base = steps.filter((x) => x.a === "view" || x.a === "page");
-    const tiedNote = (q: Bilingual): Bilingual => (tied ? b(`${q.en} I could not tell which kind of complaint you meant, so nothing is filtered by it.`, `${q.ta} எந்த வகைப் புகார் என்று புரியவில்லை, அதனால் அதன்படி வடிகட்டவில்லை.`) : q);
-    return { kind: "ask", lang, heard,
-      question: tiedNote(oneDayBack ? b("Yesterday on its own is not a window I hold. Which should I show?", "நேற்று மட்டும் என்னிடம் இல்லை. எதைக் காட்டட்டும்?")
-        : b("That stretch of time is not a window I hold: I have the last 24 hours, 7, 30 and 90 days. Which should I show?", "அந்தக் காலம் என்னிடம் இல்லை: கடந்த 24 மணி நேரம், 7, 30, 90 நாட்கள் மட்டுமே உள்ளன. எதைக் காட்டட்டும்?")),
-      choices: [
-        { label: b("The last 24 hours", "கடந்த 24 மணி நேரம்"), steps: [...base, { a: "period", period: "daily" }] },
-        { label: b("The last 7 days", "கடந்த 7 நாட்கள்"), steps: [...base, { a: "period", period: "weekly" }] },
-        { label: b("Never mind", "வேண்டாம்"), steps: [] }
-      ] };
-  }
+  // v18 (24 Nov, the owner: "if I ask for a specific day, last 2 days or last 48 hours, it should map to the correct date and answer for it"):
+  // yesterday, a day, a count of days or hours, a month, a range: the console's own filter holds none of them, but Jarvis's screens count any
+  // window (lib/thunai/v18/when.ts, screens.ts). These rules only move the console, so the sentence is handed on to the server, which answers
+  // it over that window; it is never moved to the nearest of the four, and never asked "which of the four?"
+  if (oneDayBack || otherTime) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
   // a question nothing above could place goes to Ask District IQ, whose tools answer it
   if (QUESTION.test(s) && (!steps.length || (steps.length === 1 && steps[0].a === "view"))) {
     return done([{ a: "ask", q: heard }], 1, 1, 1);

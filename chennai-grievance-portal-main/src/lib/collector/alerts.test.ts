@@ -171,3 +171,35 @@ describe("a named storm stays a cyclone when its newest report is about rain", (
     expect(l.banner?.title).toMatch(/^Cyclone Arnab/);
   });
 });
+
+// 24 Nov 2026, Karthigai Deepam day: the banner read "Heavy rain Karthigai Deepam". The model had answered the festival as the storm's name.
+describe("a festival named in a rain forecast is never the alert's name", () => {
+  const DAY = "2026-11-24 21:00:00";
+  const news: NewsAlert[] = [
+    ["Asianet Newsable", "2026-11-24 12:19:40", "Tamil Nadu-Chennai Weather Update: Heavy Rain In 9 Districts On Karthigai Deepam; Check Full List"],
+    ["ETV Bharat", "2026-11-23 14:44:19", "On Kartik Deepam, rain in more than 30 districts – Chennai Weather Research Centre"],
+    ["News Today", "2026-11-24 10:20:31", "Heavy rain alert for Chennai today - News Today"],
+    ["Dinamalar", "2026-11-23 07:05:00", "Heavy rain possible today in 9 districts including Chennai and Tiruvallur; weather bureau warning"],
+    ["The New Indian Express", "2026-11-23 06:39:57", "Heavy rain may return to Chennai, 8 TN districts today"],
+    ["LiveChennai", "2026-11-24 14:25:03", "Heavy Rain Warning for 9 Tamil Nadu Districts Today; Chennai and Several Areas to Receive Moderate Rain"]
+  ].map(([publisher, t, title], k) => ({ id: `kd-${k}`, publisher, t, title, titleEn: title }));
+  const bad = new Map(news.slice(0, 2).map((n) => [n.id, { hazard: "heavy_rain" as const, name: "Karthigai Deepam", level: null, districts: [], districtCount: 9, chennaiNamed: true, when: "Karthigai Deepam" }]));
+  const imd = [{ day: "2026-11-24", level: 1, text: "Thunderstorms & Lightning" }, { day: "2026-11-25", level: 1, text: "Thunderstorms & Lightning" }];
+  const l = lane({ now: DAY, imd, sachet: [], news, feeds: FRESH.map((f) => ({ ...f, newest: DAY })), fallback: FALLBACK, reads: bad });
+  it("names no storm, even when the model answered the festival", () => {
+    expect(l.event).toEqual({ hazard: "heavy_rain", name: null });
+    expect(JSON.stringify([l.banner, l.agreementText, l.status, l.sources])).not.toMatch(/deepam|kar\w*igai/i);
+  });
+  it("leads with what IMD says for Chennai and says who reports what", () => {
+    expect(l.banner!.title).toBe("Thunderstorms & Lightning · yellow for Chennai");
+    expect(l.agreementText).toMatch(/^IMD has a yellow warning for Chennai today \(Thunderstorms & Lightning\); 6 news outlets report heavy rain, 3 of the reports naming Chennai/);
+  });
+  it("counts only the reports that forecast heavy rain for Chennai", () => {
+    expect(l.news.filter((n) => n.chennaiUnder).map((n) => n.publisher).sort()).toEqual(["Dinamalar", "News Today", "The New Indian Express"]);
+  });
+  it("heavy rain in other districts only is no banner for Chennai", () => {
+    const far = lane({ now: DAY, imd: [{ day: "2026-11-24", level: 0, text: "No Warning" }], sachet: [], news: news.filter((_, k) => [0, 1, 5].includes(k)), feeds: FRESH.map((f) => ({ ...f, newest: DAY })), fallback: null, reads: null });
+    expect(far.banner).toBeNull();
+    expect(far.status.level).toBeNull();
+  });
+});

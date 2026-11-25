@@ -1,6 +1,6 @@
 // QA pass 7 (rules-periods): the one period reader both rules lanes use. Each meaning, in English, Tamil and Tanglish, and the edge days.
 import { describe, expect, it } from "vitest";
-import { checkSpec, compareOf, heldBy, readPeriod, spanOf, type PeriodSpec } from "./read";
+import { checkSpec, compareOf, heldBy, readPeriod, spanOf, type PeriodSpec, needsDates } from "./read";
 
 const kind = (q: string) => readPeriod(q);
 const NOW = "2026-11-06 18:08:00"; // the pinned snapshot's as-of (a Friday)
@@ -120,15 +120,19 @@ describe("days and ranges of days (p7-merge-04): one reading for both lanes", ()
 });
 
 describe("dates, from the store's now", () => {
-  it("today is midnight IST to now, inside the last 24 hours", () => {
+  // 25 Nov 2026, the owner: the dashboard showed 7 severe cases and Jarvis, counting since midnight, another number
+  it("today is the dashboard's Daily window, the last 24 hours, with no dates of its own", () => {
     const s = spanOf({ kind: "day", back: 0 }, NOW)!;
-    expect(s.range).toEqual({ from: "2026-11-06 00:00:00", to: "2026-11-06 18:08:01" });
-    expect(s.label.en).toBe("today (6 Nov, since midnight)");
+    expect([s.key, s.range, s.hours, s.label.en]).toEqual(["daily", null, null, "last 24 hours"]);
+    expect(needsDates({ kind: "day", back: 0 })).toBe(false);
     expect(heldBy(s, NOW)).toBe("daily");
   });
-  it("just after midnight IST (the UTC date is still yesterday), today is the new IST day", () => {
-    const s = spanOf({ kind: "day", back: 0 }, "2026-11-07 00:20:00")!;
-    expect(s.range?.from).toBe("2026-11-07 00:00:00");
+  it("'since midnight' is the calendar day so far", () => {
+    const spec = readPeriod("incidents since midnight");
+    expect(spec.kind).toBe("days");
+    expect(needsDates(spec)).toBe(true);
+  });
+  it("just after midnight IST (the UTC date is still yesterday), yesterday is the day before the new IST day", () => {
     expect(spanOf({ kind: "day", back: 1 }, "2026-11-07 00:20:00")!.range).toEqual({ from: "2026-11-06 00:00:00", to: "2026-11-07 00:00:00" });
   });
   it("last month on the 1st is the whole month before, not a day of this one", () => {

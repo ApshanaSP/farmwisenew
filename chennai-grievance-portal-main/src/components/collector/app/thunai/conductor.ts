@@ -278,6 +278,8 @@ export interface ConductorHooks {
   wantsYes?: () => boolean;
   /** v8: a next step is on offer ("Want the details?"): a yes or a no is its answer */
   offerPending?: () => boolean;
+  /** v18 round 2: the Collector is working with Jarvis now (a screen of its open, or an answer moments ago): request-shaped speech is in the conversation */
+  conversing?: () => boolean;
   /** v10: the line the page holds for its rest, and when (Thunai.tsx cutRef: the wake path's same-breath rest, "Hey Jarvis, tell me about the") */
   heldCut?: () => { text: string; at: number } | null;
   /**
@@ -712,12 +714,19 @@ export class Conductor {
     const cutKept = this.m.bargeIns > 0 && canContinue() && this.cutAt > 0 && now - this.cutAt <= ENGAGED_MS;
     return !!this.sayingAtOnset || cutKept || (last > 0 && now - last <= ENGAGED_MS) ? "engaged" : "ambient";
   }
+  /**
+   * v18 round 2 (24 Nov, the owner: "Jarvis gets stuck on the listening screen; only closing and opening it again gets an answer"; the log of 18:54-
+   * 18:55 IST: five questions in a row let go as unaddressed, 40 s after the last answer): while the Collector works with Jarvis (one of its
+   * screens open, or an answer in the last two minutes: the host says so) a request-shaped sentence is in the conversation; the gate still
+   * lets side talk, chores and statements go
+   */
+  private conversingNow(): number { return this.h.conversing?.() ? Date.now() : 0; }
   /** when the turn machine last cut Jarvis's voice (Date.now()); 0 before any */
   private cutAt = 0;
 
   /** when the name was last heard (the wake) or Jarvis last finished a turn, whichever is later (Date.now()); null before either */
   get engagedAt(): number | null {
-    const t = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt);
+    const t = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt, this.conversingNow());
     return t > 0 ? t : null;
   }
   /**
@@ -840,7 +849,7 @@ export class Conductor {
    */
   private ignored(text: string, gate: Addressed, info: { lang: "en" | "ta"; conf: number } = { lang: this.lastLang ?? "en", conf: 0 }) {
     if (gate.why === "cut-off" && understandV10()) {
-      const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt) || 0;
+      const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt, this.conversingNow()) || 0;
       if (last > 0 && Date.now() - last <= ENGAGED_MS) {
         this.heldAt = Date.now(); this.held = { text, at: this.heldAt }; this.h.onIgnored(text, "cut-off-held");
         this.dropped("cut-off-held", info.lang, info.conf);
@@ -887,11 +896,14 @@ export class Conductor {
   }
   private gateOne(text: string): Addressed {
     const r = this.h.rules(text);
-    const last = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt) || null;
-    // talking over Jarvis counts as engaged: it was speaking a moment ago
-    const over = this.sayingAtOnset ? Date.now() : last;
     // v8: a yes, a card or a question back waiting: a plain "okay" is its answer, not a filler
     const awaitingAnswer = !!(this.h.wantsYes?.() || this.h.clarifyPending?.() || this.h.offerPending?.());
+    // (v18 round 2's review: a card waiting for its answer keeps its own 20 s from Jarvis's last turn; being in the conversation never stretches
+    // it, or an "okay" said to someone else a minute later would press the card's button)
+    const real = Math.max(this.h.lastTurnAt() ?? 0, this.engaged, this.heldAt) || null;
+    const last = awaitingAnswer ? real : Math.max(real ?? 0, this.conversingNow()) || null;
+    // talking over Jarvis counts as engaged: it was speaking a moment ago
+    const over = this.sayingAtOnset ? Date.now() : last;
     return addressed({ text, lastTurnAt: over, now: Date.now(), rulesSure: r.sure, districtNoun: r.districtNoun, awaitingAnswer, called: this.calledNow() });
   }
   /** v8: the first sentence after "Hey Jarvis" (the name heard, nothing answered since, within 12 s) is the call's own request */

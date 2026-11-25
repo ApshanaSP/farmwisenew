@@ -193,6 +193,8 @@ export interface HudEvidence {
   /** how many records it rests on */
   n: number | null;
   period: "daily" | "weekly" | "monthly" | "quarterly" | null;
+  /** a window of the screen's own ("last 2 days"), English and Tamil, said in place of the period */
+  when?: [string, string] | null;
   sources: string[];
   asOf: string | null;
 }

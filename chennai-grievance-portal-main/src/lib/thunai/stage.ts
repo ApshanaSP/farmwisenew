@@ -23,61 +23,88 @@ export type CaseRowT = z.infer<typeof CaseRow>;
 const Point = z.object({ n: num.nullable(), id: str(120), lat: num, lon: num, label: str(160), sev: str(12).nullable(), value: num.nullable(), hot: z.boolean() });
 export type PointT = z.infer<typeof Point>;
 
+// v4 (lane A2, registered at integration): what changed with its drivers, explain one case or one part of a change, a place's situation
+// v17 (22 Nov): "dataset", an answer from one of the Collector's own Data Studio datasets (screens.ts datasetScreen). Code alone builds it:
+// the planner's schema leaves it out (PLANNER_RECIPES), since only code knows which datasets there are (and checkScreen needs its id)
+// v19 (25 Nov): "ask", exactly what was asked, counted from the analyst's own data request (v19/plan.ts) and drawn as that answer alone. Code
+// alone builds it (the planner's schema leaves it out, as it does "dataset"): its plan is the analyst's
+// v18 (24 Nov): "summary", everything the console holds about one area, department, kind or the district over any window (recipes/summary.ts)
+export const RECIPES = ["cases", "case", "news", "readings", "ranking", "compare", "trend", "why", "performance", "dashboard", "map", "nearby", "brief", "drafts", "answer", "prices", "advise", "insight", "complete",
+  "changed", "explain", "situation", "city", "focus", "dataset", "summary", "ask"] as const;
+export type Recipe = (typeof RECIPES)[number];
+
+/**
+ * v18 (24 Nov, the owner: "I cannot click an insight to see the further details of it"): where a tile, a point, a bar or a row leads. Code
+ * that builds the item knows what it rests on, so it says which screen shows those records (a kind's cases in the same window, that day's
+ * summary, a zone's summary); the Stage builds that screen when it is clicked, and Back returns.
+ */
+export const Drill = z.object({ recipe: z.enum(RECIPES), slots: z.record(z.unknown()), label: str(160) });
+export type DrillT = z.infer<typeof Drill>;
+const drill = Drill.nullable().optional();
+/**
+ * v18 round 2 (24 Nov, the owner: "I don't know what each tile is describing; simply a chart, we cannot identify what it is saying"): one line
+ * under a part's title saying what it shows and how it is counted ("Each bar: incidents of that kind reported in the last 4 days. Click a bar for its cases.")
+ */
+const ABOUT = { about: str(300).nullable().optional() };
+
 export const Block = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("Kpis"), id: str(40), title: str(120), items: z.array(z.object({
+  z.object({ kind: z.literal("Kpis"), id: str(40), ...ABOUT, title: str(120), items: z.array(z.object({
     key: str(40), label: str(80), value: num, unit: str(20).nullable(), prev: num.nullable(), delta: num.nullable(), tone: z.enum(["bad", "good", "neutral"]), spark: z.array(num).max(60),
     /** the change in percent, shown on the tile when Thunai says it */
-    pct: num.nullable().optional()
-  })).min(1).max(6) }),
-  z.object({ kind: z.literal("CaseList"), id: str(40), title: str(160), source: z.enum(["console-severity", "list", "search", "map"]), sev: str(12).nullable(),
+    pct: num.nullable().optional(),
+    drill
+  })).min(1).max(8) }),
+  z.object({ kind: z.literal("CaseList"), id: str(40), ...ABOUT, title: str(160), source: z.enum(["console-severity", "list", "search", "map"]), sev: str(12).nullable(),
     total: num, rows: z.array(CaseRow).max(60) }),
-  z.object({ kind: z.literal("CaseDetail"), id: str(40), incident: CaseRow.extend({ what: z.array(str(300)).max(6), why: str(300).nullable(), next: str(300).nullable(),
+  z.object({ kind: z.literal("CaseDetail"), id: str(40), ...ABOUT, incident: CaseRow.extend({ what: z.array(str(300)).max(6), why: str(300).nullable(), next: str(300).nullable(),
     deadline: str(40).nullable(), officials: z.array(z.object({ name: str(80), role: str(120) })).max(4) }),
     timeline: z.array(z.object({ t: str(30), source: str(60), text: str(300) })).max(20) }),
-  z.object({ kind: z.literal("NewsReader"), id: str(40), title: str(160), total: num, items: z.array(z.object({
-    id: str(120), title: str(300), source: str(80).nullable(), t: str(30).nullable(), place: str(120).nullable(), incidentId: str(80).nullable(), url: str(2000).nullable()
+  z.object({ kind: z.literal("NewsReader"), id: str(40), ...ABOUT, title: str(160), total: num, items: z.array(z.object({
+    id: str(120), title: str(300), source: str(80).nullable(), t: str(30).nullable(), place: str(120).nullable(), incidentId: str(80).nullable(), url: str(2000).nullable(),
+    /** v18: the report's own summary, shown when the item is opened on the screen */
+    summary: str(600).nullable().optional()
   })).max(30) }),
-  z.object({ kind: z.literal("Readings"), id: str(40), title: str(160), metric: str(40), unit: str(20), items: z.array(z.object({
-    id: str(80), name: str(120), value: num, t: str(30).nullable(), mean28: num.nullable(), z: num.nullable(), anomaly: z.boolean(), detail: str(200).nullable()
+  z.object({ kind: z.literal("Readings"), id: str(40), ...ABOUT, title: str(160), metric: str(40), unit: str(20), items: z.array(z.object({
+    id: str(80), name: str(120), value: num, t: str(30).nullable(), mean28: num.nullable(), z: num.nullable(), anomaly: z.boolean(), detail: str(200).nullable(), drill
   })).max(20) }),
-  z.object({ kind: z.literal("Ranking"), id: str(40), title: str(160), unit: str(30).nullable(), method: str(240), order: z.enum(["top", "bottom"]),
-    items: z.array(z.object({ key: str(60), label: str(120), value: num, rank: num, sub: str(160).nullable(), zone: num.nullable(), lat: num.nullable(), lon: num.nullable(), action: z.enum(["zone", "dept", "station", "none"]) })).max(25) }),
-  z.object({ kind: z.literal("MapView"), id: str(40), title: str(160), rule: str(240).nullable(),
+  z.object({ kind: z.literal("Ranking"), id: str(40), ...ABOUT, title: str(160), unit: str(30).nullable(), method: str(240), order: z.enum(["top", "bottom"]),
+    items: z.array(z.object({ key: str(60), label: str(120), value: num, rank: num, sub: str(160).nullable(), zone: num.nullable(), lat: num.nullable(), lon: num.nullable(), action: z.enum(["zone", "dept", "station", "none"]), drill })).max(25) }),
+  z.object({ kind: z.literal("MapView"), id: str(40), ...ABOUT, title: str(160), rule: str(240).nullable(),
     shade: z.object({ geo: z.enum(["zone", "taluk"]), label: str(80), values: z.array(z.object({ key: z.union([num, str(20)]), value: num })).max(60) }).nullable(),
     points: z.array(Point).max(200), outline: z.array(num).max(15) }),
-  z.object({ kind: z.literal("Compare"), id: str(40), title: str(160), metrics: z.array(z.object({ key: str(30), label: str(60) })).max(8),
+  z.object({ kind: z.literal("Compare"), id: str(40), ...ABOUT, title: str(160), metrics: z.array(z.object({ key: str(30), label: str(60) })).max(8),
     sides: z.array(z.object({ key: str(40), label: str(80), zone: num.nullable(), values: z.record(num), cats: z.array(z.object({ code: str(40), label: str(80), n: num })).max(8),
       series: z.array(num).max(60) })).min(2).max(4),
     seriesLabels: z.array(str(40)).max(60),
     diffs: z.array(z.object({ metric: str(30), label: str(60), hi: str(80), lo: str(80), ratio: num.nullable(), gap: num })).max(8) }),
-  z.object({ kind: z.literal("Trend"), id: str(40), title: str(160), unit: str(30), labels: z.array(str(40)).max(120), values: z.array(num).max(120),
-    marks: z.array(z.object({ i: num, why: str(160) })).max(12), normal: z.object({ lo: num, hi: num }).nullable() }),
-  z.object({ kind: z.literal("Chart"), id: str(40), title: str(160), chart: z.enum(["bar", "hbar", "line", "donut"]), unit: str(30).nullable(),
-    labels: z.array(str(80)).max(40), values: z.array(num).max(40) }),
-  z.object({ kind: z.literal("Heat"), id: str(40), title: str(160), rows: z.array(str(80)).max(12), cols: z.array(str(80)).max(10), cells: z.array(z.array(num)).max(12) }),
-  z.object({ kind: z.literal("Brief"), id: str(40), title: str(160), points: z.array(z.object({ text: str(400), ta: str(400).optional(), incidentId: str(80).nullable() })).max(10) }),
-  z.object({ kind: z.literal("Answer"), id: str(40), title: str(160), text: str(900), facts: z.array(z.object({ label: str(160), value: num, unit: str(20).nullable() })).max(12) }),
-  z.object({ kind: z.literal("Drafts"), id: str(40), title: str(120) }),
+  z.object({ kind: z.literal("Trend"), id: str(40), ...ABOUT, title: str(160), unit: str(30), labels: z.array(str(40)).max(120), values: z.array(num).max(120),
+    marks: z.array(z.object({ i: num, why: str(160) })).max(12), normal: z.object({ lo: num, hi: num }).nullable(),
+    /** v18: what each point leads to (that day's summary), in the labels' order */
+    drills: z.array(Drill.nullable()).max(120).optional() }),
+  z.object({ kind: z.literal("Chart"), id: str(40), ...ABOUT, title: str(160), chart: z.enum(["bar", "hbar", "line", "donut"]), unit: str(30).nullable(),
+    labels: z.array(str(80)).max(40), values: z.array(num).max(40),
+    /** v18: what each bar leads to, in the labels' order */
+    drills: z.array(Drill.nullable()).max(40).optional() }),
+  z.object({ kind: z.literal("Heat"), id: str(40), ...ABOUT, title: str(160), rows: z.array(str(80)).max(12), cols: z.array(str(80)).max(10), cells: z.array(z.array(num)).max(12) }),
+  z.object({ kind: z.literal("Brief"), id: str(40), ...ABOUT, title: str(160), points: z.array(z.object({ text: str(400), ta: str(400).optional(), incidentId: str(80).nullable(), drill })).max(12) }),
+  z.object({ kind: z.literal("Answer"), id: str(40), ...ABOUT, title: str(160), text: str(900), facts: z.array(z.object({ label: str(160), value: num, unit: str(20).nullable() })).max(12) }),
+  z.object({ kind: z.literal("Drafts"), id: str(40), ...ABOUT, title: str(120) }),
   /** what stands out: each finding with its method, how many values it rests on, and a caveat (stats.ts) */
-  z.object({ kind: z.literal("Findings"), id: str(40), title: str(160), items: z.array(z.object({ title: str(240), value: num.nullable(), unit: str(30).nullable(), method: str(200), n: num, caveat: str(240), tone: z.enum(["bad", "warn", "ok"]) })).max(8) }),
+  z.object({ kind: z.literal("Findings"), id: str(40), ...ABOUT, title: str(160), items: z.array(z.object({ title: str(240), value: num.nullable(), unit: str(30).nullable(), method: str(200), n: num, caveat: str(240), tone: z.enum(["bad", "warn", "ok"]), drill })).max(8) }),
   /** a table filled in by code: a filled cell shows its source, and what could not be filled is named (complete.ts) */
-  z.object({ kind: z.literal("Filled"), id: str(40), title: str(160), cols: z.array(z.object({ key: str(30), label: str(60) })).max(8),
+  z.object({ kind: z.literal("Filled"), id: str(40), ...ABOUT, title: str(160), cols: z.array(z.object({ key: str(30), label: str(60) })).max(8),
     rows: z.array(z.object({ id: str(80), title: str(240), cells: z.array(z.object({ v: z.union([num, str(160)]).nullable(), src: str(160).nullable(), filled: z.boolean() })).max(8) })).max(30),
     filled: num, left: num, cannot: z.array(z.object({ col: str(40), n: num, why: str(160) })).max(8) }),
-  z.object({ kind: z.literal("Note"), id: str(40), text: str(400) })
+  z.object({ kind: z.literal("Note"), id: str(40), ...ABOUT, text: str(400) })
 ]);
 export type BlockT = z.infer<typeof Block>;
 export type BlockKind = BlockT["kind"];
 export const BLOCK_KINDS = Block.options.map((o) => o.shape.kind.value) as BlockKind[];
+/** v18: the most blocks one screen holds (a summary dashboard: tiles, key points, kinds, days, areas, departments, cases, news, air, rain, prices) */
+export const MAX_BLOCKS = 16;
 
-// v4 (lane A2, registered at integration): what changed with its drivers, explain one case or one part of a change, a place's situation
-// v17 (22 Nov): "dataset", an answer from one of the Collector's own Data Studio datasets (screens.ts datasetScreen). Code alone builds it:
-// the planner's schema leaves it out (PLANNER_RECIPES), since only code knows which datasets there are (and checkScreen needs its id)
-export const RECIPES = ["cases", "case", "news", "readings", "ranking", "compare", "trend", "why", "performance", "dashboard", "map", "nearby", "brief", "drafts", "answer", "prices", "advise", "insight", "complete",
-  "changed", "explain", "situation", "city", "focus", "dataset"] as const;
-export type Recipe = (typeof RECIPES)[number];
 /** the screens a model may name (every recipe but the dataset answer, which code builds from the Collector's own files) */
-export const PLANNER_RECIPES = RECIPES.filter((r): r is Exclude<Recipe, "dataset"> => r !== "dataset") as [Exclude<Recipe, "dataset">, ...Exclude<Recipe, "dataset">[]];
+export const PLANNER_RECIPES = RECIPES.filter((r): r is Exclude<Recipe, "dataset" | "ask"> => r !== "dataset" && r !== "ask") as [Exclude<Recipe, "dataset" | "ask">, ...Exclude<Recipe, "dataset" | "ask">[]];
 
 export const Scope = z.object({ period: z.enum(["daily", "weekly", "monthly", "quarterly"]), zone: num.nullable(), dept: str(30).nullable(), cat: str(60).nullable(),
   taluk: str(20).nullable(), sev: z.enum(["Severe", "High", "Medium", "Low"]).nullable() });
@@ -99,9 +126,14 @@ export const StageDoc = z.object({
   takeaway: Bi.nullable(),
   /** what Thunai says, every figure from the blocks */
   say: Bi,
-  blocks: z.array(Block).min(1).max(6),
+  blocks: z.array(Block).min(1).max(MAX_BLOCKS),
   /** the scope the screen covers, mirrored on the console when it opens */
   scope: Scope,
+  /**
+   * v18 (24 Nov): the window the screen counts when it is not one of the console's four ("last 48 hours", "20 Nov", "15 to 20 Nov"), with its
+   * IST bounds: the Stage shows it in place of the four period buttons, and the date pickers start from it
+   */
+  when: z.object({ en: str(160), ta: str(200), from: str(30).nullable(), to: str(30).nullable() }).nullable().optional(),
   /** the slots that built it, so a refinement ("add Perungudi", "make it monthly") rebuilds it */
   slots: z.record(z.unknown()),
   sources: z.array(str(80)).max(10),
@@ -181,7 +213,8 @@ export function figuresOf(d: Pick<StageDocT, "blocks">): Set<string> {
     else if (typeof v === "string") for (const m of v.match(/\d+(?:\.\d+)?/g) ?? []) out.add(String(Number(m)));
     // a list of numbered cards shows how many there are
     else if (Array.isArray(v)) { if (v.length) out.add(String(v.length)); v.forEach(walk); }
-    else if (v && typeof v === "object") Object.values(v).forEach(walk);
+    // v18: where an item leads (its drill's zone numbers, month indexes, hours) is not shown on the screen: never a figure Jarvis may say
+    else if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) { if (k !== "drill" && k !== "drills") walk(x); }
   };
   walk(d.blocks);
   return out;

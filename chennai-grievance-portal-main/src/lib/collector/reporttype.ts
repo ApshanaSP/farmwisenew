@@ -20,6 +20,8 @@
  * The pipeline has the same rules (district_intel/dintel/reporttype.py): keep the two in step.
  */
 
+import { plainEvents } from "./idioms";
+
 export type ReportKind = "incident" | "alert" | "government_action" | "resolution" | "roundup" | "opinion" | "other";
 export const NON_INCIDENT_KINDS: ReportKind[] = ["alert", "government_action", "resolution", "roundup", "opinion", "other"];
 
@@ -104,7 +106,8 @@ const SERVICES = /\bfire\s*(?:personnel|service\w*|fighters?|and rescue|tenders?
  * translation of a Tamil one first, then the original).
  */
 export function reportKind(...texts: (string | null | undefined)[]): ReportKind | null {
-  const t = texts.filter(Boolean).join(" \n ").replace(/[‘’]/g, "'");
+  // (24 Nov: "cardiac arrest" is not an arrest, "GTA" is not a theft, a meeting held is nobody held: idioms.plainEvents)
+  const t = plainEvents(texts.filter(Boolean).join(" \n ").replace(/[‘’]/g, "'"));
   if (!t.trim()) return null;
   // what is prevented or prepared for did not happen ("inspection to prevent collapse", "980 fire personnel on standby")
   const said = t.replace(PREVENTED, " ").replace(SERVICES, " ");

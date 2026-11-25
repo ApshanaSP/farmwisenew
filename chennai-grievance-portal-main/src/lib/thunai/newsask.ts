@@ -230,7 +230,9 @@ export function newsScreen(o: { lang: "en" | "ta"; kind: "read" | "lookup"; outl
     : { en: outlet ? `${outlet}'s report` : "The news report", ta: outlet ? `${outlet} செய்தி` : "செய்தி அறிக்கை" };
   const title = L(titles.en, titles.ta);
   const blocks: StageDocT["blocks"] = [{ kind: "Note", id: "brief", text: clip(said || L("Nothing to read out.", "படிக்க எதுவும் இல்லை."), 400) }];
+  // (v18 review: every part says what it shows, under its title, as the built screens do: drills.ts withAbout)
   if (links.length) blocks.push({ kind: "NewsReader", id: "sources", title: L("Sources", "ஆதாரங்கள்"), total: links.length,
+    about: L("The pages this answer was read from, each with its outlet and date. Click Article to open one.", "இந்தப் பதில் படிக்கப்பட்ட பக்கங்கள், ஊடகம், தேதியுடன். கட்டுரையைத் தொட்டால் திறக்கும்."),
     items: links.map((x, i) => ({ id: `web-${i + 1}`, title: clip(x.title || x.outlet, 300), source: clip(x.outlet, 80) || null, t: x.publishedAt ? x.publishedAt.slice(0, 30) : null, place: null, incidentId: null, url: x.url })) });
   const doc = {
     v: 1, id: `news-${(o.now ?? Date.now()).toString(36)}`, recipe: "news", title, takeaway: null,

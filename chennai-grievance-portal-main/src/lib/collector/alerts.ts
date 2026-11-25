@@ -23,6 +23,7 @@ import { RowDataPacket } from "mysql2";
 import { z } from "zod";
 import intelPool from "@/lib/collector/db";
 import { generateJson, aiStatus } from "@/lib/ai/gateway";
+import { isOccasion, stormName } from "@/lib/collector/idioms";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -46,8 +47,6 @@ const DISTRICTS = ["Chennai", "Tiruvallur", "Thiruvallur", "Kancheepuram", "Kanc
   "Trichy", "Perambalur", "Ariyalur", "Krishnagiri", "Dharmapuri", "Nilgiris", "Puducherry", "Pondicherry", "Karaikal",
   "சென்னை", "திருவள்ளூர்", "காஞ்சிபுரம்", "செங்கல்பட்டு"];
 const CHENNAI = /\bchennai\b|சென்னை/i;
-const STOP_NAMES = new Set(["chennai", "tamil", "nadu", "bay", "bengal", "severe", "breaking", "arabian", "the", "a", "live", "approaching", "rains", "rain",
-  "weather", "update", "latest", "very", "cyclonic", "storm", "cyclone", "super", "new", "big", "massive", "heavy", "imd", "red", "orange", "yellow", "alert"]);
 
 export interface AlertRead {
   hazard: Hazard | null;
@@ -69,10 +68,12 @@ export function readHeadline(...texts: (string | null | undefined)[]): AlertRead
   const hazard: Hazard | null = /cyclone|cyclonic|storm|புயல்/i.test(t) ? "cyclone" : /thunder|lightning|squall|இடி/i.test(t) ? "thunderstorm"
     : /flood|வெள்ள/i.test(t) ? "flood" : /heat ?wave|hot weather|வெப்ப/i.test(t) ? "heat" : /rain|downpour|மழை/i.test(t) ? "heavy_rain" : null;
   let name: string | null = null;
-  // the name is capitalised; the word "cyclone" may be either case
+  // the name is capitalised; the word "cyclone" may be either case. Only a name the headline writes beside the storm word
+  // counts (idioms.stormName): a festival or a quoted word in a rain forecast is never a storm (24 Nov: "Heavy rain
+  // Karthigai Deepam" in the banner, from "Heavy Rain In 9 Districts On Karthigai Deepam")
   for (const m of t.matchAll(/(?:[Cc]yclone|CYCLONE|[Ss]torm)\s+'?([A-Z][a-z]{2,})'?|'([A-Z][a-z]{2,})'\s*(?:[Cc]yclone|[Ss]torm)?|\b([A-Z][a-z]{2,})\s+(?:[Cc]yclone|CYCLONE)\b/g)) {
-    const n = m[1] ?? m[2] ?? m[3];
-    if (n && !STOP_NAMES.has(n.toLowerCase())) { name = n; break; }
+    name = stormName(m[1] ?? m[2] ?? m[3], ...t.split("\n"));
+    if (name) break;
   }
   const lv = /\bred\b|சிவப்பு/i.test(t) && /alert|warning|எச்சரிக்கை/i.test(t) ? 3 : /\borange\b|ஆரஞ்சு/i.test(t) && /alert|warning|எச்சரிக்கை/i.test(t) ? 2
     : /\byellow\b|மஞ்சள்/i.test(t) && /alert|warning|எச்சரிக்கை/i.test(t) ? 1 : null;
@@ -89,7 +90,12 @@ export function readHeadline(...texts: (string | null | undefined)[]): AlertRead
   const forClause = clauses.filter((x) => !x.question).flatMap((x) => [...x.c.matchAll(/(?:alert|warning|warned)\w*\s+(?:\w+\s+){0,2}?(?:for|in|over|to)\s+(.{0,120})/gi)].map((m) => m[1])).join(" | ");
   // Tamil: "சென்னைக்கு ... எச்சரிக்கை" (a warning for Chennai) in one clause that is not a question
   const forTa = clauses.filter((x) => !x.question && /எச்சரிக்கை|அலர்ட்/.test(x.c)).map((x) => x.c).join(" | ");
-  const districts = named.filter((d) => new RegExp(`(^|[^\\w])${d}([^\\w]|$)`, "i").test(forClause) || (/[^\x00-\x7F]/.test(d) && forTa.includes(d))
+  // "Heavy rain possible today in 9 districts including Chennai", "Heavy rain may return to Chennai": a forecast of heavy rain
+  // (never of light or moderate rain) that names the district in the same clause, unless the clause says it will not come
+  const heavy = clauses.filter((x) => !x.question && /\b(?:heavy|extremely heavy|intense|torrential)\s+(?:rain\w*|downpour|showers?)\b|கனமழை/i.test(x.c) &&
+    /\b(?:possible|possibility|expected|likely|chance|may|set to|to (?:lash|hit|return|continue)|forecast|predicted|warning|alert)\b|வாய்ப்பு|எச்சரிக்கை/i.test(x.c) &&
+    !/\b(?:no|not|unlikely|without|miss(?:es|ed)?|escapes?|skips?|moderate)\b|இல்லை/i.test(x.c)).map((x) => x.c).join(" | ");
+  const districts = named.filter((d) => new RegExp(`(^|[^\\w])${d}([^\\w]|$)`, "i").test(forClause) || new RegExp(`(^|[^\\w])${d}([^\\w]|$)`, "i").test(heavy) || (/[^\x00-\x7F]/.test(d) && forTa.includes(d))
     || clauses.some((x) => !x.question && new RegExp(`${d}[^,]{0,20}(?:on|under)\\s+(?:red|orange|yellow)\\s+alert`, "i").test(x.c)));
   return { hazard, name, level: lv as Level | null, districts: [...new Set(districts.map(canon))], districtCount: count ? Number(count[1]) || words[count[1].toLowerCase()] || null : null,
     chennaiNamed: CHENNAI.test(t), when };
@@ -185,7 +191,9 @@ export async function sachetChennai(): Promise<{ items: SachetItem[]; error: str
 const AiRead = z.object({
   items: z.array(z.object({
     id: z.string(), hazard: z.enum(["cyclone", "heavy_rain", "thunderstorm", "flood", "heat", "other", "none"]),
-    name: z.string(), level: z.enum(["red", "orange", "yellow", "none"]), districts: z.array(z.string()), when: z.string()
+    storm_name: z.string().describe("the name the weather office gave a cyclone; empty when the headline is not about a named cyclone"),
+    occasion: z.string().describe("a festival, holiday or event the forecast falls on (Karthigai Deepam, Deepavali, a match); empty when none"),
+    level: z.enum(["red", "orange", "yellow", "none"]), districts: z.array(z.string()), when: z.string()
   }))
 });
 type AiReadT = z.infer<typeof AiRead>;
@@ -202,20 +210,26 @@ declare global {
 function aiReads(docs: { id: string; text: string }[]): Map<string, AlertRead> | null {
   if (!docs.length || !aiStatus().available) return null;
   const key = docs.map((d) => d.id).sort().join(",");
+  const textOf = new Map(docs.map((d) => [d.id, d.text]));
   const g = (global.__alertAi ??= { key: "", out: null, busy: null });
   if (g.key === key && g.out) return g.out;
   if (g.key !== key && !g.busy) {
     g.key = key; g.out = null;
     g.busy = generateJson<AiReadT>({
-      role: "fast", name: "alert-headlines", schema: AiRead, temperature: 0, maxOutputTokens: 2400, user: "system", background: true, timeoutMs: 40_000,
-      system: "You read weather and disaster warning headlines from Tamil Nadu news. For each, give: hazard; the storm's own name if it has one " +
-        "(e.g. Arnab), else empty; the alert colour level if the headline states one, else none; the districts the warning is FOR, exactly as named " +
-        "(not districts only asked about, e.g. 'Will Chennai be affected?' does not put Chennai in the list); when it applies (today, tomorrow, a date) or empty. Never guess.",
+      role: "fast", name: "alert-headlines", schema: AiRead, temperature: 0, maxOutputTokens: 4000, user: "system", background: true, timeoutMs: 40_000,
+      system: "You read weather and disaster warning headlines from Tamil Nadu news. For each, give: hazard (none when the headline is not about weather or a " +
+        "natural hazard); storm_name: only the name the weather office gave a CYCLONE (Arnab in 'Cyclone Arnab'), written beside the word cyclone or storm, else " +
+        "empty. Ordinary rain has no name. A festival, holiday, place or event is never a storm's name: in 'Heavy Rain In 9 Districts On Karthigai Deepam' the festival " +
+        "Karthigai Deepam is only the day the rain falls on, so storm_name is empty and occasion is Karthigai Deepam. Then the alert colour level if the headline states " +
+        "one, else none; the districts the warning is FOR, exactly as named (not districts only asked about, e.g. 'Will Chennai be affected?' does not put Chennai in the " +
+        "list); when it applies (today, tomorrow, a date) or empty. Never guess.",
       prompt: docs.map((d) => `${d.id}: ${d.text}`).join("\n")
     }).then((r) => {
       if (g.key !== key) return;
       g.out = new Map(r.object.items.map((x) => [x.id, {
-        hazard: x.hazard === "none" ? null : x.hazard, name: x.name.trim() || null,
+        hazard: x.hazard === "none" ? null : x.hazard,
+        // the model's answer is checked against the headline itself: a name counts only beside the storm word, and never a festival
+        name: isOccasion(x.storm_name) || (!!x.storm_name.trim() && x.occasion.trim().toLowerCase() === x.storm_name.trim().toLowerCase()) ? null : stormName(x.storm_name, textOf.get(x.id)),
         level: (x.level === "red" ? 3 : x.level === "orange" ? 2 : x.level === "yellow" ? 1 : null) as Level | null,
         districts: x.districts.map((d) => d.trim()).filter(Boolean), districtCount: x.districts.length || null,
         chennaiNamed: false, when: x.when.trim() || null
@@ -278,7 +292,7 @@ export function lane(i: { now: string; imd: ImdDay[]; sachet: SachetItem[]; news
   // ---- news: each alert article read (the AI's reading where it has one), grouped into the main event
   const news = i.news.filter((n) => hoursBetween(n.t, i.now) <= NEWS_HOURS).map((n) => {
     const r = readHeadline(n.titleEn, n.title), ai = i.reads?.get(n.id);
-    const m: AlertRead = ai ? { ...r, hazard: ai.hazard ?? r.hazard, name: ai.name ?? r.name, level: ai.level ?? r.level,
+    const m: AlertRead = ai ? { ...r, hazard: ai.hazard ?? r.hazard, name: stormName(ai.name, n.titleEn, n.title) ?? r.name, level: ai.level ?? r.level,
       districts: ai.districts.length ? ai.districts : r.districts, districtCount: ai.districtCount ?? r.districtCount, when: ai.when ?? r.when } : r;
     // whether the alert is FOR Chennai is the code's reading of the headline, never the AI's: the AI put Chennai in the
     // list of "Chennai Weather LATEST Update: ... Red, Orange Alerts Issued", which names no district at all
@@ -300,8 +314,9 @@ export function lane(i: { now: string; imd: ImdDay[]; sachet: SachetItem[]; news
   const newsLevelAny = group.reduce<Level>((a, n) => Math.max(a, n.level ?? 0) as Level, 0);
   // a named storm is a cyclone when any of its reports says so: the newest one may be about its rain ("Heavy rain Arnab", 27 Oct)
   const named = group.find((n) => n.name)?.name ?? null;
-  const event = main ? { hazard: named && group.some((n) => n.hazard === "cyclone") ? "cyclone" as Hazard : group[0]?.hazard ?? null, name: named } : null;
-  const eventName = event ? (event.name ? `${event.hazard === "cyclone" || !event.hazard ? "Cyclone" : HAZARD_NAME[event.hazard]} ${event.name}` : HAZARD_NAME[event.hazard ?? "other"]) : null;
+  // only a cyclone carries a name: rain, thunderstorms and floods never do
+  const event = main ? { hazard: named ? "cyclone" as Hazard : group[0]?.hazard ?? null, name: named } : null;
+  const eventName = event ? (event.name ? `Cyclone ${event.name}` : HAZARD_NAME[event.hazard ?? "other"]) : null;
   const elsewhere = group.filter((n) => n.level && !n.chennaiUnder && (n.districts.length || n.districtCount));
   const newsSays = !group.length ? "nothing" : [
     `${eventName} in ${nOut} outlet${nOut === 1 ? "" : "s"}`,
@@ -319,15 +334,21 @@ export function lane(i: { now: string; imd: ImdDay[]; sachet: SachetItem[]; news
   ];
 
   // ---- agreement, for Chennai
-  const newsActive = nOut >= 3 || newsChennai.length >= 2;
+  // a cyclone is watched wherever it is (it moves); rain, thunderstorms and heat only when the reports name Chennai: "heavy rain in 9
+  // districts" elsewhere in the State is not a warning for this district
+  const storm = !!event && (event.hazard === "cyclone" || !!event.name);
+  const newsActive = (storm && nOut >= 3) || newsChennai.length >= 2;
   const agreement: AlertLane["agreement"] = !officialLevel && !newsActive ? "none"
     : officialLevel && newsActive ? (newsLevelChennai && Math.abs(newsLevelChennai - officialLevel) >= 1 && newsChennai.some((n) => n.level) ? "disagree" : "agree")
       : officialLevel ? "official_only" : "news_only";
+  // the official warning's own words ("Thunderstorms & Lightning"), so the banner never calls IMD's thunderstorm warning "heavy rain"
+  const officialWhat = imdLevel >= sachetLevel ? (imdToday?.text || null) : (sachetTop?.event || null);
+  const said = eventName ? (event?.name ? eventName : eventName.toLowerCase()) : "it";
   const agreementText = {
     none: "No warning for Chennai from any source.",
-    agree: `The sources agree: ${LEVEL_NAME[officialLevel]} for Chennai (${imdLevel >= sachetLevel ? "IMD" : "NDMA SACHET"}), and ${nOut} news outlet${nOut === 1 ? "" : "s"} report ${eventName}${newsChennai.length ? `, ${newsChennai.length} naming Chennai` : ""}.`,
+    agree: `${imdLevel >= sachetLevel ? "IMD" : "NDMA SACHET"} has a ${LEVEL_NAME[officialLevel]} warning for Chennai today${officialWhat ? ` (${officialWhat})` : ""}; ${nOut} news outlet${nOut === 1 ? "" : "s"} report ${said}${newsChennai.length ? `, ${newsChennai.length} of the reports naming Chennai` : ""}. The sources agree.`,
     disagree: `The sources differ: news reports a ${LEVEL_NAME[newsLevelChennai]} alert for Chennai, the official level is ${LEVEL_NAME[officialLevel]}.`,
-    official_only: `${imdLevel >= sachetLevel ? "IMD" : "NDMA SACHET"} has a ${LEVEL_NAME[officialLevel]} warning for Chennai; the news has not reported it widely.`,
+    official_only: `${imdLevel >= sachetLevel ? "IMD" : "NDMA SACHET"} has a ${LEVEL_NAME[officialLevel]} warning for Chennai today${officialWhat ? ` (${officialWhat})` : ""}; the news has not reported it widely.`,
     news_only: `${eventName} is in ${nOut} news outlets${newsLevelAny ? ` (${LEVEL_NAME[newsLevelAny]} alert${elsewhere.length ? ` for ${describeElsewhere(elsewhere)}` : ""})` : ""}, but neither IMD nor NDMA has a warning for Chennai${imdTop && imdTop.level ? ` today (IMD: ${LEVEL_NAME[imdTop.level]} on ${imdTop.day === today ? "today" : fmtWhen(imdTop.day + " 00:00:00")})` : ""}.`
   }[agreement];
 
@@ -339,10 +360,11 @@ export function lane(i: { now: string; imd: ImdDay[]; sachet: SachetItem[]; news
 
   // ---- the banner
   let banner: AlertLane["banner"] = null;
-  const lead = eventName ?? (officialLevel ? `${LEVEL_NAME[officialLevel][0].toUpperCase()}${LEVEL_NAME[officialLevel].slice(1)} warning for Chennai` : "Weather alert");
+  // a named cyclone leads; else what the official warning says; else the hazard the news reports
+  const lead = (event?.name ? eventName : officialLevel ? officialWhat : null) ?? eventName ?? (officialLevel ? `${LEVEL_NAME[officialLevel][0].toUpperCase()}${LEVEL_NAME[officialLevel].slice(1)} warning for Chennai` : "Weather alert");
   if (staleNow.length) {
     const s = staleNow[0];
-    banner = { tone: "red", title: `${lead} · ${s.label} not reporting`,
+    banner = { tone: "red", title: `${lead}${officialLevel ? ` · ${LEVEL_NAME[officialLevel]} for Chennai` : ""} · ${s.label} not reporting`,
       line: `${s.label} last reported ${s.newest ? `${fmtWhen(s.newest)}, ${s.hours} hours ago` : "never"} during an active alert. Using IMD rain and lake levels instead. ${agreementText}` };
   } else if (officialLevel >= 1 || newsActive) {
     banner = { tone: officialLevel === 3 ? "red" : officialLevel === 2 ? "orange" : officialLevel === 1 ? "yellow" : "watch",
@@ -396,7 +418,8 @@ export async function alertLane(now: string): Promise<AlertLane> {
     q(`SELECT DATE_FORMAT(observed_at, '%Y-%m-%d') AS day, value AS level, detail AS text
        FROM observations WHERE source = 'imd' AND metric = 'imd_warning_level' AND observed_at >= DATE(?) ORDER BY observed_at LIMIT 60`, [now]).catch(() => [] as Row[]),
     q(`SELECT d.doc_id AS id, d.title, d.title_en, d.publisher, d.url, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t FROM documents d
-       WHERE d.source_kind = 'news' AND d.report_type = 'alert' AND d.published_at > (? - INTERVAL 48 HOUR) AND d.published_at <= ?
+       WHERE d.source_kind = 'news' AND d.report_type = 'alert' AND COALESCE(d.publisher_tier, '') NOT IN ('social', 'aggregator')
+         AND d.published_at > (? - INTERVAL 48 HOUR) AND d.published_at <= ?
        ORDER BY d.published_at DESC LIMIT 80`, [now, now]).catch(() => [] as Row[]),
     Promise.all(HAZARD_FEEDS.map(async (f) => {
       const [r] = await q(`SELECT DATE_FORMAT(MAX(observed_at), '%Y-%m-%d %H:%i:%s') AS t FROM observations WHERE source = ? AND metric = ? AND observed_at <= ?`, [f.source, f.metric, now]).catch(() => [] as Row[]);

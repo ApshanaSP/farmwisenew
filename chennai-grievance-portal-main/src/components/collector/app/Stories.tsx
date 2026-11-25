@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
 import type { Thread, ThreadStep } from "@/lib/collector/threads";
+import type { EventSource } from "@/lib/collector/storyai";
 import { I } from "./icons";
 import { Empty, SEV_HEX, fmtDate, fmtDay, fmtTime, reportsOutlets } from "./lib";
 import { itemWhen, safeUrl } from "./Added";
@@ -63,9 +64,42 @@ export function StoriesCard({ d, c }: { d: OverviewData; c: Console }) {
   );
 }
 
+export const STORY_STATUS: Record<string, string> = { ongoing: "Ongoing", waiting: "Awaiting next step", settled: "Settled" };
+
+/** The colour of a step, by what its label says happened (the labels are the AI's own words: "Died", "Seat vacant"). */
+export function stepColour(label: string): string {
+  const l = label.toLowerCase();
+  if (STAGE_COL[label]) return STAGE_COL[label];
+  if (/\b(died?|dead|death|killed|funeral|cremat|drown)/.test(l)) return STAGE_COL.Death;
+  if (/\b(arrest|held|detain|custody|remand|booked)/.test(l)) return STAGE_COL.Arrest;
+  if (/\b(court|hc|bail|verdict|petition|sentence|order)/.test(l)) return STAGE_COL.Court;
+  if (/\b(probe|inquiry|investigat|complaint|notice|report)/.test(l)) return STAGE_COL.Probe;
+  if (/\b(protest|strike|blockade|agitation|demand)/.test(l)) return STAGE_COL.Protest;
+  if (/\b(warn|alert|injur|accident|fire|collapse|attack|missing)/.test(l)) return STAGE_COL.Warning;
+  return "#15803D";
+}
+
+/** The outlets behind one event, each linking to its own report. */
+function Outlets({ list, reports }: { list: EventSource[]; reports: number }) {
+  const [all, setAll] = useState(false);
+  const shown = all ? list : list.slice(0, 5);
+  return (
+    <span className="sl-src">
+      <em>Reported by</em>
+      {shown.map((o) => {
+        const url = safeUrl(o.url);
+        return url ? <a key={o.publisher} href={url} target="_blank" rel="noopener noreferrer" title={`${o.title} · ${fmtDate(o.t)}, ${fmtTime(o.t)}`}>{o.publisher}<I n="ext" /></a>
+          : <span key={o.publisher} title={o.title}>{o.publisher}</span>;
+      })}
+      {list.length > shown.length && <button className="lnk" onClick={() => setAll(true)}>+{list.length - shown.length} more</button>}
+      {reports > list.length && <i>{reports} reports</i>}
+    </span>
+  );
+}
+
 /**
- * Full view: the stories on the left; on the right the chosen story as one timeline of what changed (AI, from its
- * reports), where it stands now, and every report behind it on demand, with repeats folded ("+3 similar").
+ * Full view: the stories on the left; on the right the chosen story as one timeline, each event once with every outlet that reported it
+ * (AI, checked against the reports: storyai.ts), where it stands now, and every report behind it on demand.
  */
 export function StoriesBody({ c, focus }: { c: Console; focus: string | null }) {
   const data = c.stories;
@@ -76,54 +110,46 @@ export function StoriesBody({ c, focus }: { c: Console; focus: string | null }) 
   const t = list.find((x) => x.id === sel) ?? list[0];
   if (!t) return <Empty>No story developed further in this period: nothing new was reported after the first reports.</Empty>;
   const pick = (id: string) => { setSel(id); setAll(false); };
-  const ms = t.ai?.milestones ?? [];
   return (
     <div className="thv">
       <div className="thv-l">
         <div className="thv-note">
-          {data.ai ? "Reports about the same event are joined into one story. News that only repeats (prices, forecasts, listings) is left out."
-            : "Reports are threaded when they share a story or an incident, or when their headlines name the same people or places within four days."}
+          {data.ai ? "Each event is told once, in order, with every outlet that reported it. Repeats, speculation and reactions are left out."
+            : data.pending ? "Being read by AI: the timelines below are from the rules and will be replaced in a few seconds."
+              : "No AI answer just now: the timelines are from the rules."}
         </div>
         {list.map((x) => (
           <button key={x.id} className={`thv-i${x.id === t.id ? " on" : ""}`} onClick={() => pick(x.id)}>
             <b>{x.title}</b>
-            <small>{where(x, c)} · {x.ai ? `${x.ai.milestones.length} developments` : `${x.reports} reports`} · {fmtDate(x.first)}{x.first.slice(0, 10) !== x.last.slice(0, 10) ? ` – ${fmtDate(x.last)}` : ""}</small>
+            <small>{where(x, c)} · {x.events.length} events · {fmtDate(x.events[0]?.t ?? x.first)}{x.first.slice(0, 10) !== x.last.slice(0, 10) ? ` – ${fmtDate(x.last)}` : ""}</small>
           </button>
         ))}
       </div>
       <div className="thv-r">
-        <h3>{t.title}</h3>
+        <h3>{t.title}{t.ai && <span className={`sl-st ${t.ai.status}`}>{STORY_STATUS[t.ai.status]}</span>}</h3>
         <div className="thv-meta">
           <span><I n="pin" />{where(t, c)}</span>
           {t.catLabel && <span><I n="doc" />{t.catLabel}</span>}
           <span><I n="clock" />{fmtDate(t.first)} → {fmtDate(t.last)} ({span(t.hours)})</span>
           <span><I n="news" />{reportsOutlets(t.reports, t.outlets.length)}</span>
         </div>
-        {t.ai ? (
-          <>
-            <p className="sv-now"><I n="spark" /><b>Where it stands</b><span>{t.ai.now}</span></p>
-            <ol className="sv-ms">
-              {ms.map((m, k) => {
-                const url = safeUrl(m.url);
-                const col = STAGE_COL[m.label] ?? (k === 0 ? STAGE_COL["First report"] : "#15803D");
-                return (
-                  <li key={k} style={{ "--c": col } as React.CSSProperties}>
-                    <span className="sv-when"><b>{fmtDate(m.t)}</b><small>{fmtTime(m.t)}</small></span>
-                    <span className="sv-body">
-                      <span className="stg" style={{ color: col, background: `${col}17` }}>{k === 0 ? "First report" : m.label}</span>
-                      <b className="sv-what">{m.what}</b>
-                      <small>
-                        {url ? <a href={url} target="_blank" rel="noopener noreferrer">{m.title}<I n="ext" /></a> : m.title}
-                        {m.publisher ? ` · ${m.publisher}` : ""}
-                        {m.incident && <button className="lnk" onClick={() => c.openInc(m.incident!)}>open incident</button>}
-                      </small>
-                    </span>
-                  </li>
-                );
-              })}
-            </ol>
-          </>
-        ) : <div className="thv-sum"><b>What happened:</b> <StageStrip t={t} max={8} /></div>}
+        {t.ai && <p className="sv-now"><I n="spark" /><b>Where it stands</b><span>{t.ai.now}</span></p>}
+        <ol className="sv-ms">
+          {t.events.map((m, k) => {
+            const col = stepColour(m.label);
+            return (
+              <li key={k} style={{ "--c": col } as React.CSSProperties} className={k === t.events.length - 1 ? "last" : undefined}>
+                <span className="sv-when"><b>{fmtDate(m.t)}</b><small>{fmtTime(m.t)}</small></span>
+                <span className="sv-body">
+                  <span className="stg" style={{ color: `color-mix(in srgb, ${col} 62%, var(--text))`, background: `${col}1f` }}>{m.label}</span>
+                  <b className="sv-what">{m.what}</b>
+                  <Outlets list={m.sources} reports={m.reports} />
+                  {m.incident && <small><button className="lnk" onClick={() => c.openInc(m.incident!)}>Open the incident record</button></small>}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
         {t.incidents.length > 0 && (
           <div className="thv-inc">
             In our records:
@@ -131,17 +157,15 @@ export function StoriesBody({ c, focus }: { c: Console; focus: string | null }) 
             {t.open != null && <span className="dim"> · {t.open ? "still open" : "closed"}</span>}
           </div>
         )}
-        {t.ai && (
-          <button className="sv-all" onClick={() => setAll(!all)} aria-expanded={all}>
-            <I n={all ? "chevd" : "chevr"} />{all ? "Hide" : "Show"} every report ({t.reports}{t.folded ? `; ${t.folded} repeats folded` : ""})
-          </button>
-        )}
-        {(all || !t.ai) && (
+        <button className="sv-all" onClick={() => setAll(!all)} aria-expanded={all}>
+          <I n={all ? "chevd" : "chevr"} />{all ? "Hide" : "Show"} every report ({t.reports}{t.folded ? `; ${t.folded} repeats folded` : ""})
+        </button>
+        {all && (
           <ol className="tl2">
-            {t.days.map((g, k) => (
+            {t.days.map((g) => (
               <li key={g.day}>
                 <div className="tl2-d">Day {dayNo(t.first, g.day)} · {fmtDay(g.day + " 00:00:00")}</div>
-                {g.steps.map((s, j) => <Step key={j} s={s} c={c} first={k === 0 && j === 0} />)}
+                {g.steps.map((s, j) => <Step key={j} s={s} c={c} />)}
               </li>
             ))}
           </ol>
@@ -153,15 +177,14 @@ export function StoriesBody({ c, focus }: { c: Console; focus: string | null }) 
 
 const dayNo = (first: string, day: string) => Math.round((Date.parse(day) - Date.parse(first.slice(0, 10))) / 864e5) + 1;
 
-function Step({ s, c, first }: { s: ThreadStep; c: Console; first: boolean }) {
+function Step({ s, c }: { s: ThreadStep; c: Console }) {
   const url = safeUrl(s.url);
-  const col = STAGE_COL[s.stage] ?? STAGE_COL.Update;
+  const col = STAGE_COL.Update;
   return (
     <div className="tl2-s" style={{ "--c": col } as React.CSSProperties}>
       <span className="tl2-t">{fmtTime(s.t)}</span>
       <span className="tl2-b">
-        <span className="stg" style={{ color: col, background: `${col}14` }}>{s.stage}</span>
-        {url ? <a href={url} target="_blank" rel="noopener noreferrer" className={first ? "strong" : undefined}>{s.title}<I n="ext" /></a> : <b>{s.title}</b>}
+        {url ? <a href={url} target="_blank" rel="noopener noreferrer">{s.title}<I n="ext" /></a> : <b>{s.title}</b>}
         <small>
           {[s.publisher, ...s.also].filter(Boolean).join(", ") || "News"}
           {(s as ThreadStep & { similar?: number }).similar ? <span className="tg-sim">+{(s as ThreadStep & { similar?: number }).similar} similar</span> : null}

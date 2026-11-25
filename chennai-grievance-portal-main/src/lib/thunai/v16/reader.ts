@@ -25,11 +25,13 @@ import { turnLine } from "../plan";
 import type { Turn } from "../plan";
 import type { World } from "../types";
 import { figuresIn } from "../numbergate";
+import { isTopic, topicsLine } from "../v18/topics";
 
 // v17 (22 Nov): "dataset", a question about one of the Collector's own Data Studio datasets (any of them, not only the one open on the page)
+// v18 (24 Nov): "summary", everything about one area, department, kind of problem or the district, over any window (recipes/summary.ts)
 export const ASKS = [
   "focus", "first_case", "tasks", "compare", "cases", "case", "situation", "why", "changed", "brief", "news", "city", "readings", "prices",
-  "ranking", "trend", "performance", "nearby", "map", "navigate", "stage_op", "follow_up", "repeat", "chat", "meta", "unclear", "general", "other", "dataset"
+  "ranking", "trend", "performance", "nearby", "map", "navigate", "stage_op", "follow_up", "repeat", "chat", "meta", "unclear", "general", "other", "dataset", "summary"
 ] as const;
 export const PAGES = ["overview", "briefing", "trends", "environment", "studio", "map"] as const;
 export type Ask = (typeof ASKS)[number];
@@ -53,7 +55,16 @@ export const ReadingSchema = z.object({
   request: z.string().describe("the request said again as one complete plain English sentence"),
   reply: z.string().nullable().describe("chat and meta only: one short sentence to say back, in the Collector's language, no figure"),
   // (every property required, null where unused: the strict structured-output modes of the ladder's rungs take only this shape)
-  dataset: z.string().nullable().describe("dataset only: the tag (D1, D2...) of the Collector's own dataset asked about; else null")
+  dataset: z.string().nullable().describe("dataset only: the tag (D1, D2...) of the Collector's own dataset asked about; else null"),
+  // v18 (24 Nov): any window, a department, a group of kinds
+  time: z.object({
+    said: z.string().nullable().describe("the time words as said, in English: 'last 2 days', 'last 48 hours', 'on 20 November', 'two days ago', 'last weekend'"),
+    from: z.string().nullable().describe("the first calendar day covered, YYYY-MM-DD (IST), from Now; null for a count of hours back from now"),
+    to: z.string().nullable().describe("the last calendar day covered, YYYY-MM-DD, inclusive; null for a count of hours back from now"),
+    hours: z.number().nullable().describe("a count back from now, in hours: 'last 48 hours' 48, 'last 2 days' 48, 'past 4 days' 96, 'last 6 hours' 6; else null")
+  }).nullable().describe("the time the Collector names or that is carried from the turn being followed; null when none"),
+  dept: z.string().nullable().describe("a department code from the list, when a department or body is named or carried; else null"),
+  topic: z.string().nullable().describe("a group of kinds from the list ('crimes' CRIME, 'flooding' FLOOD), when a whole group is named; else null")
 });
 export type Reading = z.infer<typeof ReadingSchema>;
 
@@ -69,8 +80,11 @@ export function readerSystem(w: World): string {
 
 Zones (number name (Tamil)): ${zonesLine(w)}.
 Kinds of incident (code label): ${catsLine(w)}.
+Departments and bodies (code name): ${deptsLine(w)}.
+Groups of kinds (code: what it covers): ${topicsLine()}.
 
 ask, the one that fits the whole sentence:
+- summary: a summary, report, overview, roundup, "all the details" or "everything" about ONE area or locality, ONE department, ONE kind or group of kinds, or the whole district, for any time: "summary of Anna Nagar", "give me a report on the police department", "summary of crimes", "everything on flooding in Adyar in the last 4 days", "what happened in Velachery on 20 November", "Anna Nagar பத்தி full details சொல்லு", "how was the district in the last 48 hours", "what's happening in Adyar". Not the day's own briefing ("brief me", "today's briefing" stay brief), not a list ("show the severe cases" stays cases).
 - focus: about AREAS over the past weeks: where to concentrate or what needs attention most, which areas are improving, which are getting worse, where problems keep coming back. zones [] for the whole district; one zone for that zone's own trend ("is Adyar getting worse?"); two to four zones to say which of THOSE needs more attention ("compare Alandur and Adyar and tell me which to focus on"). lenses: attention, improving, worsening, repeat, in the order asked. about: areas (zones), places (streets, roads, spots), kinds (kinds of problem rising or falling).
 - first_case: which INCIDENT or CASE to attend to first, the most urgent case; "which one should I concentrate on" right after a list of cases means those cases (carry their severity, zone, kind and period). one true when only that single incident is wanted ("tell me about that incident alone").
 - tasks: what the Collector should do today, their tasks or to-do, what needs them now; "what should I focus on in Adyar", "I'm visiting Adyar, what needs attention there" is tasks with that zone.
@@ -94,6 +108,8 @@ To see a list of complaints or cases ("show", "list", "காட்டு", "எ
 
 Carrying from the recent turns: only for a sentence that points back at them ("there", "that", "those", "which of these", "the same", "do it", "which one first" right after a list, "and in Adyar?"). A complete new question starts clean: no zone, kind, severity or period from earlier turns ("just tell me the single most urgent case" after an Adyar answer is the whole district; "which area has the most cases" after a murder question is every kind).
 zones: the zone numbers named or meant; a locality named goes to the zone it lies in (Velachery 13, T. Nagar 9, Mylapore 9, Kolathur 6, Tambaram is outside the district: none), as well as into place. place: the locality, road or spot itself when one is named that is not a zone ("Velachery", "Anna Salai"), else null. cat: only when a kind is named or carried ("violent crime", "கொலை" murder -> the crime kind; "flooding" -> the waterlogging kind; "garbage" -> the solid waste kind). sev: Severe when severe, serious or critical is said or carried. period: only when a time is said or carried: daily for today, weekly for this week or over a week, monthly for this month or last month, quarterly for three months; "now", "இப்போ", "currently", "these days", "lately" are not a time: null.
+time: whenever the sentence names a time, or one is carried from the turn being followed ("and Adyar?" after a question about the last 2 days keeps it). said: the time words in English. A count back from now ("last 2 days", "past 48 hours", "last 4 days", "past fortnight", "last 6 hours"): hours (48, 48, 96, 336, 6), from and to null. Calendar days ("today", "yesterday", "on 20 November", "on the 20th", "two days ago", "day before yesterday", "last weekend", "between 15 and 20 November", "since Monday", "this month", "last month"): from and to as YYYY-MM-DD counted from Now (to is the last day, inclusive, today when it runs to now), hours null. A day with no month is the most recent such day that has begun. "now", "currently", "these days", "lately" are no time: null. Always set period as well when the time is one of the four (today daily, this week weekly ...).
+dept: the department or body named ("police" POL-GCP, "corporation's storm water drain" GCC-SWD, "Metrowater" CMWSSB, "electricity board" TANGEDCO), or carried; null otherwise. topic: a whole group of kinds named ("crimes", "crime" CRIME; "flooding", "floods" FLOOD; "health issues" HEALTH; "road problems" ROADS_TRAFFIC; "garbage and sanitation" WASTE_SANITATION); one kind named goes in cat instead ("murders", "theft", "potholes").
 one: true when a single item alone is wanted. request: the Collector's request said again as one complete English sentence that someone with no context would understand: put in what "this", "that", "which", "there", "the first one", "do it" point at from the recent turns and the screen; keep every place, kind, time and number said; never add a figure. reply: chat and meta only, one short warm sentence in the language of the sentence just said (Tamil script when it is Tamil or Tanglish, English when it is English, whatever earlier turns were in), never a figure except the time or date asked; null otherwise. For meta, say what you will do (for "why did you stop?": you stopped because you heard something; say "continue" and you will carry on).
 
 Examples (meaning, not words):
@@ -117,8 +133,21 @@ after an answer about Adyar: "just tell me the single most urgent case right now
 "go to the map in Madhavaram" -> map, zones [3], page map
 "go to the trends page and tell me which areas are getting worse" -> focus, lenses [worsening], page trends (never navigate: something is asked)
 "அம்பத்தூரில் இந்த வாரம் வெள்ளப் புகார்கள் காட்டு" -> cases, zones [7], cat the waterlogging kind, period weekly
-"theft area wise" -> focus, cat the property crime kind, lenses [attention], about areas`;
+"theft area wise" -> focus, cat the property crime kind, lenses [attention], about areas
+"give me the summary of Anna Nagar" -> summary, zones [8]
+"summary of Velachery for the last 2 days" -> summary, zones [13], place "Velachery", time {said "last 2 days", hours 48}
+"summary of the police department" -> summary, dept POL-GCP
+"summary of crimes happening" -> summary, topic CRIME (every crime kind, never the whole district)
+"what happened in Adyar on 20 November" -> summary, zones [13], time {said "on 20 November", from the 20th of November, to the same day}
+"show me the severe cases from two days ago" -> cases, sev Severe, time {said "two days ago", from and to the day two days before Now}
+"compare Adyar and Anna Nagar for the last 4 days" -> compare, zones [13, 8], time {said "last 4 days", hours 96}
+"flooding news in the last 48 hours" -> news, topic FLOOD, time {said "last 48 hours", hours 48}
+"which zone had the most cases between 15 and 20 November" -> ranking, measure zone_incidents, time {from the 15th, to the 20th}
+"கடந்த 3 நாட்களில் அண்ணா நகர்ல என்ன நடந்தது" -> summary, zones [8], time {said "last 3 days", hours 72}`;
 }
+
+/** the departments as the reader's prompt lists them */
+const deptsLine = (w: World) => w.depts.map((d) => `${d.code} ${d.name}`).join("; ");
 
 /** the time now in IST as said in the prompt ("Sunday 22 November 2026, 2:05 pm"): the only figure a chat reply may say */
 export const nowText = (now: number = Date.now()): string =>
@@ -172,8 +201,17 @@ export function checkReading(r: Reading, w: World, now: string = nowText()): Rea
   const place = r.place && /^[\p{L}\p{M} .'-]{2,60}$/u.test(r.place.trim()) ? r.place.trim() : null;
   // a dataset is named by its digest tag only ("D2"): anything else a model writes there is dropped (code finds the dataset itself)
   const dataset = typeof r.dataset === "string" && /^D[1-9]$/i.test(r.dataset.trim()) ? r.dataset.trim().toUpperCase() : null;
-  return { ...r, zones, cat, reply, request, place, lenses: [...new Set(r.lenses)], dataset };
+  // v18: a department and a group of kinds only when the world knows them; the time's dates and hours only in their shapes (when.ts checks them
+  // against today before any screen counts them)
+  const dept = typeof r.dept === "string" && w.depts.some((d) => d.code === r.dept!.trim()) ? r.dept.trim() : null;
+  const topic = isTopic(r.topic) ? r.topic : null;
+  const t = r.time;
+  const day = (x: unknown) => (typeof x === "string" && /^\d{4}-\d{2}-\d{2}$/.test(x.trim()) ? x.trim() : null);
+  const hours = t && typeof t.hours === "number" && Number.isFinite(t.hours) && t.hours >= 1 && t.hours <= 4320 ? Math.round(t.hours) : null;
+  const time = t && (day(t.from) || day(t.to) || hours || (t.said && t.said.trim())) ? { said: t.said ? clipSaid(t.said) : null, from: day(t.from), to: day(t.to), hours } : null;
+  return { ...r, zones, cat, reply, request, place, lenses: [...new Set(r.lenses)], dataset, dept, topic, time };
 }
+const clipSaid = (s: string) => s.replace(/[^\p{L}\p{M}\p{N} ,.'-]/gu, " ").replace(/\s+/g, " ").trim().slice(0, 80) || null;
 
 export interface ReadIn { text: string; turns?: Turn[] | null; screen?: string | null; stageTitle?: string | null; lastPlace?: string | null;
   /** v17: the Collector's Data Studio digest (forAssistants.ts studioDigest), when there are datasets */
@@ -184,7 +222,7 @@ export type ReadFn = (x: ReadIn, w: World, o: { user: string; until: number; sig
 export const readSentence = (deps?: LlmDeps): ReadFn => async (x, w, o) => {
   const t0 = Date.now();
   const now = nowText();
-  const r = await callLlm({ name: "jarvis_reader", system: readerSystem(w), prompt: readerPrompt({ ...x, now }), schema: ReadingSchema, maxOutputTokens: 260, user: o.user, lane: "router",
+  const r = await callLlm({ name: "jarvis_reader", system: readerSystem(w), prompt: readerPrompt({ ...x, now }), schema: ReadingSchema, maxOutputTokens: 360, user: o.user, lane: "router",
     until: Math.min(o.until, t0 + readerMs()), signal: o.signal, hedge: false }, deps).catch((e) => { if ((e as Error).name === "AbortError") throw e; return null; });
   if (!r) return null;
   return { reading: checkReading(r.object, w, now), model: r.model, tokens: r.tokens, ms: Date.now() - t0 };
@@ -201,7 +239,9 @@ const FITS: Partial<Record<Ask, readonly string[]>> = {
   trend: ["trend", "focus"], performance: ["performance", "ranking"], nearby: ["nearby"], map: ["map", "city", "nearby", "cases"],
   chat: [], meta: [], general: [],
   // v17: a question about the Collector's own dataset: only its answer, never a word lane's screen of the console's data
-  dataset: ["dataset"]
+  dataset: ["dataset"],
+  // v18: everything about one subject (its screen, or a lane's brief or situation of the same subject)
+  summary: ["summary", "situation", "brief"]
 };
 /** Does a lane's screen fit what the reader understood? (no reading, or "other", "follow_up", "navigate", "stage_op": every lane may try) */
 export function fits(r: Reading | null, recipe: string | null | undefined): boolean {
