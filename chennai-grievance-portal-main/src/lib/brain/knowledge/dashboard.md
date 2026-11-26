@@ -181,7 +181,7 @@ Defaults for this page, unless an entry says otherwise. Source: the district int
 ### + − fit, Full screen, Map / Satellite, Map tools
 - Zoom, show the whole area, full screen, switch street map and satellite (remembered).
 - Map tools: "Then and now" (swipe between an old and the current Esri satellite photo, with photo dates) and "Measure and plot" (draw a plot: area, perimeter, wards touched, incidents inside, copy as GeoJSON, or ask about it).
-- "Back to previous view" appears after an incident was located. Code: geotools/GeoTools.tsx, components/map/basemap.ts.
+- "Back to previous view" appears at the foot of the map, in the middle, after an incident was located (it used to sit at the top, behind Ask the map, Rain and Traffic). Code: SatMap.tsx, geotools/GeoTools.tsx, components/map/basemap.ts.
 
 ### Ask the map… (pill)
 - See "Ask the Map".
@@ -346,6 +346,9 @@ Defaults: Source: incidents and documents in the store. Filters: ALL: the period
 ### Oldest open complaint
 - Shows: the oldest open citizen complaint of the period, in days. Filters: ALL. Click: the incident. API: `book.citizens.oldest`.
 
+### Under the glance: Departments, Stories still developing, Only in the news
+- Shows: three full-size cards under "Today at a glance". The Briefing page scrolls: the glance first, the three cards below it ("Departments, stories and news below" until the page is scrolled). Each card shows the rows that fit whole and says at its foot how many more ("9 more departments"), which opens the full list.
+
 ### Departments
 - Shows: each department in one line: what it received in the period, what is past its deadline, deaths and severe (only when above 0). "See all" opens the Departments popup.
 - Worked out: incidents reported in the period (open and closed) by lead department. Filters: ALL (a department filter leaves only that one).
@@ -359,7 +362,7 @@ Defaults: Source: incidents and documents in the store. Filters: ALL: the period
 - Code: DeptSummary.tsx, MiniCharts.tsx, lib/collector/deptsummary.ts. API: /api/collector/dept.
 
 ### Stories still developing
-- Shows: news stories that really moved on (attack, arrest, death, court): title, status (Ongoing, Awaiting next step, Settled), the first and last steps with dates, outlets and "updated".
+- Shows: news stories that really moved on (attack, arrest, death, court): title, status (Ongoing, Awaiting next step, Settled), the latest two steps with dates ("latest 2 of 6 events"; the rest open with the story), outlets and "updated".
 - Worked out: reports of the last 14 to 30 days; the AI finds the matters, joins duplicates, drops repeats and routine notices (prices, forecasts, lists), and writes each event once with every outlet; labels and figures are checked against the reports. A story is shown if it had two or more events in the period. Without AI, rules show stories with two or more different headlines from two outlets (or 3 reports) and a new kind of step or over a day.
 - Filters: ALL (stories updated since the period start). Click: the story's timeline. "AI is reading…" while it writes.
 - Code: storyai.ts stories, threads.ts. API: GET /api/collector/stories `threads[]`.
@@ -524,7 +527,7 @@ Defaults: Filters: none except each card's own station picker. Code: components/
 ## Jarvis
 
 ### Jarvis bar
-- Shows: the listening core, what it heard, what it says, its steps, the evidence chip (rows behind the answer), and buttons: Stop talking, Mute, Type, Questions, Close Jarvis. Jarvis opens by the button, by "Hi Jarvis", or the palette. Its questions with answers are kept (last 60 on this browser).
+- Shows: one slim bar along the bottom of the screen, in the strip every page leaves free (the page does not move or shrink when Jarvis opens or when Type is pressed): the listening core, what it heard, what it says, its steps, the evidence chip (rows behind the answer), and buttons: Stop talking, Mute, Type (the box opens inside the bar), Questions, Close Jarvis. Jarvis opens by the button, by "Hi Jarvis", or the palette. Its questions with answers are kept (last 60 on this browser).
 - Worked out: the same assistant as Ask District IQ, by voice: Claude reads the records with tools, and code checks every figure and name before it is said. What is drawn comes from the tables read. Emails are drafted into an approval tray, never sent without the Collector's tap.
 - Code: thunai/Thunai.tsx, Hud.tsx, Stage.tsx; lib/brain/*, lib/thunai/*.
 

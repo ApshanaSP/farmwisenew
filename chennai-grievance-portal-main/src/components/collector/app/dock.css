@@ -22,11 +22,11 @@
 
 /* the strip every page leaves free (a page scaled to the window: its grid ends above it) */
 .dic.fit .app:has(>.cdock) .body{padding-bottom:var(--dock-h)}
-/* Jarvis's bar takes the same place while it is open: the page ends above the bar at rest (its cards and a long caption may still rise over it),
-   its own button gives way to the bar's "Close Jarvis", and Ask District IQ stays at the right of the bar (hud.css) */
-html.jv-hud .dic.fit .app:has(>.cdock) .body{padding-bottom:calc(var(--hud-room,92px) / var(--z,1))}
+/* Jarvis's bar takes the same strip while it is open, its own button gives way to the bar's "Close Jarvis", and Ask District IQ stays at the
+   right of the bar (hud.css). 26 Nov, evening (the owner: opening Jarvis or its type box pushed every page up and shrank it): the page keeps its size
+   and the bar lies low in the strip; only what grows over the bar for a moment (a card, a long caption) rises over the page's foot */
 html.jv-hud .dic .cdock .jvf-pair{display:none}
-html.jv-hud .dic.fit .cdock{bottom:calc(22px / var(--z,1))}
+html.jv-hud .dic.fit .cdock{bottom:calc(7px / var(--z,1))}
 
 /* messages sit in the same strip, at its left: they never cover the top bar or the filters */
 .dic .toasts{left:16px;right:auto;top:auto;bottom:6px;width:max-content;max-width:min(calc(38vw / var(--z,1)),calc(100vw / var(--z,1) - 400px));align-items:flex-start}

@@ -28,20 +28,46 @@ const num = (v: number) => v.toLocaleString("en-IN");
  * Page 2, read top to bottom in half a minute. Across the top, "Today at a glance": one sentence, the figures (each its tile's), what is
  * happening, what needs the Collector, what to do next; composed by code for the filters in force (glance.ts). Under it: each department in
  * one line (a click opens its summary), stories that really developed, and what is only in the news.
+ * 26 Nov, evening (the owner: the three cards under the glance were "very small, congested, not easily visible"): squeezed into the 126 px left
+ * under the glance they cut rows in half. The page now scrolls: the glance stays as it was, and the three cards under it are full size,
+ * in larger type, with how many more each holds at its foot. Until the page is scrolled, a cue at the bottom says they are there.
  */
 export function BriefingBook({ ins, d, c }: { ins: Insights; d?: OverviewData; c: Console }) {
   const b = ins.book!;
+  const box = useRef<HTMLElement>(null);
+  const row = useRef<HTMLDivElement>(null);
+  const below = useBelow(box);
+  const down = () => row.current?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "end" });
   return (
-    <section className="bb bb2">
+    <section className="bb bb2" ref={box}>
       <Today ins={ins} b={b} d={d} c={c} />
-      <div className="bb2-row">
+      <div className="bb2-row" ref={row}>
         <Departments b={b} c={c} />
         {/* the Collector's own datasets are on the Environment page now (pinned from the Data Studio), not here */}
         <Developing ins={ins} c={c} />
         <NewsOnly ins={ins} c={c} />
       </div>
+      {below && <button className="bb2-down" onClick={down} title="Scroll down to the departments, the developing stories and what is only in the news">
+        <I n="chevd" />Departments, stories and news below</button>}
     </section>
   );
+}
+
+/** True while the page can scroll and is still at its top (the three cards are mostly below the fold); false on phones (the page scrolls anyway). */
+function useBelow(box: React.RefObject<HTMLElement | null>) {
+  const [below, setBelow] = useState(false);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const f = () => setBelow(!!el.closest(".dic.fit") && el.scrollHeight - el.clientHeight > 60 && el.scrollTop < 24);
+    f();
+    el.addEventListener("scroll", f, { passive: true });
+    const ro = new ResizeObserver(f);
+    ro.observe(el);
+    for (const k of Array.from(el.children)) ro.observe(k);
+    return () => { el.removeEventListener("scroll", f); ro.disconnect(); };
+  }, [box]);
+  return below;
 }
 
 // ----------------------------------------------------------------------------------------------------- building blocks --
@@ -286,32 +312,43 @@ function Group({ title, icon, points, ta, open, none, children }: { title: strin
 /** Each department in one line: what it received, what is late, deaths and severe. A click opens its summary (DeptSummary.tsx). */
 function Departments({ b, c }: { b: Book; c: Console }) {
   const rows = b.departments;
+  const [ref, hidden] = useFit<HTMLUListElement>(rows.map((x) => `${x.code}:${x.n}:${x.dead}:${x.severe}:${x.overdue}`).join());
   return (
     <section className="bb-card bb-depts">
-      <Head ic="gov" title="Departments" note={`what each received · ${labelLower(c.periodLabel)}`} more={rows.length ? () => c.openDepts() : undefined} />
+      <Head ic="gov" title="Departments" n={rows.length || undefined} note={`what each received · ${labelLower(c.periodLabel)}`} more={rows.length ? () => c.openDepts() : undefined} />
       {rows.length ? (
-        <ul className="dp-list two">
-          {rows.map((x) => (
-            <li key={x.code} data-code={x.code}>
-              <button className="dp-row" onClick={() => c.openDept(x.code)} title="Open the department's summary">
-                <span className="bb-dic"><I n={deptIcon(x.code)} /></span>
-                <span className="dp-main">
-                  <span className="dp-n">{x.name}</span>
-                  <span className="dp-tags">
-                    {x.dead > 0 && <em className="dead">{`${num(x.dead)} dead`}</em>}
-                    {x.severe > 0 && <em className="sev">{`${num(x.severe)} severe`}</em>}
-                    {x.overdue > 0 && <em className="late">{`${num(x.overdue)} late`}</em>}
-                    {!x.dead && !x.severe && !x.overdue && <em className="calm">{`${num(x.open)} open`}</em>}
+        <>
+          <ul ref={ref} className="bb-fit bb-dl">
+            {rows.map((x) => (
+              <li key={x.code} data-code={x.code}>
+                <button className="dp-row" onClick={() => c.openDept(x.code)} title="Open the department's summary">
+                  <span className="bb-dic"><I n={deptIcon(x.code)} /></span>
+                  <span className="dp-main">
+                    <span className="dp-n">{x.name}</span>
+                    <span className="dp-tags">
+                      {x.dead > 0 && <em className="dead">{`${num(x.dead)} dead`}</em>}
+                      {x.severe > 0 && <em className="sev">{`${num(x.severe)} severe`}</em>}
+                      {x.overdue > 0 && <em className="late">{`${num(x.overdue)} late`}</em>}
+                      {!x.dead && !x.severe && !x.overdue && <em className="calm">{`${num(x.open)} open`}</em>}
+                    </span>
                   </span>
-                </span>
-                <b className="dp-k" title={`${num(x.n)} reports in the period, ${num(x.open)} still open`}>{num(x.n)}</b>
-              </button>
-            </li>
-          ))}
-        </ul>
+                  <b className="dp-k" title={`${num(x.n)} reports in the period, ${num(x.open)} still open`}>{num(x.n)}<small>reports</small></b>
+                  <I n="chevr" />
+                </button>
+              </li>
+            ))}
+          </ul>
+          <More n={hidden} what={["department", "departments"]} onClick={() => c.openDepts()} />
+        </>
       ) : <div className="bb-fit"><Calm>No department received a report in this period.</Calm></div>}
     </section>
   );
+}
+
+/** The foot of a list whose last rows did not fit: how many more, and one click to all of them. */
+function More({ n, what, onClick }: { n: number; what: [string, string]; onClick: () => void }) {
+  if (n <= 0) return null;
+  return <button className="bb-foot" onClick={onClick}>{`${num(n)} more ${n === 1 ? what[0] : what[1]}`}<I n="chevr" /></button>;
 }
 
 // ------------------------------------------------------------------------------------------------------- the news --
@@ -323,7 +360,7 @@ function Departments({ b, c }: { b: Book; c: Console }) {
 function Developing({ ins, c }: { ins: Insights; c: Console }) {
   const data = c.stories;
   const threads = data?.threads ?? [];
-  const [ref] = useFit<HTMLUListElement>(threads.map((t) => `${t.id}:${t.events.length}`).join());
+  const [ref, hidden] = useFit<HTMLUListElement>(threads.map((t) => `${t.id}:${t.events.length}`).join());
   return (
     <section className="bb-card grow bb-dev">
       <Head ic="pulse" title="Stories still developing" n={data ? threads.length : undefined} note={data?.pending ? "AI is reading…" : undefined}
@@ -333,35 +370,37 @@ function Developing({ ins, c }: { ins: Insights; c: Console }) {
       ) : threads.length ? (
         <ul ref={ref} className="bb-fit">
           {threads.map((s) => {
+            // what developed: the story's last two steps (the earlier ones open with the story), so two stories fit the card whole
             const ev = s.events;
-            const shown = ev.length > 3 ? [ev[0], ...ev.slice(-2)] : ev;
-            const hidden = ev.length - shown.length;
+            const shown = ev.slice(-2);
+            const earlier = ev.length - shown.length;
             return (
               <li key={s.id}>
                 <button className="bb-story sl" onClick={() => c.openStories(s.id)} title={s.ai?.now ?? "Open the story's timeline"}>
                   <span className="sl-h"><b>{s.title}</b>{s.ai && <span className={`sl-st ${s.ai.status}`}>{STORY_STATUS[s.ai.status]}</span>}</span>
                   <span className="sl-line">
                     {shown.map((m, k) => (
-                      <span key={k} className={`sl-ev${k === shown.length - 1 ? " last" : ""}${k === 0 && hidden > 0 ? " gap" : ""}`} style={{ "--c": stepColour(m.label) } as React.CSSProperties}
-                        title={`${fmtDate(m.t)}: ${m.what}${k === 0 && hidden > 0 ? ` (${hidden} more before the next)` : ""}`}>
+                      <span key={k} className={`sl-ev${k === shown.length - 1 ? " last" : ""}`} style={{ "--c": stepColour(m.label) } as React.CSSProperties}
+                        title={`${fmtDate(m.t)}: ${m.what}`}>
                         <time>{fmtDate(m.t)}</time><i /><span><em>{m.label}</em>{m.what}</span>
                       </span>
                     ))}
                   </span>
-                  <small>{ev.length} events · {s.outlets.slice(0, 2).join(", ")}{s.outlets.length > 2 ? ` +${s.outlets.length - 2}` : ""} · updated {rel(s.last, ins.now)}</small>
+                  <small>{earlier > 0 ? `latest ${shown.length} of ${ev.length} events` : `${ev.length} ${ev.length === 1 ? "event" : "events"}`} · {s.outlets.slice(0, 2).join(", ")}{s.outlets.length > 2 ? ` +${s.outlets.length - 2}` : ""} · updated {rel(s.last, ins.now)}</small>
                 </button>
               </li>
             );
           })}
         </ul>
       ) : <div className="bb-fit"><Calm>No story developed further in this period.</Calm></div>}
+      {data && <More n={hidden} what={["story", "stories"]} onClick={() => c.openStories(null)} />}
     </section>
   );
 }
 
 function NewsOnly({ ins, c }: { ins: Insights; c: Console }) {
   const rows = ins.gaps as Row[];
-  const [ref] = useFit<HTMLUListElement>(rows.map((g) => g.id).join());
+  const [ref, hidden] = useFit<HTMLUListElement>(rows.map((g) => g.id).join());
   return (
     <section className="bb-card grow bb-gaps">
       <Head ic="news" title="Only in the news" n={rows.length} note="no department record" more={rows.length ? () => c.openGaps() : undefined} />
@@ -378,6 +417,7 @@ function NewsOnly({ ins, c }: { ins: Insights; c: Console }) {
           ))}
         </ul>
       ) : <div className="bb-fit"><Calm>{ins.book?.today.whole ? "Every incident in the news has a department record." : "Nothing in this view is only in the news."}</Calm></div>}
+      <More n={hidden} what={["incident", "incidents"]} onClick={() => c.openGaps()} />
     </section>
   );
 }

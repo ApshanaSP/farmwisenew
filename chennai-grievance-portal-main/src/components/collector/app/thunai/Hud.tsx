@@ -300,7 +300,7 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
             {saying && s.caption && <Caption c={s.caption} />}
             {evidence && <EvidenceChip e={evidence} lang={lang} onOpen={a.onEvidence} />}
             {s.faint && <div className="hud-faint" data-testid="faint">{s.faint}</div>}
-            {s.notice && <div className="hud-notice" role="status" lang={lang}>{s.notice}</div>}
+            {s.notice && <div className="hud-notice" role="status" lang={lang} title={s.notice}>{s.notice}</div>}
             {s.needsResume && <div className="hud-notice" lang={lang}>{ta ? "குரலைக் கேட்க எங்காவது கிளிக் செய்யுங்கள்" : "Click anywhere to hear the voice"}</div>}
             {s.strip.budgetLow && <div className="hud-notice warn" lang={lang}>{ta ? "கொஞ்சம் பொறுங்கள்: அடுத்த கேள்விக்கு \"ஜார்விஸ்\" என்று முதலில் சொல்லுங்கள்" : "Too much talk in the room: say \"Jarvis\" first for your next question"}</div>}
           </div>

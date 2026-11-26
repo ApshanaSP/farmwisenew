@@ -241,6 +241,25 @@ html:has(.dic .cdock):has(.dic .aq-overlay) .hud-dock.hud-dock { right: auto; wi
 .hud-bar:has(.hud-compose) .hud-read { gap: 0; }
 .hud-bar:has(.hud-compose) .hud-notice { font-size: 12.5px; line-height: 1.3; }
 .hud-bar:has(.hud-compose) .hud-compose input { height: 36px; }
+/* 26 Nov, evening (the owner: opening Jarvis, or its type box, pushed the page up and shrank it): the page keeps its size (dock.css), so the bar at rest
+   is one slim row in the strip every page already leaves free along the bottom: the core drawn at its size but laid out a little smaller, the
+   state and its hint on one line, and the type box inside the bar in the state's place instead of a second row */
+html:has(.dic.fit .cdock) .hud-dock { bottom: 2px; max-width: 1000px; }
+html:has(.dic.fit .cdock) .hud-bar { padding: 4px 8px; gap: 4px 10px; }
+html:has(.dic.fit .cdock) .hud-core { margin: -3px 0; }
+html:has(.dic.fit .cdock) .hud-read { gap: 0; }
+html:has(.dic.fit .cdock) .hud-state { flex-wrap: nowrap; min-width: 0; white-space: nowrap; line-height: 1.3; }
+html:has(.dic.fit .cdock) .hud-state .hud-hint { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* a notice (the microphone is blocked) is one line; all of it shows when the pointer rests on it (Hud.tsx gives it a title) */
+html:has(.dic.fit .cdock) .hud-read .hud-notice { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; line-height: 1.3; }
+/* typing: the state's word beside the box (what was heard, the hint and any notice wait until the box closes), the buttons after it */
+html:has(.dic.fit .cdock) .hud-bar:has(.hud-compose) .hud-read { flex: 0 1 auto; min-width: 0; max-width: 190px; }
+html:has(.dic.fit .cdock) .hud-bar:has(.hud-compose) .hud-read > :not(.hud-state), html:has(.dic.fit .cdock) .hud-bar:has(.hud-compose) .hud-state .hud-hint { display: none; }
+html:has(.dic.fit .cdock) .hud-bar:has(.hud-compose) .hud-state b { overflow: hidden; text-overflow: ellipsis; }
+html:has(.dic.fit .cdock) .hud-bar .hud-compose { order: 1; flex: 1 1 220px; min-width: 0; }
+html:has(.dic.fit .cdock) .hud-bar:has(.hud-compose) .hud-acts { order: 2; }
+html:has(.dic.fit .cdock) .hud-bar:has(.hud-compose) .hud-compose input { height: 34px; }
+html:has(.dic.fit .cdock) .hud-first { bottom: 60px; }
 /* Tamil words are longer: the four buttons stay on the bar's one row */
 .hud[lang="ta"] .hud-bar .hud-btn { padding: 0 9px; gap: 4px; font-size: 12.5px; }
 .hud[lang="ta"] .hud-bar .hud-read { min-width: 150px; }

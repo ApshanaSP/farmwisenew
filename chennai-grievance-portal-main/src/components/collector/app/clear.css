@@ -70,9 +70,7 @@
 .dic:not(.fit) .iv-col{overflow:visible;min-height:auto}
 .dic:not(.fit) .tf-sn em{white-space:normal}
 
-/* ---- with Jarvis's bar up the pages are shorter: their cards keep a useful height and the page scrolls above the bar */
-html.jv-hud .dic.fit .p2.env3{grid-template-rows:minmax(236px,1fr) minmax(230px,1.12fr);overflow-y:auto;scrollbar-width:thin}
-html.jv-hud .dic.fit .p3.trends{grid-template-rows:minmax(232px,1.75fr) minmax(158px,1fr);overflow-y:auto;scrollbar-width:thin}
+/* ---- (26 Nov, evening) the pages no longer get shorter while Jarvis's bar is up (dock.css), so they keep their own rows with it open */
 
 /* ---- Tamil: the filters give the band's words room (the alert and data chips were cut at them), the news tabs stand their counts under their
    names (they ran into each other), and the severity names and Act stay whole */
