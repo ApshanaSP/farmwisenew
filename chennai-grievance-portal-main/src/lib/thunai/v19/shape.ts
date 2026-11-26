@@ -50,7 +50,8 @@ export const QuerySchema = z.object({
   sort: z.enum(["priority", "newest", "oldest", "complaints", "deaths"]).describe("the order of listed cases"),
   before: z.boolean().describe("true when a rise or fall against the time before is asked")
 });
-export type Query = z.infer<typeof QuerySchema>;
+/** `part`: code's own mark on a share, which limit is the part of the rest (shareOf); never asked of the model */
+export type Query = z.infer<typeof QuerySchema> & { part?: "sev" | "sev+state" | "dept" | null };
 
 export const PlanSchema = z.object({
   understood: z.string().describe("the request said again as one complete plain English question, with everything it points back at put in"),
@@ -61,7 +62,9 @@ export const PlanSchema = z.object({
   title_ta: z.string().describe("the same heading in Tamil"),
   queries: z.array(QuerySchema).max(3)
 });
-export type Plan = z.infer<typeof PlanSchema>;
+export type Plan = Omit<z.infer<typeof PlanSchema>, "queries"> & { queries: Query[] };
+/** a plan as a screen keeps it: with code's own marks */
+const KeptPlan = PlanSchema.extend({ queries: z.array(QuerySchema.extend({ part: z.enum(["sev", "sev+state", "dept"]).nullable().optional() })).max(3) });
 
 // ------------------------------------------------------------- code's guards --
 
@@ -89,6 +92,125 @@ const negated = (text: string, word: string): boolean => new RegExp(`\\b(?:not(?
 /** "the three newest", "five oldest" */
 const latestOf = (text: string): number | null => { const m = noNames(text).match(/\b(two|three|four|five|six|seven|eight|nine|ten|\d{1,2})\s+(?:newest|oldest|latest|most recent)\b/i); return m ? (/^\d/.test(m[1]) ? Number(m[1]) : NUM_WORDS.find(([re]) => re.test(m[1]))?.[1] ?? null) : null; };
 const FIRE_SERVICE = /\bfire (?:department|dept|services?|brigade|force|team|station)\b|தீயணைப்பு|\btheeyanaippu\b/i;
+/** the sewer itself is meant: never put right to "severe" */
+const SEWER_SAID = /\bsevere\b|metro ?water|water board|cmwssb|\bdrain|manhole|sewage|sewerage|septic|overflow|\bblocked\b|blockage|clogg|chok(?:e|ed|ing)\b|\bpipes?\b|pipeline|water supply|\bunderground\b|stagnat|manual scaveng|\b(?:sanitation|sewer) workers?\b|\b(?:workers?|labou?rers?)\b[^.?]{0,20}\b(?:died|dead|killed|deaths?|dying)\b|poison|\btoxic|suffocat|asphyxia|\bsmell|\bstench|கழிவுநீர்|சாக்கடை|மெட்ரோ ?வாட்டர்|குடிநீர்|வடிகால்/i;
+/** a word speech recognition mishears, put right where only one reading makes sense ("sewer cases" are severe cases; "sewer overflow" is the sewer) */
+export const heardRight = (text: string): string => SEWER_SAID.test(text) ? text : text.replace(/\b(?:sewer|sever|saver|saviou?r|server)(?=\s+(?:cases?|events?|incidents?)\b)/gi, (x, k: number) => (/\b(?:life|water|power|cyber|screen)\s+$/i.test(text.slice(0, k)) ? x : "severe"));
+/** all that is waiting, said so: never only what came in the last day (water that stands, or garbage piled up, is no backlog) */
+const BACKLOG = /\bback\s?log(?:s|ged)?\b|\b(?:cases?|complaints?|petitions?|grievances?|files?)\s+(?:(?:that\s+)?(?:have|has|had|are|is|were)\s+)?(?:been\s+)?(?:pil(?:ed|ing)[- ]up|in arrears)\b|\bpile[- ]?up of (?:the )?(?:\w+ )?(?:cases|complaints|petitions|grievances|files)\b|(?:வழக்கு|புகார்|கேஸ்|மனு|கோப்பு)\S*\s+(?:தேக்க(?:ம்|மாக|த்தில்)|தேங்கி)/i;
+/** the backlog set apart ("leaving the backlog aside", "not counting the backlog") is not asked for */
+const noBacklog = (t: string): string => t.replace(/\b(?:other than|apart from|except(?: for)?|exclud(?:e|ing)|besides|without(?: counting| including)?|not(?: counting| including)?|leav(?:e|ing)(?: out| aside)?|(?:setting|keeping) aside|ignor(?:e|ing)|minus|don'?t (?:want|count|include|need))\s+(?:(?:the|our|any|old|existing|earlier)\s+)*back\s?log\w*|\bback\s?log\w*\s+(?:aside|apart|excluded|left out|thavira)\b/gi, " ");
+/** a part of what was just counted ("how many of them are overdue") */
+const OF_THOSE = /\b(?:of|among|out of) (?:them|those|these|which)\b|அதுல|அதில்|அவற்றில்|இதுல|இதில்|\b(?:adhula|athula|idhula)\b/i;
+const NOW_TIME = /^(?:(?:right|just|as of)\s+)?now$|^(?:currently|presently|at (?:the moment|present))$|^இப்ப(?:ோ|ோது)?$/i;
+/** "now" said of the time (not the "now" that opens a sentence: "now show me ...") */
+const nowSaidIn = (t: string): boolean => /\b(?:right now|just now|now|currently|at the moment|at present)\b|இப்போ/i.test(t.replace(/^\W*(?:(?:ok(?:ay)?|so|and|but|jarvis)\W+)*now\b/i, " "));
+const LASTU = "(?:the\\s+)?(?:last|previous|past)\\s+(week|month)\\b";
+const CH = "(?:up|down|risen|rising|rose|fallen|falling|fell|drop(?:ped|ping)?|increas(?:e|ed|ing)|decreas(?:e|ed|ing)|chang(?:e|ed|ing)|difference|improv(?:ed|ing)|worsened|worse|better|reduc(?:ed|ing)|higher|lower|more|fewer|less|jumped|grown?|grew|grow|eased)";
+/** set against the week or month before: "than last week" is the comparison itself, "from last week" needs the change beside it, "since last week" a rise or fall before it */
+const AGAINST: RegExp[] = [
+  new RegExp(`(?<!\\b(?:older|longer|earlier|later)\\s)\\b(?:(?:than|compared? (?:to|with)|comparing (?:to|with)|against|versus|vs\\.?)\\s+|than\\s+(?:(?:it|they|we|there)\\s+(?:was|were|had)|in)\\s+)${LASTU}(?!\\s+(?:days?|hours?))`, "i"),
+  new RegExp(`(?<=\\bcompare\\b[^.?]{0,40})\\bwith\\s+${LASTU}`, "i"),
+  new RegExp(`\\b(?!(?<=\\b(?:any|anything|some|show|me|see|there|what)\\s+)(?:more|fewer|less)\\b)${CH}\\s+(?:(?:a lot|a little|much|sharply|slightly)\\s+)?from\\s+${LASTU}`, "i"),
+  new RegExp(`\\b(?:(?:come|came|gone|went|go|going|coming)\\s+(?:up|down)|risen|rising|rose|fallen|falling|fell|dropped|increased|decreased|changed|improved|worsened|worse|better|reduced|higher|lower|jumped|grown?|grew|eased|up|down)\\b(?<!\\b(?:list|pull|bring|show|break|sum|clean|cleaned|follow|followed|pick|picked|call|called)\\s+(?:up|down))[^.?]{0,40}\\b(?:since|over)\\s+${LASTU}`, "i"),
+  /(?:போன|கடந்த|சென்ற|முந்தைய)\s*(வார|மாத|மாச)த்\S*\s*(?:விட(?:வும்)?(?![஀-௿])|காட்டிலும்|ஒப்பி\S*|கம்பேர்)|(?:போன|கடந்த|சென்ற|முந்தைய)\s*(வார|மாத|மாச)த்தோட\s*(?:ஒப்பி\S*|கம்பேர்)/i,
+  /\b(?:pona|kadandha|kadantha|last|previous)\s+(vaar\w*|maas\w*|maath\w*|week|month)\s+(?:vida|vidha|compare)\b(?!\s+(?:with|to|against)\b)/i
+];
+/** and, when the model marked a rise or fall (before): "since last week" anywhere, "any increase in thefts from last week", "over last week", "போன வாரத்துல இருந்து குறைஞ்சிருக்கா" */
+const AGAINST_BEFORE: RegExp[] = [
+  new RegExp(`\\b(?:since|over)\\s+${LASTU}`, "i"),
+  new RegExp(`(?<=\\b(?:increase|decrease|rise|fall|drop|reduction|improvement|decline|change|difference|spike|jump)\\b[^.?]{0,40})\\bfrom\\s+${LASTU}`, "i"),
+  /(?:போன|கடந்த|சென்ற)\s*(வார|மாத|மாச)த்(?:துல|துலே|தில்|தில)\s*(?:இருந்து|ிருந்து)|(?:போன|கடந்த|சென்ற)\s*(வார|மாத|மாச)த்(?:தி|து)லிருந்து|\b(?:pona|kadandha|kadantha)\s+(vaar\w*|maas\w*|maath\w*)\s+(?:la\s+)?(?:irun\w+|lerndhu)\b/i
+];
+/** the window a comparison with last week or month counts (this one), or null: none, or the sentence names another window of its own */
+export function againstLast(text: string, time: NonNullable<Query["time"]>, before = false): "weekly" | "monthly" | null {
+  const m = (before ? [...AGAINST, ...AGAINST_BEFORE] : AGAINST).map((re) => text.match(re)).find(Boolean);
+  if (!m) return null;
+  // only a time that stands for the week or month set against
+  if (time.said && !/\b(?:last|previous|past)\s+(?:week|month)\b|(?:போன|கடந்த|சென்ற|முந்தைய)\s*(?:வார|மாத|மாச)|\b(?:pona|kadandha|kadantha)\s+(?:vaar|maas)/i.test(time.said)) return null;
+  const cut = text.replace(m[0], " "), rest = readPeriod(dateWords(cut));
+  // ("compare last month's thefts with the previous month": last month is the window itself)
+  if (/\b(?:last|previous|past)\s+(?:week|month)\b/i.test(cut)) return null;
+  if (["last", "day", "days", "month", "months", "hours", "since", "holiday"].includes(rest.kind)) return null;
+  return /month|மாத|மாச|maa/i.test(m.slice(1).find(Boolean) ?? "") ? "monthly" : "weekly";
+}
+/** a kind of jam is a limit only when it is said: "congested traffic" is every jam (a closed, flooded or accident road is never invented) */
+const JAM_SAID: Partial<Record<NonNullable<Query["level"]>, RegExp>> = {
+  very: /\b(?:very|highly|heavily|heavy|severe|severely|extremely|badly|critical|critically|completely|totally|fully|terribly|standstill|serious|seriously|choked|gridlock(?:ed)?)\b|\breally (?:bad|bad(?:ly)?|congested|jammed|heavy)\b|\bmajor (?:traffic|jams?|congestion|hold[- ]?ups?|bottlenecks?)\b|மிக(?!வும்?\s*அதிக|\s*அதிக)|ரொம்ப(?!\s*(?:அதிக|டிரா|ட்ரா|நெரிச))|கடு(?:ம்|மை)|\bromba\b(?!\s+(?:traffic|adhig|athig))/i,
+  congested: /\b(?:only|just|merely)\s+(?:the\s+)?congested\b|\bcongested (?:ones |roads )?(?:only|alone)\b|\bnot very congested\b|\bmoderate(?:ly)?\b/i,
+  slow: /\bslow(?!er|est|ly)|மெதுவ|ஸ்லோ|medhuva/i
+};
+const ANY_VERY = /மிக|ரொம்ப|\b(?:romba|miga)\b/i;
+function strayLevel(q: Query, p: { understood: string }, text: string, last: Plan | null, all: Query[]): boolean {
+  const re = q.level ? JAM_SAID[q.level] : undefined;
+  if (!re || re.test(text)) return false;
+  // ("ரொம்ப நெரிசலான ரோடு எத்தனை" counts the very congested ones; "எங்க ரொம்ப நெரிசல்" asks where there is most)
+  if (q.level === "very" && !q.by && !/எங்க|எந்த|எது|\b(?:enga|endha|entha|edhu)\b/i.test(text) && ANY_VERY.test(text)) return false;
+  const was = last?.queries.filter((x) => x.of === "traffic" && x.level && x.level in JAM_SAID) ?? [];
+  if (was.some((x) => x.level === q.level)) return false;
+  // ("and the congested ones?" after the very congested)
+  if (was.length && q.level === "congested" && FOLLOWS.test(text) && /\b(?:the|only|just|many) congested\b|\bcongested ones?\b/i.test(text)) return false;
+  if (new Set(all.map((x) => x.level).filter((l) => l && l in JAM_SAID)).size > 1) return false;
+  return !(q.level !== "congested" && re.test(p.understood) && !/[஀-௿]/.test(text) && !!last && FOLLOWS.test(text));
+}
+const SEV_WORD = /\b(?:severe|serious|critical|high[- ]priority|severity)\b/i;
+const STATE_WORD = /\b(?:open|pending|unresolved|not (?:yet )?(?:resolved|closed)|back\s?log|overdue|past (?:the |their )?deadline|resolved|closed|waiting|citizen\w*|public|deaths?|injur\w+|older than|more than)\b/i;
+/** "what percent of X are Y": which of the limits is the part (Y) when the limits alone cannot say; null: the plain reading */
+export function shareOf(text: string, w: World): "sev" | "sev+state" | "dept" | null {
+  // ("the cases that are severe": its verb is not the sentence's)
+  const t = text.replace(/\b(?:that|which|who)\s+(?:are|is|were|was|(?:have|has|had) been)\s+/gi, " ").replace(/\s+/g, " ").trim();
+  // ("out of all the cases, what percent are Y"; "what percentage of X do Y make up", "Y are what percent of X", "the share of Y in the total")
+  const front = t.match(/\b(?:out of|of|among|amongst|from)\s+((?:all|the|our|this|every|total|cases|incidents|complaints|\d+)\b[^,?]*?),?\s+(?:what|how (?:much|many))\s+(?:per ?cent(?:age)?|share|proportion|fraction)?\s*(?:of (?:them|those|these) )?(?:are|is|was|were|have been|has been)\s+(.+?)[?.!]*$/i);
+  const makes = t.match(/\b(?:per ?cent(?:age)?|share|proportion|fraction)\s+of\s+(.+?)\s+(?:do|does|did)\s+(.+?)\s+(?:make up|form|account for|constitute|represent)\b/i);
+  const back = t.match(/^(.+?)\s+(?:are|is|make up|form|account for|constitute)\s+(?:what|how much)\s+(?:per ?cent(?:age)?|share|proportion|fraction)\s+of\s+(.+?)[?.!]*$/i);
+  const m0 = front ?? makes ?? (back && ["", back[2], back[1]]);
+  const m = m0 ?? t.match(/\b(?:per ?cent(?:age)?|share|proportion|fraction|how (?:much|many))\s+of\s+(.+?)\s+(?:are|is|was|were|have been|has been|lie|lies|sit|sits|belong|belongs)\s+(.+?)[?.!]*$/i);
+  const r = m ? null : t.match(/\b(?:per ?cent(?:age)?|share|proportion)\s+of\s+(.+?)\s+(?:among|amongst|out of|within|in)\s+((?:all |the |our |this )*(?:open|pending|unresolved|overdue|back\s?log|resolved|citizen|total|cases|incidents|complaints)\b.*)[?.!]*$/i);
+  if (!m && !r) return null;
+  const x = m ? m[1] : r![2], y = m ? m[2] : r![1];
+  if (deptSaid(y, w) && !deptSaid(x, w) && (SEV_WORD.test(x) || STATE_WORD.test(x))) return "dept";
+  if (SEV_WORD.test(y) && !SEV_WORD.test(x)) return STATE_WORD.test(x) ? "sev" : STATE_WORD.test(y) ? "sev+state" : "sev";
+  return null;
+}
+const ENDS: [string, string][] = [["fastest|quickest", "slowest"], ["highest|most|top|maximum|max", "lowest|least|fewest|bottom|minimum|min"], ["worst|busiest", "least|quietest"], ["best", "worst|bottom"], ["top", "worst"], ["costliest|dearest|most expensive|priciest", "cheapest|least expensive"], ["hottest|warmest", "coldest|coolest"], ["safest|cleanest", "worst|most dangerous|least safe|dirtiest|most polluted"], ["longest", "shortest"], ["biggest|largest", "smallest"], ["wettest", "driest"]];
+const THINGS = "areas?|zones?|wards?|departments?|depts?|roads?|streets?|localit(?:y|ies)|places?|days?|stations?|vegetables?|kinds?|ones?|markets?|taluks?|lakes?";
+const THING1 = "area|zone|ward|department|dept|road|street|locality|place|day|station|vegetable|kind|one|market|taluk|lake";
+const NUM = "\\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten";
+const KINDLY = "(?:efficient|responsive|improved|safe|peaceful|reliable|performing|rated|ranked|active|prompt|helpful)";
+const numOf = (x: string | undefined): number | null => (!x ? null : /^\d/.test(x) ? Number(x) : NUM_WORDS.find(([re]) => re.test(x))?.[1] ?? null);
+const AND = `(?:and|&|as well as|plus) (?:also )?(?:(?:which|who|what|where) (?:(?<n1>${NUM}) )?(?:(?<thing>${THINGS}) )?(?:(?<verb>has|have|had|is|are|was|were|close|closes|closed|takes?|took|gets?|got|sees?|saw) )?(?:they |it )?)?(?:the )?(?:(?<n2>${NUM}) )?(?:(?:ones? )?(?:with|having) (?:the )?)?`;
+/** both ends of one ranking asked for ("the two fastest and the two slowest"): how many of each, in the order said (null: no number), and the words; null: one end */
+export function otherEnd(text: string): { a: string; na: number | null; b: string; nb: number | null } | null {
+  const t = ` ${text.toLowerCase().replace(/[,;:"“”()?!]+/g, " ").replace(/\s+/g, " ").trim()} `;
+  if (/\b(?:from|in order of|ranked|sorted)\b[^.?]{0,20}\b(?:highest|most|top|best|fastest|worst)\b[^.?]{0,12}\bto\b/.test(t)) return null;
+  // each end with its own number: beside it, or before the things it ranks ("which two departments close fastest"); one number serves both
+  // only when both words share one noun ("top and bottom three areas", "the three fastest and slowest departments")
+  const out = (g: Record<string, string | undefined>, at: number, mid: string): { a: string; na: number | null; b: string; nb: number | null } | null => {
+    const before = t.slice(0, at);
+    if (g.thing && !/^ones?$/.test(g.thing) && !before.includes(` ${g.thing.replace(/ies$/, "y").replace(/s$/, "")}`)) return null;
+    const own = numOf(g.na ?? g.na2), pre = own ?? numOf(noNames(before).match(new RegExp(`\\b(${NUM}) (?:(?!and )[a-z]+ ){0,1}?(?:${THINGS}) (?!(?:(?:that|which|who) are )?(?:the )?$)(?:[a-z-]+ ){1,6}$`))?.[1]);
+    const nb = numOf(g.n1 ?? g.n2 ?? g.nb2);
+    const single = (own != null && !!mid) || /^(?:has|is|was|closes|takes|gets|sees)$/.test(g.verb ?? "") || new RegExp(` ${g.b} (?:${THING1}) `).test(t);
+    return { a: g.a!, na: pre ?? (g.nb2 && !mid ? nb : null), b: g.b!, nb: nb ?? (pre != null && !single ? pre : null) };
+  };
+  for (const [a, b] of [...ENDS, ...ENDS.map(([x, y]) => [y, x] as [string, string])]) {
+    const m = t.match(new RegExp(`\\b(?:(?<na>${NUM}) )?(?<a>${a})\\b(?: (?<na2>${NUM}))?(?<mid>(?: (?!and |& )[a-z0-9-]+){0,6}?) ${AND}(?<b>${b})(?: (?<nb2>${NUM}))?(?: (?:${THINGS}))?(?= [.?!]? ?$|[.?!]| (?:in|this|last|now|right now|currently|today|yesterday|since|on|to|among|by|during|over|at|for) )`));
+    if (m) {
+      // ("top for theft and lowest for accidents": two subjects)
+      const of = (x: string) => x.match(/ (?:for|in|on) (?!the last |the past |this |last )(?:the )?([a-z]+)/)?.[1];
+      const s1 = of(`${m.groups!.mid} `), s2 = t.slice(m.index! + m[0].length).match(/^ (?:for|in|on) (?!the last |the past |this |last )(?:the )?([a-z]+)/)?.[1];
+      if (s1 && s2 && s1 !== s2) return null;
+      return out(m.groups!, m.index!, m.groups!.mid);
+    }
+    // ("the most and the fewest accidents": one thing, both ends; never "the best and most efficient")
+    const near = t.match(new RegExp(`\\b(?:(?<na>${NUM}) )?(?<a>${a}) (?:and|&) (?:the )?(?:(?<n2>${NUM}) )?(?<b>${b}) (?!${KINDLY}\\b)[a-z]+`));
+    if (near) return out(near.groups!, near.index!, "");
+    // ("most complaints and least complaints", "... and which area has the least complaints")
+    const rep = t.match(new RegExp(`\\b(?:(?<na>${NUM}) )?(?<a>${a})(?<mid> (?<what>[a-z]+)(?: [a-z]+){0,2}) ${AND}(?<b>${b}) \\k<what>\\b`));
+    if (rep) return out(rep.groups!, rep.index!, rep.groups!.mid);
+  }
+  return null;
+}
 /** something is left out by name (more than "than", "after": a comparison leaves nothing out) */
 const LEFT_OUT = /\b(?:other than|apart from|except|excluding|besides|everywhere but|all but|leaving out|without counting)\b|தவிர|அல்லாத/i;
 /** a sentence that goes on from the last one */
@@ -160,7 +282,9 @@ export function olderSaid(t: string): number | null {
 }
 /** "between 6 pm and 9 pm", "from 6 to 9 in the evening": the hours of the clock */
 export function clockSaid(t: string): [number, number] | null {
-  const m = t.toLowerCase().match(/\b(?:between|from)\s+(\d{1,2})(?::00)?\s*(am|pm|a\.m\.?|p\.m\.?)?\s*(?:and|to|till|until|-)\s*(\d{1,2})(?::00)?\s*(am|pm|a\.m\.?|p\.m\.?|o'?clock)?\s*(?:in the (morning|evening|afternoon|night))?/);
+  // ("10 at night and 4 in the morning" is 10 pm and 4 am)
+  t = t.toLowerCase().replace(/\b(\d{1,2})(?::00)?(?:\s*o'?clock)?\s+(?:at|in the)\s+(night|evening|afternoon|morning)\b/g, (x, h: string, p: string) => (p === "morning" ? `${h} am` : p === "night" && Number(h) < 6 ? `${h} am` : `${h} pm`));
+  const m = t.match(/\b(?:between|from)\s+(\d{1,2})(?::00)?\s*(am|pm|a\.m\.?|p\.m\.?)?\s*(?:and|to|till|until|-)\s*(\d{1,2})(?::00)?\s*(am|pm|a\.m\.?|p\.m\.?|o'?clock)?\s*(?:in the (morning|evening|afternoon|night))?/);
   if (!m || !(m[2] || m[4] || m[5])) return null;
   const pm = (x: string | undefined) => (x ? /^p/.test(x) : null);
   const part = m[5] ? m[5] !== "morning" : null;
@@ -170,6 +294,9 @@ export function clockSaid(t: string): [number, number] | null {
   const x = h(Number(m[1]), a), y = h(Number(m[3]), b);
   return Number(m[1]) <= 12 && Number(m[3]) <= 12 && x !== y ? [x, y === 0 ? 24 : y] : null;
 }
+/** "between 10 at night and 4 in the morning": the two numbers with nothing but words of time between them */
+const TIME_W = "(?:[ap]\\.?m(?![a-z])\\.?|o'?clock|st\\b|nd\\b|rd\\b|th\\b|at night|at noon|last night|yesterday|today|(?:in the |this |yesterday )?(?:morning|evening|afternoon|night)|(?:jan|feb|mar|apr|may|june?|july?|aug|sept?|oct|nov|dec)[a-z]*)";
+const CLOCK_SPAN = new RegExp(`\\b(?:between|from)\\s+\\d{1,2}(?:[:.]\\d\\d)?(?:\\s*${TIME_W})*\\s+(?:and|to|till|until)\\s+\\d{1,2}(?:[:.]\\d\\d)?(?:\\s*${TIME_W})*\\s*,?`, "gi");
 const WHY_START = /^\W*(?:(?:and|but|so|then|ok(?:ay)?|jarvis)\W+)*(?:why\b|what(?:'s| is| was) the (?:reason|cause)|reasons? (?:for|behind)|cause of)|ஏன்|எதனால்|காரணம் என்ன|^\W*yen\b|\bedhanala\b/i;
 /** kinds named in so many words inside a group the model took whole ("road accidents" is Road accident, not every road problem) */
 const WHOLE_GROUP = /\bcrimes?\b|\bflood|\bhealth\b|road (?:problems|issues)|roads and|civic|குற்ற|வெள்ள|சுகாதார/i;
@@ -242,6 +369,7 @@ export function checkPlan(p: Plan, w: World, text: string, o: { last?: Plan | nu
     if (dw) { codeTime = { said: dw, before: false }; break; }
   }
   let gap: string | null = null;
+  const opens = queries.filter((x) => x.status === "open" || x.status === "overdue" || x.measure === "open" || x.measure === "overdue");
   for (const q of queries) {
     // the fire service is no department of these records (a model once took its "FWD" for it): fire incidents, whoever handles them, and said so
     if (bySentence && q.of === "incidents" && FIRE_SERVICE.test(said) && !w.depts.some((d) => /\bfire\b/i.test(d.name))) { q.depts = []; q.group = null; q.cats = w.cats.some((c) => c.code === "FIRE_EXPLOSION") ? ["FIRE_EXPLOSION"] : q.cats; q.words = []; gap = "fire service as a department"; }
@@ -258,11 +386,28 @@ export function checkPlan(p: Plan, w: World, text: string, o: { last?: Plan | nu
       const age = q.of === "incidents" && queries.length === 1 ? olderSaid(text) ?? olderSaid(p.understood) : null;
       if (age) { q.older_days = age; if (q.time?.said && /more than|over|older|longer|beyond|at least|month|week|day/i.test(q.time.said) && !/\blast|past|yesterday|today\b/i.test(q.time.said)) q.time = null; if (!q.status) q.status = "open"; }
       else if (queries.length === 1 || !(olderSaid(text) ?? olderSaid(p.understood))) q.older_days = null;
-      // "now" is the dashboard's own window, never a backlog's 90 days
-      if (!q.time && !codeTime && !age && !q.older_days && /\b(?:right now|just now|now|currently|at the moment|at present)\b|இப்போ/i.test(text)) q.time = { said: "now", from: null, to: null, hours: null };
+      // "now" is the dashboard's own window, never a backlog's 90 days; but a backlog, or what is past its deadline, is all that is waiting now
+      const backlog = q.of === "incidents" && (BACKLOG.test(noBacklog(text)) || ((!!q.status || /[஀-௿]/.test(text) || OF_THOSE.test(text)) && BACKLOG.test(noBacklog(p.understood)))) && (queries.length === 1 || !opens.length || opens.includes(q));
+      const late = (x: Query) => x.status === "overdue" || x.measure === "overdue", timed = (x: Query) => ownTime(x) && !(x.time!.said && !x.time!.from && NOW_TIME.test(x.time!.said.trim()));
+      // ("how many are open right now, and how many of them are overdue", "and how many of those are overdue now": over the window of those)
+      const those = OF_THOSE.test(said);
+      const whole = q.of === "incidents" && late(q) && !backlog ? (queries.length > 1 ? queries : those ? o.last?.queries ?? [] : []).find((x) => x !== q && x.of === "incidents" && !late(x) && wideKey(x, "daily") !== "quarterly" && (those || !timed(x))) : undefined;
+      if (whole && timed(whole) && (!q.time || (!!q.time.said && !q.time.from && NOW_TIME.test(q.time.said.trim())))) q.time = whole.time;
+      const waiting = backlog || (q.of === "incidents" && late(q) && !whole);
+      if (waiting && q.time?.said && !q.time.from && NOW_TIME.test(q.time.said.trim())) q.time = null;
+      if (backlog && !q.status && q.measure === "count") q.status = "open";
+      const carries = !!o.last && untimed && FOLLOWS.test(text) && !nowSaidIn(text) && o.last.queries.some((x) => x.of === q.of && ownTime(x));
+      if ((backlog || (waiting && nowSaidIn(text))) && !carries && !q.time && !codeTime && !q.by && !age && !q.older_days && !q.before && q.measure !== "change") q.time = { said: WINDOW_WORDS.quarterly.en, from: null, to: null, hours: null };
+      // "has it come down since last week" is this week against the last one
+      if (queries.length === 1 && q.of === "incidents" && q.time) { const k = againstLast(text, q.time, q.before || q.measure === "change"); if (k) { q.time = { said: WINDOW_WORDS[k].en, from: null, to: null, hours: null }; q.before = true; } }
+      // a kind of jam nobody named is no limit
+      if (q.of === "traffic" && strayLevel(q, p, text, o.last ?? null, queries)) q.level = null;
+      // which limit of a share is the part, as the sentence says it
+      if (q.of === "incidents" && q.measure === "share" && !q.by) { const part = shareOf(/[஀-௿]/.test(text) ? p.understood : text, w) ?? shareOf(p.understood, w); if (part && (part === "dept" ? q.depts.length > 0 : q.sev.length > 0 && (!!q.status || !!q.from || !!q.harm || !!q.older_days))) q.part = part; }
+      if (!q.time && !codeTime && !age && !q.older_days && !waiting && /\b(?:right now|just now|now|currently|at the moment|at present)\b|இப்போ/i.test(text)) q.time = { said: "now", from: null, to: null, hours: null };
       if (!q.time && codeTime && !q.older_days) { q.time = { said: codeTime.said, from: null, to: null, hours: null }; if (codeTime.before) q.before = true; }
       // (a follow-up that names no time keeps the window of what it follows: "and in Adyar?" after a 90-day ranking was counted over 24 hours)
-      if (!q.time && !q.older_days && !codeTime && o.last && untimed && FOLLOWS.test(text)) { const l = o.last.queries.find((x) => x.of === q.of && ownTime(x)); if (l) q.time = l.time; }
+      if (!q.time && !q.older_days && !codeTime && o.last && untimed && FOLLOWS.test(text) && !(waiting && nowSaidIn(text))) { const l = o.last.queries.find((x) => x.of === q.of && ownTime(x)); if (l) q.time = l.time; }
       // a taluk only when a taluk is said; a locality's zone is the one it lies in, whatever the model wrote
       if (q.taluk && !/taluk|thaluk|வட்ட|தாலுகா/i.test(said)) q.taluk = null;
       if (q.place) { const pl = q.place.toLowerCase(); const hit = w.places.find((x) => x.zone && [x.name, ...x.aliases].some((a) => a.toLowerCase() === pl)); if (hit?.zone) q.zones = [hit.zone]; }
@@ -283,6 +428,8 @@ export function checkPlan(p: Plan, w: World, text: string, o: { last?: Plan | nu
       if (q.of === "incidents" && queries.length === 1 && !q.depts.length && q.by !== "dept") { const d = deptSaid(text, w); if (d && !negated(text, d.alias.replace(/[^a-z0-9\u0B80-\u0BFF ]/g, "")) && ((!q.cats.length && !q.group) || new RegExp(`${d.alias}\\s+(?:department|dept|board)`, "i").test(text) || / board$/.test(d.alias) || /^(?:police|போலீஸ்|காவல்)/.test(d.alias))) { q.depts = [d.code]; q.words = q.words.filter((x) => x.replace(d.alias, " ").replace(/\b(?:cases?|incidents?|complaints?|department|the)\b/g, " ").trim() !== "" && !d.alias.includes(x)); if (d.code === "GCC-ELE") q.cats = []; } }
       // the dead and the injured are counted in every case; a separate limit would only repeat it
       if ((q.measure === "deaths" || q.measure === "injured") && q.harm) q.harm = null;
+      // who is a department (never an area), when no area is said
+      if (q.of === "incidents" && q.by === "zone" && /\bwho\b|\bwhose\b|யார்|யாரு/i.test(text) && !/\b(?:areas?|zones?|wards?|where|places?|localit\w+)\b|ஏரியா|பகுதி|மண்டல|எங்க/i.test(text) && !q.depts.length) q.by = "dept";
       // one named thing split by its own kind is that thing ("Adyar by zone" is Adyar)
       if ((q.by === "zone" && q.zones.length === 1) || (q.by === "dept" && q.depts.length === 1) || (q.by === "kind" && q.cats.length === 1)) q.by = null;
       // a position, or how many, as the request says it in English
@@ -304,7 +451,7 @@ export function checkPlan(p: Plan, w: World, text: string, o: { last?: Plan | nu
       if (q.measure === "complaints" && !citizens && (q.depts.length > 0 || q.cats.length > 0 || !!q.group || q.words.length > 0)) q.measure = "count";
       if (q.from === "citizens" && !citizens) q.from = null;
       // one kind named inside a group taken whole
-      if (q.group && queries.length === 1 && !/\b(?:and|or|plus|as well as)\b|,|மற்றும்|&/i.test(said.replace(/\b(?:in|of) [^.]*$/i, " "))) {
+      if (q.group && queries.length === 1 && !/\b(?:and|or|plus|as well as)\b|,|மற்றும்|&/i.test(said.replace(CLOCK_SPAN, " ").replace(/\b(?:in|of) [^.]*$/i, " "))) {
         const c = catIn(norm(p.understood), { strict: true }) ?? catIn(norm(text), { strict: true });
         if (c && topicCats(q.group as Topic, w.cats).includes(c) && (q.group === "CRIME" ? c !== "CRIME_VIOLENT" && !/\bcrimes?\b(?! against)/i.test(text) : !["FLOOD", "HEALTH"].includes(q.group) && !WHOLE_GROUP.test(said))) { q.group = null; q.cats = [c]; }
         else if (q.group === "CRIME" && /\bwom[ae]n\b|\bgirls?\b|பெண்/i.test(said) && w.cats.some((x) => x.code === "CRIMES_AGAINST_WOMEN")) { q.group = null; q.cats = ["CRIMES_AGAINST_WOMEN"]; q.words = []; }
@@ -317,6 +464,9 @@ export function checkPlan(p: Plan, w: World, text: string, o: { last?: Plan | nu
     if (q.words.length) {
       const among = q.group ? topicCats(q.group as Topic, w.cats) : q.cats.length ? q.cats : null;
       const k = kindOfWord(q.words[0], w, among);
+      // (a whole kind's name, or a word any case may hold, is no other way of saying something narrower: "robbery" with "theft" and "stolen" beside
+      // it counted every theft in one asking and none in the next)
+      if (!k) q.words = q.words.filter((x, i) => i === 0 || (!kindOfWord(x, w, null) && !/^(?:stolen|stole|steal|crimes?|cases?|incidents?|complaints?|problems?|issues?|attack(?:ed|s)?|police|arrest(?:ed|s)?|report(?:ed|s)?)$/.test(x)));
       if (k) { q.words = []; q.group = null; q.cats = [k]; }
     }
     // the position asked, whatever the model wrote
@@ -340,6 +490,23 @@ export function checkPlan(p: Plan, w: World, text: string, o: { last?: Plan | nu
     const b: Query = { ...queries[0], by: null, per: null, rank: null, take: 5, list: false, measure: ["count", "severe", "overdue", "open", "deaths", "days_to_close", "days_open", "injured", "complaints", "resolved"].includes(queries[0].measure) ? queries[0].measure : "count", before: true };
     const oneKind = b.cats.length === 1 || b.words.length > 0, oneZone = b.zones.length === 1 || !!b.place;
     queries.splice(0, 1, { ...b, by: null, take: null }, ...(oneKind ? [] : [{ ...b, by: "kind" as const }]), { ...b, by: oneZone ? "place" as const : "zone" as const }, ...(oneKind ? [{ ...b, by: "day" as const, take: null }] : []));
+  }
+  // both ends of one ranking ("the two fastest and the two slowest"): the other end is put in when it was left out, each with its own number
+  if (bySentence && queries.length === 2 && JSON.stringify(queries[0]) === JSON.stringify(queries[1])) queries.pop();
+  if (bySentence && queries.length === 1 && queries[0].by && !queries[0].per && !queries[0].rank) {
+    const k = otherEnd(text) ?? otherEnd(p.understood), q0 = queries[0], split = ["hour", "weekday", "month", "day"].includes(q0.by!);
+    const whole = /\b(?:each|every|per|daily|day by day|trend|rank (?:all|the|them)|all the)\b|-wise\b/i.test(text) || (q0.take ?? 0) >= 60 || (split && !/\b(?:which|what) (?:day|hour|month|weekday|time)/i.test(text));
+    if (k && !whole) {
+      const raw = p.queries[0]?.take ?? null, src = otherEnd(text) ? text : p.understood;
+      const many = k.na || k.nb ? 1 : raw && raw > 1 && raw < 60 && !/\bthe two\b/i.test(src) && (takeSaid(text, raw) || takeSaid(p.understood, raw)) ? raw : new RegExp(`\\b(?:${plurals(NOUNS[q0.by!] ?? "x")})\\b`, "i").test(src) && !/\bthe two\b/i.test(src) ? 3 : 1;
+      // (top and bottom are no order: the fewest days to close is the top)
+      const LOW = /^(?:lowest|least|fewest|minimum|min|quietest|cheapest|least expensive|coldest|coolest|shortest|smallest|driest|fastest|quickest)$/, HIGH = /^(?:highest|most|maximum|max|busiest|costliest|dearest|most expensive|priciest|hottest|warmest|longest|biggest|largest|wettest|slowest)$/;
+      const first = LOW.test(k.a) && HIGH.test(k.b) ? q0.order === "least" : HIGH.test(k.a) && LOW.test(k.b) ? q0.order === "most" : !(raw != null && k.nb === raw && k.na !== raw);
+      const na = k.na ?? many, nb = k.nb ?? many;
+      q0.take = first ? na : nb;
+      const flip = q0.measure === "highest" ? "lowest" as const : q0.measure === "lowest" ? "highest" as const : q0.measure;
+      queries.push({ ...q0, measure: flip, order: q0.order === "most" ? "least" : "most", take: first ? nb : na });
+    }
   }
   // one request twice is one
   const seen = new Set<string>();
@@ -367,7 +534,7 @@ export const planKey = (p: Plan, key: PeriodKey): PeriodKey => p.queries.reduce<
 
 /** A plan read back from a screen's slots (a click, Back, a refresh), or null. */
 export function planFromSlots(x: unknown): Plan | null {
-  const r = PlanSchema.safeParse(x);
+  const r = KeptPlan.safeParse(x);
   return r.success && r.data.queries.length ? r.data : null;
 }
 

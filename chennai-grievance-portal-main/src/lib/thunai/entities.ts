@@ -545,7 +545,7 @@ export function briefTurn(text: string, w: World): BriefTurn | null {
   if (loc && loc.zone == null) slots.name = loc.name;
   // a place of the Corporation's own list that the data cannot place in a zone ("Chetpet police report", Tamil "தி நகர்") is said the same way, never dropped (RC-02, audit-understanding-10)
   else if (!loc && !zone && e.kind !== "zone") { const u = unplacedPlace(text, w, e); if (u) slots.name = u; }
-  // today is held by the console's last 24 hours (the briefing tool's window); any other span is counted over its own dates (screens.ts spanBrief)
+  // today is the console's Daily (the briefing tool's window); any other span is counted over its own dates (screens.ts spanBrief)
   const own = needsDates(spec) && !(spec.kind === "day" && spec.back === 0);
   return { kind: "screen", conf: r.conf, via: r.via, slots: { ...slots, period: periodIn(tn) ?? keyOf(spec) ?? "daily", ...(own ? { span: spec } : {}), fresh: true } };
 }

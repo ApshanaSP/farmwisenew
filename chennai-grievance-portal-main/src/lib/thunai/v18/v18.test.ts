@@ -292,9 +292,16 @@ describe("dates as speech writes them", () => {
     // the records begin 28 May: the 4 days from 30 May have a window before that is not all held
     expect(windowOf({ kind: "days", from: { day: 30, month: 4, year: 2026 }, to: { day: 2, month: 5, year: 2026 } }, "weekly", NOW)).toMatchObject({ prevHeld: false });
     expect(windowOf(hoursSpec(48), "weekly", NOW)).toMatchObject({ prevHeld: true });
-    // "today" is the dashboard's Daily window, set against the 24 hours before (25 Nov); the calendar day so far against the same hours before
+    // "today" is the dashboard's Daily window: from 12 AM, set against the same hours of yesterday (26 Nov, lib/period/day.ts)
     const today = windowOf({ kind: "day", back: 0 }, "daily", NOW);
-    expect([today.rolling, today.hours, today.custom]).toEqual([true, 24, false]);
+    expect([today.rolling, today.partial, today.custom, today.from, today.label.en]).toEqual([false, true, false, `${NOW.slice(0, 10)} 00:00:00`, "today"]);
+    expect([today.prev.from, today.prev.to, today.prev.label.en]).toEqual(["2026-11-23 00:00:00", today.to.replace("2026-11-24", "2026-11-23"), "yesterday by this time"]);
+    // in the small hours, still the day that began at 12 AM yesterday
+    const night = windowOf(null, "daily", "2026-11-24 01:30:00");
+    expect([night.from, night.to, night.prev.from, night.prev.to, night.label.en, night.prev.label.en]).toEqual(["2026-11-23 00:00:00", "2026-11-24 01:30:01", "2026-11-22 00:00:00", "2026-11-23 01:30:01", "since the start of yesterday", "the day before by this time"]);
+    // "the last 24 hours" is those hours
+    const h24 = windowOf(turnWhen("in the last 24 hours", null, NOW), "daily", NOW);
+    expect([h24.rolling, h24.hours, h24.custom, h24.label.en]).toEqual([true, 24, true, "last 24 hours"]);
     const sofar = windowOf({ kind: "days", from: { day: 24, month: 10, year: 2026 }, to: { day: 24, month: 10, year: 2026 } }, "daily", NOW);
     expect(sofar.prev).toMatchObject({ from: "2026-11-23 00:00:00" });
     expect(sofar.prev.label.en).toMatch(/^the day before, to the same hour/);

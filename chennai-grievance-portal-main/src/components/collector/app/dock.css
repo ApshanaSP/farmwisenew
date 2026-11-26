@@ -1,0 +1,76 @@
+/* The dock (26 Nov 2026): Jarvis, its clock and Ask District IQ, side by side in one small row at the bottom right. Every page keeps a
+   strip of --dock-h free for it along the bottom, so nothing on any page lies under it: the fixed pages end above it, the grown map and its
+   key end above it, and on a phone it is a bar of its own above the page tabs. Windows (80 and up), the chat (90) and the search (130) open
+   over it. Loaded last. */
+.dic{--dock-h:46px}
+.dic .cdock{position:fixed;right:16px;bottom:6px;z-index:70;display:flex;align-items:center;justify-content:flex-end;gap:8px;height:34px;max-width:calc(100vw / var(--z,1) - 32px)}
+.dic .cdock .jvf-wrap{position:static;z-index:auto;flex:none;flex-direction:row;align-items:center;gap:8px}
+.dic .cdock .jvf-pair{gap:6px}
+.dic .cdock .jvf{height:34px;padding:0 13px 0 4px;gap:7px;border-radius:17px;font-size:13px;white-space:nowrap;box-shadow:0 4px 12px -6px rgba(8,47,73,.35)}
+.dic .cdock .jvf-core{width:26px;height:26px}
+.dic .cdock .jvf-core::before{inset:5px}
+.dic .cdock .jvf-core b{width:7px;height:7px}
+.dic .cdock .jvf-q{width:34px;height:34px;box-shadow:0 4px 12px -6px rgba(8,47,73,.35)}
+.dic .cdock .jvf-q svg{width:16px;height:16px}
+.dic .cdock .jvf-q em{top:-5px;right:-5px}
+.dic .cdock .jvf-note{flex:none;max-width:none;padding:5px 10px;white-space:nowrap;box-shadow:none;border:1px solid var(--line)}
+.dic .cdock .ask-fab.ask-fab-v2{position:relative;right:auto;bottom:auto;height:34px;min-width:34px;padding:0 13px 0 4px;gap:8px;border-radius:17px;font-size:13px;
+  box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 4px 12px -6px rgba(6,40,25,.5)}
+.dic .cdock .ask-fab.ask-fab-v2 .ask-ico{width:26px;height:26px}
+.dic .cdock .ask-fab.ask-fab-v2 .ask-label kbd{padding:3px 5px;font-size:10.5px}
+.dic .cdock .ask-fab.ask-fab-v2 .ask-badge{top:-5px;right:-4px;min-width:18px;height:18px;padding:0 5px}
+
+/* the strip every page leaves free (a page scaled to the window: its grid ends above it) */
+.dic.fit .app:has(>.cdock) .body{padding-bottom:var(--dock-h)}
+/* Jarvis's bar takes the same place while it is open: the page ends above the bar at rest (its cards and a long caption may still rise over it),
+   its own button gives way to the bar's "Close Jarvis", and Ask District IQ stays at the right of the bar (hud.css) */
+html.jv-hud .dic.fit .app:has(>.cdock) .body{padding-bottom:calc(var(--hud-room,92px) / var(--z,1))}
+html.jv-hud .dic .cdock .jvf-pair{display:none}
+html.jv-hud .dic.fit .cdock{bottom:calc(22px / var(--z,1))}
+
+/* messages sit in the same strip, at its left: they never cover the top bar or the filters */
+.dic .toasts{left:16px;right:auto;top:auto;bottom:6px;width:max-content;max-width:min(calc(38vw / var(--z,1)),calc(100vw / var(--z,1) - 400px));align-items:flex-start}
+.dic .toast{max-width:100%;min-height:34px;padding:7px 12px;border-radius:12px;font-size:13px}
+.dic .toasts{pointer-events:none}
+.dic .toast{pointer-events:auto}
+.dic .toast>span{min-width:0}
+html.jv-hud .dic .toasts{bottom:calc((var(--hud-dock-h,74px) + 22px) / var(--z,1))}
+html:has(.hud-ans) .dic .toasts,html:has(.hud-pill) .dic .toasts{left:16px}
+
+/* a phone: the dock is a bar of its own above the page tabs (60 px), full width on the page's own surface, so the page scrolls behind a bar and not
+   behind loose buttons; the page's end clears both */
+.dic:not(.fit) .cdock{left:0;right:0;bottom:calc(60px + env(safe-area-inset-bottom, 0px));height:48px;max-width:none;padding:0 12px;background:var(--surface);border-top:1px solid var(--line);z-index:59}
+.dic:not(.fit) .cdock .jvf-wrap{bottom:auto;right:auto}
+.dic:not(.fit) .cdock .jvf-note{position:absolute;right:12px;bottom:calc(100% + 6px)}
+.dic:not(.fit) .app:has(>.cdock) .body{padding-bottom:calc(122px + env(safe-area-inset-bottom, 0px))}
+.dic:not(.fit) .toasts{left:12px;right:12px;bottom:calc(116px + env(safe-area-inset-bottom, 0px));width:auto;max-width:none}
+@media (max-width:760px){
+  /* the words shorten before a button leaves the screen (Tamil's are long) */
+  .dic .cdock .ask-fab.ask-fab-v2{flex:0 1 auto;min-width:0;padding:0 13px 0 4px}
+  .dic .cdock .ask-fab.ask-fab-v2 .ask-label{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .dic .cdock .ask-fab.ask-fab-v2 .ask-label kbd{display:none}
+}
+@media (max-width:480px){
+  .dic .cdock .jvf{padding:0 13px 0 4px}
+  .dic .cdock .jvf>span{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto}
+}
+
+/* a window opened while Jarvis is on ends above its bar: the bar used to lie over the window's last rows and buttons */
+html.jv-hud .dic.fit .modal{top:calc((100% - var(--hud-room,92px) / var(--z,1)) / 2);max-height:calc(100% - var(--hud-room,92px) / var(--z,1) - 24px)}
+html.jv-hud .dic.fit .modal.wide{height:calc(100% - var(--hud-room,92px) / var(--z,1) - 24px)}
+html.jv-hud .dic.fit .iv{height:min(760px,calc(100% - var(--hud-room,92px) / var(--z,1) - 24px))}
+html.jv-hud .dic.fit .pal{max-height:calc(88% - var(--hud-room,92px) / var(--z,1) - 12px)}
+
+/* the site's "Please wait" notice (components/activity) sits in the strip too, in its middle: at the top it lay over the page tabs */
+html:has(.dic.fit .cdock) #diq-notice{top:auto;bottom:6px;min-height:34px;padding:6px 14px 6px 10px;font-size:13px;transform:translate(-50%,6px)}
+html:has(.dic.fit .cdock) #diq-notice:is([data-state="busy"],[data-state="ok"],[data-state="err"]){transform:translate(-50%,0)}
+html.jv-hud:has(.dic.fit .cdock) #diq-notice{bottom:calc(var(--hud-room,92px) + 2px)}
+/* with Jarvis on, its bar says what is being done and the line along the top moves: no second "Please wait" over the page (a result or a fault still shows) */
+html.jv-hud:has(.dic .cdock) #diq-notice[data-state="busy"]{visibility:hidden}
+html:has(.dic:not(.fit) .cdock) #diq-notice{top:auto;bottom:calc(116px + env(safe-area-inset-bottom, 0px))}
+
+/* the map filling the window (its full screen) ends above the strip: both buttons, and the windows they open, stay in reach over it */
+.dic .app:has(>.cdock) .card.map-full{z-index:65;bottom:var(--dock-h)}
+html.jv-hud .dic .app:has(>.cdock) .card.map-full{bottom:calc(var(--hud-room,92px) / var(--z,1))}
+/* on a phone the page scrolls behind Jarvis's bar: its end clears the bar too */
+html.jv-hud .dic:not(.fit) .app:has(>.cdock) .body{padding-bottom:calc(136px + var(--hud-dock-h,150px) + env(safe-area-inset-bottom, 0px))}

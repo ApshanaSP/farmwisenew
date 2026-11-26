@@ -577,6 +577,38 @@ export function applyDesk(db: DB): { titles: number; dropped: number } {
   return { titles: titles.size, dropped: drop.length };
 }
 
+// -------------------------------------------------------------- newspapers --
+
+/**
+ * 26 Nov: how many NEWSPAPERS carried an incident, and which. The pipeline's outlet_count counts articles (980 of 980 checked), so "in more than one
+ * newspaper" held incidents one paper wrote about twice. Counted here from the linked articles and the rest of their story, each news medium once
+ * (as the incident pop-up lists them); the gap finder's copy is put right too.
+ */
+export function newspapers(db: DB) {
+  if (!has(db, "incidents", "outlet_count") || !has(db, "documents", "linked_incident_id") || !has(db, "documents", "publisher")) return;
+  if (!has(db, "incidents", "outlet_names")) db.exec("ALTER TABLE incidents ADD COLUMN outlet_names TEXT");
+  // the reports of an incident are asked for on every page that names its papers: found by key, not by reading every report (1.9 s for twenty incidents)
+  db.exec("CREATE INDEX IF NOT EXISTS ix_documents_incident ON documents (linked_incident_id)");
+  if (has(db, "documents", "story_id")) db.exec("CREATE INDEX IF NOT EXISTS ix_documents_story ON documents (story_id)");
+  const docs = db.prepare("SELECT linked_incident_id AS inc, story_id AS story, publisher, publisher_domain AS domain, publisher_tier AS tier FROM documents WHERE publisher IS NOT NULL").all() as Row[];
+  const paper = (d: Row) => (isNewsMedia(d.publisher, d.domain, d.tier) ? String(d.publisher).trim() : "");
+  const byStory = new Map<string, Set<string>>(), storiesOf = new Map<string, Set<string>>(), by = new Map<string, Set<string>>();
+  for (const d of docs) { const p = paper(d); if (p && d.story) (byStory.get(String(d.story)) ?? byStory.set(String(d.story), new Set()).get(String(d.story))!).add(p); }
+  for (const d of docs) {
+    if (!d.inc) continue;
+    const id = String(d.inc), p = paper(d);
+    const names = by.get(id) ?? by.set(id, new Set()).get(id)!;
+    if (p) names.add(p);
+    if (d.story) (storiesOf.get(id) ?? storiesOf.set(id, new Set()).get(id)!).add(String(d.story));
+  }
+  for (const [id, st] of storiesOf) for (const x of st) for (const p of byStory.get(x) ?? []) by.get(id)!.add(p);
+  tx(db, () => {
+    const up = db.prepare("UPDATE incidents SET outlet_count = ?, outlet_names = ? WHERE incident_id = ?");
+    for (const [id, names] of by) up.run(names.size, [...names].sort().join(", "), id);
+    if (has(db, "gaps", "outlet_count")) db.exec("UPDATE gaps SET outlet_count = COALESCE((SELECT i.outlet_count FROM incidents i WHERE i.incident_id = gaps.incident_id), outlet_count)");
+  });
+}
+
 // --------------------------------------------------------------- clusters --
 
 function clusters(db: DB) {
@@ -622,5 +654,6 @@ onBuild("news-media-only@2", newsMedia); // @2: its articles and events are unli
 onBuild("report-kinds@4", reportKinds); // @2: season death tallies are roundups (R-04); @3-4: drives, statements, lake levels, trade news
 onBuild("news-sanity@7", newsSanity);
 onBuild("news-desk@1", (db) => { applyDesk(db); }); // the AI news desk's verdicts kept so far; later ones are laid over as they come (newsdesk.ts)
+onBuild("newspapers@2", newspapers); // after the articles and incidents that leave the build have left it
 onBuild("website-cases@1", websiteCases); // paper petitions and online complaints (lib/manu/cases.ts): before the clusters, so they group too
 onBuild("incident-clusters@4", clusters);

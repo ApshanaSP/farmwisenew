@@ -5,9 +5,10 @@
  * chip in the dialog can override detection.
  *
  * Detection is rules only (Tamil-script share plus a small romanised-Tamil lexicon), so
- * it is instant, free and testable. No model is asked. This module has no imports, so it
- * runs anywhere (server, browser, `node --test`).
+ * it is instant, free and testable. No model is asked. Its only import is the pure table of
+ * the Daily window's words, so it runs anywhere (server, browser, `node --test`).
  */
+import { DAY_WORDS, dayWords } from "../period/day";
 
 export type Lang = "en" | "ta" | "tanglish";
 export type LangChoice = Lang | "auto";
@@ -157,11 +158,19 @@ export const TEXT = {
 } satisfies Record<string, Strings>;
 
 export const PERIOD_LABEL: Record<"daily" | "weekly" | "monthly" | "quarterly", Strings> = {
-  daily: { en: "Last 24 hours", ta: "கடந்த 24 மணி நேரம்", tanglish: "Last 24 hours" },
+  // the calendar day since 12 AM (lib/period/day.ts); periodLabelIn() gives the words for a time
+  daily: { en: DAY_WORDS.en.label, ta: DAY_WORDS.ta.label, tanglish: DAY_WORDS.tg.label },
   weekly: { en: "Last 7 days", ta: "கடந்த 7 நாட்கள்", tanglish: "Last 7 days" },
   monthly: { en: "Last 30 days", ta: "கடந்த 30 நாட்கள்", tanglish: "Last 30 days" },
   quarterly: { en: "Last 90 days", ta: "கடந்த 90 நாட்கள்", tanglish: "Last 90 days" }
 };
+
+/** A period's label at a time: "Today (since 12 AM)", from 12 AM to 6 AM "Since 12 AM yesterday". */
+export function periodLabelIn(p: keyof typeof PERIOD_LABEL, lang: Lang, now?: string | null): string {
+  if (p !== "daily") return PERIOD_LABEL[p][lang];
+  const w = dayWords(now);
+  return (lang === "ta" ? w.ta : lang === "tanglish" ? w.tg : w.en).label;
+}
 
 /** Example questions for the empty dialog and for refusals, one set per language. */
 export const EXAMPLES: Record<Lang, string[]> = {

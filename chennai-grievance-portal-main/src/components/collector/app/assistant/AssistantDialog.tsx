@@ -34,6 +34,13 @@ const LANG_OPTS: { v: LangChoice; l: string }[] = [{ v: "auto", l: "Auto" }, { v
 const uid = () => Math.random().toString(36).slice(2);
 const SESSION_KEY = "diq-assistant-session";
 
+/** the window a question with no time in it is answered over: the one the console shows */
+const PERIOD_CHIP: Record<"en" | "ta" | "tanglish", Record<string, string>> = {
+  en: { daily: "Today (since 12 AM)", weekly: "Last 7 days", monthly: "Last 30 days", quarterly: "Last 90 days" },
+  ta: { daily: "இன்று (நள்ளிரவு 12 மணி முதல்)", weekly: "கடந்த 7 நாட்கள்", monthly: "கடந்த 30 நாட்கள்", quarterly: "கடந்த 90 நாட்கள்" },
+  tanglish: { daily: "Innaikku (12 AM la irundhu)", weekly: "Last 7 naal", monthly: "Last 30 naal", quarterly: "Last 90 naal" }
+};
+
 export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab }: { c: AssistantHost; open: boolean; onClose: () => void;
   /** the Collector's chatbot has a second tab: what was asked of Jarvis */
   tab?: "chat" | "jarvis"; onTab?: (t: "chat" | "jarvis") => void }) {
@@ -138,7 +145,15 @@ export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab 
   const togglePast = () => { if (wide) { setWide(false); return; } setShowPast((v) => !v); loadPast(); };
   useEffect(() => { if (open && wide) loadPast(); }, [open, wide, loadPast]);
 
-  useEffect(() => { thread.current?.scrollTo({ top: thread.current.scrollHeight, behavior: "smooth" }); stick.current = true; }, [items]);
+  // a new answer is read from its start: the question goes to the top of the thread (it used to end at the answer's buttons, the words above out of sight)
+  useEffect(() => {
+    const el = thread.current;
+    if (!el) return;
+    const asked = items[items.length - 1]?.role === "assistant" ? [...el.querySelectorAll<HTMLElement>(".aq-row.me")].pop() : null;
+    if (asked) { el.scrollTo({ top: Math.max(0, el.scrollTop + asked.getBoundingClientRect().top - el.getBoundingClientRect().top - 8), behavior: "smooth" }); stick.current = false; return; }
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    stick.current = true;
+  }, [items]);
   // while an answer's words appear, the thread follows them, unless the Collector has scrolled up to read
   const stick = useRef(true);
   useEffect(() => {
@@ -318,7 +333,7 @@ export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab 
     stop(); setItems([]); session.current = null; lastAnswer.current = null; input.current?.focus();
     try { localStorage.removeItem(SESSION_KEY); } catch { /* storage blocked */ }
   };
-  const scopeChips = [t.defaultPeriod, c.zoneName ?? t.allZones, c.deptName ?? t.allDepts, c.taluk ? `${c.talukName(c.taluk)} taluk` : null].filter(Boolean) as string[];
+  const scopeChips = [PERIOD_CHIP[lang][c.period] ?? t.defaultPeriod, c.zoneName ?? t.allZones, c.deptName ?? t.allDepts, c.taluk ? `${c.talukName(c.taluk)} taluk` : null].filter(Boolean) as string[];
   const fresh = status ? t.fresh(status.asOf.slice(0, 16), status.feedsOk, status.feedsTotal) : "";
   const hour = new Date().getHours();
   const part = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";

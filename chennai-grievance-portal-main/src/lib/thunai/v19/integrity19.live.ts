@@ -87,6 +87,22 @@ it("the analyst's figures are the dashboard's", async () => {
     const g = await ask(q, "daily");
     for (const x of [...g.groups].sort((a, b) => b.value - a.value).slice(0, 3)) if (x.inside) same(`${JSON.stringify(q)} ${x.label} opened from 24 hours`, (await runQuery(x.inside, { world, key: "daily", now })).rowsTotal, x.value);
   }
+  // what percent of the severe are unresolved is of the severe, and of one department's severe, of those
+  for (const depts of [[], ["POL-GCP"]]) {
+    const sv = (await ask({ sev: ["Severe"], depts }, "monthly")).total!, op = (await ask({ sev: ["Severe"], status: "open", depts }, "monthly")).total!;
+    same(`share of severe that are open ${depts}`, (await ask({ sev: ["Severe"], status: "open", measure: "share", depts }, "monthly")).total, Math.round((op / sv) * 1000) / 10);
+  }
+  {
+    const n30 = async (x: Partial<Query>) => (await ask(x, "monthly")).total!;
+    const sh = async (x: Partial<Query>) => (await ask({ ...x, measure: "share" }, "monthly")).total;
+    const pc = (a: number, b: number) => Math.round((a / b) * 1000) / 10;
+    const S = { sev: ["Severe"] as Query["sev"] };
+    same("share of the open that are severe", await sh({ ...S, status: "open", part: "sev" }), pc(await n30({ ...S, status: "open" }), await n30({ status: "open" })));
+    same("share of all that are severe and open", await sh({ ...S, status: "open", part: "sev+state" }), pc(await n30({ ...S, status: "open" }), await n30({})));
+    same("share of the severe that are the police's", await sh({ ...S, depts: ["POL-GCP"], part: "dept" }), pc(await n30({ ...S, depts: ["POL-GCP"] }), await n30(S)));
+    same("share of cases with deaths that are severe", await sh({ ...S, harm: "deaths", part: "sev" }), pc(await n30({ ...S, harm: "deaths" }), await n30({ harm: "deaths" })));
+    same("share of the police's that are open", await sh({ depts: ["POL-GCP"], status: "open" }), pc(await n30({ depts: ["POL-GCP"], status: "open" }), await n30({ depts: ["POL-GCP"] })));
+  }
   // last night is 6 PM to 6 AM, whatever hour it is asked
   for (const at of ["22:02:00", "09:00:00"]) {
     const d = now.slice(0, 10), y = new Date(Date.parse(`${d}T00:00:00Z`) - 864e5).toISOString().slice(0, 10);

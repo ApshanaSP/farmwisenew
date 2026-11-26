@@ -232,10 +232,15 @@ const STEPS: Record<WarmStep, () => Promise<unknown>> = {
     await tools.warmInsights(["daily", "weekly"]);
   },
   snapshot: async () => {
+    // (26 Nov: only the older planner reads THE DISTRICT NOW; with the brain answering, its heavy refresh is not kept warm)
+    if ((await import("@/lib/brain")).brainOn()) return null;
     const snap = await import("@/lib/thunai/v11/snapshot");
     await snap.warmSnapshot();
   },
   prompt: async () => {
+    // 26 Nov: the brain answers first (lib/brain): its prompt is the one to keep warm, and the older reader's, analyst's and planner's are not used
+    const brain = await import("@/lib/brain");
+    if (brain.brainOn()) return brain.warmBrain(await (await import("@/lib/thunai/world")).serverWorld(), false, true);
     const claude = await import("@/lib/ai/claude");
     if (!claude.claudeConfigured()) return null;
     const [round, world] = await Promise.all([import("@/lib/thunai/round"), import("@/lib/thunai/world")]);

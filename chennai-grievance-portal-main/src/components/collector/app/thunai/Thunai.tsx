@@ -178,6 +178,13 @@ const MAP_LANE_MS = 8000;
 const MAP_SLOW: Record<Lang, string> = { en: "The map is still working on that. Its answer will show on the map.", ta: "வரைபடம் இன்னும் அதைப் பார்க்கிறது. பதில் வரைபடத்தில் தெரியும்." };
 /** A line the model wrote beside a plan is said only if it holds no figure: the figures come from code. */
 const noFigure = (t?: string | null) => (t && !figuresIn(t).length ? t : undefined);
+/**
+ * 26 Nov: an order that needs no understanding (at most seven words, starting with the verb of a press or a move, asking nothing): the console's own
+ * controls take it at once. Everything else is the brain's. ("show the severe cases", "open the first news" are questions of the data: the brain's)
+ */
+const ORDER_VERB = /^(?:(?:please|ok(?:ay)?|now|jarvis|hey)[\s,]+)*(?:go(?:\s+to|\s+back)?|close|hide|press|click|tap|scroll|zoom|switch|turn|select|untick|tick|type|next|previous|back|stop|undo|play|pause|replay|expand|collapse|clear|reset|mute|unmute|louder|quieter|minimi[sz]e|maximi[sz]e|full\s*screen|repeat|export|cancel|dark|light|open\s+(?:the\s+)?(?:menu|map|bell|overview|briefing|trends|environment|studio|data studio|workspaces?|sources|settings)|read\s+(?:it|this|that|them|these|aloud|out)(?:\s+(?:out|aloud|again))?)\b/i;
+const ASKS_SOMETHING = /\b(?:what|which|where|why|how|who|when|whose|tell|give|list|count|compare|explain|summar|many|much|any)\b|\?/i;
+export const isShortOrder = (t: string): boolean => { const x = t.trim(); return x.split(/\s+/).length <= 7 && ORDER_VERB.test(x) && !ASKS_SOMETHING.test(x.replace(/[?]\s*$/, "")) && !/\band\b/i.test(x); };
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const reduced = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 const store = { get: (k: string) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* not saved */ } } };
@@ -386,6 +393,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
   const [brain, setBrain] = useState<{ by: "ai" | "rules" | "instant"; model: string | null; ms: number } | null>(null);
   /** the same, readable at once by the code that runs next in this turn (the decision record's lane) */
   const brainRef = useRef(brain);
+  /** 26 Nov: the server's brain (lib/brain) answers first (thunai/world says so when Jarvis opens) */
+  const brainOnRef = useRef(false);
   const setBrainNow = (b: NonNullable<typeof brain>) => { brainRef.current = b; setBrain(b); };
   const [pendingB, setPendingB] = useState<{ text: string; steps: Step[]; heard: string; lang: Lang; act?: () => void } | null>(null);
   const pendingBRef = useRef(pendingB);
@@ -891,6 +900,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       case "handsfree": setMode(step.on ? "on" : "off"); return null; // eslint-disable-line @typescript-eslint/no-use-before-define
       case "workspace": {
         if (step.op === "save") { const id = await c.saveWorkspace(step.name ?? "Jarvis view"); return id ? line("saved", lang, { name: step.name }) : null; }
+        if (step.id) { await c.openSavedWorkspace(step.id); return null; }
         try {
           const r = await fetch("/api/collector/workspaces");
           const j = await r.json();
@@ -2125,6 +2135,10 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       out(lang === "ta" ? "அதற்கு முதலில் \"ஜார்விஸ்\" என்று சொல்லுங்கள்." : "Say Jarvis first for that.", lang, "ready");
       return true;
     };
+    // 26 Nov (the owner: "do not act rule based"): with the brain on (lib/brain, Claude with every tool), the sentence goes to it as it was said.
+    // Only orders that need no understanding stay here: a short press, a move, the open screen's own buttons, stop and repeat, a yes or a no
+    const brainFirst = brainOnRef.current && !original;
+    const shortOrder = !brainFirst || isShortOrder(said);
     // v10 (reading, JARVIS_V10.md 4.5 and 4.9 feature 1): a reply to the news brief's offer (offer10.ts): "show them on the map" (Ask the Map),
     // "draft a note to the officer" (the tray: level C, never sent), "follow it" (the follow flow and its yes), "read it fully", "what do we have
     // on this?" (news to ground truth); one pending offer, forgotten on any other turn
@@ -2155,6 +2169,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // few words when only half sure; a position said by ear ("the fast news") is read as the position when a list is on screen
     if (!original && understandV10()) {
       const f10 = front10(said);
+      if (brainFirst && f10.lane && f10.lane.lane !== "wait" && !(f10.lane.lane === "control" && shortOrder && !f10.lane.which) && !(f10.lane.lane === "map" && shortOrder && f10.lane.cmd.op !== "ask" && f10.lane.cmd.op !== "city")) f10.lane = null;
+      // (the brain reads the words as they were heard)
+      if (brainFirst) f10.said = said;
       if (f10.lane?.lane === "wait") {
         // nothing said: the rest of the sentence is joined to it when it comes (joinCut), and Jarvis keeps listening
         cutRef.current = { text: said, at: Date.now() };
@@ -2302,7 +2319,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     }
     // v8 (the owner's examples 1 and 2): a story named by its topic, place or outlet ("open the Supreme Court news on Palikan"), or a short
     // news question ("any news on the cyclone?"): found on the server among the screen's stories and the dashboard's stored news, then read
-    if (!original && v8) {
+    if (!original && v8 && !brainFirst) {
       const onScreen8 = newsOnScreen(stageRef.current, buildState());
       const n8 = newsLane8(said, { news: onScreen8, world: worldRef.current, lang: ulang ?? "en", lastFound: lastFound.current,
         panel: onNewsPanel(stageRef.current, buildState()), cases: caseInFocus(stageRef.current, buildState(), onScreen8.incident, said) });
@@ -2330,7 +2347,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         return;
       }
     }
-    if (!original) {
+    if (!original && !brainFirst) {
       // a mission, a brief or a memory request is never the news lane's (the independent check, 17 Nov: "prepare for heavy rain tonight")
       const na = intentMarker(said) || missionIntent(said, worldRef.current) ? null : newsAsk(said, newsOnScreen(stageRef.current, buildState()), { v7: answersV7() });
       if (na) {
@@ -2346,7 +2363,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (stageRef.current && !original) {
       const lc0 = localStageCommand(said);
       // (v19: on the analyst's screen a command that asks for other data is the analyst's)
-      const lc = lc0 && asksAnalyst(lc0, stageRef.current, !!stageFilterRef.current) ? null : lc0;
+      const lc = lc0 && (asksAnalyst(lc0, stageRef.current, !!stageFilterRef.current) || (brainFirst && (!shortOrder || lc0.op === "filter" || lc0.op === "sort"))) ? null : lc0;
       // v14 (21 Nov review 13, routing 1): an in-place city screen has no Stage mounted, so its close, back, full screen and table act on its
       // view and its corner card (they dropped the hidden screen, or fullscreened nothing, and nothing anyone could see happened); "details",
       // "full screen" and "expand it" open the Stage on it, as the card's Details tap does (cityopen.ts inPlaceCommand)
@@ -2390,7 +2407,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       const lg: Lang = ulang ?? opts.lang ?? (/[஀-௿]/.test(said) ? "ta" : listenLang);
       const instant = () => setBrainNow({ by: "instant", model: null, ms: 0 });
       const t0 = performance.now();
-      const im = intentMarker(said);
+      const im = brainFirst ? null : intentMarker(said);
       if (im?.intent === "remember" && im.rest) { if (needsName("B", lg)) return; instant(); gateB([{ a: "remember", text: im.rest }], said, lg); return; }
       if (im?.intent === "forget") { if (needsName("B", lg)) return; instant(); gateB([{ a: "forget", all: im.rest === "all" }], said, lg); return; }
       if (im?.intent === "recall") {
@@ -2403,7 +2420,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       }
       if (asksWhatToday(said)) { instant(); await whatToday(lg); decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: performance.now() - t0 }); return; } // eslint-disable-line @typescript-eslint/no-use-before-define
       // a mission's templates know the brief too: without a place it is the Collector's brief; "brief me on TANGEDCO" is the planner's
-      const mi = im?.intent === "brief" ? null : missionIntent(said, worldRef.current);
+      const mi0 = im?.intent === "brief" ? null : missionIntent(said, worldRef.current);
+      // (a brief is the brain's: it covers the whole day; a mission's plan card, get ready for heavy rain, stays the console's own)
+      const mi = brainFirst && mi0?.template === "brief" ? null : mi0;
       if ((im?.intent === "brief" && !im.rest) || (mi?.template === "brief" && !mi.place)) {
         instant(); await briefMe(lg, true); // eslint-disable-line @typescript-eslint/no-use-before-define
         decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: performance.now() - t0 });
@@ -2447,7 +2466,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // and "the most congested"; the same reading sends the rules' fallback below to the city screen)
     const ca = cityAsk(said, { last: lastCityNow() });
     const cityAsFilter = !!ca && rules.kind === "do" && rules.steps.some((x) => x.a === "view" && !!x.view.cat);
-    if (rules.kind === "do" && rules.confidence >= 0.9 && planRisk(rules.steps) === "A" && ((isPlainMove(rules.steps) && !asksBeyondMove(said)) || isNavCommand(said, rules.steps)) && !cityAsFilter) {
+    if (rules.kind === "do" && shortOrder && rules.confidence >= 0.9 && planRisk(rules.steps) === "A" && ((isPlainMove(rules.steps) && !asksBeyondMove(said)) || isNavCommand(said, rules.steps)) && !cityAsFilter) {
       traceDecided("rules");
       setBrainNow({ by: "instant", model: null, ms: 0 });
       await run(rules.steps, rules.lang, said, "rules", rules.note?.[rules.lang]);
@@ -2460,7 +2479,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const heardAs = original ?? said;
     // "complete this data" with a list on the screen means those rows, not whatever the console's filters hold
     const openRows = (stageRef.current?.blocks ?? []).flatMap((b) => (b.kind === "CaseList" ? b.rows.map((r) => r.id) : []));
-    if (openRows.length && quickScreen(said, worldRef.current)?.recipe === "complete") { await directStage("complete", { ids: openRows }, ackFor(said, rules.lang) || (rules.lang === "ta" ? "தரவை முழுமையாக்குகிறேன்" : "Completing the data"), rules.lang); return; } // eslint-disable-line @typescript-eslint/no-use-before-define
+    if (!brainFirst && openRows.length && quickScreen(said, worldRef.current)?.recipe === "complete") { await directStage("complete", { ids: openRows }, ackFor(said, rules.lang) || (rules.lang === "ta" ? "தரவை முழுமையாக்குகிறேன்" : "Completing the data"), rules.lang); return; } // eslint-disable-line @typescript-eslint/no-use-before-define
     // the rules could not settle it: the planner's turn (the trace's lane, before its call is made)
     traceDecided("planner");
     // what it is doing shows in the bar at once; it is not said aloud (a spoken "one moment" was cut off mid-word whenever the
@@ -2509,9 +2528,12 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       const lang = ag.lang;
       // a line the model wrote can hold no figure at all: the gate on the chunks has none to allow (nor does the turn's memory)
       // (a frame's reply, "how do you know?", reads the open screen's own provenance: it may say the screen's figures, nothing else)
-      if (ag.kind === "chat") { earcon("done"); remember(heardAs, "answered in words", { result: noFigure(ag.reply) }); out(ag.reply ?? "", lang, "ready", ag.note?.startsWith("frame:") && stageRef.current ? speakableFigures(stageRef.current, lang) : NO_FIGURES); return; }
-      if (ag.kind === "refuse") { earcon("blocked"); audit(heardAs, [], "refused"); remember(heardAs, "refused", { result: noFigure(ag.reply) }); out(ag.reply ?? "", lang, "ready", NO_FIGURES); return; }
-      if (ag.kind === "clarify") { ask({ question: ag.reply ?? "", lang, heard: heardAs, choices: ag.options.map((o) => ({ label: o.label, en: o.label, request: o.request })) }, NO_FIGURES, true); return; }
+      // (26 Nov: the brain's words were checked on the server against what it read: their own figures may be said)
+      const brainSaid = ag.note === "brain" ? allowedSet(figuresIn(`${ag.reply ?? ""} ${ag.say ?? ""}`).map((f) => f.value).filter(Number.isFinite)) : null;
+      const keptLine = (t: string | null) => (brainSaid ? t : noFigure(t));
+      if (ag.kind === "chat") { earcon("done"); remember(heardAs, "answered in words", { result: keptLine(ag.reply) }); out(ag.reply ?? "", lang, "ready", brainSaid ?? (ag.note?.startsWith("frame:") && stageRef.current ? speakableFigures(stageRef.current, lang) : NO_FIGURES)); return; }
+      if (ag.kind === "refuse") { earcon("blocked"); audit(heardAs, [], "refused"); remember(heardAs, "refused", { result: keptLine(ag.reply) }); out(ag.reply ?? "", lang, "ready", brainSaid ?? NO_FIGURES); return; }
+      if (ag.kind === "clarify") { ask({ question: ag.reply ?? "", lang, heard: heardAs, choices: ag.options.map((o) => ({ label: o.label, en: o.label, request: o.request })) }, brainSaid ?? NO_FIGURES, true); return; }
       const risk = planRisk(ag.steps);
       const opRisk: "A" | "B" | "C" = ag.stageOp?.op === "save" || ag.stageOp?.op === "pin" ? "B" : ag.stageOp?.op === "draft" ? "C" : "A";
       if (needsName(risk > opRisk ? risk : opRisk, lang)) return;
@@ -2537,7 +2559,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         await applyStageOp(ag.stageOp, lang);
         return;
       }
-      await run(ag.steps, lang, heardAs, "ai", noFigure(ag.reply));
+      await run(ag.steps, lang, heardAs, "ai", keptLine(ag.reply) ?? undefined);
       return;
     }
     // the agent could not answer: the built-in rules, then the analyst (the v1 planner asked the same busy provider again,
@@ -3520,7 +3542,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     lastHeardAt.current = Date.now();
     void loadMemory();
     // asked each time Jarvis opens: the server also works out the district's overviews then, ahead of the first question
-    fetch("/api/collector/thunai/world").then((r) => (r.ok ? r.json() : null)).then((j) => { if (j && !ref.cats.length) setRef(j); }).catch(() => undefined);
+    fetch("/api/collector/thunai/world").then((r) => (r.ok ? r.json() : null)).then((j) => { if (j) brainOnRef.current = j.brain === true; if (j && !ref.cats.length) setRef(j); }).catch(() => undefined);
     // v10: the day's names in the news (storms, people, bodies), for names said by ear; asked each time Jarvis opens
     if (understandV10()) fetch("/api/collector/thunai/lexicon").then((r) => (r.ok ? r.json() : null)).then((j: { entities?: Entity10[] } | null) => { if (j?.entities) lexRef.current = j.entities; }).catch(() => undefined);
     warmVoices();

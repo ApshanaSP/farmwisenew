@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { collectorSession, failed } from "@/lib/collector/guard";
 import { referenceWorld } from "@/lib/thunai/world";
 import { markActive } from "@/lib/thunai/keepwarm";
+import { brainOn, warmBrain } from "@/lib/brain";
+import { serverWorld } from "@/lib/thunai/world";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +16,9 @@ export async function GET() {
     // started here held the server's thread 40-49 s while the Collector was speaking (the report, first-question-latency RC1). The
     // keep-warm (lib/thunai/keepwarm.ts) does that work on its own schedule, one step at a time, while the console is in use: this says it is.
     markActive("jarvis");
-    return NextResponse.json(referenceWorld());
+    // 26 Nov: whether the brain (lib/brain) answers first; the browser then sends every sentence to it instead of its own word lanes
+    if (brainOn()) void serverWorld().then((w) => warmBrain(w)).catch(() => undefined);
+    return NextResponse.json({ ...referenceWorld(), brain: brainOn() });
   } catch (err) {
     return failed(err, "Thunai's vocabulary");
   }

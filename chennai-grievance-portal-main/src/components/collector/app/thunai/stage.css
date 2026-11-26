@@ -533,3 +533,20 @@ button.st-kpi:active { transform: translateY(1px); }
 .st-index button { height: 28px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--panel); color: var(--text-2); font-size: 12.5px; font-weight: 600; }
 .st-index button:hover { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
 @media (max-width: 640px) { .st-index { padding: 0 14px 8px; flex-wrap: nowrap; overflow-x: auto; } .st-index button { flex: none; } }
+
+/* 26 Nov: the brain's tables and timelines */
+.st-any td { vertical-align: top; overflow-wrap: anywhere; }
+.st-any th { white-space: nowrap; }
+.st-any th small { font-weight: 400; color: var(--text-3); }
+.st-any tbody tr:hover { background: color-mix(in srgb, var(--accent, #1f7a4d) 6%, transparent); }
+.st-any tr.drill:focus-visible { outline: 2px solid var(--accent, #1f7a4d); outline-offset: -2px; }
+.st-tl { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 0; }
+.st-tl li { position: relative; display: grid; grid-template-columns: 14px minmax(120px, 168px) 1fr; gap: 10px; padding: 8px 0; }
+.st-tl li::before { content: ""; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: var(--line); }
+.st-tl li:first-child::before { top: 14px; }
+.st-tl li:last-child::before { bottom: auto; height: 14px; }
+.st-tl .dot { position: relative; z-index: 1; width: 12px; height: 12px; margin-top: 4px; border-radius: 50%; background: var(--accent, #1f7a4d); border: 2px solid var(--surface, #fff); }
+.st-tl time { font-size: 12.5px; color: var(--text-2); font-variant-numeric: tabular-nums; padding-top: 2px; }
+.st-tl p { margin: 0; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
+.st-tl small { color: var(--text-3); font-size: 12px; }
+@media (max-width: 640px) { .st-tl li { grid-template-columns: 14px 1fr; } .st-tl time { grid-column: 2; } .st-tl li > div { grid-column: 2; } }

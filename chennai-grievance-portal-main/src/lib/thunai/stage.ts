@@ -10,7 +10,7 @@ import { z } from "zod";
 
 const num = z.number().finite();
 const str = (n = 300) => z.string().max(n);
-const Bi = z.object({ en: str(600), ta: str(900) });
+const Bi = z.object({ en: str(1600), ta: str(2400) });
 export type Bilingual = z.infer<typeof Bi>;
 
 export const CaseRow = z.object({
@@ -87,7 +87,7 @@ export const Block = z.discriminatedUnion("kind", [
     drills: z.array(Drill.nullable()).max(40).optional() }),
   z.object({ kind: z.literal("Heat"), id: str(40), ...ABOUT, title: str(160), rows: z.array(str(80)).max(12), cols: z.array(str(80)).max(10), cells: z.array(z.array(num)).max(12) }),
   z.object({ kind: z.literal("Brief"), id: str(40), ...ABOUT, title: str(160), points: z.array(z.object({ text: str(400), ta: str(400).optional(), incidentId: str(80).nullable(), drill })).max(12) }),
-  z.object({ kind: z.literal("Answer"), id: str(40), ...ABOUT, title: str(160), text: str(900), facts: z.array(z.object({ label: str(160), value: num, unit: str(20).nullable() })).max(12) }),
+  z.object({ kind: z.literal("Answer"), id: str(40), ...ABOUT, title: str(160), text: str(2400), facts: z.array(z.object({ label: str(160), value: num, unit: str(20).nullable() })).max(12) }),
   z.object({ kind: z.literal("Drafts"), id: str(40), ...ABOUT, title: str(120) }),
   /** what stands out: each finding with its method, how many values it rests on, and a caveat (stats.ts) */
   z.object({ kind: z.literal("Findings"), id: str(40), ...ABOUT, title: str(160), items: z.array(z.object({ title: str(240), value: num.nullable(), unit: str(30).nullable(), method: str(200), n: num, caveat: str(240), tone: z.enum(["bad", "warn", "ok"]), drill })).max(8) }),
@@ -95,7 +95,12 @@ export const Block = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("Filled"), id: str(40), ...ABOUT, title: str(160), cols: z.array(z.object({ key: str(30), label: str(60) })).max(8),
     rows: z.array(z.object({ id: str(80), title: str(240), cells: z.array(z.object({ v: z.union([num, str(160)]).nullable(), src: str(160).nullable(), filled: z.boolean() })).max(8) })).max(30),
     filled: num, left: num, cannot: z.array(z.object({ col: str(40), n: num, why: str(160) })).max(8) }),
-  z.object({ kind: z.literal("Note"), id: str(40), ...ABOUT, text: str(400) })
+  z.object({ kind: z.literal("Note"), id: str(40), ...ABOUT, text: str(400) }),
+  /** 26 Nov (lib/brain): any table of a result, what happened step by step with its times, and several lines over one time */
+  z.object({ kind: z.literal("Table"), id: str(40), ...ABOUT, title: str(160), cols: z.array(z.object({ key: str(40), label: str(60), unit: str(20).nullable(), num: z.boolean() })).min(1).max(10), total: num,
+    rows: z.array(z.object({ id: str(80).nullable(), url: str(2000).nullable(), cells: z.array(z.union([num, str(310)]).nullable()).max(10) })).max(60) }),
+  z.object({ kind: z.literal("Timeline"), id: str(40), ...ABOUT, title: str(160), items: z.array(z.object({ t: str(40), text: str(300), by: str(120).nullable(), stage: str(60).nullable() })).max(40) }),
+  z.object({ kind: z.literal("Lines"), id: str(40), ...ABOUT, title: str(160), unit: str(40).nullable(), labels: z.array(str(40)).max(60), series: z.array(z.object({ name: str(60), values: z.array(num).max(60) })).min(1).max(6) })
 ]);
 export type BlockT = z.infer<typeof Block>;
 export type BlockKind = BlockT["kind"];
@@ -197,6 +202,7 @@ export function idsOf(b: BlockT): string[] {
     case "Compare": return b.sides.map((s) => s.label);
     case "CaseDetail": return [b.incident.id];
     case "MapView": return b.points.map((p) => p.id);
+    case "Table": return b.rows.map((r, i) => r.id ?? `row-${i + 1}`);
     default: return [];
   }
 }

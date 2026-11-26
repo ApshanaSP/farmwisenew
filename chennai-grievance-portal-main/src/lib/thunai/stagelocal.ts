@@ -233,6 +233,9 @@ export function stageDigest(m: StageModel, focus: number | null = null): string 
     if (b.kind === "NewsReader") return `news: ${b.items.slice(0, 6).map((x, i) => `${i + 1}=${x.title.slice(0, 40)}`).join("; ")}`;
     if (b.kind === "Ranking") return `ranking: ${b.items.slice(0, 6).map((x) => `${d.recipe === "ask" ? `#${x.rank} ` : ""}${x.label.slice(0, d.recipe === "ask" ? 40 : 24)}`).join(", ")}`;
     if (b.kind === "Compare") return `compare: ${b.sides.map((s) => s.label).join(" vs ")}`;
+    if (b.kind === "Table") return `table "${b.title.slice(0, 40)}" (${b.cols.map((c) => c.label).join(", ").slice(0, 90)}): ${b.rows.slice(0, 5).map((r, i) => `${i + 1}=${r.id ? `${r.id} ` : ""}${r.cells.filter((c) => c != null).slice(0, 3).join(" ").slice(0, 60)}`).join("; ")}`;
+    if (b.kind === "Timeline") return `timeline "${b.title.slice(0, 40)}": ${b.items.slice(0, 4).map((x) => `${x.t} ${x.text.slice(0, 40)}`).join("; ")}`;
+    if (b.kind === "Lines") return `lines "${b.title.slice(0, 40)}": ${b.series.map((x) => x.name).join(", ").slice(0, 90)}`;
     return b.kind;
   }).join(" | ");
   return JSON.stringify({ recipe: d.recipe, title: d.title.slice(0, 80), slots: Object.fromEntries(Object.entries(d.slots).filter(([k, v]) => k !== "plan" && v != null && !(Array.isArray(v) && !v.length))), filter: m.filter, views: m.views, focus, items }).slice(0, 1400);
@@ -414,6 +417,9 @@ export function toCsv(d: StageDocT): string {
     else if (b.kind === "Compare") table(b.title, ["measure", ...b.sides.map((s) => s.label)], b.metrics.map((m) => [m.label, ...b.sides.map((s) => s.values[m.key])]));
     else if (b.kind === "Trend") table(b.title, ["period", b.unit], b.labels.map((l, i) => [l, b.values[i]]));
     else if (b.kind === "Chart") table(b.title, ["label", b.unit ?? "value"], b.labels.map((l, i) => [l, b.values[i]]));
+    else if (b.kind === "Table") table(b.title, b.cols.map((c) => `${c.label}${c.unit ? ` (${c.unit})` : ""}`), b.rows.map((r) => r.cells));
+    else if (b.kind === "Timeline") table(b.title, ["when", "step", "what", "by"], b.items.map((x) => [x.t, x.stage, x.text, x.by]));
+    else if (b.kind === "Lines") table(b.title, ["period", ...b.series.map((x) => x.name)], b.labels.map((l, i) => [l, ...b.series.map((x) => x.values[i] ?? null)]));
     else if (b.kind === "Heat") table(b.title, ["", ...b.cols], b.rows.map((r, i) => [r, ...b.cells[i]]));
     else if (b.kind === "NewsReader") table(b.title, ["#", "headline", "source", "time", "incident"], b.items.map((x, i) => [i + 1, x.title, x.source, x.t, x.incidentId]));
     else if (b.kind === "Brief") table(b.title, ["#", "point"], b.points.map((p, i) => [i + 1, p.text]));

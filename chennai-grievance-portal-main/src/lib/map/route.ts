@@ -233,10 +233,11 @@ function rangeOf(spec: PeriodSpec, now: string): Period | "unheld" {
   return { kind: "range", from: wallPlus(now, -hours + 1 / 3600), to: now, label: { en: span.label.en, ta: span.label.ta }, said: spec };
 }
 
+const SINCE_YESTERDAY_MAP = /\bsince yesterday\b|நேற்றிலிருந்து|\bnethu(?:la)? irundhu\b/;
 /**
  * Period words: "today", "this week", "last 10 days", "இந்த மாதம்", "indha vaaram". Read by the one reader of Jarvis and Ask District IQ
  * (src/lib/period/read.ts, fixall3-map-today), so a phrase means one window on the whole console:
- * - "today" is the dashboard's Daily window (the last 24 hours), "yesterday" the calendar day before, "last week / month / quarter" the calendar one before;
+ * - "today" is the dashboard's Daily window (since 12 AM, lib/period/day.ts), "the last 24 hours" those hours back, "yesterday" the calendar day before, "last week / month / quarter" the calendar one before;
  * - "this week", "last 7 days", "this month" are the console's rolling windows, "last 10 days" that much back, "last 36 hours" 36 hours back;
  * - "in September", "on 20 Oct", "since 1 October", "the last week of September": those calendar bounds (`now` is the map's clock; without it null);
  * - "right now": the current state (no reporting window); "two weeks ago", "last year": unheld, a time the records cannot answer;
@@ -257,14 +258,16 @@ export function periodOf(text: string, now?: string | null): SaidPeriod {
     return { kind: "range", from: wallPlus(now, -24 * LIMITS.days + 1 / 3600), to: wallPlus(now, -age.hours),
       label: { en: `reported more than ${age.n} ${unit[0]}${age.n === 1 ? "" : "s"} ago`, ta: `${age.n} ${unit[1]}க்கு முன் பதிவானவை` }, age_hours: age.hours };
   }
+  // "since yesterday": the 24 hours back (a count; "what changed since yesterday" is the change's own)
+  if (SINCE_YESTERDAY_MAP.test(t)) return { kind: "last_days", days: 1, offset: 0 };
   const s = readPeriod(text);
   switch (s.kind) {
-    case "window": case "compare": return { kind: "last_days", days: KEY_DAYS[s.key], offset: 0 };
+    case "window": case "compare": return s.key === "daily" ? { kind: "day", offset: 0 } : { kind: "last_days", days: KEY_DAYS[s.key], offset: 0 };
     case "hours":
       if (s.hours % 24 === 0) return { kind: "last_days", days: Math.min(LIMITS.days, s.hours / 24), offset: 0 };
       return now ? rangeOf(s, now) : null;
-    // today is the dashboard's Daily window, the last 24 hours (25 Nov 2026): the map's count is the tile's
-    case "day": return s.back === 0 ? { kind: "last_days", days: 1, offset: 0 } : { kind: "day", offset: s.back };
+    // today is the dashboard's Daily window, since 12 AM (26 Nov 2026): the map's count is the tile's
+    case "day": return { kind: "day", offset: s.back };
     case "last": return { kind: s.unit, offset: 1 };
     case "now": return NOW_STATE.test(text) ? "now" : null;
     case "month": case "days": case "since": case "holiday": case "lastWeekOf": return now ? rangeOf(s, now) : null;
@@ -285,7 +288,7 @@ export function periodOf(text: string, now?: string | null): SaidPeriod {
   if (n) return { kind: "last_days", days: Math.min(LIMITS.days, Number(n[1] ?? n[2])), offset: 0 };
   const mo = t.match(/\b(?:last|past)\s+(\d{1,2})\s+months?\b/);
   if (mo) return { kind: "last_days", days: Math.min(LIMITS.days, Number(mo[1]) * 30), offset: 0 };
-  if (/\btoday\b|இன்று|innaiki|inniki|indru/.test(t)) return { kind: "last_days", days: 1, offset: 0 };
+  if (/\btoday\b|இன்று|innaiki|inniki|indru/.test(t)) return { kind: "day", offset: 0 };
   if (/\b(last 24 hours|past 24 hours|since yesterday)\b/.test(t)) return { kind: "last_days", days: 1, offset: 0 };
   if (/\blast week\b|கடந்த வாரம்/.test(t)) return { kind: "week", offset: 1 };
   if (/\blast month\b|கடந்த மாதம்/.test(t)) return { kind: "month", offset: 1 };
@@ -344,12 +347,14 @@ export const isComparison = (text: string): boolean => readPeriod(text).kind ===
 const REFERENCE = /\b(?:than|from|vs\.?|versus|compared (?:to|with)|against|relative to|over)\s+(?:the\s+)?(?:last|previous|past)\s+(?:week|month|quarter)\b|\b(?:than|from|vs\.?|versus|compared (?:to|with)|against)\s+yesterday\b|(?:வாரத்தை|மாதத்தை|நேற்றை)\s*விட|\b(?:vaaratha|maasatha|nethai|nethaiya)\s+vida\b/i;
 
 /**
- * The two windows of a change, of equal length, the one before ending where this one starts (read.ts's comparison). A calendar period so far
- * (today since midnight, this calendar week) is compared as its rolling window, never against the whole period before it; so is a period named
+ * The two windows of a change, of equal length, the one before ending where this one starts (read.ts's comparison). Today (the console's Daily,
+ * since 12 AM) is set against the same hours of yesterday; another calendar period so far (this calendar week) is compared as its rolling window,
+ * never against the whole period before it; so is a period named
  * as the one compared against ("up from last month": this month's window against last month's). A whole calendar period said as the window
  * ("did flooding go up last month") is compared with the calendar period before it.
  */
 export function changeWindows(said: Period | null, reference = false): { now: Period; before: Period } {
+  if (said?.kind === "day" && (said.offset === 0 || reference)) return { now: { kind: "day", offset: 0 }, before: { kind: "day", offset: 1, so_far: true } };
   const now: Period = !said || said.kind === "range" ? { kind: "last_days", days: 7, offset: 0 }
     : isCalendar(said) && (said.offset === 0 || reference) ? { kind: "last_days", days: ROLLING_DAYS[said.kind], offset: 0 } : said;
   return { now, before: { ...now, offset: (now as { offset: number }).offset + 1 } as Period };

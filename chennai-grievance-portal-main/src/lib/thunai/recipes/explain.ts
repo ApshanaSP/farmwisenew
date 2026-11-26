@@ -285,7 +285,7 @@ async function explainChange(c: RecipeCtx, dim: Dim, key: string): Promise<Recip
   // the kind of incident the part is about: the part itself, or the kind that moved most inside a zone or a department
   const kindCode = dim === "cat" ? key : lead ? lead.key : null;
   const rainy = !!kindCode && RAIN_KINDS.has(kindCode) && seg.delta > 0;
-  // a gauge reads the last 24 hours: said beside a 24-hour window only; a longer window is set against its rain days
+  // a gauge reads the last 24 hours, said as that: beside the Daily window only; a longer window is set against its rain days
   const rain = rainy && c.s.period === "daily" ? await rainNear(c, { lat: null, lon: null }) : null;
   const rainDays = num(sd.rainDays), rainDaysBefore = num(sd.rainDaysPrev);
   const wetter = rainy && !rain && rainDays != null && rainDaysBefore != null && rainDays > rainDaysBefore;
@@ -337,7 +337,7 @@ async function explainChange(c: RecipeCtx, dim: Dim, key: string): Promise<Recip
   }
   const why: Bilingual[] = [];
   if (u.flag) why.push(bi(`that's ${u.flag === "high" ? "above" : "below"} the usual range`, `இது வழக்கமான அளவை விட ${u.flag === "high" ? "அதிகம்" : "குறைவு"}`));
-  if (rain && rain.value >= 10) why.push(bi(`${spoken(rain.value)} mm of rain fell at ${rain.name} in the same 24 hours`, `அதே 24 மணி நேரத்துல ${spoken(rain.value)} மி.மீ மழை பெஞ்சிருக்கு`));
+  if (rain && rain.value >= 10) why.push(bi(`${spoken(rain.value)} mm of rain fell at ${rain.name} in the last 24 hours`, `கடந்த 24 மணி நேரத்துல ${spoken(rain.value)} மி.மீ மழை பெஞ்சிருக்கு`));
   else if (wetter) why.push(bi(`the window had ${spoken(rainDays as number)} rain days against ${spoken(rainDaysBefore as number)} before`, `இந்தக் காலத்துல ${spoken(rainDays as number)} மழை நாள், முன்னாடி ${spoken(rainDaysBefore as number)}`));
   else if (linked && up) why.push(bi(`${spoken(linked)} came during or after rain`, `${spoken(linked)} மழை நேரத்துலயோ அதுக்கு அப்புறமோ வந்திருக்கு`));
   if (why.length) { const j = why.slice(0, 2); en.push(`${cap(j.map((x) => x.en).join(", and "))}.`); ta.push(`${j.map((x) => x.ta).join("; ")}.`); }

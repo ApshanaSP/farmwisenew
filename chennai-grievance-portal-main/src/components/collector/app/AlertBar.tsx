@@ -70,7 +70,7 @@ export function AlertBar({ now, compact }: { now: string; compact?: boolean }) {
                 <ul className="alb-news">
                   {d.lane.news.slice(0, 6).map((n) => (
                     <li key={n.id}>
-                      {n.url ? <a href={n.url} target="_blank" rel="noreferrer">{n.titleEn ?? n.title}</a> : <span>{n.titleEn ?? n.title}</span>}
+                      {n.url ? <a href={n.url} target="_blank" rel="noreferrer" title={n.titleEn ?? n.title}>{n.titleEn ?? n.title}</a> : <span>{n.titleEn ?? n.title}</span>}
                       <small>{n.publisher ?? "News"} · {fmtWhen(n.t, now)}{n.chennaiUnder ? " · names Chennai" : ""}</small>
                     </li>
                   ))}
@@ -115,7 +115,7 @@ function AlertChip({ d, b, admin, now, open, setOpen, onHide }: { d: Payload; b:
   }, [open, setOpen]);
   return (
     <span className="alc-w" data-pop>
-      <button ref={btn} className={`alc t-${tone}${open ? " open" : ""}`} onClick={() => setOpen((o) => !o)} aria-expanded={open} title={b ? `${b.title}: ${b.line}` : admin?.line}>
+      <button ref={btn} className={`alc t-${tone}${open ? " open" : ""}`} onClick={() => setOpen((o) => !o)} aria-expanded={open} title={b ? `${b.title}: ${b.line} For the whole district: the filters do not apply.` : admin?.line}>
         <span className="alc-dot" aria-hidden="true" /><I n={tone === "red" ? "alert" : tone === "admin" ? "info" : "cloud"} />
         {/* the event's name only ("Cyclone Murasu"); what each source says opens on a click */}
         <b>{(b?.title ?? admin?.title ?? "").split(" · ")[0]}</b><I n="chevd" />
@@ -144,7 +144,7 @@ function AlertChip({ d, b, admin, now, open, setOpen, onHide }: { d: Payload; b:
                 <ul className="alb-news">
                   {d.lane.news.slice(0, 5).map((n) => (
                     <li key={n.id}>
-                      {n.url ? <a href={n.url} target="_blank" rel="noreferrer">{n.titleEn ?? n.title}</a> : <span>{n.titleEn ?? n.title}</span>}
+                      {n.url ? <a href={n.url} target="_blank" rel="noreferrer" title={n.titleEn ?? n.title}>{n.titleEn ?? n.title}</a> : <span>{n.titleEn ?? n.title}</span>}
                       <small>{n.publisher ?? "News"} · {fmtWhen(n.t, now)}</small>
                     </li>
                   ))}

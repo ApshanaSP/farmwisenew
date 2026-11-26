@@ -23,6 +23,8 @@ export async function GET(req: NextRequest) {
         cat: parseCat(p.get("cat")),
         taluk: parseTaluk(p.get("taluk")),
         place: readPlace(p.get("place")),
+        // the Open complaints tile's list: only incidents a citizen complained about
+        complaints: p.get("complaints") === "1",
         status: readStatus(p.get("status")),
         q: (p.get("q") || "").trim().slice(0, 80) || null,
         sort: sort === "sev" || sort === "c" || sort === "r" || sort === "d" ? sort : "t",

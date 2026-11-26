@@ -15,7 +15,7 @@ import path from "path";
 import type { DatabaseSync as DB } from "node:sqlite";
 
 export type Org = "groq" | "gemini" | "bedrock" | "azure" | "anthropic";
-export type Lane = "named" | "engaged" | "ambient" | "planner" | "router" | "hedge" | "tts" | "eval" | "warm" | "aide" | "other";
+export type Lane = "named" | "engaged" | "ambient" | "planner" | "router" | "hedge" | "tts" | "eval" | "warm" | "aide" | "brain" | "other";
 
 export interface Limits { rpm?: number; rpd?: number; tpm?: number; tpd?: number; ash?: number; asd?: number; minAudioS?: number }
 
@@ -27,6 +27,8 @@ export interface Limits { rpm?: number; rpd?: number; tpm?: number; tpd?: number
  * owner's spend ceiling (claudebudget.ts, JARVIS_CLAUDE_BUDGET_USD) is the guard on money; these only stop a runaway loop.
  */
 const CLAUDE_DAY: Limits = { rpm: 50, rpd: 2000, tpm: 400_000, tpd: 8_000_000 };
+/** 26 Nov: the brain (lib/brain) asks Haiku two to four times a question, so its day holds more calls; tokens read from the cache count a tenth there */
+const CLAUDE_HAIKU: Limits = { ...CLAUDE_DAY, rpm: 160, rpd: 12_000 };
 /**
  * v7: that day cap was set against Opus's prices; on Haiku 5.5 it stops Claude at under US$0.10 of spend. JARVIS_CLAUDE_DAY_TOKENS and
  * JARVIS_CLAUDE_DAY_REQUESTS raise it for a run (unset: the cap above). The owner's spend ceiling (claudebudget.ts) holds every call whatever.
@@ -40,7 +42,7 @@ const claudeDayFlags = (): Limits => {
 export const LIMITS: Record<string, Limits> = {
   "anthropic/claude-opus-5-5": CLAUDE_DAY,
   "anthropic/claude-sonnet-5-5": CLAUDE_DAY,
-  "anthropic/claude-haiku-5-5": CLAUDE_DAY,
+  "anthropic/claude-haiku-5-5": CLAUDE_HAIKU,
   // Groq, one organisation across all keys; x-ratelimit-limit-tokens said 8000 on the Phase 0 probe (see BUILD_LOG)
   "groq/qwen/qwen3.8-27b": { rpm: 60, rpd: 1000, tpm: 8000, tpd: 200_000 },
   "groq/openai/gpt-oss-20b": { rpm: 30, rpd: 1000, tpm: 8000, tpd: 200_000 },
@@ -176,7 +178,10 @@ export class Ledger {
   room(org: Org, model: string, need: { tokens?: number; audioS?: number } = {}): Room {
     const l = this.limit(org, model), now = this.clock();
     const left = { rpm: Infinity, rpd: Infinity, tpm: Infinity, tpd: Infinity, ash: Infinity, asd: Infinity };
-    const min = this.spent(org, model, 60_000), hour = this.spent(org, model, 3_600_000), day = this.spent(org, model, DAY);
+    const min = this.spent(org, model, 60_000), hour = this.spent(org, model, 3_600_000), day0 = this.spent(org, model, DAY);
+    // 26 Nov: an evaluation run never uses up the day of the console the Collector is using (the owner's spend ceiling holds it all the same)
+    const ev = org === "anthropic" ? this.spent(org, model, DAY, "eval") : null;
+    const day = ev ? { ...day0, requests: day0.requests - ev.requests, tokens: day0.tokens - ev.tokens } : day0;
     const tok = need.tokens ?? 0, audio = need.audioS != null ? Math.max(l.minAudioS ?? 0, need.audioS) : 0;
     if (l.rpm != null) left.rpm = l.rpm - min.requests;
     if (l.rpd != null) left.rpd = l.rpd - day.requests;

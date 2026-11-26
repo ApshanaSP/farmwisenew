@@ -124,7 +124,8 @@ export function fromWire(w: WirePlan): Plan {
       case "hotspot": return { op: "hotspot", as: s.as, of: s.of ?? "" };
       case "compare": return { op: "compare", as: s.as, of: s.of ?? "", a: areaIn(s, "area") ?? { kind: "zone", id: 0 }, b: areaIn(s, "b") ?? { kind: "zone", id: 0 } };
       case "change": return { op: "change", as: s.as, of: s.of ?? "", now: period ?? { kind: "last_days", days: 7, offset: 0 },
-        before: cal ? ({ kind: cal.kind, offset: Math.round(s.before_offset ?? cal.offset + 1) } as CalendarPeriod)
+        // (today so far is set against the same hours of yesterday, never against the whole of it)
+        before: cal ? ({ kind: cal.kind, offset: Math.round(s.before_offset ?? cal.offset + 1), ...(cal.kind === "day" && cal.offset === 0 ? { so_far: true } : {}) } as CalendarPeriod)
           : { kind: "last_days", days: Math.round(s.before_days ?? s.period_days ?? 7), offset: Math.round(s.before_offset ?? 1) } };
       case "rank": return { op: "rank", as: s.as, of: s.of ?? "", by: s.by === "zone" || s.by === "taluk" ? s.by : "ward", order: s.order === "fall" ? "fall" : "rise" };
       case "speed": return { op: "speed", as: s.as, of: s.of ?? "", by: s.by === "zone" || s.by === "taluk" || s.by === "category" || s.by === "dept" ? s.by : "ward", order: s.order === "slow" ? "slow" : "fast" };

@@ -7,6 +7,7 @@ import type { Insights } from "@/lib/collector/insights";
 import type { Stories } from "@/lib/collector/storyai";
 import type { DayBrief } from "@/lib/collector/aibrief";
 import type { PeriodConflicts, StoryConflicts } from "@/lib/collector/conflicts";
+import type { ConflictScope } from "@/lib/collector/conflictscope";
 import type { Nearby, NearbyEvent } from "@/lib/collector/nearby";
 import type { MapGeo } from "@/lib/collector/geo";
 import { PAGE_FEEDS, freshnessLine } from "@/lib/collector/freshness";
@@ -20,6 +21,7 @@ import type { Plan } from "@/lib/map/plan";
 import { BriefingPage, GapsBody, PatternBody, ReviewBody, TrendsPage, mdToHtml, type Pattern } from "./Insights";
 import { IncidentView } from "./Detail";
 import { BriefingBook } from "./BriefingBook";
+import { DeptSummaryBody } from "./DeptSummary";
 import { AlertBar } from "./AlertBar";
 import { RainBand, type RehearsalOpen } from "./rehearsal/RainBand";
 import { DEV_RAIN_API, LIVE_RAIN_API, type RainApi, type RainStart } from "./rehearsal/rainLayer";
@@ -62,6 +64,9 @@ import "./nearby.css";
 import "./motionfx.css";
 import "./overview-map.css";
 import "./shell2.css";
+import "./briefing.css";
+import "./clear.css";
+import "./dock.css";
 import ConfirmHost from "@/components/security/Confirm";
 const SecurityPanel = dynamic(() => import("@/components/security/SecurityPanel"), { ssr: false });
 // The friend's Command Centre look (navy bar, ocean accent) is off: it overrides the FarmWise green. To try it, import
@@ -75,9 +80,11 @@ const Studio = dynamic(() => import("./studio/Studio"), { ssr: false, loading: (
 const PERIOD_KEYS: Period[] = ["daily", "weekly", "monthly", "quarterly"];
 const PERIOD_WORD: Record<Period, string> = { daily: "Daily", weekly: "Weekly", monthly: "Monthly", quarterly: "Quarterly" };
 const PERIOD_HINT: Record<Period, string> = {
-  daily: "Daily: the last 24 hours, up to now", weekly: "Weekly: incidents reported in the last 7 days",
+  daily: "Daily: since 12 AM, up to now (until 6 AM the day before goes on)", weekly: "Weekly: incidents reported in the last 7 days",
   monthly: "Monthly: incidents reported in the last 30 days", quarterly: "Quarterly: incidents reported in the last 90 days"
 };
+/** the query of the district-wide pages' parts: one fixed window, whatever the Overview's period (30 days; Trends' locations to review) */
+const DISTRICT_QS = "period=monthly";
 const FIT_W = 1366;
 const FIT_H = 680;
 export type PageKey = "overview" | "briefing" | "trends" | "environment" | "studio";
@@ -85,6 +92,7 @@ const PAGE_TITLE: Record<PageKey, string> = { overview: "Overview", briefing: "B
 
 export type ListPreset = Partial<{ dept: string; sev: string; status: string; q: string; sort: string; dir: number; scope: string; cat: string; taluk: string;
   /** "unlocated" | "nozone" | "notaluk": incidents with no exact place */ place: string;
+  /** "1": only incidents with a citizen complaint */ complaints: string;
   /** ignore the dashboard's zone filter (lists opened from the district-wide pages) */ anyZone: boolean }>;
 export interface DeptNav { code: string; name: string; head?: string | null; open: number; n: number; severe: number; unverified: number }
 type ModalState =
@@ -92,6 +100,7 @@ type ModalState =
   | { kind: "zones" | "depts" | "export" | "news" | "workspace" | "customize"; title: string }
   | { kind: "sources"; title: string; tab?: "sources" | "add" | "audit"; url?: string }
   | { kind: "contact"; title: string; dept: Row; contacts: Row[] }
+  | { kind: "dept"; title: string; code: string }
   | { kind: "text"; title: string; md: string }
   | { kind: "item"; title: string; item: Row }
   | { kind: "story"; title: string; story: Story }
@@ -159,6 +168,8 @@ export interface Console {
   openStory: (s: Story) => void;
   openZones: () => void;
   openDepts: () => void;
+  /** one department's summary: figures, charts, cases, news and what is due, for the console's period, zone, taluk and category */
+  openDept: (code: string) => void;
   openFeeds: () => void;
   openContact: (dept: Row, contacts: Row[]) => void;
   /** an item from a source the Collector added: its text, category, place and source link */
@@ -180,8 +191,9 @@ export interface Console {
   stories: Stories | null;
   /** the key points of the period and scope, written by AI: null while loading, { brief: null } when no model answered */
   dayBrief: { brief: DayBrief | null } | null;
-  /** the period's news stories whose outlets disagree (conflicts.ts): null while loading */
-  conflicts: PeriodConflicts | null;
+  /** the period's news stories whose outlets disagree (conflicts.ts): null while loading. `scope` (under a filter): which of them are linked
+   * to an incident inside it, and which have no incident on record (conflictscope.ts) */
+  conflicts: (PeriodConflicts & { scope?: ConflictScope }) | null;
   /** a story whose outlets disagree: its incident or its reports, with the disagreements on top */
   openConflict: (s: StoryConflicts) => void;
   /** the reports of a story whose outlets disagree (its news pop-up) */
@@ -413,7 +425,10 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
       const on = w >= 700 && h >= 380;
       const raw = Math.min(w / FIT_W, h / FIT_H);
       const z = on ? Math.max(0.5, Math.min(1.3, raw > 1 && raw < 1.08 ? 1 : raw)) : 1;
-      setFit({ on, z: Math.round(z * 1000) / 1000, w, h });
+      const zoom = Math.round(z * 1000) / 1000;
+      setFit({ on, z: zoom, w, h });
+      // Jarvis's bar is drawn outside the zoomed console: it reads the zoom to keep clear of the dock (hud.css)
+      document.documentElement.style.setProperty("--diq-z", String(zoom));
     };
     f();
     setLayoutState(loadLayout());
@@ -459,11 +474,12 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   }, [qs, reloadKey, toast]);
 
   // briefing, trends and markets load when a page needs them, each only its own part (insights.ts InsightPart)
-  // the news-only list opens from page 1's snapshot too, so it loads the briefing part when that modal is open
-  const needIns = (page !== "overview" && page !== "studio") || modal?.kind === "gaps";
+  const needIns = page !== "overview" && page !== "studio";
   const part = page === "trends" ? "trends" : page === "environment" ? "environment" : "briefing";
-  // Trends and Environment & markets are district-wide: they ignore the zone, taluk and department filters
-  const insQs = `${page === "trends" || page === "environment" ? `period=${period}` : qs}&part=${part}`;
+  // Trends and Environment & markets are district-wide: no filter applies, the Overview's period included (their windows are their own:
+  // Trends' "Locations needing review" is always the last 30 days, the window its words say)
+  const partKey = useCallback((p: "briefing" | "trends" | "environment") => `${p === "briefing" ? qs : DISTRICT_QS}&part=${p}`, [qs]);
+  const insQs = partKey(part);
   // each page's data, kept once loaded (and fetched ahead in the background after the console opens), so turning to
   // Briefing, Trends or Environment shows it at once instead of a wait; a reload or new data clears it
   const insCache = useRef(new Map<string, { at: number; d: Insights }>());
@@ -482,15 +498,29 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     getIns(insQs).then((j) => live && setIns({ key: insQs, d: j })).catch((e) => { if (live && !hit) { toast(e.message, "alert"); setInsFailed(insQs); } });
     return () => { live = false; };
   }, [insQs, reloadKey, needIns, toast, getIns, insRetry]);
+  // a window that shows one page's part (the news-only list, the mandi prices, the locations to review) loads that part itself, from
+  // whatever page it is opened (Jarvis opens them from the Overview, where no part is loaded: they stayed on "loading")
+  const modalPart = modal?.kind === "gaps" ? "briefing" : modal?.kind === "markets" ? "environment" : modal?.kind === "review" ? "trends" : null;
+  const modalQs = modalPart && partKey(modalPart);
+  const [modalIns, setModalIns] = useState<{ key: string; d: Insights } | null>(null);
+  const [modalFailed, setModalFailed] = useState<string | null>(null);
+  useEffect(() => {
+    if (!modalQs) return;
+    let live = true;
+    setModalFailed(null);
+    getIns(modalQs).then((d) => live && setModalIns({ key: modalQs, d })).catch(() => live && setModalFailed(modalQs));
+    return () => { live = false; };
+  }, [modalQs, reloadKey, getIns, insRetry]);
+  const mIns = modalQs && modalIns?.key === modalQs ? modalIns.d : null;
   useEffect(() => {
     // the other pages, one after another, a few seconds after the console has drawn (never competing with page 1)
     const t = setTimeout(async () => {
-      for (const key of [`${qs}&part=briefing`, `period=${period}&part=trends`, `period=${period}&part=environment`]) {
+      for (const key of [partKey("briefing"), partKey("trends"), partKey("environment")]) {
         if (!insCache.current.has(key)) await getIns(key).catch(() => undefined);
       }
     }, 5000);
     return () => clearTimeout(t);
-  }, [qs, period, reloadKey, getIns]);
+  }, [partKey, reloadKey, getIns]);
   const ins = insState?.key === insQs ? insState.d : null;
 
   // The Briefing's developing stories (duplicates joined, repeats dropped, storyai.ts) and AI key points (aibrief.ts) take
@@ -511,15 +541,16 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     return () => { live = false; stop(); };
   }, [qs, reloadKey]);
 
-  // where outlets disagree about the same event: the period's news only (the zone and department filters do not apply)
-  const [conflictState, setConflicts] = useState<{ key: string; d: PeriodConflicts } | null>(null);
+  // where outlets disagree about the same event: the period's news; under a filter the answer also says which stories are linked to an
+  // incident inside it (a story with no incident on record has no zone or department: shown as district-wide)
+  const [conflictState, setConflicts] = useState<{ key: string; d: PeriodConflicts & { scope?: ConflictScope } } | null>(null);
   useEffect(() => {
     let live = true;
     // (23 Nov: a failed reload keeps the list it had; it emptied it, and a Differ item seen a minute before was gone)
-    api(`/api/collector/conflicts?period=${period}`).then((j) => live && setConflicts({ key: period, d: j }))
-      .catch(() => live && setConflicts((had) => (had?.key === period ? had : { key: period, d: { stories: [], checked: 0, ai: false } })));
+    api(`/api/collector/conflicts?${qs}`).then((j) => live && setConflicts({ key: qs, d: j }))
+      .catch(() => live && setConflicts((had) => (had?.key === qs ? had : { key: qs, d: { stories: [], checked: 0, ai: false } })));
     return () => { live = false; };
-  }, [period, reloadKey]);
+  }, [qs, reloadKey]);
   // the neighbouring districts' news (Latest news, "Next door"): read once the console is up, again on reload
   const [nearbyState, setNearby] = useState<{ key: number; d: Nearby } | null>(null);
   useEffect(() => {
@@ -711,11 +742,13 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     setDept, setZone,
     openInc: (id) => { setModal(null); setActionFor(null); setInc(id); },
     openAction: (id) => { setModal(null); setActionFor(id); setInc(id); },
-    openList: (preset, title) => { setInc(null); setModal({ kind: "list", title: `${title} · ${scopeName}`, preset: { cat: cat ?? undefined, taluk: taluk ?? undefined, ...preset } }); },
+    // (the list says its own filters: chips and the line under them; a scope in the title stayed there after a chip was removed)
+    openList: (preset, title) => { setInc(null); setModal({ kind: "list", title, preset: { cat: cat ?? undefined, taluk: taluk ?? undefined, ...preset } }); },
     openNewsAll: () => setModal({ kind: "news", title: `Latest news · ${scopeName}` }),
     openStory: (s) => { if (s.incident) { setModal(null); setInc(s.incident); } else { setInc(null); setModal({ kind: "story", title: "In the news", story: s }); } },
     openZones: () => setModal({ kind: "zones", title: "Zones by open complaints" }),
     openDepts: () => setModal({ kind: "depts", title: "Departments" }),
+    openDept: (code) => { setInc(null); setModal({ kind: "dept", title: "Department summary", code }); },
     openFeeds: () => setModal({ kind: "sources", title: "Data sources" }),
     openContact: (d, contacts) => setModal({ kind: "contact", title: `${d.name} · official contacts`, dept: d, contacts }),
     openItem: (item) => { setInc(null); setModal({ kind: "item", title: `From an added source · ${item.source}`, item }); },
@@ -730,7 +763,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     openReview: () => setModal({ kind: "review", title: "Locations needing review" }),
     stories: storiesState?.key === qs ? storiesState.d : null,
     dayBrief: dayState?.key === qs ? dayState.d : null,
-    conflicts: conflictState?.key === period ? conflictState.d : null,
+    conflicts: conflictState?.key === qs ? conflictState.d : null,
     openConflict: (s) => { setInc(null); setModal({ kind: "conflict", title: "Reports differ", story: s }); },
     openConflictStory: (s) => {
       const st = ov.allNews?.find((x) => x.id === s.id || x.docIds.some((d) => s.docIds.includes(d)));
@@ -900,7 +933,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
         <defs><linearGradient id="gBar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" style={{ stopColor: "var(--accent)" }} /><stop offset="1" style={{ stopColor: "var(--accent-line)" }} /></linearGradient></defs>
       </svg>
       {loading && <div className="loading-bar" />}
-      <div className="app" style={fit.on ? { zoom: fit.z, width: fit.w / fit.z, height: fit.h / fit.z } : undefined}>
+      <div className="app" style={fit.on ? { zoom: fit.z, width: fit.w / fit.z, height: fit.h / fit.z, ["--z" as string]: fit.z } : undefined}>
         <header className="top">
           <div className="tbrand"><Wordmark className="twm" /><small className="tsub">Chennai · Collector</small></div>
           <PageTabs items={pages.map((p) => ({ key: p, label: TAB_LABEL[p], icon: PAGE_ICON[p] }))} active={page} onPick={(p) => setPage(p as PageKey)} />
@@ -918,7 +951,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
             { key: "src", icon: "sensor", label: "Data sources", sub: "Feeds and audit log", run: c.openFeeds },
             { key: "sec", icon: "shield", label: "Security", sub: "Sign-ins, sessions, check an email", run: () => setSecOpen(true) }
           ]} onDashboards={() => setPage("studio")} />
-          <Bell open={pop === "bell"} onToggle={() => setPop((p) => (p === "bell" ? null : "bell"))} unread={bellN} nowMs={ms(ov.now)} period={ov.periodInfo.label}
+          <Bell open={pop === "bell"} onToggle={() => setPop((p) => (p === "bell" ? null : "bell"))} unread={bellN} nowMs={ms(ov.now)} period={ov.periodInfo.label} scope={scopeName}
             onPick={(id) => { setPop(null); c.openInc(id); }} onMarkRead={() => { setBellRead(true); setPop(null); }}
             items={ov.bell.map((i) => ({ id: i.id, title: fullTitle(i), sub: `${i.zone_name ?? "Chennai"} · ${i.sev} · ${rel(i.t, ov.now)}`, sev: String(i.sev), t: ms(i.t), icon: deptIcon(i.dept) }))} />
           <div className="rel">
@@ -957,18 +990,23 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
                   <span>{fmtDay(ov.now)}</span>
                   {/* warnings for Chennai from every source, stale hazard feeds, refused AI keys: one chip, details on a click */}
                   <AlertBar now={ov.now} compact />
-                  {/* one chip for the data: when it was collected, amber with the count when a feed this page uses is late */}
-                  <Collected ov={ov} onClick={c.openFeeds} live={feedsOk} partial={feedsPartial} page={page} />
+                  {/* one chip for the data: when it was collected, amber with the count when a feed this page uses is late (on the Overview it
+                      sits beside the greeting: beside the date and the alert chip it was cut off at the filters) */}
+                  {page !== "overview" && <Collected ov={ov} onClick={c.openFeeds} live={feedsOk} partial={feedsPartial} page={page} />}
                 </div>
-                <RollTitle text={page === "overview" ? `${greeting(ov.now)}, Collector` : PAGE_TITLE[page]} />
+                {page === "overview"
+                  ? <div className="band-h1"><RollTitle text={`${greeting(ov.now)}, Collector`} /><Collected ov={ov} onClick={c.openFeeds} live={feedsOk} partial={feedsPartial} page={page} /></div>
+                  : <RollTitle text={PAGE_TITLE[page]} />}
               </div>
               {page === "studio" ? (
                 <span className="fnote" title="Your own files and links: AI reads, cleans, maps and links them with the district. Not affected by the dashboard filters.">
                   <I n="spark" />Your files · not filtered
                 </span>
               ) : districtWide ? (
-                <span className="fnote" title={page === "trends" ? "Whole district, not filtered. Click any row to see what is behind it." : "Whole district: choose a station on each card. Prices are shown per Chennai market."}>
-                  <I n="map" />District-wide · not filtered
+                // what each page's figures cover, in its own words: no filter applies, and the one thing the Overview's period still changes is said
+                <span className="fnote" title={page === "trends" ? "Whole district: no filter applies, the Overview's period included. Each card says the days it covers; locations to review are of the last 30 days. Click any row to see what is behind it."
+                  : `Whole district: the zone, taluk, department and category do not apply. Choose a station on each card. Prices are shown per Chennai market. The rain days cover the last ${ov.bottom.rain.days.length} days and the reservoir line the last ${Math.max(10, ov.bottom.rain.days.length)}, from the Overview's period (${PERIOD_WORD[period]}).`}>
+                  <I n="map" />{page === "trends" ? "District-wide · not filtered" : "District-wide · each card says its days"}
                 </span>
               ) : (
                 // every filter in one group, in the order the Collector narrows down: when, where, which department
@@ -1020,10 +1058,11 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
         {inc && <IncidentView key={inc} id={inc} c={c} startAction={actionFor === inc} />}
         {modal?.kind === "story" && <NewsView key={modal.story.id} s={modal.story} c={c} />}
         {modal && modal.kind !== "story" && (
-          <Modal title={modal.title} c={c} narrow={["depts", "zones", "customize", "item"].includes(modal.kind)} wide={["stories", "markets", "pattern", "story", "review", "nearby", "nextdoor", "conflict"].includes(modal.kind)}>
-            {modal.kind === "list" ? <ListBody key={modal.title} preset={modal.preset} c={c} />
+          <Modal title={modal.title} c={c} narrow={["depts", "zones", "customize", "item"].includes(modal.kind)} wide={["dept", "stories", "markets", "pattern", "story", "review", "nearby", "nextdoor", "conflict"].includes(modal.kind)}>
+            {modal.kind === "list" ? <ListBody key={`${modal.title}|${JSON.stringify(modal.preset)}|${qs}`} preset={modal.preset} c={c} />
               : modal.kind === "zones" ? <ZonesBody d={ov} c={c} />
                 : modal.kind === "depts" ? <DeptsBody c={c} />
+                : modal.kind === "dept" ? <DeptSummaryBody key={modal.code} code={modal.code} c={c} />
                   : modal.kind === "sources" ? <SourcesBody c={c} initial={modal.tab} url={modal.url} />
                     : modal.kind === "export" ? <ExportBody c={c} />
                       : modal.kind === "news" ? <NewsAllBody d={ov} c={c} />
@@ -1034,10 +1073,10 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
                                 : modal.kind === "item" ? <ItemBody item={modal.item} c={c} />
                                   : modal.kind === "added" ? <AddedAllBody d={ov} c={c} />
                                     : modal.kind === "stories" ? <StoriesBody c={c} focus={modal.focus} />
-                                      : modal.kind === "markets" ? <MarketsFull ins={ins} c={c} />
+                                      : modal.kind === "markets" ? (modalFailed === modalQs ? <PartFailed retry={() => setInsRetry((n) => n + 1)} /> : <MarketsFull ins={mIns} c={c} />)
                                         : modal.kind === "pattern" ? <PatternBody key={JSON.stringify(modal.pattern)} p={modal.pattern} c={c} />
-                                          : modal.kind === "gaps" ? <GapsBody ins={ins} c={c} />
-                                            : modal.kind === "review" ? <ReviewBody ins={ins} c={c} />
+                                          : modal.kind === "gaps" ? (modalFailed === modalQs ? <PartFailed retry={() => setInsRetry((n) => n + 1)} /> : <GapsBody ins={mIns} c={c} />)
+                                            : modal.kind === "review" ? (modalFailed === modalQs ? <PartFailed retry={() => setInsRetry((n) => n + 1)} /> : <ReviewBody ins={mIns} c={c} />)
                                               : modal.kind === "nearby" ? <NearbyEventBody e={modal.event} c={c} />
                                                 : modal.kind === "nextdoor" ? <NextDoorAll c={c} />
                                                   : modal.kind === "conflict" ? <ConflictView s={modal.story} c={c} /> : null}
@@ -1045,15 +1084,19 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
         )}
         <Palette open={palette} onClose={() => setPalette(false)} actions={actions} search={searchHits} ask={askWith} askMap={(q) => c.askOnMap?.(q)} />
         <ToastStack toasts={toasts} dismiss={(id) => setToasts((x) => x.filter((y) => y.id !== id))} />
-        {/* the chatbot at the bottom right, and Jarvis's own button just above it */}
-        {!ask && <JarvisFab />}
-        {!ask && (
-          <button className="ask-fab ask-fab-v2" onClick={() => { setAskTab("chat"); setAsk(true); }} aria-keyshortcuts="Control+K" title="Ask District IQ: type a question (Ctrl+K)">
-            <i className="ask-ico"><AskIcon size={22} /></i>
-            <span className="ask-label">Ask District IQ<kbd aria-hidden="true" data-t="Ctrl K" /></span>
-            {insightCount > 0 && <em className="ask-badge" aria-hidden="true" data-t={insightCount} />}
-          </button>
-        )}
+        {/* the dock: Jarvis and the chatbot side by side at the bottom right, in a strip every page keeps free for them (dock.css).
+            The strip stays while the chat is open, so the page under it does not move */}
+        <div className="cdock" role="group" aria-label="Jarvis and Ask District IQ">
+          {!ask && <JarvisFab />}
+          {!ask && (
+            <button className="ask-fab ask-fab-v2" onClick={() => { setAskTab("chat"); setAsk(true); }} aria-keyshortcuts="Control+K"
+              title={`Ask District IQ: type a question (Ctrl+K)${insightCount > 0 ? `. ${insightCount} of today's insights ready, for the whole district` : ""}`}>
+              <i className="ask-ico"><AskIcon size={18} /></i>
+              <span className="ask-label">Ask District IQ<kbd aria-hidden="true" data-t="Ctrl K" /></span>
+              {insightCount > 0 && <em className="ask-badge" aria-hidden="true" data-t={insightCount} />}
+            </button>
+          )}
+        </div>
         {askMounted && <AssistantDialog c={c} open={ask} onClose={() => setAsk(false)} tab={askTab} onTab={setAskTab} />}
         <Thunai host={thunaiHost} />
       </div>
@@ -1077,6 +1120,16 @@ function FreshWarn({ ov, page, onClick }: { ov: OverviewData; page: PageKey; onC
       title={`${stale.map((f) => freshnessLine(f, view)).join("\n")}\nClick for the data sources.`}>
       <I n="alert" />{freshnessLine(stale[0], view)}{more}
     </button>
+  );
+}
+
+/** A window's figures could not be loaded: a message and Try again, not a loading state forever. */
+function PartFailed({ retry }: { retry: () => void }) {
+  return (
+    <div role="alert" className="empty">
+      <p>These figures could not be loaded.</p>
+      <button type="button" className="btn" style={{ marginTop: 10 }} onClick={retry}>Try again</button>
+    </div>
   );
 }
 

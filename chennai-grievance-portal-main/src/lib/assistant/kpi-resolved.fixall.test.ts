@@ -28,7 +28,8 @@ describe("reviewerE-04: Ask's overview_kpis names the Resolved count as the tile
       expect(resolved.value).toBe(4);
       expect((r.data as { labels: Record<string, string> }).labels.resolved).toBe(PERIODS[period].resolved);
       expect(r.facts.map((f) => f.label).join(" | ")).not.toMatch(/this (day|week|month|quarter)/i);
-      expect(r.facts.find((f) => f.id === "kpi.ongoing")!.label).toBe(`Ongoing incidents, ${PERIODS[period].label.toLowerCase()}`);
+      const l = PERIODS[period].label;
+      expect(r.facts.find((f) => f.id === "kpi.ongoing")!.label).toBe(`Ongoing incidents, ${l.charAt(0).toLowerCase()}${l.slice(1)}`);
     });
   }
 });

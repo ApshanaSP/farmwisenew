@@ -31,6 +31,8 @@ import { STAGES, allThreads, newsUnits, stageOf, threadOf, tokens, type Thread, 
 import { deskOf, headOf } from "@/lib/collector/deskbook";
 import { plainEvents } from "@/lib/collector/idioms";
 import { syncEpoch } from "@/lib/collector/epoch";
+import { keepStories, type StoryDay } from "@/lib/collector/daynews";
+import { dayKey, istClock } from "@/lib/period/day";
 
 export interface EventSource { publisher: string; url: string | null; t: string; title: string }
 /** one thing that happened, once, with everyone who reported it */
@@ -412,6 +414,31 @@ function keepLast(days: number, w: Whole): void {
   try { fs.mkdirSync(path.dirname(LAST_FILE), { recursive: true }); fs.writeFileSync(LAST_FILE, JSON.stringify({ v: V, days, at: w.at, list: w.list })); } catch { /* read-only disk: memory only */ }
 }
 
+// 26 Nov: the model picks the stories again whenever a report joins, and could leave out one the Collector had seen an hour before: the day's
+// own stories stay until the day rolls over (daynews.ts keepStories), kept on disk for a restart
+declare global {
+  // eslint-disable-next-line no-var
+  var __storyDay: StoryDay<Story> | null | undefined;
+}
+const DAY_FILE = process.env.STORIES_DAY_FILE || (process.env.VITEST ? null : path.join(process.cwd(), "data", "aws-cache", "stories-day.json"));
+function dayStories(): StoryDay<Story> | undefined {
+  if (global.__storyDay === undefined) {
+    try { const j = DAY_FILE ? JSON.parse(fs.readFileSync(DAY_FILE, "utf8")) : null; global.__storyDay = j?.v === V ? { day: j.day, items: new Map((j.items as Story[]).map((s) => [s.id, s])) } : null; }
+    catch { global.__storyDay = null; }
+  }
+  return global.__storyDay ?? undefined;
+}
+/** a story's reports, the same in two builds: their addresses, else their ids */
+const reportsIn = (s: Story): string[] => flat(s).flatMap((x) => [x.url, x.doc].filter((v): v is string => !!v));
+function withDay(w: Whole, now: string): Story[] {
+  // (only for the day it is: a probe of another day reads the list as it is)
+  if (!process.env.VITEST && dayKey(now) !== dayKey(istClock())) return w.list;
+  const k = keepStories(dayStories(), w.list, reportsIn, now, w.ai);
+  global.__storyDay = k.bag;
+  if (k.changed && DAY_FILE) try { fs.mkdirSync(path.dirname(DAY_FILE), { recursive: true }); fs.writeFileSync(DAY_FILE, JSON.stringify({ v: V, day: k.bag.day, items: [...k.bag.items.values()] })); } catch { /* read-only disk: memory only */ }
+  return k.list;
+}
+
 /** The scope's own stories out of the whole window's. */
 function scoped(list: Story[], s: ThreadScope): Story[] {
   const lastMove = (x: Story) => x.events[x.events.length - 1]?.t ?? x.last;
@@ -433,7 +460,7 @@ export async function stories(scope: ThreadScope, now: string, user: string): Pr
   const kept = (global.__stories2 ??= new Map());
   syncEpoch(kept); // the stories carry whether each is still open: a decision empties them (RC-35)
   const memo = kept.get(key);
-  const done = (w: Whole, pending: boolean): Stories => { const list = scoped(w.list, scope); return { days: base.days, total: list.length, threads: list, ai: w.ai, pending }; };
+  const done = (w: Whole, pending: boolean): Stories => { const list = scoped(withDay(w, now), scope); return { days: base.days, total: list.length, threads: list, ai: w.ai, pending }; };
   if (memo && Date.now() - memo.at < 30 * 60_000) return done(memo, false);
 
   // The model's work runs in the background: a page waits at most WAIT_MS for it (remembered write-ups come back at once), else gets the

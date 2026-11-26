@@ -287,7 +287,7 @@ export function howKnow(r: Register, now: number | null = null): { en: string; t
   return { en: en.join(" "), ta: ta.join(" ") };
 }
 
-const PERIOD_LINE: Record<string, string> = { daily: "24h", weekly: "7d", monthly: "30d", quarterly: "90d" };
+const PERIOD_LINE: Record<string, string> = { daily: "today", weekly: "7d", monthly: "30d", quarterly: "90d" };
 
 /**
  * The register as the planner reads it: about 300 tokens at most (1,200 characters), framed as untrusted data. Labels come from the screen's

@@ -177,7 +177,7 @@ describe("what changed", () => {
       expect(sentences(line), line).toBeLessThanOrEqual(4);
     }
     for (const t of codeWords(doc)) expect(causalIn(t), t).toBeNull();
-    expect(doc.say.en).toMatch(/^Incidents are up: 410 in the last 24 hours against 330 the 24 hours before\./);
+    expect(doc.say.en).toMatch(/^Incidents are up: 410 today against 330 yesterday by this time\./);
     expect(doc.say.en).toMatch(/flooding and waterlogging \(60 more\)/);
     expect(doc.say.en).toMatch(/during or after rain/);
     expect(doc.say.en).toMatch(/starting in Adyar\.$/);
@@ -305,8 +305,8 @@ describe("explain one part of a change", () => {
   it("Adyar's part of the rise: how much, what sits under it, its range, rain alongside, what I'd do", async () => {
     const { doc } = await runRecipe("explain", explainRecipe, { ...emptySlots(), period: "daily", ...({ change: { dim: "zone", key: "13" } } as Partial<Slots>) }, BASE, world, consistent(), "explain Adyar's rise", "st-exc");
     expect(valid(doc).success, JSON.stringify(valid(doc).error?.issues?.[0])).toBe(true);
-    expect(doc.say.en).toMatch(/^Incidents in Adyar went up: 150 in the last 24 hours against 80 the 24 hours before, 88% of the whole change\./);
-    expect(doc.say.en).toMatch(/64\.2 mm of rain fell at Chennai-Nungambakkam in the same 24 hours\./);
+    expect(doc.say.en).toMatch(/^Incidents in Adyar went up: 150 today against 80 yesterday by this time, 88% of the whole change\./);
+    expect(doc.say.en).toMatch(/64\.2 mm of rain fell at Chennai-Nungambakkam in the last 24 hours\./);
     expect(doc.say.en).toMatch(/Most of it is flooding and waterlogging, 40 more\./);
     expect(doc.say.en).toMatch(/above the usual range/);
     for (const line of said(doc)) {
@@ -376,7 +376,7 @@ describe("the situation in a place or the district", () => {
     const { doc, runs } = await situation("what's the situation");
     expect(valid(doc).success, JSON.stringify(valid(doc).error?.issues?.[0])).toBe(true);
     expect(runs).toEqual(expect.arrayContaining(["change_drivers", "environment", "unusual_rises", "console_news"]));
-    expect(doc.say.en).toBe("Across the district, 410 incidents came in over the last 24 hours against 330 the 24 hours before. There are more flooding and waterlogging reports after the rain: 90 against 30. "
+    expect(doc.say.en).toBe("Across the district, 410 incidents came in today against 330 yesterday by this time. There are more flooding and waterlogging reports after the rain: 90 against 30. "
       + "An IMD orange warning is in force, and Puzhal (Red Hills) is 85% full. I'd ask the corporation's drains team for pumps and a desilting check on the worst streets, and chase the 40 cases past their deadline.");
     for (const line of said(doc)) {
       expect(gateChunk(line, figuresOf(doc)), line).toMatchObject({ ok: true });

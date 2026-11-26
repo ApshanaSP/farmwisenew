@@ -47,7 +47,7 @@ export interface WinScope {
 
 function where(s: WinScope, from: string, to: string, now: string, rolling = false, endIncl = false) {
   // v18 round 2: a count back from now is counted as the console counts its windows (intel.ts periodWindow: after its start, up to now), so a
-  // summary's figure and the console's tile for the same window are the same number
+  // summary's figure and the console's tile for the same window are the same number (Daily: from 12 AM, that minute included, as the tile)
   const f = filters(s, now);
   // (the window before a rolling one ends where this one starts, that second included: kpiBlock counts it there, "<= now - h")
   return { sql: [...(rolling ? ["i.first_reported_at > ?", endIncl ? "i.first_reported_at <= ?" : "i.first_reported_at < ?"] : ["i.first_reported_at >= ?", "i.first_reported_at < ?"]), ...f.parts].join(" AND "), params: [from, to, ...f.params] };
@@ -71,13 +71,15 @@ function filters(s: WinScope, now: string): { parts: string[]; params: unknown[]
 }
 
 /**
- * v18 round 2: the incidents closed in the window, by when they closed (the console's "Resolved" tile, intel.ts kpiBlock): the current rolling
- * window has no upper bound, so a decision made since the last refresh counts, as on the tile. The same place, department and kind filters.
+ * v18 round 2: the incidents closed in the window, by when they closed (the console's "Resolved" tile, intel.ts kpiBlock): the console's current
+ * window (a rolling one, or Daily since 12 AM) has no upper bound, so a decision made since the last refresh counts, as on the tile. The same
+ * place, department and kind filters.
  */
-function closedWhere(s: WinScope, w: Pick<Win, "from" | "to" | "rolling" | "partial">, now: string) {
+function closedWhere(s: WinScope, w: Pick<Win, "from" | "to" | "rolling" | "partial"> & { custom?: boolean }, now: string) {
   const { parts, params } = filters({ ...s, status: null }, now);
-  const win = w.rolling && w.partial ? [`${EFF.closedAt} > ?`] : [`${EFF.closedAt} >= ?`, `${EFF.closedAt} < ?`];
-  return { sql: [...win, ...parts, `${EFF.open} = 0`, `${EFF.status} = 'Resolved'`].join(" AND "), params: [...(w.rolling && w.partial ? [w.from] : [w.from, w.to]), ...params] };
+  const open = w.partial && (w.rolling || w.custom === false);
+  const win = open ? [`${EFF.closedAt} ${w.rolling ? ">" : ">="} ?`] : [`${EFF.closedAt} >= ?`, `${EFF.closedAt} < ?`];
+  return { sql: [...win, ...parts, `${EFF.open} = 0`, `${EFF.status} = 'Resolved'`].join(" AND "), params: [...(open ? [w.from] : [w.from, w.to]), ...params] };
 }
 
 export interface WinIncidents {

@@ -1,0 +1,110 @@
+/* Nothing over anything (26 Nov 2026): what lay over something else, or was cut off with no way to reach it, and is not the dock's (dock.css).
+   Loaded last, with dock.css. */
+
+/* ---- the band: the data chip beside the greeting (beside the date and the alert chip it was cut at the filters) */
+.dic .band-h1{display:flex;align-items:center;gap:12px;min-width:0}
+.dic .band-h1>h1.roll{flex:none}
+.dic .band-h1>.daily{flex:0 1 auto;min-width:0;margin-left:0;overflow:hidden}
+.dic .band-h1>.daily>span{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dic .band-h1>.daily small{margin-left:6px}
+.dic .band.hero .band-h1 .daily small{display:none}
+@media (min-width:1500px){.dic .band.hero .band-h1 .daily:not(:has(em.late)) small{display:inline}}
+.dic:not(.fit) .band-h1{flex-wrap:wrap;row-gap:4px}
+
+/* ---- a list shows every row: the ones that did not fit wrapped into hidden columns at the right (Trends: 6 of 8 rises, 13 of 18 taluks) */
+.dic .fitlist{flex-wrap:nowrap;overflow-x:hidden;overflow-y:auto;scrollbar-width:thin;overscroll-behavior:contain}
+
+/* ---- why a case needs the Collector is read whole, on its own line, with the place, department and time under it */
+.dic .att-row.need .att-txt small,.dic .att-row.task2 .att-txt small{white-space:normal;overflow:visible}
+.dic .att-row.need .att-txt small em,.dic .att-row.task2 .att-txt small em{display:flex;width:fit-content;max-width:100%;margin:1px 0 2px;white-space:normal;line-height:1.35;padding:1px 7px;border-radius:9px}
+
+/* ---- the map: its colour key at the bottom left, clear of the tools (right) and the map's credit line (bottom right), and away while the land
+   tools use that corner; on a short map the tools scroll in their column; in the Rain and Traffic views the scale clears the panel at the left */
+.dic .map-heat{left:10px;right:auto;bottom:10px}
+.dic .map-wrap:has(.gt-swipe) .map-heat,.dic .map-wrap:has(.gt-plotcard) .map-heat{display:none}
+.dic .map-tools{max-height:calc(100% - 30px);overflow-x:hidden;overflow-y:auto;scrollbar-width:none}
+.dic .gt-plotcard{max-height:calc(100% - 44px);overflow-y:auto}
+.dic .map-wrap:has(>.amp.rv) .leaflet-bottom.leaflet-left{left:50%}
+.dic .map-wrap .rv-leg{bottom:26px}
+
+/* ---- a filter's scope, said above a list that follows it differently (Latest news, Differ, Next door, Departments) */
+.dic .scope-note{flex:none;display:flex;align-items:center;gap:6px;margin:2px 0 6px;padding:5px 9px;border-radius:9px;background:var(--accent-soft);color:var(--text-2);font:600 11.5px/1.35 var(--font-ui)}
+.dic .scope-note.wide{background:var(--surface-2);color:var(--text-3)}
+.dic .scope-note svg,.dic .scope-note .ic{flex:none;width:13px;height:13px}
+.dic .list-chips{display:flex;flex-wrap:wrap;gap:6px;margin:-2px 0 8px}
+.dic .pop-h>span{min-width:0;display:flex;flex-direction:column}
+.dic .pop-h>span small{font:500 11.5px/1.3 var(--font-ui);color:var(--text-3)}
+
+/* ---- Environment: the readings keep their words (the reservoir's source was cut off); what does not fit scrolls in its own place */
+.dic.fit .p2.env3{grid-template-rows:minmax(236px,1fr) minmax(0,1.12fr)}
+.dic .env3 .env .env-say{display:block;-webkit-line-clamp:none;overflow-x:hidden;overflow-y:auto;min-height:0;scrollbar-width:thin}
+
+/* ---- Data Studio: the figure's small print stops before the tile's resize corner */
+.dic .ds-tile-kpi>small{display:block;padding-right:16px}
+.dic .ds-tile-kpi>small em{margin-right:6px;vertical-align:-1px}
+
+/* ---- a phone: the top bar is one row (the account was pushed to a second), and the map's pills wrap instead of running under its tools */
+.dic:not(.fit) .top{gap:6px}
+.dic:not(.fit) .top .cmdk{flex:none;width:38px;padding:0;justify-content:center}
+.dic:not(.fit) .tm-btn{padding:0;width:38px;justify-content:center}
+.dic:not(.fit) .tm-btn .tm-chev,.dic:not(.fit) .me>.ic{display:none}
+.dic:not(.fit) .lang-sw{padding:0 6px}
+.dic:not(.fit) .lang-sw span:last-child{display:none}
+.dic .ampills{flex-wrap:wrap;row-gap:6px}
+
+/* ---- a phone's Environment page: the three readings stack at their own height (they were held in 440 px, and the prices lay over two of them) */
+.dic:not(.fit) .p2.env3>*{height:auto}
+.dic:not(.fit) .env3-top>*{height:auto;min-height:230px}
+.dic:not(.fit) .env3 .env .env-say{overflow:visible}
+
+/* ---- a phone: the grown map ends above the dock's bar and the page tabs; the live traffic counts keep their words; an incident is one long
+   scroll (its three parts each scrolled in a third of the screen, cut mid-line) */
+@media (max-width:767px){
+  .dic.map-grown .a-map .map-cb{height:calc(100svh - 198px)}
+  .dic.map-grown .a-map{height:calc(100svh - 198px)!important}
+  .dic .tf-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .dic .map-wrap:has(>.amp) .leaflet-bottom{display:none}
+}
+.dic .tf-kpis span{flex-wrap:wrap;overflow-wrap:anywhere}
+.dic:not(.fit) .iv-b{display:block;overflow:auto}
+.dic:not(.fit) .iv-col{overflow:visible;min-height:auto}
+.dic:not(.fit) .tf-sn em{white-space:normal}
+
+/* ---- with Jarvis's bar up the pages are shorter: their cards keep a useful height and the page scrolls above the bar */
+html.jv-hud .dic.fit .p2.env3{grid-template-rows:minmax(236px,1fr) minmax(230px,1.12fr);overflow-y:auto;scrollbar-width:thin}
+html.jv-hud .dic.fit .p3.trends{grid-template-rows:minmax(232px,1.75fr) minmax(158px,1fr);overflow-y:auto;scrollbar-width:thin}
+
+/* ---- Tamil: the filters give the band's words room (the alert and data chips were cut at them), the news tabs stand their counts under their
+   names (they ran into each other), and the severity names and Act stay whole */
+html[data-lang="ta"] .dic.fit .band .filters{flex:0 1 auto;min-width:0}
+html[data-lang="ta"] .dic.fit .band .filters .fsel{flex:0 1 auto;min-width:0}
+html[data-lang="ta"] .dic.fit .band .filters .fsel select{max-width:118px;text-overflow:ellipsis}
+html[data-lang="ta"] .dic.fit .band .filters .ui-seg button{padding-left:7px;padding-right:7px;font-size:11.5px}
+html[data-lang="ta"] .dic .band.hero .band-eb:has(.alc-w)>span:first-child{display:none}
+html[data-lang="ta"] .dic.fit .band .alc b{max-width:130px}
+html[data-lang="ta"] .dic .a-brief .btabs button{display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 2px 5px;font-size:11.5px;line-height:1.35}
+html[data-lang="ta"] .dic .a-brief .btabs .tab-n{margin:0;line-height:1.5}
+html[data-lang="ta"] .dic .att-pills button span{font-size:10.5px;letter-spacing:0}
+html[data-lang="ta"] .dic .att-act{padding:0 8px;gap:4px}
+html[data-lang="ta"] .dic .att-act span{font-size:11px}
+
+/* ---- a phone: all five page tabs, in Tamil too (the fifth was off the screen) */
+.dic:not(.fit) .ptab{flex:1 1 0;min-width:0;padding:0 2px}
+.dic:not(.fit) .ptab span{max-width:100%;white-space:normal;text-align:center;line-height:1.15;overflow:hidden}
+html[data-lang="ta"] .dic:not(.fit) .ptab{padding-left:1px;padding-right:1px;gap:2px}
+html[data-lang="ta"] .dic:not(.fit) .ptab span{font-size:9.5px}
+
+/* ---- a pattern's chart: the usual level is named above the bars, and a count crossed by its dashed line stays readable */
+.dic .pc-key{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin:0 0 2px;font:600 11px/1.2 var(--font-ui);color:var(--text-3)}
+.dic .pc-key i{flex:none;width:18px;height:0;border-top:1.5px dashed var(--text-3)}
+.dic .pc-bars>span>em{position:relative;z-index:2;padding:0 2px;border-radius:3px;background:var(--surface)}
+.dic .pc-bars>span>em:empty{background:none}
+
+/* ---- a phone: the page's name, its alert and its note each on their own line (the name was pushed out and the alert cut) */
+.dic:not(.fit) .band:not(.hero) .band-t{flex:1 0 100%;flex-wrap:wrap;row-gap:6px}
+
+/* ---- Data Studio, Datasets: the list of datasets keeps room for its rows under "Add data" (it was squeezed to a sliver); the column scrolls */
+.dic.fit .ds-rail{overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
+.dic.fit .ds-rail>.ds-add{flex:none}
+.dic.fit .ds-rail>.ds-lib{flex:1 0 auto;min-height:0}
+.dic.fit .ds-rail>.ds-lib .ds-lib-l{overflow:visible}

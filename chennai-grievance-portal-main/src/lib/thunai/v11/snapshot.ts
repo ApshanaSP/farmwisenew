@@ -297,6 +297,9 @@ const WORDY: [RegExp, string][] = [
   [/\bin (?:3|three) or more\b/gi, "repeatedly"],
   [/\b(?:3|three) or more times\b/gi, "repeatedly"],
   [/\bonce or twice\b/gi, "occasionally"],
+  // (the Daily window's own words, lib/period/day.ts: its 12 AM is no figure of the data)
+  [/\btoday \(since 12 AM\)/gi, "today"],
+  [/\bsince 12 AM yesterday\b/gi, "since midnight yesterday"],
   [/\b(?:in )?the last 24 hours\b/gi, "in the last day"],
   [/\blast 24 hours\b/gi, "the last day"],
   [/\bin 24 hours\b/gi, "in a day"],

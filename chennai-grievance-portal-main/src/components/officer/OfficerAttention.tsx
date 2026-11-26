@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { I } from "@/components/collector/app/icons";
 import { Empty, SEVS, SEV_HEX, deptIcon, fromManu, fullTitle, rel, sevTone, type Row } from "@/components/collector/app/lib";
+import { labelIn } from "@/lib/period/day";
 import type { Ctx } from "./OfficerApp";
 import "@/components/collector/app/attention.css";
 
@@ -59,7 +60,7 @@ export function OfficerAttention({ c, goGrievances }: { c: Ctx; goGrievances: (t
                 <span className="att-btns"><button className="att-ib" onClick={() => c.openGrievance(i.id)} title="Open" aria-label="Open"><I n="right" /></button></span>
               </div>
             ))}
-            {!(c.ov.board.severity.rows as Row[]).some((r) => r.sev === tab) && <Empty>No open {tab.toLowerCase()} incidents {c.ov.periodInfo.label.toLowerCase()}.</Empty>}
+            {!(c.ov.board.severity.rows as Row[]).some((r) => r.sev === tab) && <Empty>No open {tab.toLowerCase()} incidents {labelIn(c.ov.periodInfo.label)}.</Empty>}
           </div>
         </>
       ) : (

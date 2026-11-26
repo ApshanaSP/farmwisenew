@@ -192,7 +192,7 @@ describe("P2 proactive: the brief, the watch, interjections, Level-B memory, fol
     expect(src).toContain("/api/collector/thunai/follow");
   });
   it("D2's intentMarker routes the memory flows and the brief before the planner, with the address gate's Level B rule", () => {
-    const flows = between("const im = intentMarker(said);", "const st = buildState();");
+    const flows = between("const im = brainFirst ? null : intentMarker(said);", "const st = buildState();");
     expect(flows).toMatch(/intent === "remember" && im\.rest\) \{ if \(needsName\("B", lg\)\) return;/);
     expect(flows).toMatch(/intent === "forget"\) \{ if \(needsName\("B", lg\)\) return;/);
     expect(flows).toMatch(/if \(fa\) \{ if \(needsName\("B", lg\)\) return;/);

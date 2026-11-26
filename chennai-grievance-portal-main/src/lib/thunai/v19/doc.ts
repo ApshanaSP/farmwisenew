@@ -78,7 +78,9 @@ function tileOf(r: Result, id: string, ta: boolean, label?: string): Extract<Blo
   const delta = prev == null ? null : Math.round((r.total! - prev) * 10) / 10;
   const worse = r.q.measure !== "resolved";
   const name = r.q.of === "incidents" && !sameAsWhat(r) ? (ta ? `${r.measure.ta}: ${r.what.ta}` : `${cap(r.measure.en)}: ${r.what.en}`) : ta ? r.what.ta : cap(r.what.en);
-  return { key: id, label: clip(label ?? name, 80), value: r.total ?? 0, unit: r.q.measure === "share" ? "%" : r.q.of === "incidents" && (r.q.measure === "days_open" || r.q.measure === "days_to_close") ? "days" : r.q.of === "incidents" || r.q.of === "traffic" || r.q.of === "news" ? null : r.unit,
+  // (a share's name is its whole; its part is said beside it when both fit)
+  const shown = label ?? (r.q.measure === "share" && name.length > 80 ? (ta ? r.measure.ta : cap(r.measure.en)) : name);
+  return { key: id, label: clip(shown, 80), value: r.total ?? 0, unit: r.q.measure === "share" ? "%" : r.q.of === "incidents" && (r.q.measure === "days_open" || r.q.measure === "days_to_close") ? "days" : r.q.of === "incidents" || r.q.of === "traffic" || r.q.of === "news" ? null : r.unit,
     prev, delta, pct: prev ? Math.round((delta! / prev) * 100) : null, tone: delta == null || delta === 0 ? "neutral" : (delta > 0) === worse ? "bad" : "good", spark: [] };
 }
 const pointsOf = (rows: { lat: number | null; lon: number | null; id: string; title: string; sev: string | null }[]): PointT[] =>
@@ -259,7 +261,7 @@ export function sayOf(r: Result, w: World): Bilingual {
   let ta = count ? `${ov}: ${what.ta} ${fmt(t)}.` : `${ov}: ${what.ta}, ${valueWords(r, t).ta}.`;
   if (r.q.before && r.prev) {
     const d = t - r.prev.total;
-    en += r.prev.held ? ` ${d === 0 ? "The same as" : d > 0 ? `Up from ${fmt(r.prev.total)} in` : `Down from ${fmt(r.prev.total)} in`} ${r.prev.label.en}.` : " The window before is not fully in the records, so no change is given.";
+    en += r.prev.held ? ` ${d === 0 ? "The same as" : d > 0 ? `Up from ${fmt(r.prev.total)}${/^(?:yesterday|the day before)/.test(r.prev.label.en) ? "" : " in"}` : `Down from ${fmt(r.prev.total)}${/^(?:yesterday|the day before)/.test(r.prev.label.en) ? "" : " in"}`} ${r.prev.label.en}.` : " The window before is not fully in the records, so no change is given.";
     ta += r.prev.held ? ` ${r.prev.label.ta}: ${fmt(r.prev.total)}.` : "";
   }
   if (t && r.rows.length && r.q.list) { en += ` ${r.rows.length > 1 ? "First on the list" : "It is"}: ${caseWords(r.rows[0], w, false)}.`; ta += ` முதலில்: ${caseWords(r.rows[0], w, true)}.`; }

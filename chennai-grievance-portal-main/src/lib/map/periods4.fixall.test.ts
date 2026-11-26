@@ -39,15 +39,15 @@ describe("a follow-up keeps its command with any 'now' phrase", () => {
   });
   it("a time alone is still a time edit", () => {
     expect(takeOf(planOf("last 30 days", first())?.plan)?.filter?.period).toEqual({ kind: "last_days", days: 30, offset: 0 });
-    expect(takeOf(planOf("show me today's", first())?.plan)?.filter?.period).toEqual({ kind: "last_days", days: 1, offset: 0 });
+    expect(takeOf(planOf("show me today's", first())?.plan)?.filter?.period).toEqual({ kind: "day", offset: 0 });
     expect(takeOf(planOf("right now", first())?.plan)?.filter?.period).toBeNull();
   });
 });
 
 describe("comparisons: of times, or of areas", () => {
-  it.each(["flooding today vs yesterday", "garbage complaints today vs yesterday", "compare flooding today and yesterday"])("%s: a change of two 24-hour windows", (q) => {
+  it.each(["flooding today vs yesterday", "garbage complaints today vs yesterday", "compare flooding today and yesterday"])("%s: today so far, against yesterday by this time", (q) => {
     const c = planOf(q)?.plan.steps.find((s) => s.op === "change") as Extract<Step, { op: "change" }> | undefined;
-    expect(c?.now).toEqual({ kind: "last_days", days: 1, offset: 0 });
+    expect([c?.now, c?.before]).toEqual([{ kind: "day", offset: 0 }, { kind: "day", offset: 1, so_far: true }]);
   });
   it.each(["Adyar or Velachery, which is higher or lower?", "zone 13 and zone 10: more or fewer potholes?", "garbage in zone 13 and zone 10, up or down?"])(
     "%s: an area comparison, both areas kept", (q) => {

@@ -6,6 +6,7 @@ import type { PatternBrief } from "@/lib/collector/aibrief";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
 import { I } from "./icons";
 import { Empty, SEV_HEX, SevChip, deptIcon, fmtDate, fmtShort, rel, sevTone, watchBrief, type Row } from "./lib";
+import { labelLower } from "@/lib/period/day";
 import type { Console } from "./CollectorApp";
 import { itemWhen, itemWhere } from "./Added";
 import { StoriesCard } from "./Stories";
@@ -136,7 +137,7 @@ export function BriefingPage({ ins, d, c }: { ins: Insights | null; d: OverviewD
   return (
     <section className="p3 bpage">
       <article className="card bf" style={{ gridColumn: "span 6", gridRow: "span 2" }}>
-        <div className="ch"><I n="doc" /><h2>Collector&apos;s Briefing <span>· {ins.scope} · {c.periodLabel.toLowerCase()}</span></h2>
+        <div className="ch"><I n="doc" /><h2>Collector&apos;s Briefing <span>· {ins.scope} · {labelLower(c.periodLabel)}</span></h2>
           <button className="more" onClick={() => c.showText("Collector's Briefing", b.md)} title="Read the whole briefing"><I n="doc" />Full text</button>
           <button className="more" onClick={() => download(`district-iq-briefing-${c.period}.md`, b.md)} title="Download as text"><I n="download" />Download</button>
           <button className="more" onClick={() => c.openWorkspace()} title="Save this view with a frozen copy of the briefing"><I n="layers" />Save</button>
@@ -327,7 +328,7 @@ export function GapsBody({ ins, c }: { ins: Insights | null; c: Console }) {
   return (
     <>
       <div className="gap-bar">
-        <span>Reported in the news, but no department has a record of it yet. Newest and most serious first.</span>
+        <span>Reported in the news, but no department has a record of it yet. Highest priority first.</span>
         <label className="tgl"><input type="checkbox" checked={multi} onChange={(e) => setMulti(e.target.checked)} />Only stories in 2+ outlets</label>
         <span className="cnt-b">{rows.length}</span>
       </div>
@@ -476,7 +477,7 @@ function LocationReview({ ins, c }: { ins: Insights; c: Console }) {
   );
 }
 
-/** Modal: the review list. Place unknown (open the incident to set it) and placed from the report (check it on the map). */
+/** Modal: the review list. Place unknown (open the incident for its reports and the officer to ask) and placed from the report (check it on the map). */
 export function ReviewBody({ ins, c }: { ins: Insights | null; c: Console }) {
   const [tab, setTab] = useState<"missing" | "placed">("missing");
   const [find, setFind] = useState("");
@@ -498,7 +499,7 @@ export function ReviewBody({ ins, c }: { ins: Insights | null; c: Console }) {
       </div>
       <p className="rv-note">
         {tab === "missing"
-          ? <>Open incidents of the last 30 days reported only as &ldquo;in Chennai&rdquo;: the map cannot show them. Open one to see its reports and set the place.{skipped ? ` Not listed: ${skipped}.` : ""}</>
+          ? <>Open incidents of the last 30 days reported only as &ldquo;in Chennai&rdquo;: the map cannot show them. Open one to read its reports and who is responsible, and ask them for the exact place; it is placed by itself when a report names it.{skipped ? ` Not listed: ${skipped}.` : ""}</>
           : <>The pipeline had only &ldquo;Chennai&rdquo;, but the headline, its translation or the article names the place, so they are now on the map. Check that the place is right.</>}
       </p>
       <div className="rv-list">
@@ -665,8 +666,10 @@ function PatChart({ d }: { d: PatternDetail }) {
     : `${Math.round(usualV)} a week`;
   return (
     <div className={`pc ${d.kind}`}>
+      {/* what the dashed line is, above the bars: on the line it lay over the last ones */}
+      {usualV != null && <p className="pc-key"><i aria-hidden="true" />Usual: {usualText}</p>}
       <div className="pc-bars">
-        {usualV != null && <span className="pc-usual" style={{ bottom: `${(usualV / mx) * 100}%` }}><em>Usual: {usualText}</em></span>}
+        {usualV != null && <span className="pc-usual" style={{ bottom: `${(usualV / mx) * 100}%` }} />}
         {s.map((x, k) => (
           <span key={k} className={x.hl ? "hl" : ""} title={`${x.label}: ${x.n}`}>
             <em>{x.n && (x.hl || N <= 14 || x.n === mx) ? x.n : ""}</em>

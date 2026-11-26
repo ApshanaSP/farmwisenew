@@ -6,6 +6,7 @@
  * speechcheck.ts; a line that fails is dropped, never said. The end line is always the last line. Pure.
  */
 import { allowedSet, gateChunk } from "./numbergate";
+import { dayWords } from "@/lib/period/day";
 import { copiedRun, labelIn } from "./speechcheck";
 import { freshWords, watchFor, type Bi, type Conditions, type Severity, type SignalKind, type SourceChip, type WatchSignal } from "./signals";
 
@@ -59,9 +60,11 @@ function standingItems(s: Standing, asOf: string): BriefItem[] {
   }
   if (s.reported != null) {
     const sev = s.severe ?? 0;
-    out.push({ id: "standing:today", kind: "standing", severity: sev > 0 ? "medium" : "low", source: src, values: { reported: s.reported, severe: sev, hours: 24 },
-      text: sev > 0 ? { en: `${s.reported} incidents came in over the last 24 hours, and ${sev} of them are severe.`, ta: `கடந்த 24 மணி நேரத்துல ${s.reported} சம்பவங்கள் வந்திருக்கு, அதுல ${sev} கடுமையானவை.` }
-        : { en: `${s.reported} incidents came in over the last 24 hours, none of them severe.`, ta: `கடந்த 24 மணி நேரத்துல ${s.reported} சம்பவங்கள் வந்திருக்கு, எதுவும் கடுமையானது இல்லை.` } });
+    // the console's Daily: the calendar day since 12 AM (lib/period/day.ts)
+    const w = dayWords(s.asOf), day = { en: w.en.inWords, ta: w.ta.inWords };
+    out.push({ id: "standing:today", kind: "standing", severity: sev > 0 ? "medium" : "low", source: src, values: { reported: s.reported, severe: sev },
+      text: sev > 0 ? { en: `${s.reported} incidents came in ${day.en}, and ${sev} of them are severe.`, ta: `${day.ta} ${s.reported} சம்பவங்கள் வந்திருக்கு, அதுல ${sev} கடுமையானவை.` }
+        : { en: `${s.reported} incidents came in ${day.en}, none of them severe.`, ta: `${day.ta} ${s.reported} சம்பவங்கள் வந்திருக்கு, எதுவும் கடுமையானது இல்லை.` } });
   }
   const c = s.conditions;
   if (c && (c.rainMax != null || c.lakeMax != null)) {
@@ -117,7 +120,7 @@ export function buildBrief(signals: WatchSignal[], standing: Standing, asOf: str
     told: top.filter((i) => i.kind !== "standing").map((i) => ({ key: i.id, level: signals.find((s) => s.key === i.id)?.level ?? 1 })) };
 }
 
-/** The console's own briefing counts for the last 24 hours (the briefing tool, the Briefing page's figures); nulls when it cannot say. */
+/** The console's own briefing counts for today, since 12 AM (the briefing tool, the Briefing page's figures); nulls when it cannot say. */
 export async function standingNow(): Promise<Standing> {
   try {
     const { runTool } = await import("@/lib/assistant/tools");

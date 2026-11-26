@@ -5,9 +5,10 @@
  * from last month" was a list in one lane and October against September in the other). One phrase now has one meaning, in English, Tamil and
  * Tanglish alike:
  *
- *   "today", "this morning", இன்று, innaiku ........... the dashboard's own Daily window, the last 24 hours (25 Nov 2026, the owner: the dashboard
- *                                                         said 7 severe and Jarvis, counting since midnight, said another number). "since
- *                                                         midnight" is still the calendar day so far
+ *   "today", "this morning", இன்று, innaiku ........... the dashboard's own Daily window (lib/period/day.ts): since 12 AM today, and until 6 AM
+ *                                                         since 12 AM yesterday (26 Nov 2026, the owner; one number for "today" everywhere). "since
+ *                                                         midnight" is the calendar date so far
+ *   "the last 24 hours", "past 24 hrs", 24 மணி நேரம் .... the 24 hours back from now, as the words say (a rolling window, never the Daily one)
  *   "right now", "currently", "open now", இப்போது, ippo  the current state: what is open now, whatever day it was reported (no reporting window)
  *   "yesterday", நேற்று, nethu ........................ the calendar day before today; "the day before yesterday" the one before that
  *   "last week / month / quarter", கடந்த மாதம், pona maasam   the previous calendar week (Monday to Sunday), month or quarter
@@ -24,6 +25,7 @@
  */
 
 import { englishMonths, heldPeriod, unheldPhraseIn, windowIn } from "@/lib/windowspan";
+import { DAY_WORDS, dayWindow, dayWords } from "@/lib/period/day";
 
 export type PeriodKey = "daily" | "weekly" | "monthly" | "quarterly";
 export type CalUnit = "week" | "month" | "quarter";
@@ -32,11 +34,11 @@ export type PeriodSpec =
   | { kind: "none" }
   /** the current state: open now, whatever day it was reported */
   | { kind: "now" }
-  /** one of the console's rolling windows, as said */
+  /** one of the console's windows, as said: today since 12 AM (daily), or the last 7, 30 or 90 days */
   | { kind: "window"; key: PeriodKey }
-  /** "last 10 days": that much time back from now (never one of the console's four windows: those are `window`) */
+  /** "last 10 days", "the last 24 hours": that much time back from now (the last 7, 30 and 90 days are `window`) */
   | { kind: "hours"; hours: number; n: number; unit: "hour" | "day" | "week" | "month" }
-  /** a calendar day: 0 today, 1 yesterday, 2 the day before yesterday */
+  /** a calendar day: 0 today (the Daily window), 1 yesterday, 2 the day before yesterday */
   | { kind: "day"; back: 0 | 1 | 2 }
   /** the previous calendar week (Monday to Sunday), month or quarter */
   | { kind: "last"; unit: CalUnit }
@@ -63,7 +65,7 @@ export interface DayOf { day: number; month: number; year: number | null }
 export interface Span {
   /** the console window that holds it (for tools that know only the four windows) */
   key: PeriodKey;
-  /** exact bounds on the IST wall clock, from inclusive, to exclusive; null: the rolling window `key` (or `hours`) back from now */
+  /** exact bounds on the IST wall clock, from inclusive, to exclusive; null: the console's window `key` (Daily: since 12 AM), or `hours` back from now */
   range: { from: string; to: string } | null;
   /** a rolling window that is not one of the four ("last 10 days") */
   hours: number | null;
@@ -178,7 +180,9 @@ const THIS_EN = /\b(this|current|indha|intha|inda) (week|month|quarter|vaaram|ma
 const WEEK_TA = "வார(?:ம்|த்|ங்|ாந்|ந்|(?![\\u0B80-\\u0BFF]))";
 const MONTH_TA_W = "(?:மாத(?:ம்|த்|ங்|ாந்|(?![\\u0B80-\\u0BFF]))|மாச(?:ம்|த்|(?![\\u0B80-\\u0BFF])))";
 const THIS_TA = new RegExp(`(?:இந்த|தற்போதைய) ?(${WEEK_TA}|${MONTH_TA_W}|காலாண்டு)`);
-const DAILY = /\b(24 ?(?:hrs?|hours?|h)|past day|daily)\b|தினசரி|24 மணி/i;
+const DAILY = /\b(daily)\b|தினசரி/i;
+/** "24 hours", "24 hrs", "24 மணி நேரம்" said without "last": still the 24 hours back from now (an explicit count of hours, never the Daily window) */
+const HOURS_24 = /\b(?:24 ?(?:hrs?|hours?|h)|twenty[- ]four hours?|past day)\b|24 ?மணி/i;
 /** "7 days", "30 days" said bare: the console's own windows */
 const BARE_DAYS = /\b(7|seven) days\b|\b(30|thirty) days\b/i;
 const WEEKLY = new RegExp(`\\b(weekly|weeks?|vaaram|vaara|vaarathukku|varam)\\b|${TA_EDGE}${WEEK_TA}`, "i");
@@ -210,6 +214,9 @@ export function dateWords(text: string): string {
   t = t.replace(/\b(?:till|until|through|thru|upto|up to)\b(?=\s+\d|\s+(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept?|oct|nov|dec)\b)/gi, "to");
   return t.replace(/\s+/g, " ").trim();
 }
+
+/** The 24 hours back from now, said outright. */
+export const ROLLING_24: PeriodSpec = { kind: "hours", hours: 24, n: 24, unit: "hour" };
 
 /** What time the question names. Pure: no clock. */
 export function readPeriod(text: string): PeriodSpec {
@@ -262,7 +269,8 @@ export function readPeriod(text: string): PeriodSpec {
   if (th) return { kind: "window", key: keyOfUnit(th[2] ?? th[1]) };
   // 9. the current state, never from "till now" or a "now" of sequence ("ok now show ...")
   if (NOW.test(t.replace(UPTO_NOW, " ").replace(SEQ_NOW, " "))) return { kind: "now" };
-  // 10. the console's windows, as said
+  // 10. the console's windows, as said; a bare count of 24 hours is that many hours back
+  if (HOURS_24.test(t)) return ROLLING_24;
   if (DAILY.test(t)) return { kind: "window", key: "daily" };
   const bare = BARE_DAYS.exec(t);
   if (bare) return { kind: "window", key: bare[1] ? "weekly" : "monthly" };
@@ -381,6 +389,8 @@ function spanIn(t: string): PeriodSpec | null {
   if (w.kind === "bad") return { kind: "unheld" };
   const key = heldPeriod(w.hours);
   if (key) return { kind: "window", key };
+  // "the last 24 hours", "the past day": 24 hours back from now, in hours (a day is a calendar day, and the Daily window is the day so far)
+  if (w.hours === 24) return ROLLING_24;
   return { kind: "hours", hours: w.hours, n: w.n, unit: w.unit === "year" ? "month" : w.unit };
 }
 
@@ -421,11 +431,17 @@ const dayLabel = (wallMs: number) => new Date(wallMs).toLocaleDateString("en-GB"
 const dayTa = (wallMs: number) => { const d = new Date(wallMs); return `${d.getUTCDate()} ${MONTH_TA[d.getUTCMonth()]}`; };
 
 export const WINDOW_WORDS: Record<PeriodKey, Words> = {
-  daily: { en: "last 24 hours", ta: "கடந்த 24 மணி நேரம்", tg: "kadandha 24 mani neram" },
+  // (the Daily window's words: lib/period/day.ts; dailyWords() for the ones at a time)
+  daily: { en: DAY_WORDS.en.inWords, ta: DAY_WORDS.ta.inWords, tg: DAY_WORDS.tg.inWords },
   weekly: { en: "last 7 days", ta: "கடந்த 7 நாட்கள்", tg: "kadandha 7 naal" },
   monthly: { en: "last 30 days", ta: "கடந்த 30 நாட்கள்", tg: "kadandha 30 naal" },
   quarterly: { en: "last 90 days", ta: "கடந்த 90 நாட்கள்", tg: "kadandha 90 naal" }
 };
+/** The Daily window's words at a time: "today", and from 12 AM to 6 AM "since 12 AM yesterday". */
+export const dailyWords = (now: string): Words => { const w = dayWords(now); return { en: w.en.inWords, ta: w.ta.inWords, tg: w.tg.inWords }; };
+/** A console window's words at a time. */
+export const windowWords = (key: PeriodKey, now: string): Words => (key === "daily" ? dailyWords(now) : WINDOW_WORDS[key]);
+/** the length of a console window in hours (a whole day for Daily, which is the calendar day: its own bounds are day.ts dayWindow) */
 export const KEY_HOURS: Record<PeriodKey, number> = { daily: 24, weekly: 168, monthly: 720, quarterly: 2160 };
 
 /**
@@ -449,10 +465,11 @@ export function spanOf(spec: PeriodSpec, now: string): Span | null {
       return { ...base, key: "quarterly", range: { from: "2000-01-01 00:00:00", to: toNow }, now: true, partial: true,
         label: { en: "open now, whatever the day reported", ta: "இப்போது நிலுவையில், எந்த நாள் பதிவானாலும்", tg: "ippo open-la irukkiravai, endha naal report aanaalum" } };
     case "window":
-      return { ...base, key: spec.key, range: null, label: WINDOW_WORDS[spec.key] };
+      return { ...base, key: spec.key, range: null, label: windowWords(spec.key, now) };
     case "hours": {
       const unit = spec.unit;
       const en = `last ${spec.n} ${unit}${spec.n === 1 ? "" : "s"}`;
+      // (hours: the rolling window, whatever its length)
       const taU = unit === "hour" ? "மணி நேரம்" : unit === "week" ? "வாரங்கள்" : unit === "month" ? "மாதங்கள்" : "நாட்கள்";
       const tgU = unit === "hour" ? "mani neram" : unit === "week" ? "vaaram" : unit === "month" ? "maasam" : "naal";
       return { ...base, key: keyOfHours(spec.hours), range: null, hours: spec.hours, label: { en, ta: `கடந்த ${spec.n} ${taU}`, tg: `kadandha ${spec.n} ${tgU}` },
@@ -461,8 +478,8 @@ export function spanOf(spec: PeriodSpec, now: string): Span | null {
     case "day": {
       const a = todayMid - spec.back * 864e5;
       const d = dayLabel(a);
-      // today is the console's Daily window, the last 24 hours: one number for "today" on the tiles, in Jarvis, in the chatbot and on the map
-      if (spec.back === 0) return { ...base, key: "daily", range: null, label: WINDOW_WORDS.daily };
+      // today is the console's Daily window (since 12 AM): one number for "today" on the tiles, in Jarvis, in the chatbot and on the map
+      if (spec.back === 0) return { ...base, key: "daily", range: null, label: dailyWords(now) };
       return { ...base, key: "daily", range: { from: wall(a), to: wall(a + 864e5) },
         label: spec.back === 1 ? { en: `yesterday (${d})`, ta: `நேற்று (${dayTa(a)})`, tg: `nethu (${d})` }
           : { en: `the day before yesterday (${d})`, ta: `நேற்று முன்தினம் (${dayTa(a)})`, tg: `munthaa naal (${d})` } };
@@ -558,19 +575,28 @@ export function spanOf(spec: PeriodSpec, now: string): Span | null {
   }
 }
 
-/** A comparison with dates on it: the window `key` back from now, against the window of the same length just before it. */
+/**
+ * A comparison with dates on it: the window `key` against the one before it, of the same length. Daily: the day so far (since 12 AM) against
+ * the same hours one day earlier, "yesterday by this time" (lib/period/day.ts).
+ */
 export interface Comparison { key: PeriodKey; cur: Span; prev: Span; label: Words }
 export function compareOf(key: PeriodKey, now: string): Comparison | null {
   const nowMs = ms(now);
   if (!Number.isFinite(nowMs)) return null;
+  if (key === "daily") {
+    const c = dayWindow(now), q = dayWindow(now, 1), w = dayWords(now), cur = dailyWords(now);
+    const plus = (t: string) => ist(ms(t) + 1000);
+    const before: Words = { en: w.en.prev, ta: w.ta.prev, tg: w.tg.prev };
+    const s = (x: { from: string; to: string }, label: Words): Span => ({ key, range: { from: x.from, to: plus(x.to) }, hours: null, label, partial: false, now: false, note: null });
+    return { key, cur: s(c, cur), prev: s(q, before), label: { en: `${cur.en} against ${before.en}`, ta: `${cur.ta}, ${before.ta} உடன் ஒப்பிட்டு`, tg: `${cur.tg}, ${before.tg} oda compare` } };
+  }
   const h = KEY_HOURS[key];
   const b = nowMs + 1000, a = b - h * 3600_000, p = a - h * 3600_000;
   const dl = (t: number) => dayLabel(t + 330 * 60_000);
   const w = WINDOW_WORDS[key];
   // in words, with its dates: "the 30 days before" puts a figure no count explains into a spoken line
-  const unitW = { daily: ["day", "நாள்", "naal"], weekly: ["week", "வாரம்", "vaaram"], monthly: ["month", "மாதம்", "maasam"], quarterly: ["quarter", "காலாண்டு", "kaalaandu"] }[key];
-  const before: Words = key === "daily" ? { en: "the day before", ta: "அதற்கு முந்தைய நாள்", tg: "adhukku munnadi naal" }
-    : { en: `the ${unitW[0]} before (${dl(p)} to ${dl(a - 1000)})`, ta: `அதற்கு முந்தைய ${unitW[1]} (${dl(p)} முதல் ${dl(a - 1000)} வரை)`, tg: `adhukku munnadi ${unitW[2]} (${dl(p)} to ${dl(a - 1000)})` };
+  const unitW = { weekly: ["week", "வாரம்", "vaaram"], monthly: ["month", "மாதம்", "maasam"], quarterly: ["quarter", "காலாண்டு", "kaalaandu"] }[key];
+  const before: Words = { en: `the ${unitW[0]} before (${dl(p)} to ${dl(a - 1000)})`, ta: `அதற்கு முந்தைய ${unitW[1]} (${dl(p)} முதல் ${dl(a - 1000)} வரை)`, tg: `adhukku munnadi ${unitW[2]} (${dl(p)} to ${dl(a - 1000)})` };
   const span = (from: number, to: number, label: Words): Span => ({ key, range: { from: ist(from), to: ist(to) }, hours: null, label, partial: false, now: false, note: null });
   return { key, cur: span(a, b, w), prev: span(p, a, before), label: { en: `the ${w.en} against ${before.en}`, ta: `${w.ta}, ${before.ta} உடன் ஒப்பிட்டு`, tg: `${w.tg}, ${before.tg} oda compare` } };
 }
@@ -594,12 +620,13 @@ export function prevOf(spec: PeriodSpec, now: string): Span | null {
   return { key: s.key, range: { from: wall(p), to: wall(a) }, hours: null, label, partial: false, now: false, note: b - a > 0 ? null : null };
 }
 
-/** The console window a span fits in, when it lies wholly inside it (today is inside the last 24 hours; last month is not inside the last 30 days). */
+/** The console window a span fits in, when it lies wholly inside it (since midnight is inside Daily; last month is not inside the last 30 days). */
 export function heldBy(span: Span, now: string): PeriodKey | null {
   if (span.now) return null;
   if (!span.range) return span.hours == null ? span.key : null;
   const lo = ms(span.range.from), nowMs = ms(now);
-  for (const k of ["daily", "weekly", "monthly", "quarterly"] as PeriodKey[]) if (nowMs - lo <= KEY_HOURS[k] * 3600_000 && ms(span.range.to) >= nowMs) return k;
+  if (lo >= ms(dayWindow(now).from) && ms(span.range.to) >= nowMs) return "daily";
+  for (const k of ["weekly", "monthly", "quarterly"] as PeriodKey[]) if (nowMs - lo <= KEY_HOURS[k] * 3600_000 && ms(span.range.to) >= nowMs) return k;
   return null;
 }
 
@@ -648,7 +675,7 @@ export function keyOf(s: PeriodSpec): PeriodKey | null {
 export function periodWordsOut(text: string): string {
   let t = ` ${text} `;
   // the longest phrases first: a comparison holds a month word ("மாதத்தை விட"), and a month word taken out first would leave the rest of it behind
-  for (const re of [DAYS_RANGE, DAY_ONE, SINCE_DAY_TA, LAST_WEEK_OF_TA, REF_EN, VS_TG, VS_TA, EITHER_WAY, AGO_EN, AGO_TG, AGO_TA, LAST_WEEK_OF, DAY_BEFORE, SINCE_YESTERDAY, YESTERDAY, ROLLING_LAST, LAST_EN, LAST_TA, THIS_EN, THIS_TA, TODAY, NOW, DAILY, BARE_DAYS, QUARTERLY, WEEKLY, MONTHLY, LAST_LONE])
+  for (const re of [DAYS_RANGE, DAY_ONE, SINCE_DAY_TA, LAST_WEEK_OF_TA, REF_EN, VS_TG, VS_TA, EITHER_WAY, AGO_EN, AGO_TG, AGO_TA, LAST_WEEK_OF, DAY_BEFORE, SINCE_YESTERDAY, YESTERDAY, ROLLING_LAST, LAST_EN, LAST_TA, THIS_EN, THIS_TA, TODAY, NOW, HOURS_24, DAILY, BARE_DAYS, QUARTERLY, WEEKLY, MONTHLY, LAST_LONE])
     t = t.replace(new RegExp(re.source, re.flags.includes("g") ? re.flags : `${re.flags}g`), " ");
   const w = windowIn(t);
   if (w) t = t.replace(w.said, " ");

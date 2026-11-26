@@ -832,13 +832,18 @@ export default function SatMap(props: Props) {
     s.map.flyToBounds(b ?? s.district, { padding: [8, 8], duration: 0.5 });
   };
   // full screen: the whole map card (the map, its pins, the key under it, the panels on it) fills the screen
-  // (a browser that refuses the Fullscreen API, as an embedded one can, gets the card filling the window instead: .map-full)
+  // (the card fills the window, .map-full, and the window the screen when the browser allows it)
   const [full, setFull] = useState(false);
+  /** true full screen is on for this map (the whole page, its card filling it) */
+  const screenFull = useRef(false);
   const cardOf = () => el.current?.closest<HTMLElement>(".a-map") ?? el.current?.closest<HTMLElement>(".card") ?? el.current?.parentElement ?? null;
   useEffect(() => {
     const on = () => {
       const f = document.fullscreenElement;
-      setFull((!!f && !!el.current && f.contains(el.current)) || !!cardOf()?.classList.contains("map-full"));
+      // true full screen was left (Esc): the card stops filling the window with it
+      if (!f && screenFull.current) { screenFull.current = false; if (cardOf()?.classList.contains("map-full")) { exitMapFullscreen(); return; } }
+      if (f === document.documentElement && cardOf()?.classList.contains("map-full")) screenFull.current = true;
+      setFull((!!f && f !== document.documentElement && !!el.current && f.contains(el.current)) || !!cardOf()?.classList.contains("map-full"));
       // the map at its new size, framed on the whole district (or the chosen zone or taluk) unless an answer, Rain or an incident holds the camera
       setTimeout(() => {
         const s = st.current;
@@ -865,11 +870,11 @@ export default function SatMap(props: Props) {
     if (full) { exitMapFullscreen(); return; }
     const card = cardOf();
     if (!card) return;
-    const fill = () => { card.classList.add("map-full"); document.dispatchEvent(new Event(MAP_FULL_EVENT)); };
-    if (!card.requestFullscreen) { fill(); return; }
-    // refused, or (in some embedded browsers) never answered: fill the window instead
-    card.requestFullscreen().catch(fill);
-    setTimeout(() => { if (!document.fullscreenElement && !card.classList.contains("map-full")) fill(); }, 700);
+    // the card fills the window, and the window the whole screen when the browser allows it (refused, or never answered in some embedded
+    // browsers: the window alone). The card alone in full screen hid Jarvis, Ask District IQ and their windows, which are outside it
+    card.classList.add("map-full");
+    document.dispatchEvent(new Event(MAP_FULL_EVENT));
+    document.documentElement.requestFullscreen?.().catch(() => undefined);
   };
   const m = () => st.current?.map;
   return (

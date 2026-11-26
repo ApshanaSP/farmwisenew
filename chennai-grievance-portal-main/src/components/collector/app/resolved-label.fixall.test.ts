@@ -2,8 +2,9 @@ import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 // console-sync-01, hunt2-ops-10: the Resolved tile said "Resolved today" (Tamil "இன்று தீர்க்கப்பட்டவை") and "Resolved this week / month /
-// quarter" over the console's reporting windows, which are the last 24 hours and the last 7, 30 and 90 days back from now (intel.ts
-// periodSinceWindow; the owner's design). The tile, the PDF's tile and the period's own label now read one wording from PERIODS.
+// quarter" over the console's reporting windows, the last 7, 30 and 90 days back from now (intel.ts periodSinceWindow). The tile, the PDF's
+// tile and the period's own label read one wording from PERIODS. 26 Nov 2026 (the owner): Daily IS the calendar day, from 12 AM to now
+// (lib/period/day.ts), so "Resolved today" is now what it counts.
 vi.mock("./SatMap", () => ({ default: () => null }));
 vi.mock("./askmap/AskOverlay", () => ({ default: () => null }));
 vi.mock("next/dynamic", () => ({ default: () => () => null }));
@@ -26,18 +27,22 @@ const tiles = (period: keyof typeof PERIODS) => {
 
 describe("the Resolved tile says the window it counts", () => {
   for (const period of Object.keys(PERIODS) as (keyof typeof PERIODS)[]) {
-    it(`${period}: the tile and the PDF's tile say "${PERIODS[period].label.toLowerCase()}", never a calendar day, week, month or quarter`, () => {
+    it(`${period}: the tile and the PDF's tile say its window, never a calendar week, month or quarter`, () => {
       const tile = tiles(period).find((k) => k?.key === "resolved");
       expect(tile?.props.label).toBe(PERIODS[period].resolved);
-      expect(tile?.props.label).not.toMatch(/today|this (day|week|month|quarter)/i);
-      expect(tile?.props.label?.toLowerCase()).toContain(PERIODS[period].label.toLowerCase());
+      expect(tile?.props.label).not.toMatch(/this (day|week|month|quarter)/i);
+      if (period === "daily") expect(tile?.props.label).toBe("Resolved today");
+      else expect(tile?.props.label?.toLowerCase()).toContain(PERIODS[period].label.toLowerCase());
+      expect(tile?.props.label).not.toMatch(/24 hours/);
       expect(pdfTiles(PERIODS[period]).find((t) => t[1] === "resolved")?.[0]).toBe(PERIODS[period].resolved);
     });
   }
   it("in Tamil, the hand-checked words say the same window, with its number", () => {
-    expect(translate(PERIODS.daily.resolved)).toBe("தீர்க்கப்பட்டவை, கடந்த 24 மணி நேரம்");
+    expect(translate(PERIODS.daily.resolved)).toBe("இன்று தீர்க்கப்பட்டவை");
+    expect(translate("Resolved since 12 AM yesterday")).toBe("நேற்று நள்ளிரவு 12 மணி முதல் தீர்க்கப்பட்டவை");
     expect(translate(PERIODS.weekly.resolved)).toBe("தீர்க்கப்பட்டவை, கடந்த 7 நாட்கள்");
     expect(translate(PERIODS.quarterly.resolved)).toBe("தீர்க்கப்பட்டவை, கடந்த 90 நாட்கள்");
-    for (const p of Object.values(PERIODS)) expect(translate(p.resolved)).not.toMatch(/இன்று|இந்த/);
+    for (const p of Object.values(PERIODS)) expect(translate(p.resolved)).not.toMatch(/இந்த/);
+    for (const p of [PERIODS.weekly, PERIODS.monthly, PERIODS.quarterly]) expect(translate(p.resolved)).not.toMatch(/இன்று/);
   });
 });

@@ -103,7 +103,7 @@ How to work:
 - Places: the resolved place below gives a locality's zone and taluk: a locality or zone goes in "zone"; "X taluk" goes in "taluk".
   A department named (including short names: PWD, Metrowater, SWD, SWM, TNPCB, police) goes in "dept"; a kind of incident in "cat".
   Use only the codes listed. Never add a filter the message (or, for a follow-up, the conversation) does not name.
-- Periods: daily = today / last 24 hours / yesterday; weekly = this week / 7 days; monthly = this month / 30 days; quarterly = this
+- Periods: daily = today (since 12 AM), yesterday (the whole day), or the last 24 hours (code counts them exactly); weekly = this week / 7 days; monthly = this month / 30 days; quarterly = this
   quarter / 90 days; null = the default (the last 90 days; "now" or "currently" with no period = weekly).
 - Follow-ups ("what about Adyar?", "only severe", "and last month?", "why?") repeat the previous answer's tools or kind with that change.
 - A message with several questions: cover every part (one call each).

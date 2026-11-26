@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useGrowFrom } from "./Shell";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
 import { I } from "./icons";
-import { DeskTags, OfficerCard, StoryLink } from "./Overview";
+import { DeskTags, LinkedNote, OfficerCard, StoryLink } from "./Overview";
+import { FilterChip } from "@/components/ui";
 import { Empty, SEVS, SevChip, Sources, StChip, fmtShort, fullTitle, listScopeWords, rel, reportOpt, type Row } from "./lib";
 import type { Console, ListPreset } from "./CollectorApp";
 
@@ -22,6 +23,7 @@ export function Modal({ title, children, c, narrow, wide }: { title: string; chi
   );
 }
 
+const PLACE_CHIP: Record<string, string> = { unlocated: "No exact place", nozone: "No zone", notaluk: "No taluk" };
 const STATUS_OPTS: [string, string][] = [
   ["open", "Unresolved"], ["awaiting", "Awaiting your verification"], ["critical", "Severe, not yet checked"], ["overdue", "Open and past deadline"],
   ["Open", "Open"], ["Under review", "Under review"], ["Assigned", "Assigned"], ["In progress", "In progress"],
@@ -42,7 +44,7 @@ export function ListBody({ preset, c }: { preset: ListPreset; c: Console }) {
     let live = true;
     const p = new URLSearchParams({ period: c.period, sort: String(f.sort), dir: String(f.dir), page: String(f.page), scope: String(f.scope) });
     if (c.zone && !f.anyZone) p.set("zone", String(c.zone));
-    for (const k of ["dept", "sev", "status", "q", "cat", "taluk", "place"] as const) if ((f as Record<string, unknown>)[k]) p.set(k, String((f as Record<string, unknown>)[k]));
+    for (const k of ["dept", "sev", "status", "q", "cat", "taluk", "place", "complaints"] as const) if ((f as Record<string, unknown>)[k]) p.set(k, String((f as Record<string, unknown>)[k]));
     setError(null);
     fetch(`/api/collector/list?${p}`)
       .then(async (r) => {
@@ -55,6 +57,13 @@ export function ListBody({ preset, c }: { preset: ListPreset; c: Console }) {
   }, [f, c.period, c.zone, c.reloadKey, retry]);
 
   const set = (k: string, v: unknown) => setF((x) => ({ ...x, [k]: v, page: 0 }));
+  // the filters the list carries from the console (or from what opened it) that none of its own boxes shows: each a chip, removed with its x
+  const chips: { key: string; label: string; clear: () => void }[] = [];
+  if (c.zone && c.zoneName && !f.anyZone) chips.push({ key: "zone", label: `Zone: ${c.zoneName}`, clear: () => set("anyZone", true) });
+  if (f.taluk) chips.push({ key: "taluk", label: `Taluk: ${c.talukName(f.taluk) ?? f.taluk}`, clear: () => set("taluk", undefined) });
+  if (f.cat) chips.push({ key: "cat", label: `Category: ${f.cat === c.cat && c.catLabel ? c.catLabel : f.cat.replace(/_/g, " ").toLowerCase()}`, clear: () => set("cat", undefined) });
+  if (f.place) chips.push({ key: "place", label: PLACE_CHIP[f.place] ?? "No exact place", clear: () => set("place", undefined) });
+  if (f.complaints) chips.push({ key: "complaints", label: "With a citizen complaint", clear: () => set("complaints", undefined) });
   const pages = data ? Math.max(1, Math.ceil(data.total / 12)) : 1;
   const th = (k: string, l: string) => (
     <th className="sortable" onClick={() => setF((x) => ({ ...x, dir: x.sort === k ? -x.dir : -1, sort: k, page: 0 }))}>
@@ -79,6 +88,11 @@ export function ListBody({ preset, c }: { preset: ListPreset; c: Console }) {
           <option value="period">{c.periodLabel}</option>{f.scope === "30d" && <option value="30d">Last 30 days</option>}<option value="all">All 180 days</option>
         </select>
       </div>
+      {chips.length > 0 && (
+        <div className="list-chips" role="group" aria-label="Other filters on this list">
+          {chips.map((x) => <FilterChip key={x.key} onRemove={x.clear} removeLabel={`Remove the filter ${x.label}`}>{x.label}</FilterChip>)}
+        </div>
+      )}
       <div style={{ fontSize: 13, color: "var(--text-3)", marginBottom: 8 }}>
         {error ? <span role="alert">{error} <button className="lnk" onClick={() => setRetry((n) => n + 1)}>Retry</button></span>
           : data ? `${(data.incidents ?? data.total).toLocaleString("en-IN")} incidents${data.incidents != null && data.incidents !== data.total
@@ -150,11 +164,12 @@ export function ZonesBody({ d, c }: { d: OverviewData; c: Console }) {
 export function DeptsBody({ c }: { c: Console }) {
   return (
     <div className="tbl-wrap">
+      <p className="scope-note"><I n="pin" /><span>{[c.periodLabel, c.zoneName, c.catLabel, c.talukName(c.taluk) ? `${c.talukName(c.taluk)} taluk` : null].filter(Boolean).join(" · ")} · every department</span></p>
       <table>
         <thead><tr><th>Department</th><th>Open incidents</th><th>Awaiting your verification</th><th>Severe</th></tr></thead>
         <tbody>
           {c.depts.map((d) => (
-            <tr key={d.code} onClick={() => c.setDept(d.code)}>
+            <tr key={d.code} onClick={() => c.openDept(d.code)} title="Open the department's summary">
               <td className="ev">{d.name}</td><td className="num">{d.open}</td><td className="num">{d.unverified}</td>
               <td className="num" style={{ color: "var(--sev)" }}>{d.severe}</td>
             </tr>
@@ -219,7 +234,7 @@ export function ContactBody({ dept, contacts }: { dept: Row; contacts: Row[] }) 
 }
 
 const REPORT_PERIODS = [
-  ["daily", "Daily", "last 24 hours"], ["weekly", "Weekly", "last 7 days"], ["monthly", "Monthly", "last 30 days"], ["quarterly", "Quarterly", "last 90 days"]
+  ["daily", "Daily", "since 12 AM"], ["weekly", "Weekly", "last 7 days"], ["monthly", "Monthly", "last 30 days"], ["quarterly", "Quarterly", "last 90 days"]
 ] as const;
 
 export function ExportBody({ c }: { c: Console }) {
@@ -326,9 +341,14 @@ export function NewsAllBody({ d, c }: { d: OverviewData; c: Console }) {
     return () => { live = false; };
   }, [c.period, d.allNews]);
   if (d.allNews) {
-    const n = { act: d.allNews.filter((i) => i.desk?.v === "act").length, know: d.allNews.filter((i) => i.desk?.v !== "act").length };
+    // every count is of the whole period; the list holds the newest 250 (d.allNewsCounts; counted here from the list for an older answer)
+    const C = d.allNewsCounts ?? null;
+    const n = C ?? { act: d.allNews.filter((i) => i.desk?.v === "act").length, know: d.allNews.filter((i) => i.desk?.v !== "act").length };
     const areas = new Map<string, number>();
-    for (const i of d.allNews) if (i.desk?.area) areas.set(i.desk.area, (areas.get(i.desk.area) ?? 0) + 1);
+    if (C) for (const [a, k] of Object.entries(C.areas)) { const x = show === "act" ? k.act : show === "know" ? k.know : k.act + k.know; if (x) areas.set(a, x); }
+    else for (const i of d.allNews) if (i.desk?.area) areas.set(i.desk.area, (areas.get(i.desk.area) ?? 0) + 1);
+    const total = d.allNewsTotal || d.allNews.length;
+    const wanted = area ? areas.get(area) ?? 0 : show === "act" ? n.act : show === "know" ? n.know : total;
     const list = d.allNews.filter((i) => (show === "all" || show === "left" || (show === "act") === (i.desk?.v === "act")) && (!area || i.desk?.area === area));
     const tab = (k: NewsFilter, label: string, count: number | null) => (
       <button role="tab" aria-selected={show === k} className={show === k ? "on" : ""} onClick={() => setShow(k)}>{label}{count != null && <b>{count}</b>}</button>
@@ -337,7 +357,7 @@ export function NewsAllBody({ d, c }: { d: OverviewData; c: Console }) {
       <div className="nwall">
         <div className="nwall-h">
           <div className="nw-seg" role="tablist" aria-label="Which news">
-            {tab("all", "All", d.allNewsTotal || d.allNews.length)}{tab("act", "Needs action", n.act)}{tab("know", "For information", n.know)}
+            {tab("all", "All", total)}{tab("act", "Needs action", n.act)}{tab("know", "For information", n.know)}
             {tab("left", "Left out", left && left !== "error" ? left.total : null)}
           </div>
           {show !== "left" && areas.size > 1 && (
@@ -346,7 +366,9 @@ export function NewsAllBody({ d, c }: { d: OverviewData; c: Console }) {
               {[...areas.entries()].sort((a, b) => b[1] - a[1]).map(([a, k]) => <option key={a} value={a}>{a} ({k})</option>)}
             </select>
           )}
-          <span className="nwall-n">{show === "left" ? "Read by AI and not the district administration's business" : "Read by AI from official news media, newest first"}</span>
+          <span className="nwall-n">{show === "left" ? "Read by AI and not the district administration's business" : "Read by AI from official news media, newest first"}
+            {show !== "left" && wanted > list.length && <> · <b>{`${list.length.toLocaleString("en-IN")} of ${wanted.toLocaleString("en-IN")} listed (the newest ${d.allNews.length.toLocaleString("en-IN")} stories)`}</b></>}
+            {show === "left" && left && left !== "error" && left.total > left.items.length && <> · <b>{`newest ${left.items.length.toLocaleString("en-IN")} of ${left.total.toLocaleString("en-IN")} listed`}</b></>}</span>
         </div>
         {show === "left" ? (
           left === "error" ? <Empty>The list could not be loaded just now.</Empty> : !left ? <Empty>Loading…</Empty> : !left.items.length ? <Empty>Nothing was left out in this period.</Empty> : (
@@ -369,7 +391,7 @@ export function NewsAllBody({ d, c }: { d: OverviewData; c: Console }) {
               <button key={i.id} className={`ncard nw${i.desk?.v === "act" ? " act" : ""}`} onClick={() => c.openStory(i)}>
                 <div className="nw-tags"><DeskTags i={i} />{i.sev && <SevChip s={i.sev} />}</div>
                 <h4 title={i.original ?? undefined}>{i.title}</h4>
-                {i.desk?.gist && <p>{i.desk.gist}</p>}
+                {i.desk?.gist && <p title={i.desk.gist}>{i.desk.gist}</p>}
                 {i.desk?.why && <p className="nw-why"><b>Why it matters</b>{i.desk.why}</p>}
                 <div className="nout" aria-label="Sources">{(i.sources?.length ? i.sources.map((s) => s.name) : i.outletNames.length ? i.outletNames : ["News"]).slice(0, 5).map((nm) => <span key={nm}>{nm}</span>)}
                   {i.outletNames.length > 5 && <span>+{i.outletNames.length - 5}</span>}</div>
@@ -382,8 +404,10 @@ export function NewsAllBody({ d, c }: { d: OverviewData; c: Console }) {
       </div>
     );
   }
-  if (!d.news.length) return <Empty>No news reports in this period.</Empty>;
+  if (!d.news.length) return <Empty>No news is linked to an incident in {c.scopeName} in this period. Clear the filters for every news story.</Empty>;
   return (
+    <>
+    <LinkedNote c={c} />
     <div className="ngrid">
       {d.news.map((i) => (
         <button key={i.id} className="ncard" onClick={() => c.openInc(i.id)}>
@@ -397,5 +421,6 @@ export function NewsAllBody({ d, c }: { d: OverviewData; c: Console }) {
         </button>
       ))}
     </div>
+    </>
   );
 }

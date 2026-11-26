@@ -10,6 +10,7 @@
  */
 import { GridIndex, M_PER_DEG_LAT, CHENNAI_LAT, distToLineM, expandBboxM, haversineM, inBbox, mPerDegLon, pointInPolygon, type LatLon, type Pair } from "./geom";
 import { checkSpec, spanOf } from "@/lib/period/read";
+import { dayWindow } from "@/lib/period/day";
 import { facingIncidents, isCalendar, type AreaRef, type Filter, type Period, type Plan, type Step } from "./plan";
 import type { Hotspot, Inc, LayerId, LineFeat, PointFeat, PolyFeat, World } from "./types";
 import { CAT_TA, FAMILY_WORD, LAYER_WORD, SEV_WORD, STATUS_WORD, inPeriodWords, isTa, nOf, periodWords, type Lang, zoneTa } from "./words";
@@ -132,7 +133,7 @@ export function shiftWall(wall: string, hours: number): string {
   return new Date(t).toISOString().slice(0, 19).replace("T", " ");
 }
 
-/** A period as (from, to]: the console's own window (periodWindow in intel.ts), ending at `now`. */
+/** A period as (from, to]: the console's own window (periodWindow in intel.ts), ending at `now`; "today" is its Daily, from 12 AM (lib/period/day.ts). */
 export function periodRange(p: Period, now: string): { from: string; to: string; fromOpen: boolean } {
   if (p.kind === "last_days") return { from: shiftWall(now, -24 * p.days * (p.offset + 1)), to: shiftWall(now, -24 * p.days * p.offset), fromOpen: true };
   if (isCalendar(p)) {
@@ -140,6 +141,8 @@ export function periodRange(p: Period, now: string): { from: string; to: string;
     // midnight, a week from Monday, a month or quarter from its 1st; offset 0 is the current one up to now, 1 the one before, and so on
     const y = Number(now.slice(0, 4)), m = Number(now.slice(5, 7)) - 1, d = Number(now.slice(8, 10));
     let start: number, end: number;
+    if (p.kind === "day" && p.so_far) return { ...dayWindow(now, p.offset), fromOpen: false };
+    if (p.kind === "day" && p.offset === 0) return { ...dayWindow(now), fromOpen: false };
     if (p.kind === "day") { start = Date.UTC(y, m, d - p.offset); end = Date.UTC(y, m, d - p.offset + 1); }
     else if (p.kind === "week") { const monday = d - ((new Date(Date.UTC(y, m, d)).getUTCDay() + 6) % 7); start = Date.UTC(y, m, monday - 7 * p.offset); end = Date.UTC(y, m, monday - 7 * p.offset + 7); }
     else if (p.kind === "month") { start = Date.UTC(y, m - p.offset, 1); end = Date.UTC(y, m - p.offset + 1, 1); }

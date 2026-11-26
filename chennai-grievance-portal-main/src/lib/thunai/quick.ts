@@ -209,8 +209,8 @@ export const unheldWindowIn = (t: string, raw = t): boolean => AGO_EN.test(t) ||
  */
 export const calendarWindowIn = (t: string): boolean => readPeriod(t).kind === "unheld";
 /**
- * The console window a sentence names, read by the one shared reader (lib/period/read.ts): "this week", "last 30 days", "monthly". Today is held by the last
- * 24 hours. A span with its own dates (last month, yesterday) or the current state ("right now") is no window: null here, `spanIn` has it.
+ * The console window a sentence names, read by the one shared reader (lib/period/read.ts): "this week", "last 30 days", "monthly". Today is the
+ * console's Daily (since 12 AM). A span with its own dates ("the last 24 hours" too) (last month, yesterday) or the current state ("right now") is no window: null here, `spanIn` has it.
  */
 export function periodIn(t: string): PeriodKey | null {
   const s = readPeriod(t);
@@ -470,10 +470,10 @@ function withSpan(q: Quick, spec: PeriodSpec): Quick | null {
   // ("today" is the dashboard's Daily window: lib/period/read.ts)
   if (spec.kind === "day" && spec.back === 0) return { ...q, slots: { ...q.slots, period: "daily" } };
   if (!needsDates(spec)) return q;
-  // what changed, explain and a place's situation compare a window with the one before it: a day ("since yesterday", "today") is the last 24 hours
-  // against the 24 before, a week or a month its window; a span they cannot hold is left to the planner (v4, the analysis recipes)
+  // what changed, explain and a place's situation compare a window with the one before it: a day ("since yesterday", "today") is the day so far
+  // against yesterday by this time, a week or a month its window; a span they cannot hold is left to the planner (v4, the analysis recipes)
   if (q.recipe === "changed" || q.recipe === "explain" || q.recipe === "situation") {
-    // v6: a place's situation "right now" ("இப்போ", "ippo") is its state today, the last 24 hours its screen already reads (its own default)
+    // v6: a place's situation "right now" ("இப்போ", "ippo") is its state today, the Daily window its screen already reads (its own default)
     const key = spec.kind === "day" || (spec.kind === "now" && q.recipe === "situation") ? "daily" : spec.kind === "compare" || spec.kind === "last" || spec.kind === "lastWeekOf" ? keyOf(spec) : null;
     return key ? { ...q, slots: { ...q.slots, period: key } } : null;
   }
@@ -481,11 +481,11 @@ function withSpan(q: Quick, spec: PeriodSpec): Quick | null {
     if (q.recipe !== "cases" || q.slots.status === "resolved") return null;
     return { recipe: "trend", slots: { cat: q.slots.cat ?? null, zones: q.slots.zones ?? [], sev: q.slots.sev ?? null, status: q.slots.status ?? null, period: spec.key, span: spec, fresh: true } };
   }
-  // (a brief for today stays the briefing of the last 24 hours that holds it, with its conditions line: the same rule as the resolve lane, entities.ts)
+  // (a brief for today stays the Daily briefing, with its conditions line: the same rule as the resolve lane, entities.ts)
   if ((q.recipe === "cases" && q.slots.status !== "resolved") || (q.recipe === "brief" && !(spec.kind === "day" && spec.back === 0))) return { ...q, slots: { ...q.slots, period: keyOf(spec), span: spec } };
   // a reading (air, rain, lakes), prices and a place search have no reporting window: the time words change nothing
   if (["readings", "prices", "nearby"].includes(q.recipe)) return q;
-  // a list of resolved cases over a span is not one this lane can count ("resolved today" is since midnight in Ask District IQ): handed on, never the last 24 hours
+  // a list of resolved cases over a span is not one this lane can count ("resolved yesterday"): handed on, never another window
   if (q.recipe === "cases") return null;
   if (spec.kind === "day" && spec.back === 0) return { ...q, slots: { ...q.slots, period: "daily" } };
   return null;

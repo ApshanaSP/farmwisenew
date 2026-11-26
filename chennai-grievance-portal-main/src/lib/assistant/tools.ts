@@ -10,6 +10,7 @@
  */
 import { z } from "zod";
 import { PERIODS, areaSnapshot, asOf, asOfNow, contactsFor, explain, incident, list, overview, periodSince, search, type Overview } from "@/lib/collector/intel";
+import { periodInfo, periodLower } from "@/lib/period/day";
 import { insights, type Insights } from "@/lib/collector/insights";
 import { threads, type Thread } from "@/lib/collector/threads";
 import type { Story } from "@/lib/collector/storyai";
@@ -221,7 +222,7 @@ export function readableTime(t: unknown): string | null {
 const openedHours = (h: number | null) => (h == null ? null : Math.max(0, h));
 const openFor = (hours: number | null) => hours == null ? null : hours < 0 ? "not started yet" : hours < 48 ? `${Math.round(hours)} hours` : `${Math.round(hours / 24)} days`;
 const inr = (v: number) => v.toLocaleString("en-IN");
-const periodOf = (s: AssistantScope) => PERIODS[s.period].label.toLowerCase();
+const periodOf = (s: AssistantScope) => (s.period === "daily" && s.offset ? (s.offset === 1 ? "yesterday" : "the day before yesterday") : periodLower(s.period));
 
 /**
  * The scope's incident count as a fact. Departmental feeds are mock data FarmwiseAI allows: answers never count or label
@@ -437,14 +438,14 @@ export const TOOLS = [
     args: scopeOnly,
     async run({ scope }) {
       const d = await ov(scope);
-      const P = PERIODS[scope.period];
-      // the Resolved tile's own words (PERIODS.resolved, "Resolved, last 7 days"): the count is closings in the rolling window, never
-      // "this week" (reviewerE-04, as hunt2-ops-10 fixed the tile and the PDF); it already names its window
+      const P = periodInfo(scope.period, d.now);
+      // the Resolved tile's own words (PERIODS.resolved, "Resolved today", "Resolved, last 7 days"): the count is closings in the console's
+      // window, never "this week" (reviewerE-04, as hunt2-ops-10 fixed the tile and the PDF); it already names its window
       const label: Record<string, string> = { severe: "Severe events", complaints: "Open citizen complaints", ongoing: "Ongoing incidents",
         resolved: P.resolved };
       const facts: Fact[] = [];
       for (const k of Object.keys(label)) {
-        const now = k === "resolved" ? label[k] : `${label[k]}, ${P.label.toLowerCase()}`;
+        const now = k === "resolved" ? label[k] : `${label[k]}, ${periodLower(scope.period, d.now)}`;
         const before = k === "resolved" ? `Resolved, ${P.prev}` : `${label[k]}, ${P.prev}`;
         facts.push(fact(`kpi.${k}`, now, d.kpi.cur[k]), fact(`kpi.${k}.prev`, before, d.kpi.prev[k]));
       }
@@ -700,7 +701,7 @@ export const TOOLS = [
       const nowT = Date.parse(`${now.replace(" ", "T")}+05:30`) / 1000;
       const place = s.zone == null ? await resolvePlace(a.text).catch(orNull("tools:438")) : null;
       const zone = s.zone ?? (place?.zone != null ? Number(place.zone) : null);
-      const f = { since: a.allTime ? null : nowT - PERIODS[s.period].hours * 3600, until: nowT, zone, cats: s.cat ? [s.cat] : null, dept: s.dept };
+      const f = { since: a.allTime ? null : Date.parse(`${periodSince(s.period, now).replace(" ", "T")}+05:30`) / 1000, until: nowT, zone, cats: s.cat ? [s.cat] : null, dept: s.dept };
       const [inc, news] = await Promise.all([
         // a kind not asked for is not searched: null, the same as "no index", so the fallback below runs when every asked kind has none
         a.kinds.includes("incidents") ? hybridSearch("incidents", a.text, f, 12) : Promise.resolve(null),
@@ -1307,13 +1308,13 @@ export const TOOLS = [
 
   tool({
     name: "incident_series",
-    description: "Incidents reported in the scope over time, in the console's buckets (2-hour buckets for the last 24 hours, daily for a week or 30 days, weekly for 90 days), with severe and still-open counts per bucket. For trend lines such as 'road accident trend for the last 30 days' (monthly scope, category ROAD_ACCIDENT).",
+    description: "Incidents reported in the scope over time, in the console's buckets (2-hour buckets from 12 AM for today, daily for a week or 30 days, weekly for 90 days), with severe and still-open counts per bucket. For trend lines such as 'road accident trend for the last 30 days' (monthly scope, category ROAD_ACCIDENT).",
     args: scopeOnly,
     async run({ scope }) {
       const now = await asOf();
       const [buckets, normal] = await Promise.all([incidentSeries(scope, now), seriesNormal(scope, now)]);
       const total = buckets.reduce((a, b) => a + b.n, 0);
-      const unit = PERIODS[scope.period].buckets === 12 ? "2 hours" : scope.period === "quarterly" ? "week" : "day";
+      const unit = scope.period === "daily" ? "2 hours" : scope.period === "quarterly" ? "week" : "day";
       const facts = [fact("series.total", `Incidents reported, ${periodOf(scope)}`, total),
         ...buckets.map((b, k) => fact(`series.${k}.n`, `Incidents reported ${b.from.slice(0, 16)} to ${b.to.slice(0, 16)}`, b.n)),
         fact("series.max", "Most in one bucket", Math.max(0, ...buckets.map((b) => b.n))),

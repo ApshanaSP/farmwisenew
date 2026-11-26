@@ -19,7 +19,7 @@ export const TA: Record<string, string> = {
   "Every decision and change": "ஒவ்வொரு முடிவும் மாற்றமும்", "Fetch the latest from the store": "சமீபத்திய தரவைப் பெறு",
   "Whole district, every department": "முழு மாவட்டம், எல்லா துறைகளும்", "Feeds and added sources": "ஊட்டங்கள், சேர்த்த மூலங்கள்",
   "Notifications": "அறிவிப்புகள்", "Now": "இப்போது", "Earlier today": "இன்று முன்னதாக", "Earlier": "முன்னதாக",
-  "Severe and high · last 24 hours": "கடுமையானவை, அதிகமானவை · கடந்த 24 மணி நேரம்", "Severe and high · last 7 days": "கடுமையானவை, அதிகமானவை · கடந்த 7 நாட்கள்", "Mark all read": "அனைத்தையும் படித்ததாகக் குறி", "Alerts": "எச்சரிக்கைகள்",
+  "Severe and high · today (since 12 AM)": "கடுமையானவை, அதிகமானவை · இன்று (நள்ளிரவு 12 மணி முதல்)", "Severe and high · since 12 AM yesterday": "கடுமையானவை, அதிகமானவை · நேற்று நள்ளிரவு 12 மணி முதல்", "Severe and high · last 7 days": "கடுமையானவை, அதிகமானவை · கடந்த 7 நாட்கள்", "Mark all read": "அனைத்தையும் படித்ததாகக் குறி", "Alerts": "எச்சரிக்கைகள்",
 
   // ---- greetings and the band
   "Good morning, Collector": "காலை வணக்கம், ஆட்சியர்", "Good afternoon, Collector": "மதிய வணக்கம், ஆட்சியர்",
@@ -28,6 +28,18 @@ export const TA: Record<string, string> = {
   "All 15 zones": "அனைத்து 15 மண்டலங்கள்", "All # zones": "அனைத்து # மண்டலங்கள்", "All taluks": "அனைத்து வட்டங்கள்", "All departments": "அனைத்து துறைகள்",
   "Clear": "அழி", "Zone": "மண்டலம்", "Taluk": "வட்டம்", "Department": "துறை", "Period": "காலம்", "Filters": "வடிப்பான்கள்",
   "District-wide · not filtered": "மாவட்டம் முழுவதும் · வடிகட்டப்படவில்லை", "Your files · not filtered": "உங்கள் கோப்புகள் · வடிகட்டப்படவில்லை",
+  "District-wide · each card says its days": "மாவட்டம் முழுவதும் · நாட்கள் ஒவ்வொரு அட்டையிலும்",
+  "News linked to incidents in": "சம்பவங்களுடன் இணைந்த செய்திகள்:",
+  "Linked to an incident in": "சம்பவத்துடன் இணைந்தவை:",
+  "No story differs that is linked to an incident in": "சம்பவத்துடன் இணைந்த செய்திகளில் முரண்பாடு இல்லை:",
+  "District-wide: no incident on record": "மாவட்டம் முழுவதும்: பதிவில் சம்பவம் இல்லை",
+  "Neighbouring districts, last # days: no filter applies": "அண்டை மாவட்டங்கள், கடந்த # நாட்கள்: வடிகட்டி பொருந்தாது",
+  "Whole district, any date": "முழு மாவட்டம், எந்தத் தேதியும்",
+  "With a citizen complaint": "குடிமக்கள் புகார் உள்ளவை",
+  "No exact place": "சரியான இடம் இல்லை",
+  "No taluk": "வட்டம் இல்லை",
+  "These figures could not be loaded.": "இந்த எண்களை ஏற்ற முடியவில்லை.",
+  "every department": "எல்லா துறைகளும்",
   "Collected today, #:# AM": "இன்று சேகரிக்கப்பட்டது, முற்பகல் #:#", "Collected today, #:# PM": "இன்று சேகரிக்கப்பட்டது, பிற்பகல் #:#",
   "# of # feeds current · #/# live": "# / # ஊட்டங்கள் நடப்பில் · #/# நேரலை",
 
@@ -35,13 +47,21 @@ export const TA: Record<string, string> = {
   "Severe events": "கடுமையான நிகழ்வுகள்", "Open complaints": "திறந்த புகார்கள்", "Ongoing incidents": "நடப்பு நிகழ்வுகள்", "Open incidents": "திறந்த நிகழ்வுகள்",
   "Resolved today": "இன்று தீர்க்கப்பட்டவை", "Resolved this week": "இந்த வாரம் தீர்க்கப்பட்டவை", "Resolved this month": "இந்த மாதம் தீர்க்கப்பட்டவை",
   "Resolved this quarter": "இந்தக் காலாண்டில் தீர்க்கப்பட்டவை",
-  // the Collector's Resolved tile: its window back from now, not a calendar day or week (console-sync-01, hunt2-ops-10); "#" holds 24, 7, 30, 90
-  "Resolved, last 24 hours": "தீர்க்கப்பட்டவை, கடந்த 24 மணி நேரம்", "Resolved, last 7 days": "தீர்க்கப்பட்டவை, கடந்த 7 நாட்கள்",
+  // the Collector's Resolved tile: today since 12 AM (lib/period/day.ts), or its window back from now, not a calendar week or month
+  // (console-sync-01, hunt2-ops-10); "#" holds 12, 7, 30, 90
+  "Resolved since 12 AM yesterday": "நேற்று நள்ளிரவு 12 மணி முதல் தீர்க்கப்பட்டவை", "Resolved, last 7 days": "தீர்க்கப்பட்டவை, கடந்த 7 நாட்கள்",
   // the officer's Resolved tile: grievances reported in that window that are now resolved (fixall-board-resolved-01)
-  "Resolved, reported in last 24 hours": "கடந்த 24 மணி நேரத்தில் பதிவாகி, தீர்க்கப்பட்டவை", "Resolved, reported in last 7 days": "கடந்த 7 நாட்களில் பதிவாகி, தீர்க்கப்பட்டவை",
-  "than yesterday": "நேற்றை விட", "than last week": "கடந்த வாரத்தை விட", "than last month": "கடந்த மாதத்தை விட", "from yesterday": "நேற்றிலிருந்து",
+  "Resolved, reported today (since 12 AM)": "இன்று (நள்ளிரவு 12 மணி முதல்) பதிவாகி, தீர்க்கப்பட்டவை", "Resolved, reported since 12 AM yesterday": "நேற்று நள்ளிரவு 12 மணி முதல் பதிவாகி, தீர்க்கப்பட்டவை", "Resolved, reported in last 7 days": "கடந்த 7 நாட்களில் பதிவாகி, தீர்க்கப்பட்டவை",
+  "than yesterday": "நேற்றை விட", "than yesterday by this time": "நேற்று இதே நேரத்தை விட", "from yesterday by this time": "நேற்று இதே நேரத்திலிருந்து",
+  "than the day before by this time": "அதற்கு முந்தைய நாள் இதே நேரத்தை விட", "from the day before by this time": "அதற்கு முந்தைய நாள் இதே நேரத்திலிருந்து",
+  "yesterday by this time": "நேற்று இதே நேரம் வரை", "the day before by this time": "அதற்கு முந்தைய நாள் இதே நேரம் வரை",
+  "Today (since 12 AM)": "இன்று (நள்ளிரவு 12 மணி முதல்)", "Since 12 AM yesterday": "நேற்று நள்ளிரவு 12 மணி முதல்",
+  "Daily · today (since 12 AM)": "தினசரி · இன்று (நள்ளிரவு 12 மணி முதல்)", "Daily · since 12 AM yesterday": "தினசரி · நேற்று நள்ளிரவு 12 மணி முதல்",
+  "Daily: today, from 12 AM to now": "தினசரி: இன்று, நள்ளிரவு 12 மணி முதல் இப்போது வரை",
+  "than last week": "கடந்த வாரத்தை விட", "than last month": "கடந்த மாதத்தை விட", "from yesterday": "நேற்றிலிருந்து",
   "# fewer": "# குறைவு", "# more": "# அதிகம்", "No change": "மாற்றமில்லை",
-  "Most serious zones": "மிகவும் தீவிரமான மண்டலங்கள்", "Past deadline, still open · 24 h": "காலக்கெடு தாண்டியும் திறந்தவை · 24 மணி",
+  "Most serious zones": "மிகவும் தீவிரமான மண்டலங்கள்", "Past deadline, still open · today": "காலக்கெடு தாண்டியும் திறந்தவை · இன்று",
+  "Past deadline, still open · since yesterday": "காலக்கெடு தாண்டியும் திறந்தவை · நேற்று முதல்",
   "Severe, not yet checked": "கடுமையானவை, இன்னும் சரிபார்க்கப்படாதவை",
 
   // ---- overview cards
@@ -59,11 +79,44 @@ export const TA: Record<string, string> = {
   "No officer has confirmed": "எந்த அதிகாரியும் உறுதிப்படுத்தவில்லை",
 
   // ---- briefing
-  "Key points": "முக்கிய அம்சங்கள்", "last 24 hours": "கடந்த 24 மணி நேரம்", "Listen": "கேளுங்கள்", "Departments": "துறைகள்",
+  "Key points": "முக்கிய அம்சங்கள்", "last 24 hours": "கடந்த 24 மணி நேரம்", "last 7 days": "கடந்த 7 நாட்கள்", "resolved at #:# AM: the reports now agree": "முற்பகல் #:#-க்குத் தீர்ந்தது: செய்திகள் இப்போது ஒத்துப்போகின்றன", "resolved at #:# PM: the reports now agree": "பிற்பகல் #:#-க்குத் தீர்ந்தது: செய்திகள் இப்போது ஒத்துப்போகின்றன", "Listen": "கேளுங்கள்", "Departments": "துறைகள்",
   "Stories still developing": "தொடரும் செய்திகள்", "Only in the news": "செய்திகளில் மட்டும்", "LATEST": "சமீபத்தியது",
   "WEATHER & WATER": "வானிலை & நீர்", "LIVES LOST": "உயிரிழப்புகள்", "CIVIC SERVICES": "குடிமைச் சேவைகள்", "LAW & ORDER": "சட்டம் & ஒழுங்கு",
   "HEALTH": "சுகாதாரம்", "ALERT": "எச்சரிக்கை", "# deaths": "# உயிரிழப்புகள்", "# severe": "# கடுமை", "# dead": "# உயிரிழப்பு",
-  "what each received · last 24 hours": "ஒவ்வொன்றும் பெற்றவை · கடந்த 24 மணி",
+  "what each received · today (since 12 AM)": "ஒவ்வொன்றும் பெற்றவை · இன்று (நள்ளிரவு 12 மணி முதல்)", "what each received · since 12 AM yesterday": "ஒவ்வொன்றும் பெற்றவை · நேற்று நள்ளிரவு 12 மணி முதல்",
+
+  // ---- the Briefing's "Today at a glance" and the department summary (26 Nov 2026): the fixed labels. Their sentences are written in both
+  // languages where they are made (lib/collector/glance.ts, deptwords.ts); names in them are translated one by one
+  "Today at a glance": "இன்றைய நிலவரம் ஒரு பார்வையில்", "Last # days at a glance": "கடந்த # நாட்கள் ஒரு பார்வையில்", "Whole district": "முழு மாவட்டம்",
+  "District-wide": "மாவட்டம் முழுவதும்", "What is happening": "என்ன நடக்கிறது", "What needs you": "உங்கள் கவனத்திற்கு", "What to do next": "அடுத்து செய்ய வேண்டியவை",
+  "Past deadline": "காலக்கெடு தாண்டியவை", "Still open": "இன்னும் திறந்தவை", "still open": "இன்னும் திறந்தவை", "# still open": "# இன்னும் திறந்தவை",
+  "# severe or high": "# கடுமை அல்லது அதிகம்", "# late": "# தாமதம்", "# open": "# திறந்தவை", "reported": "பதிவானவை", "resolved": "தீர்க்கப்பட்டவை",
+  "Nothing was reported or resolved in this view.": "இந்தப் பார்வையில் எதுவும் பதிவாகவில்லை, தீர்க்கப்படவில்லை.",
+  "Nothing stands out in this view.": "இந்தப் பார்வையில் குறிப்பிடத்தக்கது எதுவும் இல்லை.",
+  "Nothing waits for you in this view.": "இந்தப் பார்வையில் உங்களுக்காக எதுவும் காத்திருக்கவில்லை.",
+  "No step is needed from you in this view.": "இந்தப் பார்வையில் உங்கள் நடவடிக்கை எதுவும் தேவையில்லை.",
+  "Nothing in this view is only in the news.": "இந்தப் பார்வையில் செய்தியில் மட்டும் உள்ளது எதுவும் இல்லை.", "Open the list": "பட்டியலைத் திற", "Open the case": "நிகழ்வைத் திற",
+  "Show only this zone": "இந்த மண்டலத்தை மட்டும் காட்டு", "Open the department's summary": "துறையின் சுருக்கத்தைத் திற", "Open Rain & flooding": "மழை & வெள்ளத்தைத் திற",
+  "Read the story": "செய்தியைப் படிக்க", "Open the story": "செய்தியைத் திற", "See what happened": "என்ன நடந்தது என்று பார்க்க", "See what each says": "ஒவ்வொன்றும் சொல்வதைப் பார்க்க",
+  "Open Environment": "சுற்றுச்சூழலைத் திற", "Open the oldest open complaint of this period": "இந்தக் காலத்தின் மிகப் பழைய திறந்த புகாரைத் திற",
+  "Read the key points aloud": "முக்கிய அம்சங்களை உரக்கப் படி", "Stop": "நிறுத்து", "Department summary": "துறைச் சுருக்கம்", "Summary": "சுருக்கம்", "Department head": "துறைத் தலைவர்",
+  "Also responsible": "மேலும் பொறுப்பானவர்", "Not listed": "பட்டியலில் இல்லை", "No phone or e-mail in the official contacts": "அதிகாரப்பூர்வ தொடர்புகளில் தொலைபேசி அல்லது மின்னஞ்சல் இல்லை",
+  "Show only this department on the page": "இந்தத் துறையை மட்டும் பக்கத்தில் காட்டு", "Show all departments on the page": "எல்லா துறைகளையும் பக்கத்தில் காட்டு",
+  "See all # reports": "# பதிவுகளையும் பார்க்க", "Time to close": "முடிக்க ஆகும் நேரம்", "Citizen complaints": "குடிமக்கள் புகார்கள்", "For your check": "உங்கள் சரிபார்ப்புக்கு",
+  "average # days": "சராசரி # நாட்கள்", "average # h": "சராசரி # மணி", "average # min": "சராசரி # நிமிடம்", "none closed": "எதுவும் முடிக்கப்படவில்லை",
+  "# on open cases": "திறந்த நிகழ்வுகளில் #", "# days": "# நாட்கள்", "# h": "# மணி", "# min": "# நிமிடம்", "was #": "முன்பு #", "Last # weeks": "கடந்த # வாரங்கள்",
+  "How serious": "எவ்வளவு தீவிரம்", "Open cases by age": "திறந்த நிகழ்வுகள், காலவாரியாக", "Top kinds of incident": "அதிகம் வந்த நிகழ்வு வகைகள்", "Top zones": "அதிகம் வந்த மண்டலங்கள்",
+  "Top wards": "அதிகம் வந்த வார்டுகள்", "Deadlines": "காலக்கெடுகள்", "Reported and resolved each day; today so far": "ஒவ்வொரு நாளும் பதிவானவை, தீர்க்கப்பட்டவை; இன்று இதுவரை",
+  "Reported and resolved each whole week, Monday to Sunday": "ஒவ்வொரு முழு வாரமும் பதிவானவை, தீர்க்கப்பட்டவை (திங்கள் முதல் ஞாயிறு)",
+  "All # open cases of any date, days since the first report": "எந்தத் தேதியும், # திறந்த நிகழ்வுகள்; முதல் பதிவிலிருந்து நாட்கள்", "cases a day": "ஒரு நாளில் நிகழ்வுகள்",
+  "cases a week": "ஒரு வாரத்தில் நிகழ்வுகள்", "In time": "காலத்திற்குள்", "Late": "தாமதம்", "No deadline on record": "காலக்கெடு பதிவில் இல்லை", "Within deadline": "காலக்கெடுவுக்குள்",
+  "#–# days": "#–# நாட்கள்", "Over # days": "# நாட்களுக்கு மேல்", "Most important open cases": "மிக முக்கியமான திறந்த நிகழ்வுகள்", "In the news": "செய்தியில்",
+  "Follow-ups and tasks due": "நிலுவை நடவடிக்கைகள்", "Nothing reported in this period.": "இந்தக் காலத்தில் எதுவும் பதிவாகவில்லை.", "No case is open.": "திறந்த நிகழ்வு எதுவும் இல்லை.",
+  "No report with a known place in this period.": "இந்தக் காலத்தில் இடம் தெரிந்த பதிவு இல்லை.", "No case was resolved in this period.": "இந்தக் காலத்தில் எதுவும் தீர்க்கப்படவில்லை.",
+  "No case of this period is open.": "இந்தக் காலத்தின் நிகழ்வு எதுவும் திறந்த நிலையில் இல்லை.",
+  "No news about this department's work in this period.": "இந்தக் காலத்தில் இத்துறையின் பணி பற்றிய செய்தி இல்லை.",
+  "Nothing is due: no reply awaited and no step on its list.": "நிலுவை எதுவும் இல்லை: பதில் எதிர்பார்க்கப்படவில்லை, பட்டியலில் நடவடிக்கை இல்லை.",
+  "The department's summary could not be loaded.": "துறையின் சுருக்கத்தை ஏற்ற முடியவில்லை.",
 
   // ---- trends
   "Which problems are rising?": "எந்தப் பிரச்சனைகள் அதிகரிக்கின்றன?", "last 4 weeks compared with the 4 weeks before": "கடந்த 4 வாரங்கள், அதற்கு முந்தைய 4 வாரங்களுடன் ஒப்பிட்டு",

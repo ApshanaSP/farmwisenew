@@ -27,6 +27,7 @@ import { RowDataPacket } from "mysql2";
 import intelPool from "@/lib/collector/db";
 import { aiJson } from "@/lib/collector/aibrief";
 import { when } from "@/lib/collector/analysis";
+import { dayStart } from "@/lib/period/day";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -184,9 +185,18 @@ function saved(): Saved {
   return G.saved!;
 }
 
+/** The fresh items, with those of the searches that failed and those of today that the feed has left out. */
+export function keepListed(fresh: Raw[], old: Raw[], unread: ReadonlySet<string>, nowIst: string): Raw[] {
+  const key = (r: Raw) => `${norm(r.title)}|${r.publisher}`;
+  const have = new Set(fresh.map(key));
+  const since = dayStart(nowIst);
+  return [...fresh, ...old.filter((r) => (unread.has(r.q) || r.t >= since) && !have.has(key(r)))];
+}
+
 async function refresh() {
   const items: Raw[] = [];
   let failed = 0;
+  const unread = new Set<string>();
   for (const { lang, q: query } of QUERIES) {
     try {
       const r = await fetch(`https://news.google.com/rss/search?q=${encodeURIComponent(query)}&${ED[lang]}`,
@@ -195,6 +205,7 @@ async function refresh() {
       items.push(...parseFeed(await r.text(), lang, query));
     } catch (e) {
       failed++;
+      unread.add(query);
       console.warn(`[nearby] ${lang} "${query.slice(0, 40)}": ${(e as Error).message}`);
     }
     await new Promise((r) => setTimeout(r, 250));
@@ -203,7 +214,8 @@ async function refresh() {
   // nothing came back: keep the last news, and try again in a quarter of an hour
   const next: Saved = failed === QUERIES.length
     ? { ...old, fetchedAt: Date.now() - EVERY_MS + 15 * 60_000, error: "The news feeds could not be reached." }
-    : { fetchedAt: Date.now(), items, error: failed ? `${failed} of ${QUERIES.length} searches failed.` : null };
+    // a search that failed keeps its last news, and what was listed today stays though the feed now answers with other items (26 Nov)
+    : { fetchedAt: Date.now(), items: keepListed(items, old.items, unread, ist(Date.now())), error: failed ? `${failed} of ${QUERIES.length} searches failed.` : null };
   G.saved = next;
   try { fs.mkdirSync(path.dirname(FILE), { recursive: true }); fs.writeFileSync(FILE, JSON.stringify(next)); } catch { /* read-only disk */ }
 }
@@ -250,7 +262,8 @@ interface Draft { district: string; topic: Topic; reports: Report[]; w: Set<stri
 
 /** Headlines -> events: placed, de-noised, the same headline from several outlets folded. Exported for the tests. */
 export function draftEvents(items: Raw[], chennaiTitles: Set<string>, nowIst: string, days = 7): Draft[] {
-  const since = ist(Date.parse(nowIst.replace(" ", "T") + "+05:30") - days * 864e5);
+  // by whole days: a report leaves the list with its day, never in the middle of one (26 Nov)
+  const since = `${ist(Date.parse(nowIst.replace(" ", "T") + "+05:30") - days * 864e5).slice(0, 10)} 00:00:00`;
   const seen = new Set<string>();
   const out: Draft[] = [];
   for (const r of [...items].sort((a, b) => a.t.localeCompare(b.t))) {

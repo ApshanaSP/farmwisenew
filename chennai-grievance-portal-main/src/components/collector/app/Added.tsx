@@ -19,7 +19,7 @@ export const itemWhere = (i: Row) => (i.place ?? i.zone_name ?? null) as string 
 /** One item in Latest news (from added sources): headline, source, place and time; opens the item. */
 export function AddedRow({ i, now, c }: { i: Row; now: string; c: Console }) {
   return (
-    <button className="brief" onClick={() => c.openItem(i)}>
+    <button className="brief" onClick={() => c.openItem(i)} title={`${i.title} · ${[i.source, itemWhere(i) ?? "Place not found", itemWhen(i.t, now)].join(" · ")}`}>
       <span className={`bic ${i.is_incident ? "t-violet" : "t-info"}`}><I n="ext" /></span>
       <span style={{ minWidth: 0, flex: 1 }}>
         <b>{i.title}</b>

@@ -8,17 +8,18 @@
  * 20th", "two days ago", "Monday", a time carried from the last turn). Every date is checked here: never in the future, never before the
  * records begin, the first day never after the last.
  *
- * A window that is one of the console's four (24 hours, 7, 30, 90 days) stays a period; anything else is a span with its own dates
- * (`needsDates`), and every screen counts that span itself (screens.ts, recipes/summary.ts).
+ * A window that is one of the console's four (today since 12 AM; the last 7, 30, 90 days) stays a period; anything else, "the last 24 hours"
+ * too, is a span with its own dates (`needsDates`), and every screen counts that span itself (screens.ts, recipes/summary.ts).
  */
-import { KEY_HOURS, MAX_HOURS, MONTH_NAMES, WINDOW_WORDS, dateWords, daysBounds, prevOf, readPeriod, spanOf, type DayOf, type PeriodKey, type PeriodSpec, type Words } from "@/lib/period/read";
+import { KEY_HOURS, MAX_HOURS, MONTH_NAMES, dateWords, daysBounds, prevOf, readPeriod, spanOf, windowWords, type DayOf, type PeriodKey, type PeriodSpec, type Words } from "@/lib/period/read";
+import { dayStart, dayWords } from "@/lib/period/day";
 
 /** What the AI reader understood of the time (v16/reader.ts ReadingSchema.time). */
 export interface ReaderTime { said: string | null; from: string | null; to: string | null; hours: number | null }
 
 /** The spans a screen counts with its own dates for any recipe ("now" and "compare" stay the cases list's and the trend's own). */
 export const WINDOW_KINDS: ReadonlySet<PeriodSpec["kind"]> = new Set(["hours", "day", "last", "lastWeekOf", "month", "days", "since", "holiday"]);
-// ("today" is the console's own Daily window, the last 24 hours: a period, never a span of its own; lib/period/read.ts)
+// ("today" is the console's own Daily window, since 12 AM: a period, never a span of its own; lib/period/day.ts)
 export const isWindowSpec = (s: PeriodSpec | null | undefined): boolean => !!s && WINDOW_KINDS.has(s.kind) && !(s.kind === "day" && s.back === 0);
 
 const ms = (ist: string) => Date.parse(`${ist.replace(" ", "T")}+05:30`);
@@ -62,9 +63,12 @@ export function readerSpec(rt: ReaderTime | null | undefined, nowIst: string): P
   return null;
 }
 
-/** A count back from now: one of the console's four windows when it is one, else that many hours (said in days when whole days). */
+/**
+ * A count back from now: the last 7, 30 or 90 days when it is one, else that many hours (said in days when whole days). 24 hours is a count of
+ * its own: the console's Daily is the day since 12 AM, so "the last 24 hours" is never answered with it (26 Nov).
+ */
 export function hoursSpec(h: number): PeriodSpec {
-  const key = (Object.keys(KEY_HOURS) as PeriodKey[]).find((k) => KEY_HOURS[k] === h);
+  const key = (Object.keys(KEY_HOURS) as PeriodKey[]).find((k) => k !== "daily" && KEY_HOURS[k] === h);
   if (key) return { kind: "window", key };
   return h >= 48 && h % 24 === 0 ? { kind: "hours", hours: h, n: h / 24, unit: "day" } : { kind: "hours", hours: h, n: h, unit: "hour" };
 }
@@ -140,7 +144,7 @@ export function windowOnly(text: string): boolean {
   return words.length > 0 && words.every((w) => WINDOW_FILLER.has(w) || /^\d+(st|nd|rd|th)?$/.test(w));
 }
 
-/** "today" (since midnight): the console's 24-hour window answers it on the screens that know only their four windows */
+/** "today": the console's Daily window (since 12 AM) answers it on the screens that know only their four windows */
 export const isToday = (s: PeriodSpec | null | undefined): boolean => !!s && s.kind === "day" && s.back === 0;
 
 /** One calendar day as a span (a day on a trend, clicked). */
@@ -169,7 +173,7 @@ export interface Win {
   outside: "all" | "part" | "future" | null;
   /** the first day the records hold, IST */
   heldFrom: string;
-  /** v18 round 2: a count back from now (the console's own windows, "last 48 hours"): counted as the console counts it, after its start and up to now */
+  /** v18 round 2: a count back from now (the last 7, 30, 90 days, "last 48 hours"): counted as the console counts it, after its start and up to now; never Daily, which starts at 12 AM */
   rolling: boolean;
   /**
    * v18 round 2's review: the window before lies wholly inside the records. When it does not (it reaches before 28 May), its count is short
@@ -202,9 +206,13 @@ export function windowOf(spec: PeriodSpec | null | undefined, key: PeriodKey, no
     from = old.from; to = old.to; label = old.label; partial = false; custom = true;
   } else if (ahead) {
     from = ahead.from; to = ahead.to; label = ahead.label; partial = false; custom = true; outside = "future";
+  } else if (key === "daily") {
+    // the console's Daily: the day the desk is in, from its 12 AM to now (lib/period/day.ts), not a count of hours back
+    from = dayStart(nowIst); to = toNow; label = windowWords(key, nowIst);
   } else {
-    from = ist(nowMs - KEY_HOURS[key] * 3600_000); to = toNow; label = WINDOW_WORDS[key]; rolling = true;
+    from = ist(nowMs - KEY_HOURS[key] * 3600_000); to = toNow; label = windowWords(key, nowIst); rolling = true;
   }
+  const day = !custom && key === "daily";
   if (outside === "future") { /* named as to come */ }
   else if (custom && ms(to) <= heldFromMs) outside = "all";
   else if (custom && ms(from) < heldFromMs) {
@@ -218,16 +226,17 @@ export function windowOf(spec: PeriodSpec | null | undefined, key: PeriodKey, no
   // the window before. A calendar window still running ("today", "since 20 Nov") is set against the same hours of the days before it, shifted
   // by whole days so the time of day matches (v18 round 2's review: "today" to 3 PM was set against yesterday's last 15 hours, and called the
   // whole day before); every other window, the same length just before it
-  const shift = custom && partial && !rolling ? Math.ceil(len / DAY) * DAY : len;
+  // (the Daily window: the same hours one day earlier, "yesterday by this time", also in the small hours, when it is longer than a day)
+  const shift = day ? DAY : custom && partial && !rolling ? Math.ceil(len / DAY) * DAY : len;
   // (a finished calendar period, "yesterday", "last week", "October", is set against the calendar period before it, "September", as Ask
   // District IQ sets it (lib/period/read.ts prevOf): one question, one "before" figure in both lanes)
   const cal = span && !span.partial && spec ? prevOf(spec, nowIst) : null;
-  const pa = cal?.range ? ms(cal.range.from) : a - shift, pb = cal?.range ? ms(cal.range.to) : shift === len ? a : b - shift;
+  const pa = cal?.range ? ms(cal.range.from) : a - shift, pb = cal?.range ? ms(cal.range.to) : day ? b - shift : shift === len ? a : b - shift;
   // the window before, in words with its dates ("the 2 days before (20 Nov to 22 Nov)")
   const wa = pa + 330 * 60_000, wb = pb - 1000 + 330 * 60_000;
   const sameDay = dl(wa) === dl(wb);
   const toHour = shift !== len;
-  const prevLabel: Words = cal?.range ? cal.label : toHour && sameDay
+  const prevLabel: Words = day ? { en: dayWords(nowIst).en.prev, ta: dayWords(nowIst).ta.prev, tg: dayWords(nowIst).tg.prev } : cal?.range ? cal.label : toHour && sameDay
     ? { en: `the day before, to the same hour (${dl(wa)})`, ta: `அதற்கு முந்தைய நாள், அதே நேரம் வரை (${dlTa(wa)})`, tg: `munnadi naal, adhe neram varai (${dl(wa)})` }
     : toHour
       ? { en: `the same stretch before (${dl(wa)} to ${dl(wb)})`, ta: `அதற்கு முந்தைய அதே காலம் (${dlTa(wa)} முதல் ${dlTa(wb)} வரை)`, tg: `munnadi (${dl(wa)} to ${dl(wb)})` }

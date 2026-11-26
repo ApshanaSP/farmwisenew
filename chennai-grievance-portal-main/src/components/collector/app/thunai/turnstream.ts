@@ -43,8 +43,8 @@ export interface RoundHooks {
   heard?: (v: Extract<TurnEvent, { type: "CUSTOM"; name: "heard" }>["value"]) => void;
 }
 
-/** the turn's budget in the browser: 8 s for a command; a v4 server may give an analysis question or a mission up to 25 s */
-export const COMMAND_MS = 8000, LONGEST_MS = 25_000;
+/** the turn's budget in the browser: 8 s for a command; a v4 server may give an analysis question, a mission or the brain up to 36 s */
+export const COMMAND_MS = 8000, LONGEST_MS = 36_000;
 export const budgetOf = (budgetMs: unknown): number =>
   (typeof budgetMs === "number" && Number.isFinite(budgetMs) ? Math.max(COMMAND_MS, Math.min(LONGEST_MS, budgetMs)) : COMMAND_MS);
 

@@ -23,7 +23,8 @@ export const LIMITS = { steps: 8, minM: 10, maxM: 5000, k: 20, days: 365, featur
 export const PeriodSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("last_days"), days: z.number().int(), offset: z.number().int() }),
   z.object({ kind: z.literal("month"), offset: z.number().int() }),
-  z.object({ kind: z.literal("day"), offset: z.number().int() }),
+  // day 0 is the console's Daily (from 12 AM to now, lib/period/day.ts), day 1 yesterday; so_far: only its hours up to this time ("yesterday by this time")
+  z.object({ kind: z.literal("day"), offset: z.number().int(), so_far: z.boolean().optional() }),
   z.object({ kind: z.literal("week"), offset: z.number().int() }),
   z.object({ kind: z.literal("quarter"), offset: z.number().int() }),
   /** IST wall clock, both ends inclusive; `label` is how the question named it ("September", "last 36 hours"), from src/lib/period/read.ts */

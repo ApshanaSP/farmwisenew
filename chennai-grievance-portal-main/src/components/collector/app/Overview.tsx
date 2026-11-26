@@ -1,5 +1,6 @@
 "use client";
 
+import { labelLower } from "@/lib/period/day";
 import type { Overview as OverviewData, Station } from "@/lib/collector/intel";
 import type { MapGeo } from "@/lib/collector/geo";
 import { I, type IconName } from "./icons";
@@ -12,7 +13,7 @@ import type { Console } from "./CollectorApp";
 import type { Insights } from "@/lib/collector/insights";
 import { MarketsCard } from "./Insights";
 import { AddedRow } from "./Added";
-import { ConflictList, DiffBadge, hasConflict } from "./Conflicts";
+import { ConflictList, DiffBadge, differView, hasConflict } from "./Conflicts";
 import { NextDoorList, nextDoorCount } from "./Nearby";
 import { useEffect, useState } from "react";
 import { AttentionCard } from "./Attention";
@@ -39,7 +40,7 @@ function RainPill({ c }: { c: Console }) {
   const warn = a && a.level !== "none" ? a.level : null;
   return (
     <button className={`ampill rainpill${warn ? ` w-${warn}` : ""}`} onClick={() => c.openRain?.()}
-      title={warn && a?.line ? `Rain & flooding: ${a.line}. Where water stood in past heavy rains, and the jobs to send before the next one.` : "Rain & flooding: where water stood in past heavy rains, the streets that flood again and again, and the jobs to send before the next one"}>
+      title={`${warn && a?.line ? `Rain & flooding: ${a.line}. Where water stood in past heavy rains, and the jobs to send before the next one.` : "Rain & flooding: where water stood in past heavy rains, the streets that flood again and again, and the jobs to send before the next one."} Whole district: the filters above do not apply.`}>
       <I n="cloud" /><span>Rain</span>
       {warn && <em className="rp-w">{warn === "act" ? "Heavy rain soon" : warn === "rehearse" ? "Heavy rain likely" : "Rain watch"}</em>}
     </button>
@@ -62,8 +63,8 @@ function TrafficPill({ c }: { c: Console }) {
   }, []);
   return (
     <button className="ampill trafficpill" onClick={() => c.openCity?.({ kind: "traffic" })}
-      title={n ? `Live traffic: ${n.very} very congested stretches now, ${n.act} spots need action. Jams, closed and flooded roads, the spots that keep coming back, and who to send them to.`
-        : "Live traffic: jams, closed and flooded roads now, the spots that keep coming back, and who to send them to"}>
+      title={`${n ? `Live traffic: ${n.very} very congested stretches now, ${n.act} spots need action. Jams, closed and flooded roads, the spots that keep coming back, and who to send them to.`
+        : "Live traffic: jams, closed and flooded roads now, the spots that keep coming back, and who to send them to."} Whole district: the filters above do not apply.`}>
       <I n="flow" /><span>Traffic</span>{n && n.act > 0 && <em className="tp-n">{n.act}</em>}
     </button>
   );
@@ -84,8 +85,8 @@ function useKpis(d: OverviewData, c: Console) {
       tip="Incidents rated severe (danger to life, major damage or many people affected), reported in the period, open or closed." />,
     complaints: merged ? null : <Kpi key="complaints" k="complaints" icon="chat" tone="t-high" label="Open complaints" v={d.kpi.cur.complaints}
       p={d.kpi.prev.complaints} goodDown prevLabel={P.prev} style={iv()} sub={`on ${plural(K.complaint_inc, "open incident")}`}
-      onClick={() => c.openList({ status: "open", sort: "c" }, "Open complaints")}
-      tip="Citizen complaints on incidents that are still open. One incident can have several complaints." />,
+      onClick={() => c.openList({ status: "open", sort: "c", complaints: "1" }, "Open complaints")}
+      tip="Citizen complaints on incidents that are still open. One incident can have several complaints. The list shows the incidents, the most complained about first." />,
     ongoing: <Kpi key="ongoing" k="ongoing" icon="doc" tone="t-info" label={merged ? "Open incidents" : "Ongoing incidents"} v={d.kpi.cur.ongoing} p={d.kpi.prev.ongoing}
       goodDown prevLabel={P.prev} style={iv()} sub={`${fmtN(K.urgent)} of them severe or high`} onClick={() => c.openList({ status: "open", sort: "sev", dir: 1 }, "Open incidents")}
       note={merged ? `${d.kpi.cur.complaints.toLocaleString("en-IN")} complaints` : undefined}
@@ -216,7 +217,7 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
                 <i className="dia" style={{ background: "var(--ai)" }} />Added<b>{addedPins.length}</b>
               </button>
               <button className={c.layers.stations ? "" : "off"} aria-pressed={c.layers.stations} onClick={() => c.toggleLayer("stations")}
-                title="Air-quality stations, rain gauges and lakes">
+                title="Air-quality stations, rain gauges and lakes of the whole district (the filters do not apply to them)">
                 <i className="sq" style={{ background: "linear-gradient(90deg,#34D399 33%,#7FD3E6 33% 66%,#3B82F6 66%)" }} />Stations<b>{env.mapStations.length}</b>
               </button>
               {/* not pinned: a district-wide or locality-only place would draw a false hotspot (see PINNABLE in intel.ts) */}
@@ -254,7 +255,8 @@ export function Kpi({ k, icon, tone, label, v, p, goodDown, prevLabel, style, on
   const diff = v - p;
   const same = diff === 0;
   const cls = same ? "" : (goodDown ? diff < 0 : diff > 0) ? "good" : "bad";
-  const than = prevLabel.replace(/^prev\. /, "the previous ");
+  // (the tile has room for two words; "by this time" is in its tooltip)
+  const than = prevLabel.replace(/^prev\. /, "the previous ").replace(/ by this time$/, "");
   return (
     <button className="kpi" data-k={k} style={{ ...style, ["--kc" as string]: KC[tone] ?? "var(--accent)" }} onClick={onClick}
       title={tip ? `${tip}${sub ? ` (${sub}.)` : ""} Click for the list.` : sub}>
@@ -307,7 +309,7 @@ function SnapTitle({ icon, title, sub, more }: { icon: IconName; title: string; 
  * tab of Latest news, where the reports can be read.)
  */
 function CommonTiles({ s, c }: { s: { overdue: number }; c: Console }) {
-  const p = c.periodLabel.toLowerCase();
+  const p = labelLower(c.periodLabel);
   // "Severe or high, still open" is not repeated here: the severity card beside it counts the same incidents
   return (
     <>
@@ -318,14 +320,14 @@ function CommonTiles({ s, c }: { s: { overdue: number }; c: Console }) {
   );
 }
 
-/** "Daily · last 24 hours": the period's name and what it covers. */
-const periodSub = (c: Console) => `${PERIOD_NAME[c.period]} · ${c.periodLabel.toLowerCase()}`;
+/** "Daily · since 12 AM today": the period's name and what it covers. */
+const periodSub = (c: Console) => `${PERIOD_NAME[c.period]} · ${labelLower(c.periodLabel)}`;
 const PERIOD_NAME: Record<string, string> = { daily: "Daily", weekly: "Weekly", monthly: "Monthly", quarterly: "Quarterly" };
 
 function DistrictSnap({ d, c }: { d: OverviewData; c: Console }) {
   const s = d.snapshot as Extract<OverviewData["snapshot"], { kind: "district" }>;
   const top = s.topZones.map((z) => z.name);
-  const p = c.periodLabel.toLowerCase();
+  const p = labelLower(c.periodLabel);
   return (
     <>
       <SnapTitle icon="chart" title="District Snapshot" sub={`${periodSub(c)} · hover a tile for what it counts`} />
@@ -336,7 +338,7 @@ function DistrictSnap({ d, c }: { d: OverviewData; c: Console }) {
           onClick={s.topZones[0] ? () => c.setZone(s.topZones[0].zone) : undefined} />
         <CommonTiles s={s} c={c} />
         <Tile l="Severe, not yet checked" v={<Cnt v={s.critical} />} tone={s.critical ? "var(--sev)" : undefined}
-          title="Open severe incidents that no officer has confirmed on the ground yet (any date). Click for the list."
+          title="Open severe incidents that no officer has confirmed on the ground yet (any date, not only the period). Click for the list."
           onClick={() => c.openList({ status: "critical", scope: "all" }, "Severe, not yet checked")} />
       </div>
     </>
@@ -372,8 +374,8 @@ function AreaSnap({ d, c }: { d: OverviewData; c: Console }) {
         {s.zoneOfficer ? <OfficerCard o={s.zoneOfficer} label="Zonal officer (GCC)" compact />
           : <div className="officer compact"><span className="avatar">ZO</span><span><b>Zonal officer</b><small>Not listed on the GCC website</small></span></div>}
         <CommonTiles s={s} c={c} />
-        <Tile l="Busiest department" title={`Department with the most open incidents in this zone (${c.periodLabel.toLowerCase()}): ${s.keyDept?.name ?? "none"}${s.keyDept ? `, ${s.keyDept.n}` : ""}. Click to show only it.`}
-          v={s.keyDept?.name ?? "—"} tone="var(--accent-2)" txt onClick={s.keyDept ? () => c.setDept(s.keyDept.code) : undefined} />
+        <Tile l="Busiest department" title={`Department with the most open incidents in this zone (${labelLower(c.periodLabel)}): ${s.keyDept?.name ?? "none"}${s.keyDept ? `, ${s.keyDept.n}` : ""}. Click for its summary.`}
+          v={s.keyDept?.name ?? "—"} tone="var(--accent-2)" txt onClick={s.keyDept ? () => c.openDept(String(s.keyDept.code)) : undefined} />
       </div>
     </>
   );
@@ -386,7 +388,8 @@ function DeptSnap({ d, c }: { d: OverviewData; c: Console }) {
   return (
     <>
       <SnapTitle icon={deptIcon(dept.code)} title={shortName(dept.name)} sub={`Department snapshot · ${periodSub(c)}`}
-        more={<button className="more" onClick={() => c.openContact(dept, s.contacts)}><I n="phone" />All contacts</button>} />
+        more={<><button className="more" onClick={() => c.openDept(String(dept.code))} title="Open the department's summary"><I n="chart" />Summary</button>
+          <button className="more" onClick={() => c.openContact(dept, s.contacts)}><I n="phone" />All contacts</button></>} />
       <div className="snap">
         {head ? <OfficerCard o={head} label="Department head (GCC)" compact />
           : <div className="officer compact"><span className="avatar">{shortInit(dept.head)}</span>
@@ -408,8 +411,12 @@ const shortInit = (s: string) => String(s ?? "").split(/\s+/).filter(Boolean).sl
  */
 function BriefCard({ d, c }: { d: OverviewData; c: Console }) {
   const [tab, setTab] = useState<"news" | "differ" | "door" | "added">("news");
-  const when = c.period === "daily" ? "last 24 hours" : `last ${d.added.days} days`;
-  const differ = c.conflicts?.stories.filter((s) => s.items.some((x) => x.kind === "conflict")).length ?? 0;
+  const when = c.period === "daily" ? labelLower(c.periodLabel) : `last ${d.added.days} days`;
+  // a filtered view's news: the stories linked to incidents inside the filters (LinkedNote says so)
+  const linked = uniqueNews(d.news);
+  const filtered = !!(c.zone || c.taluk || c.dept || c.cat);
+  const dv = differView(c.conflicts), dAll = [...dv.inside, ...dv.wide];
+  const differ = dAll.filter((s) => s.items.some((x) => x.kind === "conflict")).length;
   return (
     <>
       <div className="ch"><I n="news" /><h2>Latest news</h2>
@@ -417,25 +424,35 @@ function BriefCard({ d, c }: { d: OverviewData; c: Console }) {
       </div>
       <div className="btabs" role="tablist" aria-label="Briefing source">
         <button role="tab" aria-selected={tab === "news"} className={tab === "news" ? "on" : ""} onClick={() => setTab("news")}>
-          News{d.allNews && <> <b className="tab-n">{d.allNewsTotal || d.allNews.length}</b></>}</button>
+          News <b className="tab-n">{d.allNews ? d.allNewsTotal || d.allNews.length : linked.length}</b></button>
         <button role="tab" aria-selected={tab === "differ"} className={`${tab === "differ" ? "on" : ""}${differ ? " warn" : ""}`} onClick={() => setTab("differ")}
           title="Stories where the outlets report the same event differently (deaths, age, place...): confirm before quoting">
-          Differ{c.conflicts && <> <b className="tab-n">{c.conflicts.stories.length}</b></>}</button>
+          Differ{c.conflicts && <> <b className="tab-n">{dAll.length}</b></>}</button>
         <button role="tab" aria-selected={tab === "door"} className={tab === "door" ? "on" : ""} onClick={() => setTab("door")}
-          title="News from Tiruvallur, Kancheepuram and Chengalpattu that could reach Chennai: what to prepare for and what to watch">
+          title="News of the last 7 days from Tiruvallur, Kancheepuram and Chengalpattu that could reach Chennai: what to prepare for and what to watch. No filter applies.">
           Next door{c.nearby && <> <b className="tab-n">{nextDoorCount(c.nearby)}</b></>}</button>
         <button role="tab" aria-selected={tab === "added"} className={tab === "added" ? "on" : ""} onClick={() => setTab("added")}
           title={`Items from sources you added, ${when}`}>Added <b className="tab-n">{d.added.count}</b></button>
       </div>
-      <div className={(tab === "news" && d.allNews) || tab === "differ" || tab === "door" ? "fitlist scroll" : "fitlist"}>
-        {tab === "differ" ? <ConflictList c={c} now={d.now} /> : tab === "door" ? <NextDoorList c={c} now={d.now} /> : tab === "news"
+      <div className="fitlist scroll">
+        {tab === "differ" ? <ConflictList c={c} now={d.now} /> : tab === "door" ? <>{filtered && <p className="scope-note wide"><I n="map" /><span>Neighbouring districts, last 7 days: no filter applies</span></p>}<NextDoorList c={c} now={d.now} /></> : tab === "news"
           ? d.allNews
-            ? d.allNews.length ? d.allNews.map((i) => <NewsStory key={i.id} i={i} now={d.now} c={c} />) : <Empty>No news {c.period === "daily" ? "in the last 24 hours" : "in this period"}.</Empty>
-            : d.news.length ? uniqueNews(d.news).slice(0, 10).map((i) => <NewsItem key={i.id} i={i} now={d.now} c={c} />) : <Empty>No news reports {c.period === "daily" ? "in the last 24 hours" : "in this period"}.</Empty>
+            ? d.allNews.length ? d.allNews.map((i) => <NewsStory key={i.id} i={i} now={d.now} c={c} />) : <Empty>No news {c.period === "daily" ? labelLower(c.periodLabel) : "in this period"}.</Empty>
+            : linked.length ? <><LinkedNote c={c} />{linked.map((i) => <NewsItem key={i.id} i={i} now={d.now} c={c} />)}</>
+              : <Empty>No news is linked to an incident in {c.scopeName} ({labelLower(c.periodLabel)}). Clear the filters for every news story.</Empty>
           : d.added.items.length ? <><button className="add-manage" onClick={() => c.openSources("add")} title="Add a link, or pause or remove one you added"><I n="sliders" />Add or remove links</button>{d.added.items.slice(0, 10).map((i: Row) => <AddedRow key={i.item_id} i={i} now={d.now} c={c} />)}</>
-            : <Empty>Nothing from added sources {`in the ${when}`}. <button className="lnk" onClick={() => c.openSources("add")}>Add a link</button></Empty>}
+            : <Empty>Nothing from added sources {c.period === "daily" ? when : `in the ${when}`}. <button className="lnk" onClick={() => c.openSources("add")}>Add a link</button></Empty>}
       </div>
     </>
+  );
+}
+
+/** Under a filter the list holds only news linked to incidents inside it: an article has no zone, taluk, department or category of its own. */
+export function LinkedNote({ c }: { c: Console }) {
+  return (
+    <p className="scope-note" title="An article has no zone, taluk, department or category of its own: under a filter only news linked to an incident is shown. Clear the filters for every news story of the period.">
+      <I n="pin" /><span>News linked to incidents in {c.scopeName}</span>
+    </p>
   );
 }
 
@@ -502,7 +519,7 @@ export function StoryLink({ i }: { i: Story }) {
 export function NewsItem({ i, now, c, showDept }: { i: Row; now: string; c: Console; showDept?: boolean }) {
   const outlets: string[] = i.outletNames ?? [];
   return (
-    <button className="brief" onClick={() => c.openInc(i.id)}>
+    <button className="brief" onClick={() => c.openInc(i.id)} title={String(i.news_title ?? fullTitle(i))}>
       <span className="bic t-high"><I n="news" /></span>
       <span style={{ minWidth: 0, flex: 1 }}>
         <b title={i.news_title ? `Incident: ${fullTitle(i)}` : undefined}>{i.news_title ?? fullTitle(i)}</b>
@@ -582,7 +599,7 @@ function useEnv(d: OverviewData, geo: MapGeo | null, c: Console, district = fals
 type Env = ReturnType<typeof useEnv>;
 
 /** Average several stations' series, aligned on a time key (the day for rain gauges). */
-function combine(stations: Station[], key: (t: string) => string = (t) => t) {
+export function combine(stations: Station[], key: (t: string) => string = (t) => t) {
   const by = new Map<string, number[]>();
   for (const s of stations) s.times.forEach((t, k) => { const kk = key(t); (by.get(kk) ?? by.set(kk, []).get(kk)!).push(s.series[k]); });
   const times = [...by.keys()].sort();

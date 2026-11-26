@@ -42,6 +42,8 @@ export function filterProblem(p: URLSearchParams): string | null {
   if (scope != null && readScope(scope) == null) return `Scope ${show(scope)} is not one of ${LIST_SCOPES.join(", ")}.`;
   const place = given("place");
   if (place != null && readPlace(place) == null) return `Place ${show(place)} is not one of ${Object.keys(PLACE_FILTERS).join(", ")}.`;
+  const complaints = given("complaints");
+  if (complaints != null && complaints !== "1") return `Complaints ${show(complaints)} is not 1 (only incidents with a citizen complaint).`;
   const flag = given("flag");
   if (flag != null && readFlag(flag) == null) return `Flag ${show(flag)} is not one of ${LIST_FLAGS.join(", ")}.`;
   return null;

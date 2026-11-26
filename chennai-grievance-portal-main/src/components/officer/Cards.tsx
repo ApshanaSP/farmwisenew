@@ -10,6 +10,7 @@ import { useLangNow } from "@/lib/i18n/lang";
 import { bucketLabels, deadlineOf } from "./format";
 import type { InsightModule } from "@/lib/officer/insights";
 import { MODULE_ICON } from "./Insights";
+import { labelIn } from "@/lib/period/day";
 import type { Ctx } from "./OfficerApp";
 
 const NONE: Row[] = [];
@@ -297,7 +298,7 @@ export function PrioritiesCard({ c, modules, openModule, style }: {
   c: Ctx; modules: InsightModule[] | null; openModule: (key: string) => void; style?: CSSProperties;
 }) {
   const k = c.ov.counts;
-  const P = c.ov.periodInfo.label.toLowerCase();
+  const P = labelIn(c.ov.periodInfo.label);
   const items: Priority[] = [];
   const n = (v: number) => v.toLocaleString("en-IN");
   if (k.new) items.push({

@@ -11,6 +11,7 @@ import type { Plan, Step } from "./plan";
 import type { World } from "./types";
 import { LAYER_WORD } from "./words";
 import { MIN_PCT_BASE, pctChange } from "@/lib/reference/metrics";
+import { dayWords } from "@/lib/period/day";
 
 export interface Insight {
   id: string;
@@ -67,17 +68,19 @@ export function insightsFor(plan: Plan, r: RunResult, w: World, ctx: Ctx, lockDe
 
   // the change on the period before: reports of this kind in this window against the window before, whatever their
   // status now (comparing what is still open would compare new cases with old ones that have since been closed)
-  if (take && f?.period?.kind === "last_days" && f.period.offset === 0 && r.show.type === "incidents" && (r.steps[0]?.count ?? 0) <= 3000) {
+  if (take && (f?.period?.kind === "last_days" || f?.period?.kind === "day") && f.period.offset === 0 && r.show.type === "incidents" && (r.steps[0]?.count ?? 0) <= 3000) {
     const nowN = rerun(plan, take, { ...f, status: "any" }, w, ctx, lockDept);
-    const before = rerun(plan, take, { ...f, status: "any", period: { ...f.period, offset: 1 } }, w, ctx, lockDept);
+    const before = rerun(plan, take, { ...f, status: "any", period: f.period.kind === "day" ? { kind: "day", offset: 1, so_far: true } : { ...f.period, offset: 1 } }, w, ctx, lockDept);
     if (before != null && nowN != null && nowN !== before) {
       const p = pctChange(nowN, before);
-      const days = f.period.days;
+      const days = f.period.kind === "day" ? 1 : f.period.days;
+      const dayAll = f.period.kind === "day" ? dayWords(w.now) : null, day = dayAll?.en ?? null;
       const up = nowN > before;
-      const words = p != null ? `${up ? "up" : "down"} ${Math.abs(Math.round(p))} % on the ${days} days before (${n(before)} → ${n(nowN)} reported)`
+      const words = p != null ? `${up ? "up" : "down"} ${Math.abs(Math.round(p))} % on ${day ? day.prev : `the ${days} days before`} (${n(before)} → ${n(nowN)} reported)`
+        : day ? `${n(before)} reported ${day.prev}, ${n(nowN)} ${day.inWords} (too few for a fair percentage)`
         : `${n(before)} reported in the ${days} days before, ${n(nowN)} in the last ${days} (too few for a fair percentage)`;
       out.push({ id: "change", kind: "change", tone: up ? "warn" : "good", n: before, ids: [],
-        en: `${up ? "Rising" : "Falling"}: ${words}.`, ta: `${up ? "அதிகரிப்பு" : "குறைவு"}: முந்தைய ${days} நாட்களில் ${n(before)} பதிவு, கடந்த ${days} நாட்களில் ${n(nowN)}${p != null ? ` (${Math.abs(Math.round(p))}%)` : ""}.`,
+        en: `${up ? "Rising" : "Falling"}: ${words}.`, ta: `${up ? "அதிகரிப்பு" : "குறைவு"}: ${dayAll ? `${dayAll.ta.prev} ${n(before)} பதிவு, ${dayAll.ta.inWords} ${n(nowN)}` : `முந்தைய ${days} நாட்களில் ${n(before)} பதிவு, கடந்த ${days} நாட்களில் ${n(nowN)}`}${p != null ? ` (${Math.abs(Math.round(p))}%)` : ""}.`,
         score: 30 + Math.min(40, Math.abs(p ?? 0) / 2) + (before >= MIN_PCT_BASE ? 5 : 0) });
     }
   }

@@ -19,6 +19,7 @@ import { actionsFor, anySynthetic, idsOfDept, categoryRanking, countByZone, coun
 import { storiesOfDocs, topStories } from "@/lib/assistant/news";
 import { currentIncidentIds, hybridSearch } from "@/lib/assistant/lance";
 import { PERIODS } from "@/lib/collector/intel";
+import { SMALL_HOURS_WORDS, dayStart, dayWindow, dayWords } from "@/lib/period/day";
 import { resolveSides } from "@/lib/assistant/compare";
 import type { AnswerCard, Dataset, IncidentItem, Scope } from "@/lib/assistant/answer";
 import type { Lang } from "@/lib/assistant/lang";
@@ -28,7 +29,9 @@ type Period = Scope["period"];
 const WORD = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
 const words = (n: number) => (n <= 10 ? WORD[n] : n.toLocaleString("en-IN"));
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-const NEWS_HOURS: Record<Period, number> = { daily: 36, weekly: 168, monthly: 720, quarterly: 2160 };
+const NEWS_HOURS: Record<Period, number> = { daily: 24, weekly: 168, monthly: 720, quarterly: 2160 };
+/** one second on: the end of a range that holds the store's as-of second */
+const nextSecond = (now: string) => new Date(Date.parse(`${now.replace(" ", "T")}Z`) + 1000).toISOString().slice(0, 19).replace("T", " ");
 
 export interface FastInput {
   message: string;
@@ -84,10 +87,10 @@ export function countInLanguage(lang: string, c: { n: number; prev: number; seve
   if (lang !== "ta" && lang !== "tanglish") return null;
   const place = c.where.replace(/^\s*in\s+/i, "").trim();
   const days = c.period.match(/^last (\d+)\s*days?/)?.[1], hours = /^last 24 hours/.test(c.period), yday = /^(previous day|yesterday)\b/.test(c.period), dby = /^the day before yesterday\b/.test(c.period);
-  const lastWeek = /^last week \(/.test(c.period), lastMonth = /^last month\b/.test(c.period), today = /^today\b/.test(c.period), nowS = /^open now\b/.test(c.period);
+  const lastWeek = /^last week \(/.test(c.period), lastMonth = /^last month\b/.test(c.period), today = /^today\b/.test(c.period), nowS = /^open now\b/.test(c.period), smallH = /^since 12 AM yesterday\b/i.test(c.period);
   const f = (v: number) => v.toLocaleString("en-IN");
   if (lang === "tanglish") {
-    const when = nowS ? "ippo" : today ? "inniki" : dby ? "munthaa naal" : yday ? "netru" : lastWeek ? "pona vaaram" : lastMonth ? "pona maasam" : hours ? "kadandha 24 mani neram-la" : days ? `kadandha ${days} naal-la` : c.period;
+    const when = nowS ? "ippo" : today ? "inniki" : smallH ? SMALL_HOURS_WORDS.tg.inWords : dby ? "munthaa naal" : yday ? "netru" : lastWeek ? "pona vaaram" : lastMonth ? "pona maasam" : hours ? "kadandha 24 mani neram-la" : days ? `kadandha ${days} naal-la` : c.period;
     const at = place ? `${place}-la ` : "";
     if (c.measure === "deaths")
       return { headline: `${f(c.dead)} per uyirizhappu · ${when}`, text: `${at}${when} ${c.kind}-la ${f(c.dead)} per uyirizhandhaanga (${f(c.n)} ${c.kind}, ${f(c.severe)} severe).` };
@@ -102,7 +105,7 @@ export function countInLanguage(lang: string, c: { n: number; prev: number; seve
     const text = `${at}${when} ${f(c.n)} ${c.kind} report aagirukku${c.prev ? ` (munnadi ${f(c.prev)})` : ""}: ${f(c.severe)} severe, ${f(c.open)} innum open${c.dead ? `, ${f(c.dead)} per uyirizhappu` : ""}.`;
     return { headline: `${f(c.n)} ${c.kind} · ${when}`, text };
   }
-  const when = nowS ? "இப்போது" : today ? "இன்று" : dby ? "நேற்று முன்தினம்" : yday ? "நேற்று" : lastWeek ? "கடந்த வாரம்" : lastMonth ? "கடந்த மாதம்" : hours ? "கடந்த 24 மணி நேரத்தில்" : days ? `கடந்த ${days} நாட்களில்` : c.period;
+  const when = nowS ? "இப்போது" : today ? "இன்று" : smallH ? SMALL_HOURS_WORDS.ta.inWords : dby ? "நேற்று முன்தினம்" : yday ? "நேற்று" : lastWeek ? "கடந்த வாரம்" : lastMonth ? "கடந்த மாதம்" : hours ? "கடந்த 24 மணி நேரத்தில்" : days ? `கடந்த ${days} நாட்களில்` : c.period;
   const kind = tamilKind(c.kind);
   // "Adyar zone" in a Tamil sentence: the zone's Tamil name ("அடையாறு மண்டல"), when the place is just the zone
   const zoneTa = c.zoneTa && /^[A-Za-z .-]+ zone$/.test(place) ? `${c.zoneTa} மண்டல` : null;
@@ -173,7 +176,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
   const custom0 = customWindow(i.message, i.now);
   const custom = custom0?.now && d.intent.startsWith("NEWS") ? null : custom0;
   if (custom?.now && !f.overdue && !d.resolved) f.openOnly = true;
-  // today so far has no "period before" of its own (the same hours before midnight are not yesterday): no figure is set beside it
+  // (today is the console's Daily window: its "period before" is yesterday by this time)
   const prevOk = !custom?.now && !/^today\b/.test(custom?.label ?? "");
   const zoneName = f.zone != null ? i.names.zones.get(f.zone)?.name ?? null : null;
   const locality = i.place?.place && !i.place?.asked_for_taluk && f.zone != null && String(i.place.place).toLowerCase() !== (zoneName ?? "").toLowerCase()
@@ -217,7 +220,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
     card.chips = [...deptNamed.alt.chips, ...(card.chips ?? [])].slice(0, 4);
   }
   if (custom?.note) card.caveats.push(custom.note);
-  const pl = (p: Period) => custom?.label ?? periodLabel(p);
+  const pl = (p: Period) => custom?.label ?? periodLabel(p, i.now);
   // "in the last 7 days", "in September 2026", "since 1 Oct 2026"
   const inP = (p: Period) => { const l = pl(p); return /^(since|today|yesterday|the day before)\b/i.test(l) ? l : /^(last|previous|past)\b/i.test(l) ? `in the ${l}` : `in ${l}`; };
   const sw = (road ? ` on ${road.label}` : "")
@@ -286,7 +289,8 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
       }
       // a Tamil or Tanglish question, answered in it when the model is out ("இன்றைய முக்கிய பிரச்சனைகள்" once got the English template)
       if (i.lang !== "en") {
-        const when = { daily: { ta: "கடந்த 24 மணி நேரத்தில்", tanglish: "kadandha 24 mani neram-la" }, weekly: { ta: "கடந்த 7 நாட்களில்", tanglish: "kadandha 7 naal-la" },
+        const day = dayWords(i.now);
+        const when = custom ? pl(r.period) : { daily: { ta: day.ta.inWords, tanglish: day.tg.inWords }, weekly: { ta: "கடந்த 7 நாட்களில்", tanglish: "kadandha 7 naal-la" },
           monthly: { ta: "கடந்த 30 நாட்களில்", tanglish: "kadandha 30 naal-la" }, quarterly: { ta: "கடந்த 90 நாட்களில்", tanglish: "kadandha 90 naal-la" } }[r.period as Period]?.[i.lang] ?? pl(r.period);
         const top = d.intent === "PRIORITY_INCIDENT_LIST";
         const kindTa = tamilKind(countNoun(what, r.items.length));
@@ -354,7 +358,8 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         // the share counts incidents (the pipeline's records), as the Tamil and Tanglish lines already say: "complaints" would name another unit than the one counted, and the department list refuses "complaints by department" for the same reason (g-review 5)
         const kindS = countNoun(what.replace(/\b(?:citizen )?(?:complaint|grievance)s?\b/gi, "incident"), r.n);
         const num1 = (v: number) => v.toLocaleString("en-IN", { maximumFractionDigits: 1 });
-        const whenTa = custom ? null : { daily: { ta: "கடந்த 24 மணி நேரத்தில்", tanglish: "kadandha 24 mani neram-la" }, weekly: { ta: "கடந்த 7 நாட்களில்", tanglish: "kadandha 7 naal-la" },
+        const day = dayWords(i.now);
+        const whenTa = custom ? null : { daily: { ta: day.ta.inWords, tanglish: day.tg.inWords }, weekly: { ta: "கடந்த 7 நாட்களில்", tanglish: "kadandha 7 naal-la" },
           monthly: { ta: "கடந்த 30 நாட்களில்", tanglish: "kadandha 30 naal-la" }, quarterly: { ta: "கடந்த 90 நாட்களில்", tanglish: "kadandha 90 naal-la" } }[inc.period as Period];
         card.responseType = "kpi";
         card.display = "kpi";
@@ -630,12 +635,14 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
     case "NEWS_ONLY_GAPS":
     case "NEWS_DETAIL": {
       // a calendar span the question named (yesterday, last month, a month, since a day): the news published inside it (p7-rules-periods-01)
-      const newsSpan = custom?.range && !custom.now ? custom.range : null;
+      // today's news is since 12 AM, as on the console's Latest news (lib/period/day.ts)
+      const day = !custom && !d.storyId && d.intent !== "NEWS_ONLY_GAPS" && f.period === "daily" ? { from: dayStart(i.now), to: nextSecond(i.now) } : null;
+      const newsSpan = custom?.range && !custom.now ? custom.range : day;
       // a story described in words ("the Odisha worker news"): found by meaning and keywords among the period's articles
       // (the last 7 days when the question names no period); close runner-ups are named so the Collector can switch
       let others: string[] = [];
       if (d.intent === "NEWS_DETAIL" && !d.storyId && d.find) {
-        const hours = d.period ? NEWS_HOURS[d.period] : 168;
+        const hours = custom?.hours ?? (d.period ? NEWS_HOURS[d.period] : 168);
         const nowSec = Date.parse(i.now.replace(" ", "T") + "+05:30") / 1000;
         const sec = (s: string) => Date.parse(`${s.replace(" ", "T")}+05:30`) / 1000;
         const found = (await hybridSearch("news", d.find, newsSpan ? { since: sec(newsSpan.from), until: sec(newsSpan.to) } : { since: nowSec - hours * 3600 }, 8).catch(orNull("fastpath:305"))) ?? [];
@@ -644,7 +651,7 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
           card.responseType = "news_list";
           card.stories = [];
           card.headline = "No matching story";
-          card.answerMarkdown = `No Chennai news story about "${d.find}" in the ${hours <= 36 ? "last 36 hours" : hours === 168 ? "last 7 days" : periodLabel(d.period!)}.`;
+          card.answerMarkdown = `No Chennai news story about "${d.find}" ${custom ? inP(custom.period) : d.period ? inP(d.period) : "in the last 7 days"}.`;
           card.scopeLine = "Chennai news";
           card.context = { ...ctxBase, lastResponseType: "news_list" };
           card.sources.tools.push({ name: "find_news_story", args: { text: d.find, hours }, ms: 0 });
@@ -660,19 +667,19 @@ export async function fastPath(i: FastInput, decided?: Detected): Promise<FastOu
         card.sources.assumptions.push(`Found by meaning and keywords: "${d.find}"${d.period ? "" : " (last 7 days)"}.`);
       }
       const one = d.intent === "NEWS_DETAIL" && d.storyId;
-      const hours = newsSpan ? custom!.hours : d.intent === "NEWS_ONLY_GAPS" ? Math.max(NEWS_HOURS[f.period as Period], 168) : NEWS_HOURS[f.period as Period];
+      const hours = custom ? custom.hours : newsSpan ? 24 : d.intent === "NEWS_ONLY_GAPS" ? Math.max(NEWS_HOURS[f.period as Period], 168) : NEWS_HOURS[f.period as Period];
       const r = await topStories({ hours, topic, zone: f.zone ?? null, gapsOnly: d.intent === "NEWS_ONLY_GAPS", range: newsSpan, lockDept: i.lockDept }, i.now, one ? 1 : d.n ?? 6, one ? [d.storyId!] : undefined);
       card.responseType = one ? "news_detail" : "news_list";
       card.stories = r.stories;
       // the span asked, said as it was read ("last month (October)", "yesterday (5 Nov)"), never the rolling news window (p7-rules-periods-01)
-      const span = newsSpan ? custom!.label : hours <= 36 ? "last 36 hours" : periodLabel(f.period as Period);
+      const span = custom && !custom.now ? custom.label : periodLabel(d.intent === "NEWS_ONLY_GAPS" && f.period === "daily" && !newsSpan ? "weekly" : (f.period as Period), i.now);
       card.headline = one ? r.stories[0]?.headline ?? "Story not found"
         : d.intent === "NEWS_ONLY_GAPS" ? `In the news, no department record · ${span}` : `${topic ? `News about ${topic.label}` : "Top district news"} · ${span}`;
       card.answerMarkdown = one ? r.stories[0]?.summary ?? "That story is no longer in the news window."
         // the stories themselves first (a summary, not a description of the list), then how they were chosen
         : r.stories.length ? `${r.stories.slice(0, 3).map((s, k) => `${k === 0 ? "The biggest story: " : k === 1 ? ". Also: " : "; "}**${s.headline.replace(/\s+-\s+[^-]{2,40}$/, "").replace(/\*/g, "")}**${s.sourceCount > 1 ? ` (${s.sourceCount} outlets)` : ""}`).join("")}.`
           + ` ${cap(words(r.stories.length))} ${r.stories.length === 1 ? "story" : "stories"}${r.candidates > r.stories.length ? ` of ${r.candidates.toLocaleString("en-IN")}` : ""} shown, ranked by severity, coverage, recency and whether a department has it; reports of the same event are grouped.`
-          : `No ${topic ? `${topic.label} ` : ""}story in Chennai news in the ${span}.`;
+          : `No ${topic ? `${topic.label} ` : ""}story in Chennai news ${/^(since|today|yesterday|the day before)\b/i.test(span) ? span : /^(last|previous|past)\b/i.test(span) ? `in the ${span}` : `in ${span}`}.`;
       card.scopeLine = `${cap(span)}${f.zone ? ` · ${i.names.zones.get(f.zone)?.name ?? `Zone ${f.zone}`}` : ""} · Chennai news`;
       card.context = { ...ctxBase, lastResponseType: card.responseType, storyIds: one ? i.ctx?.storyIds : r.stories.map((s) => s.storyId),
         storyTitles: one ? i.ctx?.storyTitles : r.stories.map((s) => s.headline), selectedNewsStoryId: one ? r.stories[0]?.storyId ?? d.storyId : null,
@@ -733,7 +740,8 @@ async function narrowed(topic: Topic, inc: IncidentFilters, now: string, n: numb
   const ist = (s: string) => Date.parse(`${s.replace(" ", "T")}+05:30`) / 1000;
   const hours = inc.hours ?? PERIODS[inc.period].hours;
   const until = inc.range ? ist(inc.range.to) : nowT - (inc.offset ?? 0) * hours * 3600;
-  const since = inc.range ? ist(inc.range.from) : until - hours * 3600;
+  // (today from 12 AM, as every count of it is)
+  const since = inc.range ? ist(inc.range.from) : inc.period === "daily" && inc.hours == null && !inc.offset ? ist(dayWindow(now).from) : until - hours * 3600;
   const hits = await hybridSearch("incidents", `${topic.narrow}. ${message}`, { since, until, zone: inc.zone ?? null,
     cats: topic.cats, dept: inc.dept ?? null, openOnly: !!inc.openOnly }, 40);
   if (!hits) {

@@ -608,3 +608,11 @@
 .aq-stage svg { width: 14px; height: 14px; }
 html[data-theme="dark"] .aq-stage { color: #6EE7B7; }
 .aq-col > .aq-card, .aq-col > .aq-typing { width: 100%; }
+
+/* 26 Nov: tables in an answer */
+.dic .aq-md .md-tablewrap{overflow-x:auto;margin:6px 0 10px;border:1px solid var(--line);border-radius:10px}
+.dic .aq-md .md-table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+.dic .aq-md .md-table th,.dic .aq-md .md-table td{padding:6px 9px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+.dic .aq-md .md-table th{font-weight:600;color:var(--text-2);white-space:nowrap}
+.dic .aq-md .md-table tr:last-child td{border-bottom:0}
+.dic .aq-md .md-table .num{text-align:right}

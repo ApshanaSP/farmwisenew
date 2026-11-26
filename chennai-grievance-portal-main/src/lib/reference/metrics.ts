@@ -5,10 +5,11 @@
  * scope gives the same number everywhere ("My Tasks 0" beside "128 waiting" was two definitions of one thing).
  *
  * Windows:
- *   reported  incidents first reported in the period (the console's period filter: 24 hours, 7, 30 or 90 days)
+ *   reported  incidents first reported in the period (the console's period filter: today since 12 AM, or the last 7, 30 or 90 days)
  *   updated   incidents last updated in the period (closed work comes to My Tasks when the department reports it)
  *   any       every open incident, whenever it was reported
  */
+import { dayWords } from "@/lib/period/day";
 
 export type MetricKey = "reported" | "severe" | "severe_open" | "open" | "past_deadline" | "past_deadline_any" | "awaiting_check"
   | "left_to_departments" | "complaints" | "complaint_incidents" | "deaths";
@@ -37,19 +38,20 @@ export const METRICS: Record<MetricKey, Metric> = {
   deaths: { key: "deaths", label: "Deaths", measure: "people who died, counted once per incident", window: "reported" }
 };
 
-const PERIOD_WORDS: Record<string, string> = { daily: "the last 24 hours", weekly: "the last 7 days", monthly: "the last 30 days", quarterly: "the last 90 days" };
+const PERIOD_WORDS: Record<string, string> = { weekly: "the last 7 days", monthly: "the last 30 days", quarterly: "the last 90 days" };
 
-/** "reported in the last 24 hours", "updated in the last 7 days", "any date". */
-export function windowText(w: Window, period: string): string {
-  const p = PERIOD_WORDS[period] ?? period;
-  return w === "any" ? "any date" : `${w === "updated" ? "updated" : "reported"} in ${p}`;
+/** "reported today (since 12 AM)", "updated in the last 7 days", "any date". Daily is the calendar day (lib/period/day.ts); `now` (IST) is the clock's when left out. */
+export function windowText(w: Window, period: string, now?: string | null): string {
+  if (w === "any") return "any date";
+  const verb = w === "updated" ? "updated" : "reported";
+  return period === "daily" ? `${verb} ${dayWords(now).en.lower}` : `${verb} in ${PERIOD_WORDS[period] ?? period}`;
 }
 
-/** What a figure counts and over which window, for a tile's caption or tooltip: "open incidents past their resolution deadline · reported in the last 24 hours". */
-export const caption = (k: MetricKey, period: string) => `${METRICS[k].measure} · ${windowText(METRICS[k].window, period)}`;
+/** What a figure counts and over which window, for a tile's caption or tooltip: "open incidents past their resolution deadline · reported today (since 12 AM)". */
+export const caption = (k: MetricKey, period: string, now?: string | null) => `${METRICS[k].measure} · ${windowText(METRICS[k].window, period, now)}`;
 
-/** The label with its window: "Past deadline, still open · reported in the last 24 hours". */
-export const labelled = (k: MetricKey, period: string) => `${METRICS[k].label} · ${windowText(METRICS[k].window, period)}`;
+/** The label with its window: "Past deadline, still open · reported today (since 12 AM)". */
+export const labelled = (k: MetricKey, period: string, now?: string | null) => `${METRICS[k].label} · ${windowText(METRICS[k].window, period, now)}`;
 
 // ------------------------------------------------------------------ SQL --
 
@@ -88,8 +90,8 @@ export function changeWords(now: number, before: number, unit = ""): string {
   return p === 0 ? "the same as the period before" : `${p > 0 ? "up" : "down"} ${Math.abs(p)}% on the period before`;
 }
 
-/** The window in a few characters, for a tile's label: "24 h", "7 days". */
-export const shortWindow = (period: string) => ({ daily: "24 h", weekly: "7 days", monthly: "30 days", quarterly: "90 days" } as Record<string, string>)[period] ?? period;
+/** The window in a few characters, for a tile's label: "today", "7 days". */
+export const shortWindow = (period: string, now?: string | null) => (period === "daily" ? dayWords(now).en.short : ({ weekly: "7 days", monthly: "30 days", quarterly: "90 days" } as Record<string, string>)[period] ?? period);
 
 // -------------------------------------------------------------- deadlines --
 

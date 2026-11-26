@@ -12,7 +12,8 @@
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
-import { OPEN_NOW, PERIODS, asOf, exportMeta, scopeWhere } from "@/lib/collector/intel";
+import { OPEN_NOW, PERIODS, asOf, exportMeta, scopeWhere as consoleWhere, type Scope as ConsoleScope } from "@/lib/collector/intel";
+import { dayStart, periodHours, periodInfo, wholeDay } from "@/lib/period/day";
 import { pastDueSql } from "@/lib/reference/metrics";
 import type { AssistantScope } from "@/lib/assistant/scope";
 import { orEmpty } from "@/lib/fallback";
@@ -31,6 +32,16 @@ async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
   return r as unknown as T[];
 }
 const n = (v: unknown) => Number(v ?? 0);
+
+/**
+ * The scope as the assistants mean it. Their `offset` with a daily period is "yesterday" (or the day before it): the whole calendar day, 12 AM
+ * to 12 AM (intel.ts Scope.day); a comparison's offset (`before`: the window just before this one) is the console's own, the same hours a day
+ * earlier for today, and the calendar day before for a whole day.
+ */
+function scopeWhere(s: ConsoleScope, now: string, before = 0) {
+  const back = s.period === "daily" ? s.offset ?? 0 : 0;
+  return back ? consoleWhere({ ...s, offset: 0, day: back + before }, now) : consoleWhere({ ...s, offset: (s.offset ?? 0) + before }, now);
+}
 
 // ------------------------------------------------------------------ zones --
 
@@ -87,7 +98,7 @@ export async function syntheticShare(s: AssistantScope, now: string): Promise<{ 
  * window (the period, or 7 days if longer); its list shows only the top 40.
  */
 export async function newsGapTotal(s: AssistantScope, now: string, minOutlets = 1): Promise<number> {
-  const w = scopeWhere({ ...s, period: s.period === "daily" ? "weekly" : s.period }, now);
+  const w = scopeWhere(s.period === "daily" ? { ...s, period: "weekly", offset: 0 } : s, now);
   const [r] = await q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${w.sql} AND i.media_only = 1 AND i.status_std <> 'Lapsed'
     ${minOutlets > 1 ? "AND i.outlet_count >= ?" : ""}`, [...w.params, ...(minOutlets > 1 ? [minOutlets] : [])]);
   return n(r?.n);
@@ -180,7 +191,7 @@ export interface PartRow { code: string; label: string; n: number; prev: number;
 export async function categoryFigures(s: AssistantScope, now: string, codes: string[]): Promise<PartRow[]> {
   if (!codes.length) return [];
   const base = { period: s.period, zone: s.zone, dept: s.dept, cat: null, taluk: s.taluk };
-  const w = scopeWhere(base, now), wp = scopeWhere({ ...base, offset: 1 } as typeof base, now);
+  const w = scopeWhere(base, now), wp = scopeWhere(base, now, 1);
   const inCodes = `i.category_code IN (${codes.map(() => "?").join(",")})`;
   const [cur, prev, zones, places] = await Promise.all([
     q(`SELECT i.category_code AS code, MIN(i.category_label) AS label, COUNT(*) AS n, COALESCE(SUM(${OPEN}), 0) AS open,
@@ -241,22 +252,26 @@ export interface SeriesBucket { from: string; to: string; n: number; severe: num
 const wall = (d: Date) => new Date(d.getTime() + 5.5 * 3600_000).toISOString().slice(0, 19).replace("T", " ");
 
 /**
- * Incidents reported in the scope, in the console's buckets for the period (2-hour buckets
- * for a day, daily for a week or month, weekly for a quarter), each a full window ending at
- * the as-of time, so the first and last buckets are never partial.
+ * Incidents reported in the scope, in the console's buckets for the period: for a day, its hours
+ * in 2-hour buckets from 12 AM (the last one is the one now is in); daily for a week or month,
+ * weekly for a quarter, each a full window ending at the as-of time, so the first and last of
+ * those are never partial.
  */
 export async function incidentSeries(s: AssistantScope, now: string): Promise<SeriesBucket[]> {
-  const p = PERIODS[s.period];
+  const day = s.period === "daily", back = day ? s.offset ?? 0 : 0;
+  // a whole day asked for ("yesterday") has its 12 buckets; today has those up to now
+  const p = back ? PERIODS.daily : periodInfo(s.period, now);
   const w = scopeWhere(s, now);
   const secs = (p.hours * 3600) / p.buckets;
+  const end = new Date(now.replace(" ", "T") + "+05:30").getTime();
+  const from = back ? wholeDay(now, back).from : day ? dayStart(now) : wall(new Date(end - p.hours * 3600_000));
   const rows = await q(
-    `SELECT FLOOR(TIMESTAMPDIFF(SECOND, ? - INTERVAL ? HOUR, i.first_reported_at) / ?) AS b, COUNT(*) AS n,
+    `SELECT FLOOR(TIMESTAMPDIFF(SECOND, ?, i.first_reported_at) / ?) AS b, COUNT(*) AS n,
             SUM(i.severity_level = 'Severe') AS severe, SUM(${OPEN}) AS open
      FROM incidents i WHERE ${w.sql} GROUP BY b`,
-    [now, p.hours, secs, ...w.params]
+    [from, secs, ...w.params]
   );
-  const end = new Date(now.replace(" ", "T") + "+05:30").getTime();
-  const start = end - p.hours * 3600_000;
+  const start = new Date(from.replace(" ", "T") + "+05:30").getTime();
   const out: SeriesBucket[] = Array.from({ length: p.buckets }, (_, k) => ({
     from: wall(new Date(start + k * secs * 1000)), to: wall(new Date(start + (k + 1) * secs * 1000)), n: 0, severe: 0, open: 0
   }));
@@ -284,7 +299,7 @@ export async function seriesNormal(s: AssistantScope, now: string): Promise<{ lo
   const end = Date.parse(now.replace(" ", "T") + "+05:30");
   const values: number[] = [];
   for (const offset of [1, 2]) {
-    const w = scopeWhere({ ...s, offset }, now);
+    const w = consoleWhere({ ...s, offset }, now);
     const rows = await q(
       `SELECT FLOOR(TIMESTAMPDIFF(SECOND, ? - INTERVAL ? HOUR, i.first_reported_at) / ?) AS b, COUNT(*) AS n FROM incidents i WHERE ${w.sql} GROUP BY b`,
       [now, p.hours * (offset + 1), secs, ...w.params]
@@ -419,8 +434,8 @@ export interface Drivers {
  */
 export async function changeDrivers(s: AssistantScope, now: string): Promise<Drivers> {
   const base = { period: s.period, zone: s.zone, dept: s.dept, cat: s.cat, taluk: s.taluk };
-  const w = scopeWhere(base, now), wp = scopeWhere({ ...base, offset: 1 } as typeof base, now);
-  const days = Math.max(1, Math.round(PERIODS[s.period].hours / 24));
+  const w = scopeWhere(base, now), wp = scopeWhere(base, now, 1);
+  const days = Math.max(1, Math.round(periodHours(s.period, now) / 24));
   const [tot, totPrev, cats, catsPrev, places, placesPrev, depts, top, rain] = await Promise.all([
     q(`SELECT COUNT(*) AS n, COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe, COALESCE(SUM(${OPEN}), 0) AS open,
          COALESCE(SUM(${OPEN} = 1 AND ${pastDueSql(now)}), 0) AS overdue, COALESCE(SUM(i.dead), 0) AS dead, COALESCE(SUM(i.injured), 0) AS injured,

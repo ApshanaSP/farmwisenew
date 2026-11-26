@@ -26,6 +26,7 @@ import { intentMarker, statusIn, unheldWindowIn, unknownTopicIn, unreadClauseIn 
 import { cityAsk } from "@/lib/city/intent";
 import { needsDates, readPeriod } from "@/lib/period/read";
 import { heldPeriod, windowIn } from "@/lib/windowspan";
+import { dayWords } from "@/lib/period/day";
 
 const TA = /[஀-௿]/;
 
@@ -416,7 +417,7 @@ export function understand(input: string, state: ScreenState, world: World, opts
 
   // a note to keep that no rule above read ("don't let me forget ...", "keep ... for later", the Tamil words for remind and remember) is not a filter: ask, never put one on (RC-04)
   if (/\b(remember|remind|forget|for later|nyabagam|nyabagapaduthu|ninaivoottu|vechukko|vechuko)\b|\b(save|type|note|pin|write|draft|bookmark)( ah| a)? (pannu|panni|pannunga|pannidu|seiyu)\b|(?<![஀-௿])(நினைவூட்டு|நினைவில்|ஞாபக|மறந்துடாத|மறக்காம|சேவ்|சேமி|டைப்|மெயில்|அனுப்பு)/i.test(heard)) return { kind: "unknown", lang, heard, suggestions: SUGGEST };
-  // yesterday (and the day before): the console holds the last 24 hours, 7, 30 and 90 days, so a single past day is not a window it has. It is never answered with the current one (RC-06),
+  // yesterday (and the day before): the console holds today, and the last 7, 30 and 90 days, so a single past day is not a window it has. It is never answered with the current one (RC-06),
   // and it is not a refusal either: the rest of the sentence (the place, the topic) is read, and the Collector is asked which window to show it in (QA4 G1, ta-explain-14, ta-noisy-07)
   const oneDayBack = /\b(yesterdays?|day before( yesterday)?|nethu|neththu|netru)\b/.test(s) || /(?<![஀-௿])(நேற்று|நேத்து)/.test(heard);
   // "two weeks ago", "a month ago", "last year", "next week": also not a window the console holds, and not the current one either (SK-5)
@@ -714,8 +715,8 @@ export function describe(step: Step, world: World, lang: Lang = "en"): string {
 
 export const PAGE_EN: Record<PageKey, string> = { overview: "Overview", briefing: "Briefing", trends: "Trends", environment: "Environment", studio: "Data Studio" };
 export const PAGE_TA: Record<PageKey, string> = { overview: "முகப்பு", briefing: "சுருக்கம்", trends: "போக்குகள்", environment: "சுற்றுச்சூழல்", studio: "தரவு ஸ்டுடியோ" };
-export const PERIOD_EN: Record<PeriodKey, string> = { daily: "Last 24 hours", weekly: "Last 7 days", monthly: "Last 30 days", quarterly: "Last 90 days" };
-export const PERIOD_TA: Record<PeriodKey, string> = { daily: "கடந்த 24 மணி நேரம்", weekly: "கடந்த 7 நாட்கள்", monthly: "கடந்த 30 நாட்கள்", quarterly: "கடந்த 90 நாட்கள்" };
+export const PERIOD_EN: Record<PeriodKey, string> = { get daily() { return dayWords().en.label; }, weekly: "Last 7 days", monthly: "Last 30 days", quarterly: "Last 90 days" };
+export const PERIOD_TA: Record<PeriodKey, string> = { get daily() { return dayWords().ta.label; }, weekly: "கடந்த 7 நாட்கள்", monthly: "கடந்த 30 நாட்கள்", quarterly: "கடந்த 90 நாட்கள்" };
 export const SEV_TA: Record<Sev, string> = { Severe: "கடுமையானவை", High: "அதிகம்", Medium: "நடுத்தரம்", Low: "குறைவு" };
 const PANEL_EN: Partial<Record<Panel, string>> = { news: "Latest news", stories: "Developing stories", conflicts: "Reports that differ", gaps: "In the news, not in records",
   nextdoor: "Next door", markets: "Mandi prices", zones: "Zones", depts: "Departments", sources: "Data sources", review: "Locations to review",

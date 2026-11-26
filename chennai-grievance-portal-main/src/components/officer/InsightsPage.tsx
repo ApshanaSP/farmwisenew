@@ -52,7 +52,7 @@ export function WorkPage({ c, modules, openModule }: { c: Ctx; modules: InsightM
         <PrioritiesCard c={c} modules={modules} openModule={openModule} style={{ "--i": 6 } as React.CSSProperties} />
 
         <article className="card oi-types" style={{ "--i": 7 } as React.CSSProperties}>
-          <div className="ch"><I n="chart" /><h2>Complaint types <span>· against the {P.prev}</span></h2>
+          <div className="ch"><I n="chart" /><h2>Complaint types <span>· against {/^prev\b/.test(P.prev) ? `the ${P.prev}` : P.prev}</span></h2>
             {patterns && <button className="more" onClick={() => openModule("patterns")}>Details<I n="right" /></button>}</div>
           <div className="fitlist">
             {types.length ? types.map((r) => {

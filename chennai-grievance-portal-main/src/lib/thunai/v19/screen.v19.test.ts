@@ -283,6 +283,10 @@ describe("clicks and controls on it (the review)", () => {
     expect(checkScreen({ recipe: "ask", ...s }, W, null)?.recipe).toBe("ask");
     expect(askZoneSlots({ ...d, recipe: "cases" }, 13)).toBeNull();
   });
+  it("a share's tile names its whole", async () => {
+    const r = res({ measure: "share", sev: ["Severe"], status: "open" }, { total: 36.4, totals: M(84), measure: { en: "share of severe incidents", ta: "கடுமையான சம்பவங்கள் இல் பங்கு" }, what: { en: "severe open incidents", ta: "x" } });
+    expect(of(await build(P({ measure: "share", sev: ["Severe"], status: "open" }), [r]), "Kpis")[0].items[0].label).toBe("Share of severe incidents: severe open incidents");
+  });
   it("a backlog's own 90 days stay with the request, for what is asked next", async () => {
     const plan = P({ by: "zone", measure: "overdue" });
     const r = { ...ranked({ measure: "overdue" }) };

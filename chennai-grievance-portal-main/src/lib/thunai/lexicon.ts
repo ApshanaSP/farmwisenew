@@ -122,7 +122,8 @@ export const SEV_WORDS: [string, Sev][] = [
  * Ask District IQ read the calendar month), and "two weeks ago" or "yesterday" are no window here either. The shared reader reads every one of these words the same way.
  */
 export const PERIOD_TABLE: Record<PeriodKey, string[]> = {
-  daily: ["last 24 hours", "24 hours", "today", "daily", "இன்று", "இன்னைக்கு", "இன்றைய", "தினசரி", "innaiku", "innaikku", "inniki"],
+  // ("the last 24 hours" is no window of the console's since 26 Nov: lib/period/read.ts reads it as those hours)
+  daily: ["today", "daily", "இன்று", "இன்னைக்கு", "இன்றைய", "தினசரி", "innaiku", "innaikku", "inniki"],
   weekly: ["last 7 days", "7 days", "this week", "this weeks", "weekly", "week", "இந்த வாரம்", "இந்த வார", "வாராந்திர", "வாராந்திரம்", "வாரம்", "வாரத்துக்கு", "வாரந்தோறும்",
     "vaaram", "vaara", "vaarathukku"],
   monthly: ["last 30 days", "30 days", "this month", "this months", "monthly", "month", "இந்த மாதம்", "இந்த மாத", "மாதாந்திர", "மாதம்", "மாசம்", "மாசத்துக்கு", "மாதத்தோடு",

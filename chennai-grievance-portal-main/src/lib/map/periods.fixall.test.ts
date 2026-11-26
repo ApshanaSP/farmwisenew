@@ -30,12 +30,13 @@ const at = (first: string) => ({ ...INCIDENTS[0], first });
 
 describe("the map reads period words as Jarvis and Ask District IQ do", () => {
   it.each([
-    ["open incidents today", { kind: "last_days", days: 1, offset: 0 }],
-    ["garbage complaints today", { kind: "last_days", days: 1, offset: 0 }],
-    ["இன்று வெள்ளம்", { kind: "last_days", days: 1, offset: 0 }],
-    ["innaiki garbage", { kind: "last_days", days: 1, offset: 0 }],
-    ["inniki flooding", { kind: "last_days", days: 1, offset: 0 }],
-    ["this morning", { kind: "last_days", days: 1, offset: 0 }],
+    // (26 Nov 2026: today is the console's Daily, the calendar day since 12 AM)
+    ["open incidents today", { kind: "day", offset: 0 }],
+    ["garbage complaints today", { kind: "day", offset: 0 }],
+    ["இன்று வெள்ளம்", { kind: "day", offset: 0 }],
+    ["innaiki garbage", { kind: "day", offset: 0 }],
+    ["inniki flooding", { kind: "day", offset: 0 }],
+    ["this morning", { kind: "day", offset: 0 }],
     ["flooding yesterday", { kind: "day", offset: 1 }],
     ["incidents last week", { kind: "week", offset: 1 }],
     ["கடந்த வாரம் சம்பவங்கள்", { kind: "week", offset: 1 }],
@@ -61,7 +62,10 @@ describe("the map reads period words as Jarvis and Ask District IQ do", () => {
 
   it("today is the dashboard's Daily window on the map too", () => {
     const r = periodRange(periodOf("open incidents today") as Period, NOW);
-    expect(r).toEqual(periodRange(periodOf("open incidents in the last 24 hours") as Period, NOW));
+    expect(r).toEqual({ from: "2026-11-06 00:00:00", to: NOW, fromOpen: false });
+    expect(r).not.toEqual(periodRange(periodOf("open incidents in the last 24 hours") as Period, NOW));
+    // until 6 AM it is still the day that began at 12 AM yesterday
+    expect(periodRange({ kind: "day", offset: 0 }, "2026-11-06 02:00:00")).toEqual({ from: "2026-11-05 00:00:00", to: "2026-11-06 02:00:00", fromOpen: false });
   });
 
   it.each(["flooding yesterday", "incidents last week", "garbage last month", "accidents last quarter", "கடந்த மாதம்"])(
@@ -106,9 +110,10 @@ describe("calendar windows on the IST wall clock", () => {
 
 describe("words, the model's form and the checks", () => {
   it("each window says what it is", () => {
-    expect(periodWords({ kind: "day", offset: 0 }, "en")).toBe("today, since midnight");
-    expect(periodWords({ kind: "day", offset: 0 }, "ta")).toBe("இன்று, நள்ளிரவு முதல்");
+    expect(periodWords({ kind: "day", offset: 0 }, "en")).toBe("today, since 12 AM");
+    expect(periodWords({ kind: "day", offset: 0 }, "ta")).toBe("இன்று, நள்ளிரவு 12 மணி முதல்");
     expect(periodWords({ kind: "day", offset: 1 }, "en")).toBe("yesterday");
+    expect(periodWords({ kind: "day", offset: 1, so_far: true }, "en")).toBe("yesterday by this time");
     expect(periodWords({ kind: "week", offset: 1 }, "en")).toBe("last calendar week, Monday to Sunday");
     expect(periodWords({ kind: "quarter", offset: 1 }, "en")).toBe("last calendar quarter");
     expect(periodWords({ kind: "last_days", days: 1, offset: 0 }, "en")).toBe("last 24 hours");
@@ -133,12 +138,14 @@ describe("the map's answers", () => {
   const takeOf = (r: ReturnType<typeof rulesRoute>) => (r && r.kind === "plan" ? (r.plan.steps[0] as Extract<Plan["steps"][number], { op: "take" }>) : null);
   it("a change between two periods compares windows of equal length, never today-so-far against all of yesterday", () => {
     const chgOf = (q: string) => { const r = rulesRoute(q, null, env); return r && r.kind === "plan" ? r.plan.steps.find((s) => s.op === "change") : null; };
-    expect(chgOf("has flooding gone up today")).toMatchObject({ now: { kind: "last_days", days: 1, offset: 0 }, before: { kind: "last_days", days: 1, offset: 1 } });
+    expect(chgOf("has flooding gone up today")).toMatchObject({ now: { kind: "day", offset: 0 }, before: { kind: "day", offset: 1, so_far: true } });
     expect(chgOf("flooding this week vs last week")).toMatchObject({ now: { kind: "last_days", days: 7, offset: 0 }, before: { kind: "last_days", days: 7, offset: 1 } });
     expect(chgOf("garbage this month vs last month")).toMatchObject({ now: { kind: "last_days", days: 30, offset: 0 }, before: { kind: "last_days", days: 30, offset: 1 } });
     // a whole calendar period against the one before it
     expect(changeWindows({ kind: "week", offset: 1 })).toEqual({ now: { kind: "week", offset: 1 }, before: { kind: "week", offset: 2 } });
-    expect(changeWindows({ kind: "day", offset: 0 })).toEqual({ now: { kind: "last_days", days: 1, offset: 0 }, before: { kind: "last_days", days: 1, offset: 1 } });
+    // today so far against the same hours of yesterday
+    expect(changeWindows({ kind: "day", offset: 0 })).toEqual({ now: { kind: "day", offset: 0 }, before: { kind: "day", offset: 1, so_far: true } });
+    expect(periodRange({ kind: "day", offset: 1, so_far: true }, NOW)).toEqual({ from: "2026-11-05 00:00:00", to: "2026-11-05 12:00:00", fromOpen: false });
   });
   it.each(["open incidents in the last 24 hours", "severe incidents past 24 hours", "open incidents since yesterday", "flooding yesterday", "open incidents today",
     "garbage in the last 3 weeks"])("%s: the period's words are read, so the rules answer it whole (no AI call)", (q) => {
@@ -150,12 +157,12 @@ describe("the map's answers", () => {
     const r = rulesRoute("open incidents in September", null, env);
     expect(r && r.kind === "plan" ? r.unread : null).toContain("september");
   });
-  // (25 Nov 2026, the owner: "today" is the dashboard's Daily window, the last 24 hours, everywhere)
-  it("a model's plan for 'today' is the dashboard's 24 hours", () => {
+  // (26 Nov 2026, the owner: "today" is the dashboard's Daily window, since 12 AM, everywhere)
+  it("a model's plan for 'today' is the dashboard's Daily", () => {
     const model: Plan = { language: "en", show: "a", steps: [{ op: "take", as: "a", layer: "incidents", filter: F({ kind: "last_days", days: 1, offset: 0 }), where: null },
       { op: "take", as: "f1", layer: "schools", filter: null, where: null }] };
     const out = fitModelPlan(model, "flooding near kids' schools today");
-    expect((out.steps[0] as Extract<Plan["steps"][number], { op: "take" }>).filter?.period).toEqual({ kind: "last_days", days: 1, offset: 0 });
+    expect((out.steps[0] as Extract<Plan["steps"][number], { op: "take" }>).filter?.period).toEqual({ kind: "day", offset: 0 });
     expect(out.steps[1]).toEqual(model.steps[1]);
     // no calendar words: the model's period stands
     expect(fitModelPlan(model, "flooding near kids' schools in the last 24 hours")).toEqual(model);
@@ -163,12 +170,12 @@ describe("the map's answers", () => {
     expect(fitModelPlan(model, "flooding near kids' schools")).toBe(model);
   });
   it("'open incidents today' is asked over the dashboard's Daily window, and the answer says so", async () => {
-    expect(takeOf(rulesRoute("open flooding today", null, env))?.filter?.period).toEqual({ kind: "last_days", days: 1, offset: 0 });
+    expect(takeOf(rulesRoute("open flooding today", null, env))?.filter?.period).toEqual({ kind: "day", offset: 0 });
     const r = await askMap({ text: "open flooding today", plan: null, prev: null, context: { zone: null, taluk: null, incidentId: null, drawn: null, ward: null },
       user: { email: "collector@example.invalid", role: "collector", lockDept: null } });
     expect(r.kind).toBe("answer");
     expect(r.answer?.headline ?? "").toMatch(/24 hours|last day|today/i);
     const p = r.chips.find((c) => c.part === "period");
-    expect(p?.en).toBe("Last 24 hours");
+    expect(p?.en).toBe("Today, since 12 AM");
   });
 });

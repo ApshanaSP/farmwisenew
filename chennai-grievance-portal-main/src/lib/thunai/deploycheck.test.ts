@@ -208,7 +208,7 @@ describe("Step 4: the Groq file it pairs against, and the ledger first", () => {
   it("the minute just after Step 3 does not refuse Step 4 (Step 4 waits for the minute, sentence by sentence); cooling still does", () => {
     let now = 1_800_000_000_000;
     const l = new Ledger(new MemoryStore(), () => now);
-    for (let i = 0; i < 60; i++) { l.record("anthropic", HAIKU, { tokens: 4000, lane: "eval" }); now += 900; }
+    for (let i = 0; i < 170; i++) { l.record("anthropic", HAIKU, { tokens: 4000, lane: "eval" }); now += 300; }
     const r = l.room("anthropic", HAIKU);
     expect(r.ok).toBe(false);
     expect(["rpm", "tpm"]).toContain(r.why);
@@ -236,11 +236,13 @@ describe("Step 4: the Groq file it pairs against, and the ledger first", () => {
     expect(first).not.toBe(jarvis);
     expect(process.env.THUNAI_DIR).toBe(first);
     for (let i = 0; i < 200; i++) ledger().record("anthropic", HAIKU, { tokens: 4500, lane: "eval" });
-    expect(ledger().room("anthropic", HAIKU).left.tpd).toBe(8_000_000 - 900_000);
+    // (26 Nov: an evaluation never uses up the day of the console; it is still on the record)
+    expect(ledger().room("anthropic", HAIKU).left.tpd).toBe(8_000_000);
+    expect(ledger().spent("anthropic", HAIKU, 86_400_000).tokens).toBe(900_000);
     const step4 = ownLedger("step4");
     expect(step4).not.toBe(first);
     const r = ledger().room("anthropic", HAIKU);
-    expect(r.left).toMatchObject({ rpd: 2000, tpd: 8_000_000 });
+    expect(r.left).toMatchObject({ rpd: 12_000, tpd: 8_000_000 });
     expect(ledgerCheck(r, 60, 4500).ok).toBe(true);
     vi.stubEnv("THUNAI_DIR", jarvis);
     resetLedger();

@@ -54,8 +54,8 @@ describe("scenario 1: the severe cases", () => {
     expect(list.total).toBe(6);
     expect(hands.calls).toContain("console_severe");
     expect(r.steps).toContainEqual({ a: "view", view: { sev: "Severe" } });
-    // the console's daily window is said as the last 24 hours: "today" is the calendar day since midnight (QA pass 7, lib/period/read.ts)
-    expect(r.say).toMatch(/^6 severe cases in the last 24 hours/);
+    // the console's daily window is the calendar day since 12 AM (26 Nov, lib/period/day.ts)
+    expect(r.say).toMatch(/^6 severe cases today/);
     expect(r.say).toMatch(/past (its|their) deadline/);
     spokenIsClean(r);
     // a citizen's letter opening and phone number never reach the card or the voice

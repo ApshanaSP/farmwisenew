@@ -2,13 +2,18 @@ import { describe, expect, it } from "vitest";
 import { TA } from "@/lib/i18n/ta";
 import { translate } from "./Translator";
 
-// console-sync-13: hand-checked Tamil whose English key carries a number ("last 24 hours", "Past deadline, still open · 24 h") never
+// console-sync-13: hand-checked Tamil whose English key carries a number ("last 24 hours", "Today (since 12 AM)") never
 // matched, because the Translator looks a text up by its template, every number turned into "#". The dictionary is now read the same way.
 const withDigits = Object.keys(TA).filter((k) => /\d/.test(k));
 
 describe("console-sync-13: Tamil keys written with a number are found", () => {
-  it("the snapshot tile 'Past deadline, still open · 24 h' gets its hand-checked Tamil", () => {
-    expect(translate("Past deadline, still open · 24 h")).toBe(TA["Past deadline, still open · 24 h"]);
+  it("the Daily window's words and the snapshot tile get their hand-checked Tamil, by day and in the small hours, whatever the case", () => {
+    for (const k of ["Today (since 12 AM)", "Since 12 AM yesterday", "Past deadline, still open · today", "Resolved today", "Resolved since 12 AM yesterday", "than yesterday by this time", "than the day before by this time"]) {
+      expect(translate(k), k).toBe(TA[k]);
+      expect(TA[k], k).toMatch(/[஀-௿]/);
+    }
+    expect(translate("today (since 12 AM)")).toBe(TA["Today (since 12 AM)"]);
+    expect(translate("Daily · today (since 12 am)")).toBe(TA["Daily · today (since 12 AM)"]);
   });
 
   it("every key with a number is reachable, and gives its own Tamil", () => {

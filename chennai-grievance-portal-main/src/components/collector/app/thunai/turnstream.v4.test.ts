@@ -80,10 +80,10 @@ describe("readRound: the streamed round", () => {
 });
 
 describe("two speeds: the browser waits as long as the server's heard event allows", () => {
-  it("8 s for a command, up to 25 s for an analysis question, never outside those", () => {
+  it("8 s for a command, up to 36 s for an analysis question, never outside those", () => {
     expect(budgetOf(undefined)).toBe(8000);
     expect(budgetOf(25_000)).toBe(25_000);
-    expect(budgetOf(90_000)).toBe(25_000);
+    expect(budgetOf(90_000)).toBe(36_000);
     expect(budgetOf(100)).toBe(8000);
     expect(budgetOf(Number.NaN)).toBe(8000);
   });

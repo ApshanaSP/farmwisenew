@@ -5,6 +5,7 @@
 import fs from "fs";
 import path from "path";
 import { bodyList, deptList } from "@/lib/collector/intel";
+import { KNOWN_DEPTS } from "./knowndepts";
 import { ZONE_TA_NAME } from "./lexicon";
 import type { World } from "./types";
 
@@ -46,7 +47,9 @@ let worldLoading: Promise<World> | null = null;
 const readWorld = (): Promise<World> => (worldLoading ??= (async () => {
   try {
     const [depts, bodies] = await Promise.all([deptList().catch(() => null), bodyList().catch(() => null)]);
-    const w = { ...buildWorld(depts ?? []), ...(bodies?.length ? { bodies: bodies.map((b) => ({ code: b.code, name: b.name })) } : {}) };
+    // (a read that failed, or came back with nothing, never leaves the world without its departments: "police" would be dropped from the question)
+    if (!depts?.length) console.warn("[jarvis world] the departments could not be read; the reference list is used");
+    const w = { ...buildWorld(depts?.length ? depts : [...KNOWN_DEPTS]), ...(bodies?.length ? { bodies: bodies.map((b) => ({ code: b.code, name: b.name })) } : {}) };
     if (depts?.length) worldCache = { at: Date.now(), w };
     return w;
   } finally { worldLoading = null; }

@@ -26,7 +26,7 @@ function mockFetch(empty: boolean) {
     if (!url.includes("/api/collector/assistant/")) return real(input, init);
     if (url.includes("/status")) return json({ asOf: "2026-10-15 07:57:00", feedsOk: 8, feedsTotal: 8, ai: { available: true } });
     if (url.includes("/insights")) return json({ items: [
-      { key: "a", kind: "attention", title: "Anna Nagar needs attention", finding: "3 severe and 6 high incidents in the last 24 hours, the most of any zone.", question: "which zone needs my attention today and why?" },
+      { key: "a", kind: "attention", title: "Anna Nagar needs attention", finding: "3 severe and 6 high incidents today, the most of any zone.", question: "which zone needs my attention today and why?" },
       { key: "b", kind: "pattern", title: "Street lights up 41% in Teynampet", finding: "45 more reports than the period before; 82 linked to rain.", question: "why is Teynampet high?" }] });
     if (url.includes("/pins")) return json({ pins: [{ id: 1, title: "Severe incidents this week", question: "severe incidents this week" }] });
     if (url.match(/\/sessions\/[0-9a-f-]{36}/)) return json(empty ? { messages: [] } : fixtures);

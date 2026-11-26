@@ -18,14 +18,23 @@
  *      exact figures ("over 100" is not a count), never a date ("May 17 Movement") and never a follow-up report ("fresh",
  *      "another", "two more"). A count that only rises over the hours is the story developing, not a disagreement.
  *
- * Results are reused until the reports change (aibrief.aiJson keys on the facts; a memo per period here).
+ * One list, that stays (26 Nov 2026): what the checks find is written into the day's book (differbook.ts) and listed from there until its reports
+ * leave the window, so a regrouped story, a new build, an article that joins, or a model that is busy or answers otherwise takes nothing away. The
+ * Differ tab, the news badge, the incident pop-up and the assistants all read periodConflicts() / storyConflicts(). A model's verdict on a set of
+ * reports is kept by what the reports say (their text), so the same text is never judged twice, and is reused when no model answers; the rules'
+ * answer is never kept as the verdict: it stands in until a model has read the story.
  */
 import { z } from "zod";
 import { RowDataPacket } from "mysql2";
 import intelPool from "@/lib/collector/db";
 import { aiJson } from "@/lib/collector/aibrief";
 import { when } from "@/lib/collector/analysis";
-import { newsStories, type Period } from "@/lib/collector/intel";
+import { aiStatus } from "@/lib/ai/gateway";
+import { newsStories, periodSince, type Period } from "@/lib/collector/intel";
+import { about, bookVersion, found, listed, reportKey, settle, shown, textHash, type BookItem, type Holds } from "@/lib/collector/differbook";
+import { dataVersion } from "@/lib/collector/datakey";
+import { bumpDataEpoch } from "@/lib/collector/epoch";
+import { dayKey } from "@/lib/period/day";
 import { isNewsMedia } from "@/lib/collector/newsrel";
 import { promises as fsp, readFileSync } from "node:fs";
 import path from "node:path";
@@ -50,6 +59,8 @@ export interface Difference {
   /** who can confirm it */
   check: string | null;
   by: "rules" | "ai";
+  /** the reports have come to say the same, or one was withdrawn: "resolved at 2:20 PM: the reports now agree" (the difference stays on the list, with this on it) */
+  resolved?: string | null;
 }
 export interface StoryConflicts { id: string; title: string; incident: string | null; docIds: string[]; outlets: number; items: Difference[] }
 
@@ -58,6 +69,9 @@ export interface Report {
   id: string; publisher: string; t: string; head: string; original: string | null; summary: string; lead: string; lang: string | null;
   /** the places the pipeline found in it (localities, not "Chennai") */
   places?: string[];
+  url?: string | null;
+  /** the incident it is linked to in this build */
+  incident?: string | null;
 }
 
 // ------------------------------------------------------------- numbers --
@@ -253,10 +267,13 @@ const COUNT_WORDS: [RegExp, RegExp][] = [
 ];
 const COMMON = new Set(["The", "This", "That", "Police", "On", "In", "At", "A", "An", "He", "She", "They", "His", "Her", "Over", "About", "Around", "More", "Than"]);
 const names = (s: string) => (s.match(/\b[A-Z][a-z]{2,}\b/g) ?? []).filter((w) => !COMMON.has(w)).sort().join(",");
+/** "1 December" and "1 December 2026", four officials named and three of them: one says more than the other, they do not disagree */
+const within = (a: string, b: string) => { const A = a.split(",").filter(Boolean), B = new Set(b.split(",").filter(Boolean)); return A.length > 0 && A.every((x) => B.has(x)); };
 /**
  * The claims of a difference that really differ, or null: two outlets must state the fact with different figures (a
  * claim with no figure says nothing about a count), or, for a fact in words (a name, a place), with different names.
- * "his friend Sathyabharathi" and "his 19-year-old friend, Sathyabharathi" are the same.
+ * "his friend Sathyabharathi" and "his 19-year-old friend, Sathyabharathi" are the same; so are a date and the same date
+ * with its year (one outlet says more; a figure or a name the other leaves out is no disagreement).
  */
 export function distinct(claims: Claim[], field = ""): Claim[] | null {
   const numeric = claims.some((c) => numbersOf(c.says).size > 0);
@@ -264,7 +281,13 @@ export function distinct(claims: Claim[], field = ""): Claim[] | null {
   const own = COUNT_WORDS.find(([re]) => re.test(field))?.[1];
   const cl = (numeric ? claims.filter((c) => numbersOf(c.says).size > 0 && !ESTIMATE.test(c.says)) : claims).filter((c) => !own || own.test(c.says));
   if (new Set(cl.map((c) => c.publisher)).size < 2) return null;
-  if (new Set(cl.map(numeric ? (c: Claim) => figures(c.says) : (c: Claim) => names(c.says) || c.says.toLowerCase())).size < 2) return null;
+  const bag = numeric ? (c: Claim) => figures(c.says) : (c: Claim) => names(c.says);
+  const apart = (a: Claim, b: Claim) => {
+    const x = bag(a), y = bag(b);
+    if (!numeric && (!x || !y)) return (x || a.says.toLowerCase()) !== (y || b.says.toLowerCase());
+    return !within(x, y) && !within(y, x);
+  };
+  if (!cl.some((a, i) => cl.some((b, j) => j > i && a.publisher !== b.publisher && apart(a, b)))) return null;
   return cl;
 }
 
@@ -316,24 +339,42 @@ const tidyField = (f: string) => FIELD_ALIAS[f.trim().toLowerCase()] ?? f.trim()
 
 // --------------------------------------------------------------- stories --
 
-const NEWS_COLS = `d.doc_id AS id, d.title, d.title_en, d.lang, d.publisher, d.publisher_domain, d.publisher_tier, d.summary,
+const NEWS_COLS = `d.doc_id AS id, d.title, d.title_en, d.lang, d.publisher, d.publisher_domain, d.publisher_tier, d.summary, d.url, d.linked_incident_id AS incident,
   SUBSTR(d.body, 1, 900) AS body, d.places, d.place_text, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t`;
 
+function reportOf(r: Row, anyOutlet = false): Report | null {
+  if (!r.title || (!anyOutlet && !isNewsMedia(r.publisher, r.publisher_domain, r.publisher_tier))) return null;
+  const ta = r.lang && r.lang !== "en";
+  const places = String(r.places ?? "").split("|").map((x) => x.trim()).filter(Boolean);
+  if (!places.length && r.place_text) places.push(String(r.place_text));
+  return {
+    id: String(r.id), publisher: String(r.publisher ?? "News"), t: String(r.t), lang: r.lang ?? null,
+    head: String((ta && r.title_en) || r.title).replace(/\s+/g, " ").trim(), original: ta ? String(r.title) : null,
+    summary: String(r.summary ?? "").replace(/\s+/g, " ").trim(), lead: String(r.body ?? ""), places, url: r.url ? String(r.url) : null, incident: r.incident ? String(r.incident) : null
+  };
+}
 async function reportsOf(ids: string[]): Promise<Map<string, Report>> {
   const out = new Map<string, Report>();
   const want = [...new Set(ids)];
   for (let k = 0; k < want.length; k += 400) {
-    const rows = await q(`SELECT ${NEWS_COLS} FROM documents d WHERE d.doc_id IN (?)`, [want.slice(k, k + 400)]);
-    for (const r of rows) {
-      if (!r.title || !isNewsMedia(r.publisher, r.publisher_domain, r.publisher_tier)) continue;
-      const ta = r.lang && r.lang !== "en";
-      const places = String(r.places ?? "").split("|").map((x) => x.trim()).filter(Boolean);
-      if (!places.length && r.place_text) places.push(String(r.place_text));
-      out.set(String(r.id), {
-        id: String(r.id), publisher: String(r.publisher ?? "News"), t: String(r.t), lang: r.lang ?? null,
-        head: String((ta && r.title_en) || r.title).replace(/\s+/g, " ").trim(), original: ta ? String(r.title) : null,
-        summary: String(r.summary ?? "").replace(/\s+/g, " ").trim(), lead: String(r.body ?? ""), places
-      });
+    for (const r of await q(`SELECT ${NEWS_COLS} FROM documents d WHERE d.doc_id IN (?)`, [want.slice(k, k + 400)])) {
+      const x = reportOf(r);
+      if (x) out.set(x.id, x);
+    }
+  }
+  return out;
+}
+/** The reports behind the book's entries as this build has them, by their address, else by their id (a build may have given them other ids). */
+async function reportsBehind(items: BookItem[]): Promise<Map<string, Report>> {
+  const ids = [...new Set(items.flatMap((x) => x.reports.map((r) => r.id)))], urls = [...new Set(items.flatMap((x) => x.reports.map((r) => r.url).filter((u): u is string => !!u)))];
+  const out = new Map<string, Report>();
+  for (let k = 0; k < Math.max(ids.length, urls.length); k += 300) {
+    const a = ids.slice(k, k + 300), b = urls.slice(k, k + 300);
+    for (const r of await q(`SELECT ${NEWS_COLS} FROM documents d WHERE ${a.length ? "d.doc_id IN (?)" : "1 = 0"} OR ${b.length ? "d.url IN (?)" : "1 = 0"} ORDER BY d.doc_id`, [...(a.length ? [a] : []), ...(b.length ? [b] : [])])) {
+      // (a report already in the book is there whatever this build calls its outlet)
+      const x = reportOf(r, true);
+      if (!x) continue;
+      for (const key of [reportKey(x.url, x.id), `id:${x.id}`]) if (!out.has(key)) out.set(key, x);
     }
   }
   return out;
@@ -342,27 +383,25 @@ async function reportsOf(ids: string[]): Promise<Map<string, Report>> {
 /** At most 6 reports of a story for the checks: one per outlet (its latest), oldest first. */
 function pick(reports: Report[]): Report[] {
   const seen = new Map<string, Report>();
-  for (const r of [...reports].sort((a, b) => b.t.localeCompare(a.t))) if (!seen.has(r.publisher)) seen.set(r.publisher, r);
-  return [...seen.values()].slice(0, 6).sort((a, b) => a.t.localeCompare(b.t));
+  for (const r of [...reports].sort((a, b) => b.t.localeCompare(a.t) || a.id.localeCompare(b.id))) if (!seen.has(r.publisher)) seen.set(r.publisher, r);
+  return [...seen.values()].slice(0, 6).sort((a, b) => a.t.localeCompare(b.t) || a.id.localeCompare(b.id));
 }
 /** Could two outlets in this story be reporting the same incident at all (same day, same place)? Else nothing to compare. */
 const comparable = (reps: Report[]) => reps.some((a, i) => reps.some((b, j) => j > i && a.publisher !== b.publisher && sameIncident(a, b)));
 
-/** The model's reading when it read the story (it saw which reports are the same incident), else the rules'. */
-const combine = (rules: Difference[], ai: Difference[] | undefined) => ai ?? rules;
-
 // ------------------------------------------------------------ verdicts --
-// 23 Nov 2026: the owner saw a "Reports differ" item, opened it, came back, and it was gone. Every load decided again: a new article anywhere
-// changed the period memo's key, the pop-up asked the model on its own, a model that was busy left the rules' answer for a while and a model
-// that answered later replaced it, and a failed load emptied the list. Now one verdict per set of reports is kept (and saved, so a restart
-// keeps it): the same reports always give the same answer, in the list, in the pop-up, in Jarvis and the chatbot. A story is decided again
-// only when an outlet joins or leaves it.
-interface Verdict { at: number; by: "ai" | "rules"; items: Difference[] }
+// 23 Nov 2026: one verdict per set of reports, kept, so the same reports always give the same answer. 26 Nov, what still changed it: the set's
+// key was its ids and the story's lead report, which a new build, or one more article, draws again; the rules' answer was kept as the verdict when
+// the model did not answer (and for every story past the twelve it reads at a time), so it was never asked again. Now a verdict is the model's
+// only, kept by what the reports say (textHash), and what it found is in the day's book, which no later verdict empties.
+interface Verdict { at: number; items: { d: Difference; /** each claim's report, by its text */ h: string[] }[] }
 declare global {
   // eslint-disable-next-line no-var
   var __conflictVerdicts: Map<string, Verdict> | undefined;
   // eslint-disable-next-line no-var
   var __conflictVerdictsSave: ReturnType<typeof setTimeout> | null | undefined;
+  // eslint-disable-next-line no-var
+  var __conflictRest: number | undefined;
 }
 const VERDICT_FILE = () => path.join(process.env.DIQ_DATA_DIR ?? path.join(process.cwd(), "data"), "news-verdicts.json");
 const VERDICT_DAYS = 14;
@@ -370,7 +409,7 @@ function verdicts(): Map<string, Verdict> {
   if (global.__conflictVerdicts) return global.__conflictVerdicts;
   const m = new Map<string, Verdict>();
   try {
-    const j = JSON.parse(readFileSync(VERDICT_FILE(), "utf8")) as { v?: number; rows?: [string, Verdict][] };
+    const j = process.env.VITEST ? null : (JSON.parse(readFileSync(VERDICT_FILE(), "utf8")) as { v?: number; rows?: [string, Verdict][] });
     const since = Date.now() - VERDICT_DAYS * 864e5;
     if (j?.v === V) for (const [k, x] of j.rows ?? []) if (x && x.at >= since && Array.isArray(x.items)) m.set(k, x);
   } catch { /* none yet */ }
@@ -387,68 +426,179 @@ function saveVerdicts(): void {
     void fsp.writeFile(VERDICT_FILE(), JSON.stringify({ v: V, rows })).catch((e) => console.warn("[conflicts] verdicts not saved:", (e as Error).message));
   }, 2000);
 }
-/** the reports compared, by id: the exact set */
-const sigOf = (reps: Report[]) => `r|${reps.map((r) => r.id).sort().join(",")}`;
-/** the story and its outlets: a newer article from an outlet already in it keeps the story's verdict */
-const outletSig = (key: string, reps: Report[]) => `o|${key}|${[...new Set(reps.map((r) => r.publisher))].sort().join("|")}`;
-function verdictOf(key: string, reps: Report[]): Verdict | null {
-  const m = verdicts();
-  return m.get(sigOf(reps)) ?? m.get(outletSig(key, reps)) ?? null;
+/** the reports compared, by what they say */
+const sigOf = (reps: Report[]) => `t|${reps.map(textHash).sort().join(",")}`;
+/** What a model answered for these reports (on this build's ids), or null: none has read them. */
+function verdictOf(reps: Report[]): Difference[] | null {
+  const v = verdicts().get(sigOf(reps));
+  if (!v) return null;
+  const by = new Map(reps.map((r) => [textHash(r), r]));
+  return v.items.map(({ d, h }) => ({ ...d, claims: d.claims.map((c, k) => { const r = by.get(h[k]); return r ? { ...c, docId: r.id, t: r.t } : c; }) }));
 }
-function keepVerdict(key: string, reps: Report[], v: Omit<Verdict, "at">): void {
-  const m = verdicts();
-  const x = { ...v, at: Date.now() };
-  m.set(sigOf(reps), x); m.set(outletSig(key, reps), x);
+function keepVerdict(reps: Report[], items: Difference[]): void {
+  const by = new Map(reps.map((r) => [r.id, textHash(r)]));
+  verdicts().set(sigOf(reps), { at: Date.now(), items: items.map((d) => ({ d, h: d.claims.map((c) => by.get(c.docId) ?? "") })) });
   saveVerdicts();
 }
 
-/** The differences between the reports of one story (the news preview and the incident pop-up). */
-export async function storyConflicts(ids: string[], title: string, user: string, id?: string): Promise<StoryConflicts | null> {
-  const reps = pick([...(await reportsOf(ids.slice(0, 60))).values()]);
-  if (new Set(reps.map((r) => r.publisher)).size < 2 || !comparable(reps)) return null;
-  const key = id ?? reps[0].id;
-  const outlets = new Set(reps.map((r) => r.publisher)).size;
-  // (23 Nov: the verdict the list gave these reports, never a second opinion)
-  const had = verdictOf(key, reps);
-  if (had) return { id: key, title, incident: null, docIds: ids, outlets, items: had.items };
-  const ai = await aiDifferences([{ key, title, reports: reps }], user);
-  const items = combine(ruleDifferences(reps), ai?.get(key));
-  keepVerdict(key, reps, { by: ai?.has(key) ? "ai" : "rules", items });
-  return { id: key, title, incident: null, docIds: ids, outlets, items };
+/** after the model fails, the rules stand in this long before it is asked again */
+const REST_MS = 10 * 60_000;
+const resting = () => (global.__conflictRest ?? 0) > Date.now();
+/** Reads the stories no model has read (at most AI_STORIES); true when it answered. What it finds is written into the book. */
+async function read(stories: { s: Story; key: string; title: string; reports: Report[] }[], user: string, now: string): Promise<boolean> {
+  const ai = await aiDifferences(stories, user).catch((e) => (console.warn(`[conflicts] ${(e as Error).message.slice(0, 160)}`), null));
+  if (!ai) { global.__conflictRest = Date.now() + REST_MS; return false; }
+  let n = 0;
+  for (const x of stories) {
+    const d = ai.get(x.key);
+    if (!d) continue;
+    keepVerdict(x.reports, d);
+    n += found(storyOf(x.s, x.reports), d, new Map(x.reports.map((r) => [r.id, r])), now);
+  }
+  if (n) bumpDataEpoch();
+  return true;
 }
 
-const V = 5;
+// --------------------------------------------------------------- the list --
+
+/** a news story (intel.ts newsStories), as much of it as the checks need */
+interface Story { id: string; title: string; incident: string | null; docIds: string[]; t: string }
+const storyOf = (s: Story, reps: Report[]) => ({ title: s.title, docIds: s.docIds, incident: s.incident, outlets: new Set(reps.map((r) => r.publisher)).size });
+/** What a report says, for settling a difference: evidence in the reports themselves, never a new verdict. */
+const HOLDS: Holds = {
+  claim: claimHolds,
+  differ: (claims, field) => distinct(claims.map((c) => ({ docId: "", t: "", ...c })), field) !== null,
+  count: (field, r) => (FOLLOW_UP.test(`${r.head} ${r.original ?? ""}`) ? null : claimsOf(r).get(field) ?? null)
+};
+
+/**
+ * The differences between the reports of one story (the news preview and the incident pop-up): those the list found for any of these reports;
+ * a set of reports it never compared is compared now, and what is found joins the list.
+ */
+export async function storyConflicts(ids: string[], title: string, user: string, id?: string): Promise<StoryConflicts | null> {
+  const map = await reportsOf(ids.slice(0, 60));
+  const all = [...map.values()], keys = all.map((r) => reportKey(r.url, r.id));
+  const reps = pick(all);
+  const key = id ?? reps[0]?.id ?? ids[0];
+  const outlets = new Set(reps.map((r) => r.publisher)).size;
+  const now = istNow();
+  let items = about(ids, keys);
+  if (!items.length) {
+    if (outlets < 2 || !comparable(reps)) return null;
+    const s: Story = { id: key, title, incident: all.find((r) => r.incident)?.incident ?? null, docIds: ids, t: reps[reps.length - 1].t };
+    const had = verdictOf(reps);
+    if (had) found(storyOf(s, reps), had, map, now);
+    else if (resting() || !aiStatus().available || !(await read([{ s, key, title, reports: reps }], user, now))) found(storyOf(s, reps), ruleDifferences(reps), map, now);
+    items = about(ids, keys);
+  }
+  const byKey = await reportsBehind(items);
+  settle(items, byKey, (x) => all.filter((r) => x.reports.some((b) => { const own = byKey.get(b.key); return own ? sameIncident(own, r) : false; })), HOLDS, now, await dataVersion());
+  return { id: key, title, incident: null, docIds: ids, outlets, items: items.map((x) => shown(x, byKey)) };
+}
+const istNow = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
+
+const V = 6;
 const AI_STORIES = 12;
+/** how long a page waits for the model: what it finds later joins the list by itself (bumpDataEpoch: the consoles refresh at their next check) */
+const WAIT_MS = 20_000;
+interface Compared { s: Story; key: string; title: string; reports: Report[]; all: Report[]; rules: Difference[] }
 declare global {
   // eslint-disable-next-line no-var
-  var __conflicts: Map<string, { at: number; v: PeriodConflicts }> | undefined;
+  var __conflicts: Map<string, { at: number; v: Compared[] }> | undefined;
+  // eslint-disable-next-line no-var
+  var __conflictFlights: Map<string, Promise<PeriodConflicts>> | undefined;
+  // eslint-disable-next-line no-var
+  var __conflictReads: Map<string, Promise<boolean>> | undefined;
 }
 export interface PeriodConflicts { stories: StoryConflicts[]; checked: number; ai: boolean }
 
-/** Every story of the period's news (2+ outlets) whose reports of the same incident disagree, most outlets first. */
-export async function periodConflicts(period: Period, now: string, user: string): Promise<PeriodConflicts> {
-  const all = (await newsStories(period, now)).filter((s) => s.outletNames.length >= 2);
-  const memoKey = `${V}|${period}|${all.map((s) => `${s.id}:${s.docIds.length}`).join(",")}`;
+/** The period's stories with two or more outlets on the same incident, with their reports: the ones whose figures already differ first, then those with the most outlets. */
+async function compared(period: Period, now: string, build: string): Promise<{ list: Compared[]; stories: Story[] }> {
+  const stories = await newsStories(period, now);
+  const all = stories.filter((s) => s.outletNames.length >= 2);
+  const memoKey = `${V}|${period}|${build}|${all.map((s) => `${s.id}:${s.docIds.length}`).join(",")}`;
   const memo = (global.__conflicts ??= new Map()).get(memoKey);
-  if (memo && Date.now() - memo.at < 30 * 60_000) return memo.v;
-
+  if (memo && Date.now() - memo.at < 10 * 60_000) return { list: memo.v, stories };
   const reps = await reportsOf(all.flatMap((s) => s.docIds.slice(0, 40)));
-  const inputs = all.map((s) => ({ s, key: s.id, title: s.title, reports: pick(s.docIds.map((d) => reps.get(d)).filter((r): r is Report => !!r)) }))
-    .filter((x) => new Set(x.reports.map((r) => r.publisher)).size >= 2 && comparable(x.reports))
+  const list = all.map((s) => {
+    const mine = s.docIds.map((d) => reps.get(d)).filter((r): r is Report => !!r);
+    return { s, key: s.id, title: s.title, all: mine, reports: pick(mine) };
+  }).filter((x) => new Set(x.reports.map((r) => r.publisher)).size >= 2 && comparable(x.reports))
     .map((x) => ({ ...x, rules: ruleDifferences(x.reports) }))
-    // the model reads first the stories where the figures already differ, then those with the most outlets
-    .sort((a, b) => Number(b.rules.length > 0) - Number(a.rules.length > 0) || b.reports.length - a.reports.length || b.s.t.localeCompare(a.s.t));
-  // (23 Nov: a story already decided keeps its verdict; only the undecided go to the model, the rest of them keep the rules' answer, kept too)
-  const undecided = inputs.filter((x) => !verdictOf(x.key, x.reports));
-  const ai = undecided.length ? await aiDifferences(undecided.slice(0, AI_STORIES), user) : null;
-  for (const x of undecided) keepVerdict(x.key, x.reports, { by: ai?.has(x.key) ? "ai" : "rules", items: combine(x.rules, ai?.get(x.key)) });
-  const stories = inputs.map(({ s, key, title, reports }) => ({
-    id: key, title, incident: s.incident, docIds: s.docIds, outlets: new Set(reports.map((r) => r.publisher)).size,
-    items: verdictOf(key, reports)?.items ?? []
-  })).filter((x) => x.items.length).sort((a, b) => b.items.length - a.items.length || b.outlets - a.outlets || a.id.localeCompare(b.id));
-  const v: PeriodConflicts = { stories, checked: inputs.length, ai: !!ai || inputs.some((x) => verdictOf(x.key, x.reports)?.by === "ai") };
-  // (every story is decided and kept now, so the memo only saves reading the reports again)
-  global.__conflicts.set(memoKey, { at: Date.now(), v });
+    .sort((a, b) => Number(b.rules.length > 0) - Number(a.rules.length > 0) || b.reports.length - a.reports.length || b.s.t.localeCompare(a.s.t) || a.key.localeCompare(b.key));
+  global.__conflicts.set(memoKey, { at: Date.now(), v: list });
   while (global.__conflicts.size > 12) global.__conflicts.delete(global.__conflicts.keys().next().value!);
-  return v;
+  return { list, stories };
 }
+
+/**
+ * Every difference between outlets found in the period's news, one list for every reader, in one order: the largest gap first, then the newest.
+ * A difference found during the day stays until the day rolls over (a longer period: until its reports leave the period, by whole days).
+ */
+export function periodConflicts(period: Period, now: string, user: string): Promise<PeriodConflicts> {
+  const flights = (global.__conflictFlights ??= new Map());
+  const key = `${period}|${dayKey(now)}`;
+  const had = flights.get(key);
+  if (had) return had;
+  const p = periodFresh(period, now, user).finally(() => flights.delete(key));
+  flights.set(key, p);
+  return p;
+}
+
+async function periodFresh(period: Period, now: string, user: string): Promise<PeriodConflicts> {
+  const build = await dataVersion();
+  const { list, stories } = await compared(period, now, build);
+  const put = (x: Compared, d: Difference[]) => found(storyOf(x.s, x.reports), d, new Map(x.reports.map((r) => [r.id, r])), now);
+  const unread: Compared[] = [];
+  let ai = false;
+  for (const x of list) {
+    const v = verdictOf(x.reports);
+    if (v) { ai = true; put(x, v); } else unread.push(x);
+  }
+  // the model reads what it has not read; while it cannot, the rules' answer stands in (it is asked again later, and takes nothing away)
+  if (unread.length) {
+    if (resting() || !aiStatus().available) unread.forEach((x) => put(x, x.rules));
+    else {
+      const reads = (global.__conflictReads ??= new Map());
+      const ask = unread.slice(0, AI_STORIES), k = ask.map((x) => sigOf(x.reports)).join(";");
+      const job = reads.get(k) ?? read(ask, user, now).finally(() => reads.delete(k));
+      reads.set(k, job);
+      const done = await Promise.race([job, new Promise<"late">((r) => { setTimeout(() => r("late"), WAIT_MS).unref?.(); })]);
+      if (done === true) ai = true;
+      else if (done === false) unread.forEach((x) => put(x, x.rules));
+    }
+  }
+
+  // from the start of the day the period begins in: an entry leaves with its whole day, never in the middle of one
+  const items = listed(`${periodSince(period, now).slice(0, 10)} 00:00:00`, now);
+  const byKey = await reportsBehind(items);
+  const idsOf = (x: BookItem) => new Set([...x.docIds, ...x.reports.map((r) => byKey.get(r.key)?.id ?? r.id)]);
+  /** the story on the page that holds its reports now, whatever its id */
+  const nowIn = (x: BookItem): Story | null => {
+    const own = x.reports.map((r) => byKey.get(r.key)?.id ?? r.id), ids = idsOf(x);
+    return stories.find((s) => own.some((d) => s.docIds.includes(d))) ?? stories.find((s) => s.docIds.some((d) => ids.has(d))) ?? null;
+  };
+  const at = new Map(items.map((x) => [x.key, nowIn(x)]));
+  const others = new Map(list.map((x) => [x.s.id, x.all]));
+  settle(items, byKey, (x) => (others.get(at.get(x.key)?.id ?? "") ?? []).filter((r) => x.reports.some((b) => { const own = byKey.get(b.key); return own ? sameIncident(own, r) : false; })), HOLDS, now, build);
+
+  const rows = new Map<string, StoryConflicts>();
+  for (const x of listed(`${periodSince(period, now).slice(0, 10)} 00:00:00`, now)) {
+    const s = at.get(x.key) ?? null;
+    const row = rows.get(x.group);
+    const own = x.reports.map((r) => byKey.get(r.key)).filter((r): r is Report => !!r);
+    if (row) {
+      row.items.push(shown(x, byKey));
+      row.docIds = [...new Set([...row.docIds, ...(s?.docIds ?? []), ...own.map((r) => r.id), ...x.docIds])];
+      row.outlets = Math.max(row.outlets, x.outlets);
+      row.incident ??= s?.incident ?? own.find((r) => r.incident)?.incident ?? null;
+    } else rows.set(x.group, { id: x.group, title: s?.title ?? x.title, incident: s?.incident ?? own.find((r) => r.incident)?.incident ?? (byKey.size ? null : x.incident),
+      docIds: [...new Set([...(s?.docIds ?? []), ...own.map((r) => r.id), ...x.docIds])], outlets: x.outlets, items: [shown(x, byKey)] });
+  }
+  return { stories: [...rows.values()], checked: list.length, ai };
+}
+
+/** The one list of differences between outlets for anyone else who needs it (an assistant, a report): the Differ tab's own, for the day. */
+export const dayDifferences = (now: string, user: string): Promise<PeriodConflicts> => periodConflicts("daily", now, user);
+/** moves when the list changed (a key for anything kept from it) */
+export const differencesVersion = (): number => bookVersion();

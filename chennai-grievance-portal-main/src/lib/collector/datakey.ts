@@ -6,13 +6,15 @@
  * about 3.5 s (the report, first-question-latency RC2). The version is the hourly build's id (exportMeta build_id, else exported_at); the
  * epoch moves on every write that changes a figure (a decision, an officer step, a case filed, a live reading, a new build: epoch.ts and
  * store.ts), so a change made through this server is never answered from an older copy. The bucket bounds how far the time windows
- * ("the last 24 hours", what is past its deadline) may lag the clock.
+ * (the week back from now, what is past its deadline) may lag the clock; the desk's day (lib/period/day.ts) is in the key, so a copy of
+ * yesterday's Daily is never served after the day rolls over at 6 AM.
  *
  * keptRead also answers at once from the last minute or two's settled copy while the current minute's is worked out (stale while
  * revalidate), only for the same version and epoch: a question never waits for a recompute that only the clock asked for. Server only.
  * Kept on globalThis: the server's start-up code (instrumentation, Jarvis's keep-warm) and the routes load their own copies of a module.
  */
 import { dataEpoch } from "@/lib/collector/epoch";
+import { dayKey, istClock } from "@/lib/period/day";
 import { inBackground } from "@/lib/util/background";
 
 /**
@@ -47,9 +49,9 @@ export function dataVersion(read?: () => Promise<Record<string, string>>): Promi
   return v;
 }
 
-/** The version and the epoch, as one key part ("build-2026-11-21T06|42"). */
+/** The version, the epoch and the desk's day, as one key part ("build-2026-11-21T06|42|2026-11-21"). */
 export async function dataKey(read?: () => Promise<Record<string, string>>): Promise<string> {
-  return `${await dataVersion(read)}|${dataEpoch()}`;
+  return `${await dataVersion(read)}|${dataEpoch()}|${dayKey(istClock())}`;
 }
 
 export interface Kept<T> { at: number; bucket: number; p: Promise<T>; done: boolean }

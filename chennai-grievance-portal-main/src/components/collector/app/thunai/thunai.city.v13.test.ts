@@ -23,7 +23,7 @@ describe("v13 finding 1 6: the city screen in place, the Stage only on Details",
   it("the Stage is not mounted for it, and the HUD's corner card and reticle stay (stageOpen false)", () => {
     expect(src).toContain("{on && stage && !stageInPlace && (\n        <Stage doc={stage}");
     expect(src).toMatch(/<Hud lang=\{listenLang\} coreRef=\{orbRef\} stageOpen=\{!!stage && !stageInPlace\}/);
-    expect(hudSrc).toContain("{!stageOpen && (s.answer || panel) && <AnswerCorner");
+    expect(hudSrc).toContain("{!stageOpen && !pill && (s.answer || panel) && <AnswerCorner");
     expect(hudSrc).toContain("{!stageOpen && <Reticle />}");
   });
   it("putStage opens the city view with the console's drawer and chatbot out of the way, or full when its Details asked", () => {

@@ -1,6 +1,6 @@
 "use client";
 /**
- * Jarvis's own button, above the chatbot's at the bottom right: the light-blue core and its name. A click starts it, and once it
+ * Jarvis's own button, beside the chatbot's in the dock at the bottom right (dock.css): the light-blue core and its name. A click starts it, and once it
  * is running the same button closes it. Saying "Hi Jarvis" opens it too (Thunai.tsx). Joined to it while Jarvis is closed, a
  * clock with the number of questions asked: a click lists them, with what Jarvis answered (JarvisQuestions.tsx). While Jarvis is
  * open the bar's "Questions" button is the one way to them (v4: one entry point at a time, not three); both open this list.

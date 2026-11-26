@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import type { World } from "../types";
 import { analystTakes, notHeldReply } from "./route";
-import { checkPlan, clockSaid, codePlan, followByCode, howMany, kindOfWord, ordinalAsked, planFromSlots, planKey, type Plan, type Query } from "./shape";
+import { checkPlan, clockSaid, codePlan, followByCode, howMany, kindOfWord, ordinalAsked, heardRight, otherEnd, shareOf, planFromSlots, planKey, type Plan, type Query } from "./shape";
 
 const W = {
   zones: [{ n: 8, name: "Anna Nagar", ta: "அண்ணா நகர்" }, { n: 13, name: "Adyar", ta: "அடையாறு" }, { n: 9, name: "Teynampet", ta: "தேனாம்பேட்டை" }],
@@ -255,4 +255,111 @@ describe("the live check of 25 Nov, 10 PM", () => {
     expect(checkPlan(p, W, "").gap).toMatch(/fire service/);
     expect(checkPlan(P({ cats: ["FIRE_EXPLOSION"] }, { understood: "u", gap: "nothing" }), W, "how many fires this week").gap).toBeNull();
   });
+});
+
+describe("the comparison of 25 Nov: six mistakes", () => {
+  it.each(["Excluding the police, who has the biggest backlog right now?", "Which department has the most overdue cases right now"])("a backlog is all that waits, never the last day's: %s", (t) => {
+    const p = checkPlan(P({ by: "dept", status: /backlog/.test(t) ? "open" : "overdue", take: 1, time: { said: "now", from: null, to: null, hours: null } }, { understood: t }), W, t);
+    expect(p.queries[0].time).toBeNull();
+    expect(planKey(p, "daily")).toBe("quarterly");
+  });
+  it("the backlog as one number, and 'now' of anything else is still the dashboard's window", () => {
+    expect(one("What is the total backlog in Adyar right now", { zones: [13] })).toMatchObject({ status: "open", time: { said: "last 90 days" } });
+    expect(one("How many severe cases are there right now", { sev: ["Severe"] }).time?.said).toBe("now");
+    expect(one("How many open cases are there in Adyar now", { zones: [13], status: "open" }).time?.said).toBe("now");
+  });
+  it.each([["Has street light trouble in Ambattur come down since last week?", "last 7 days"], ["Are thefts up compared to last month", "last 30 days"], ["போன வாரத்தை விட இந்த வாரம் திருட்டு கூடியிருக்கா", "last 7 days"]] as const)("set against last week is this week: %s", (t, said) =>
+    expect(one(t, { time: { said: /month/.test(t) ? "last month" : "last week", from: null, to: null, hours: 168 }, before: true })).toMatchObject({ time: { said }, before: true }));
+  it.each(["How many thefts last week", "Show the accidents from last week", "List the thefts since last week", "Which area had the most cases last week"])("last week alone is last week: %s", (t) => expect(one(t, { time: { said: "last week", from: null, to: null, hours: null }, by: /area/.test(t) ? "zone" : null }).time?.said).toBe("last week"));
+  it.each([["witch aria has con chested traffic now the third one", "congested", null], ["which area has congested traffic", "congested", null], ["which area has the most congested roads", "very", null], ["how many very congested roads are there", "very", "very"], ["which roads are closed now", "closed", "closed"], ["flooded roads in Adyar", "flood", "flood"], ["slow roads near Guindy", "slow", "slow"]] as const)("a kind of road only when it is said: %s", (t, l, want) => expect(one(t, { of: "traffic", by: "zone", measure: "jams", level: l }).level).toBe(want));
+  it("both ends of a ranking are two", () => {
+    const qs = checkPlan(P({ by: "dept", measure: "days_to_close", order: "least", take: 2 }, { understood: "u" }), W, "The two departments closing cases fastest, and the two slowest").queries;
+    expect(qs.map((q) => [q.order, q.take])).toEqual([["least", 2], ["most", 2]]);
+    expect(checkPlan(P({ by: "zone", take: 1 }, { understood: "u" }), W, "Which area has the most and the fewest accidents today").queries.map((q) => q.order)).toEqual(["most", "least"]);
+    expect(checkPlan(P({ by: "zone", take: 2 }, { understood: "u" }), W, "top two and bottom three areas for theft").queries.map((q) => q.take)).toEqual([2, 3]);
+  });
+  it.each(["the highest and the second highest areas", "rank the areas from highest to lowest", "which area has the most accidents", "the worst and the second worst road", "Which area has the most accidents and the fewest thefts of cattle"])("one end stays one: %s", (t) => expect([t, otherEnd(t)]).toEqual([t, null]));
+  it.each([["how many sewer cases in Adyar today", "how many severe cases in Adyar today"], ["sewer overflow cases", "sewer overflow cases"], ["sever incidents now", "severe incidents now"], ["complaints about the sewer", "complaints about the sewer"], ["sewer complaints in Adyar", "sewer complaints in Adyar"]])("heard right: %s", (a, b) => expect(heardRight(a)).toBe(b));
+});
+
+describe("the review of the six fixes: what each must and must not touch", () => {
+  const T = (said: string | null, x: Partial<NonNullable<Query["time"]>> = {}) => ({ said, from: null, to: null, hours: null, ...x });
+  it.each([["இந்த மாசம் எந்த ஏரியால தண்ணி தேங்கி இருந்தது அதிகம்?", "Which area had the most waterlogging this month?"], ["How many garbage complaints are there with waste piled up in Adyar", "u"], ["Show the protests over salary arrears this week", "u"]])("water that stands, or garbage piled up, is no backlog: %s", (t, u) => expect(one(t, { group: "FLOOD", by: /எந்த/.test(t) ? "zone" : null, time: T("this month") }, u)).toMatchObject({ status: null, time: { said: "this month" } }));
+  it("a wait in the backlog has no window on top of it, and a backlog's rise is the week's", () => {
+    expect(one("How many cases in the backlog are pending for more than three months?", { status: "open", older_days: 90 })).toMatchObject({ older_days: 90, time: null });
+    const p = checkPlan(P({ status: "open", before: true }, { understood: "Is the backlog growing?" }), W, "Is the backlog growing?");
+    expect([p.queries[0].time, planKey(p, "daily")]).toEqual([null, "weekly"]);
+  });
+  it("a backlog follow-up that says now is now, never the last answer's window", () => {
+    const last = P({ cats: ["CRIME_PROPERTY"], time: T("yesterday", { from: "2026-11-24", to: "2026-11-24" }) });
+    expect(checkPlan(P({ by: "dept", status: "overdue" }, { understood: "Which department has the most overdue cases right now?" }), W, "And which department has the most overdue cases right now?", { last }).queries[0].time).toBeNull();
+  });
+  it("a backlog in one part of a question leaves the other part alone", () => {
+    const qs = checkPlan(P([{ sev: ["Severe"] }, { status: "open" }], { understood: "How many severe incidents are there, and how big is the backlog?" }), W, "How many severe incidents are there, and how big is the backlog?").queries;
+    expect(qs[0]).toMatchObject({ status: null, time: null });
+    expect(qs[1]).toMatchObject({ status: "open", time: { said: "last 90 days" } });
+  });
+  it("overdue right now, as a number, is all that is overdue", () => expect(one("How many cases are past their deadline right now?", { status: "overdue", time: T("right now") }).time?.said).toBe("last 90 days"));
+  it.each([["What percent of the severe cases are unresolved?", null], ["What percentage of this month's severe cases are still unresolved?", null], ["What percent of the open cases in the last 30 days are severe?", "sev"], ["What percent of all cases this month are severe and still open?", "sev+state"], ["What percentage of the backlog is severe?", "sev"],
+    ["What share of citizen-reported cases are severe?", "sev"], ["What percentage of cases with deaths are severe?", "sev"], ["What share of the severe cases come from citizens?", null], ["What percent of police cases are resolved", null], ["What percent of police cases are severe", "sev"], ["What share of incidents does Adyar have", null],
+    ["What share of the severe cases are the police's?", "dept"], ["What share of the unresolved severe cases are with the police?", "dept"], ["What share of the backlog is with the police?", "dept"], ["What percent of the police's severe cases are unresolved", null], ["What is the share of severe cases among the open ones?", "sev"]] as const)("which limit of a share is the part: %s", (t, want) => expect(shareOf(t, W)).toBe(want));
+  it("a share's part is kept on its screen", () => {
+    const p = checkPlan(P({ measure: "share", sev: ["Severe"], status: "open" }, { understood: "u" }), W, "What percent of the open cases are severe?");
+    expect(p.queries[0].part).toBe("sev");
+    expect(planFromSlots(JSON.parse(JSON.stringify(p)))?.queries[0].part).toBe("sev");
+  });
+  it.each([["List down the murders from last month", "last month"], ["Show more cases from last week", "last week"], ["How many accidents happened yesterday, and is it more than last week?", "yesterday"], ["Are thefts in November higher than last month?", "in November"], ["last week against the previous week, thefts", "last week"], ["போன வாரம் விடுமுறை நாள்ல எத்தனை விபத்து", "போன வாரம்"]])("the window that was said is kept: %s", (t, said) => expect(one(t, { cats: ["CRIME_PROPERTY"], time: T(said) }).time?.said).toBe(said));
+  it.each([["Are thefts this week more than last week?", "last week", "last 7 days"], ["போன வாரத்தை விட திருட்டு அதிகமா இருக்கா", "last week", "last 7 days"], ["போன மாசத்தை விட திருட்டு கூடியிருக்கா", "last month", "last 30 days"], ["pona vaaratha vida theft koodirukka", "last week", "last 7 days"], ["Has theft come down in Adyar since last week", "last week", "last 7 days"], ["compare thefts with last month", "last month", "last 30 days"]])("set against the one before: %s", (t, said, want) => expect(one(t, { cats: ["CRIME_PROPERTY"], time: T(said), before: true }).time?.said).toBe(want));
+  it.each([["மூடப்பட்ட சாலைகள் எவை", "closed"], ["Any roadblocks now?", "closed"], ["தண்ணி தேங்கிய ரோடு", "flood"], ["மெதுவா போற ரோடு", "slow"], ["கடுமையான நெரிசல் எங்க", "very"]] as const)("a kind of road said in any words is kept: %s", (t, level) => expect(one(t, { of: "traffic", by: "road", measure: "delay", level }, "Which roads are closed now?").level).toBe(level));
+  it("the slowest road is no 'slow' one; the three kinds side by side, or a follow-up of one, keep theirs", () => {
+    expect(one("Which is the slowest road now?", { of: "traffic", by: "road", measure: "delay", level: "slow" }).level).toBeNull();
+    expect(checkPlan(P([{ of: "traffic", level: "very" }, { of: "traffic", level: "congested" }, { of: "traffic", level: "slow" }], { understood: "u" }), W, "How many very congested, congested and slow roads are there now?").queries.map((q) => q.level)).toEqual(["very", "congested", "slow"]);
+    expect(checkPlan(P({ of: "traffic", by: "road", level: "congested", zones: [13] }, { understood: "Show only the congested roads in Adyar" }), W, "and in Adyar", { last: P({ of: "traffic", by: "road", level: "congested" }) }).queries[0].level).toBe("congested");
+  });
+  it.each(["How many severe sewer cases are open in Adyar?", "How many sewer cases are pending with Metro Water?", "drainage and sewer cases in Adyar this week"])("the sewer itself: %s", (t) => expect(heardRight(t)).toBe(t));
+  it("police and sewer cases is the mishearing", () => expect(heardRight("police and sewer cases in Adyar")).toBe("police and severe cases in Adyar"));
+  const ends = (t: string, q: Partial<Query>) => checkPlan(P(q, { understood: "u" }), W, t).queries.map((x) => [x.order, x.take]);
+  it.each([["Which is the best and most efficient department?", { by: "dept", measure: "days_to_close", order: "least", take: 1 }], ["Which are the top and best performing departments this month?", { by: "dept", measure: "resolved" }], ["Show me the daily trend of accidents this month with the highest and the lowest days", { by: "day", cats: ["ROAD_ACCIDENT"] }], ["Rank all the areas by theft and tell me the highest and the lowest", { by: "zone", take: 99 }], ["Which area is the top one for theft and the lowest for road accidents this month?", { by: "zone", take: 1 }], ["Which area has the most thefts and which has the least accidents", { by: "zone", take: 1 }]] as [string, Partial<Query>][])("one end, or a whole ranking, stays one: %s", (t, q) => expect(ends(t, q)).toHaveLength(1));
+  it.each([["top 5 and bottom 5 areas for theft this month", { by: "zone", take: 5 }, [["most", 5], ["least", 5]]], ["fastest 2 and slowest 2 departments", { by: "dept", measure: "days_to_close", order: "least", take: 2 }, [["least", 2], ["most", 2]]], ["The fastest department and the three slowest departments", { by: "dept", measure: "days_to_close", order: "least", take: 1 }, [["least", 1], ["most", 3]]], ["Tell me the top five and the bottom two areas for theft", { by: "zone", take: 5 }, [["most", 5], ["least", 2]]],
+    ["Which department has the most overdue cases and which has the least?", { by: "dept", status: "overdue", take: 1 }, [["most", 1], ["least", 1]]], ["the worst and the least congested roads now", { of: "traffic", by: "road", measure: "delay" }, [["most", 3], ["least", 3]]]] as [string, Partial<Query>, unknown][])("both ends, each with its own number: %s", (t, q, want) => expect(ends(t, q)).toEqual(want));
+  it("the highest and the lowest reading are two measures", () => expect(checkPlan(P({ of: "air", by: "station", measure: "highest", take: 1 }, { understood: "u" }), W, "Which station has the highest and lowest AQI this week?").queries.map((q) => [q.measure, q.order])).toEqual([["highest", "most"], ["lowest", "least"]]));
+  it("hours of the clock are no second kind", () => expect(one("Between 10 at night and 4 in the morning, which area sees the most accidents?", { by: "zone", group: "ROADS_TRAFFIC" }, "Which area has the most accidents between 10 PM and 4 AM?")).toMatchObject({ group: null, cats: ["ROAD_ACCIDENT"] }));
+});
+
+describe("the last live run", () => {
+  it("who is a department", () => {
+    expect(one("Excluding the police, who has the biggest backlog right now?", { by: "zone", status: "open", take: 1 })).toMatchObject({ by: "dept", not: ["POL-GCP"] });
+    expect(one("Who reported the most cases in which area", { by: "zone" }).by).toBe("zone");
+  });
+  it.each([["Between 10 at night and 4 in the morning, which area sees the most accidents?", [22, 4]], ["accidents from 6 in the evening to 9 at night", [18, 21]], ["between 1 and 4 in the morning", [1, 4]], ["between 6 pm and 9 pm", [18, 21]]] as const)("hours said with their part of the day: %s", (t, want) => expect(clockSaid(t)).toEqual(want));
+});
+
+describe("the second review of the six fixes", () => {
+  const T = (said: string | null, x: Partial<NonNullable<Query["time"]>> = {}) => ({ said, from: null, to: null, hours: null, ...x });
+  const all = (t: string, q: Partial<Query> | Partial<Query>[], o: { last?: Plan; u?: string } = {}) => checkPlan(P(q, { understood: o.u ?? t }), W, t, { last: o.last ?? null }).queries;
+  it("the overdue of what is open right now is over the same window", () => {
+    expect(all("How many cases are open right now, and how many of them are overdue?", [{ status: "open" }, { status: "overdue" }]).map((q) => q.time?.said)).toEqual(["now", "now"]);
+    expect(all("And how many of those are overdue right now?", { cats: ["ROAD_ACCIDENT"], status: "overdue" }, { last: P({ cats: ["ROAD_ACCIDENT"], time: T("today", { hours: 24 }) }) })[0].time?.said).toBe("today");
+    expect(all("How many cases did we close today and how many are still overdue right now?", [{ status: "resolved", time: T("today", { hours: 24 }) }, { status: "overdue" }])[1].time?.said).toBe("last 90 days");
+  });
+  it.each([["Out of all the cases this month, what percent are severe and still open?", "sev+state"], ["Severe pending cases are what percentage of the total this month?", "sev+state"], ["What percentage of cases that are severe are unresolved?", null], ["What percentage of the cases that are still open are severe?", "sev"], ["Of the open cases this month, what percent are severe?", "sev"]] as const)("a share said another way: %s", (t, want) => expect(shareOf(t, W)).toBe(want));
+  it("a share of two areas keeps its whole in each", () => expect(all("Between Adyar and Anna Nagar, what percent of cases are severe and still open?", [{ zones: [13], measure: "share", sev: ["Severe"], status: "open" }, { zones: [8], measure: "share", sev: ["Severe"], status: "open" }]).map((q) => q.part)).toEqual(["sev+state", "sev+state"]));
+  it.each([["Compare last month's thefts with the previous month", "last month"], ["How did thefts last week compare with the week before", "last week"], ["Tell me more from last month", "last month"], ["List down the murders over the last month", "last month"], ["What happened over the last week?", "last week"]])("a window that is asked itself stays: %s", (t, said) => expect(one(t, { cats: ["CRIME_PROPERTY"], time: T(said) }).time?.said).toBe(said));
+  it.each([["Any increase in thefts from last week?", "last week", "last 7 days"], ["Since last month, which area has improved the most?", "last month", "last 30 days"], ["Are thefts up over last week?", "last week", "last 7 days"]])("a rise or fall the model marked: %s", (t, said, want) => expect(one(t, { cats: ["CRIME_PROPERTY"], time: T(said), before: true }).time?.said).toBe(want));
+  it.each(["How many new cases came in today, leaving the backlog aside", "How many cases this week, not counting the backlog"])("the backlog set apart is not asked for: %s", (t) => expect(one(t, {}).status).toBeNull());
+  it("a kind of jam said in other words is kept", () => {
+    expect(one("ரொம்ப நெரிசலான ரோடு எத்தனை இருக்கு", { of: "traffic", measure: "jams", level: "very" }, "How many very congested roads are there now?").level).toBe("very");
+    expect(all("And the congested ones?", { of: "traffic", measure: "jams", level: "congested" }, { last: P({ of: "traffic", measure: "jams", level: "very" }) })[0].level).toBe("congested");
+  });
+  it.each([["From 1st November how many drainage and water supply complaints have come", "DRAINAGE"], ["From 20 November how many garbage and toilet complaints came in Adyar", "WASTE_SANITATION"]])("two kinds after a date stay two: %s", (t, group) => expect(one(t, { group }).group).toBe(group));
+  const ends = (t: string, q: Partial<Query>) => all(t, q).map((x) => [x.order, x.take]);
+  it.each([["Which two departments close cases fastest and which two close slowest?", { by: "dept", measure: "days_to_close", order: "least", take: 2 }, [["least", 2], ["most", 2]]], ["top and bottom three areas for theft", { by: "zone", take: 3 }, [["most", 3], ["least", 3]]], ["Give me the two departments, the fastest and the slowest", { by: "dept", measure: "days_to_close", order: "least", take: 2 }, [["least", 1], ["most", 1]]]] as [string, Partial<Query>, unknown][])("each end's own number: %s", (t, q, want) => expect(ends(t, q)).toEqual(want));
+  it.each([["the fastest department and the one with the least overdue", { by: "dept", measure: "days_to_close", order: "least", take: 1 }], ["Which area has the most accidents and which department has the least", { by: "zone", take: 1 }], ["best for air and worst for traffic, which area", { by: "zone", take: 1 }]] as [string, Partial<Query>][])("two subjects are no two ends: %s", (t, q) => expect(ends(t, q)).toHaveLength(1));
+  it.each(["How many sewer cases where workers died this year", "sewer cases with the water board", "sewer cases with a bad smell in Adyar"])("the sewer itself: %s", (t) => expect(heardRight(t)).toBe(t));
+});
+
+it("a narrower thing is never widened to its whole kind by the words beside it", () => {
+  expect(one("How many robberies were reported this week?", { cats: ["CRIME_PROPERTY"], words: ["robbery", "robberies", "burglary", "theft", "stolen"] }).words).toEqual(["robbery", "robberies", "burglary"]);
+  expect(one("news on chain snatching", { words: ["chain snatching", "chain snatched", "gold chain"] }).words).toEqual(["chain snatching", "chain snatched", "gold chain"]);
+  expect(one("How many murders this month?", { cats: ["CRIME_VIOLENT"], words: ["murder", "killed"] }).words).toContain("hacked to death");
 });

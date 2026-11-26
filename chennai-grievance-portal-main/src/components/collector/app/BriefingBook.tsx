@@ -1,39 +1,42 @@
 "use client";
 
 import { useLang } from "@/lib/i18n/lang";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Insights } from "@/lib/collector/insights";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
+import { composeGlance, glanceNumbers, plain, type Glance, type GlanceIn, type GlanceOpen, type GlancePoint, type Seg } from "@/lib/collector/glance";
+import { checkOpening } from "@/lib/collector/opening";
+import { PERIODS, dayStart, labelLower } from "@/lib/period/day";
 import { I, type IconName } from "./icons";
-import { SEV_HEX, deptIcon, fmtDate, rel, useFit, watchBrief, type Row } from "./lib";
+import { SEV_HEX, deptIcon, fmtDate, ms, rel, useFit, type Row } from "./lib";
 import { STORY_STATUS, stepColour } from "./Stories";
+import { differView } from "./Conflicts";
+import { Sentence } from "./DeptSummary";
+import { Legend } from "./MiniCharts";
+import { combine, type Story } from "./Overview";
 import type { Console } from "./CollectorApp";
+import { greeting } from "./Shell";
 import { canSpeak, speak, stopSpeaking } from "./assistant/speech";
-import { api } from "./studio/client";
-import type { WatchItem } from "@/lib/studio/store";
 
 type Book = NonNullable<Insights["book"]>;
-type Dept = Book["departments"][number];
 type Lang = "en" | "ta";
 
 const STATUS = { normal: "Normal", watchful: "Watchful", alert: "Alert" } as const;
 const num = (v: number) => v.toLocaleString("en-IN");
-const lc = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 /**
- * Page 2: the Collector's brief, read top to bottom in a minute. Left: the key points of the period, one AI report of
- * every incident, grievance and news story (numbers checked), the critical incidents and what to watch. Middle: each
- * department in one line (deaths and severe only), opening in place to a short brief, what happened in each death and
- * every report. Right: stories that really developed (duplicates joined, repeats left out) and what is only in the news.
+ * Page 2, read top to bottom in half a minute. Across the top, "Today at a glance": one sentence, the figures (each its tile's), what is
+ * happening, what needs the Collector, what to do next; composed by code for the filters in force (glance.ts). Under it: each department in
+ * one line (a click opens its summary), stories that really developed, and what is only in the news.
  */
-export function BriefingBook({ ins, c }: { ins: Insights; d?: OverviewData; c: Console }) {
+export function BriefingBook({ ins, d, c }: { ins: Insights; d?: OverviewData; c: Console }) {
   const b = ins.book!;
   return (
-    <section className="bb">
-      <Brief ins={ins} b={b} c={c} />
-      <Departments b={b} c={c} />
-      {/* the Collector's own datasets are on the Environment page now (pinned from the Data Studio), not here */}
-      <div className="bb-col">
+    <section className="bb bb2">
+      <Today ins={ins} b={b} d={d} c={c} />
+      <div className="bb2-row">
+        <Departments b={b} c={c} />
+        {/* the Collector's own datasets are on the Environment page now (pinned from the Data Studio), not here */}
         <Developing ins={ins} c={c} />
         <NewsOnly ins={ins} c={c} />
       </div>
@@ -59,275 +62,255 @@ function Head({ ic, title, n, note, more, children }:
 
 const Calm = ({ children }: { children: React.ReactNode }) => <p className="bb-calm"><I n="checkc" />{children}</p>;
 
-/** Numbers stand out, so the points can be scanned. */
-export function Emph({ text }: { text: string }) {
-  const parts = text.split(/(\d[\d,.]*\s?%?)/);
-  return <>{parts.map((p, k) => (k % 2 ? <b key={k}>{p}</b> : <Fragment key={k}>{p}</Fragment>))}</>;
+// ------------------------------------------------------------------------------------------------- today at a glance --
+
+const RANK_ACT = (s: { desk?: { v?: string } | null; outletNames: string[]; t: string }) => (s.desk?.v === "act" ? 1000 : 0) + s.outletNames.length;
+
+/** The Overview's data when it is for exactly the filters on screen (while it reloads, the Briefing's own figures are used). */
+export function sameView(d: OverviewData | undefined, c: Pick<Console, "period" | "zone" | "dept" | "cat" | "taluk">): OverviewData | null {
+  return d && d.period === c.period && (d.zone ?? null) === c.zone && (d.dept ?? null) === c.dept && (d.cat ?? null) === c.cat && (d.taluk ?? null) === c.taluk ? d : null;
 }
 
-/** A paragraph as points: one sentence each. */
-export function sentences(text: string): string[] {
-  return text.replace(/\s+/g, " ").split(/(?<=[.!?])\s+(?=\S)/).map((s) => s.trim()).filter((s) => s.length > 2);
+/** The period's first day on the calendar ("YYYY-MM-DD"), for what is dated by day (an unusual rise). */
+const firstDay = (period: Console["period"], now: string) =>
+  period === "daily" ? dayStart(now).slice(0, 10) : new Date(ms(now) + 330 * 60_000 - PERIODS[period].hours * 3600_000).toISOString().slice(0, 10);
+
+/** What the glance is made from: the tiles as the Overview shows them, the Briefing's lists, and the news and stories of these filters. */
+export function glanceInput(ins: Insights, b: Book, live: OverviewData | null, c: Console): GlanceIn {
+  const t = b.today, whole = t.whole;
+  const k = live ? live.kpi : t.kpi;
+  const acted = new Set((live?.severity.rows ?? []).filter((r) => r.acted).map((r) => String(r.id)));
+  const snap = live?.snapshot as { overdue?: number; critical?: number } | undefined;
+  // news: the whole district's stories carry no zone or department, so under a filter only news linked to an incident of the view
+  const story = whole && live?.allNews ? [...live.allNews].sort((x, y) => RANK_ACT(y) - RANK_ACT(x) || String(y.t).localeCompare(String(x.t)))[0] : null;
+  const linked = !whole && live ? [...live.news].sort((x, y) => (y.outletNames?.length ?? 0) - (x.outletNames?.length ?? 0))[0] : null;
+  const thread = c.stories?.threads.find((s) => s.ai?.status !== "settled") ?? null;
+  const differ = differOf(b, c);
+  const rise = ins.briefing.emerging.find((e) => String(e.date) >= firstDay(c.period, ins.now)) ?? null;
+  // the department most of the news-only incidents belong to, with its own count
+  const byDept = new Map<string, number>();
+  for (const x of ins.gaps as Row[]) if (x.dept_name) byDept.set(String(x.dept_name), (byDept.get(String(x.dept_name)) ?? 0) + 1);
+  const gap = [...byDept.entries()].sort((x, y) => y[1] - x[1])[0] ?? null;
+  const al = b.alerts?.banner ? b.alerts : null;
+  const env = live?.bottom;
+  const L = env?.lakes;
+  return {
+    scope: { zone: c.zoneName, taluk: c.taluk ? c.talukName(c.taluk) : null, dept: c.deptName, cat: c.catLabel, words: c.scopeName },
+    period: c.period, now: ins.now,
+    cur: k.cur as Record<string, number>, prev: k.prev as Record<string, number>,
+    overdue: snap?.overdue ?? t.overdue, deaths: t.deaths, injured: t.injured, awaiting: live ? live.tasks.count : t.awaiting,
+    unchecked: snap?.critical ?? t.unchecked, kinds: t.kinds, zones: t.zones, depts: b.departments.map((x) => ({ code: x.code, name: x.name, n: x.n, overdue: x.overdue })),
+    cases: t.cases.map((x) => ({ ...x, acted: acted.has(x.id) })), fatal: t.fatal,
+    news: story ? { title: story.title, outlets: story.outletNames.length, act: story.desk?.v === "act", key: story.id, incident: story.incident }
+      : linked ? { title: String(linked.news_title ?? linked.title ?? linked.type), outlets: linked.outletNames?.length ?? 0, act: false, key: String(linked.id), incident: String(linked.id) } : null,
+    story: thread ? { id: thread.id, title: thread.title, events: thread.events.length } : null,
+    differ: differ.length ? { n: differ.length, title: differ[0].title, field: differ[0].items[0]?.field ?? "Details" } : null,
+    newsOnly: ins.gaps.length ? { n: ins.gaps.length, deptName: gap?.[0] ?? null, deptN: gap?.[1] ?? 0 } : null,
+    // under a department or a taluk the count is the view's own share of the rise, so "times the usual" (the whole zone's) is not said of it
+    rise: rise ? { cat: String(rise.cat), label: String(rise.label), zone: rise.zone == null ? null : Number(rise.zone), zoneName: rise.zone_name ?? null, n: Number(rise.observed),
+      times: c.dept || c.taluk ? null : Number(rise.ratio), date: String(rise.date) } : null,
+    warning: whole && al ? { title: al.banner!.title.split(" · ").slice(0, 2).join(" · "), agreement: al.agreement,
+      rain: al.officialLevel > 0 && ["heavy_rain", "cyclone", "thunderstorm", "flood"].includes(String(al.hazard)) } : null,
+    env: whole && env ? { rainMm: env.rain.stations.length ? combine(env.rain.stations, (x) => x.slice(0, 10)).now ?? null : null, aqi: env.aqi.stations.length ? combine(env.aqi.stations).now ?? null : null,
+      lakesPct: L?.total ? L.total.series[L.total.series.length - 1] ?? null : L?.stations.length ? combine(L.stations).now ?? null : null } : null
+  };
 }
 
-/** "the 24 hours before" / "the 7 days before" for the period's comparison. */
-function before(label: string): string {
-  const m = /last (.+)$/i.exec(label);
-  return m ? `the ${m[1]} before` : "the previous period";
+/** The stories whose outlets disagree that belong to the view: the period's, or, under a filter, only those linked to its incidents. */
+function differOf(b: Book, c: Console) {
+  if (!b.today.whole && !c.conflicts?.scope) return [];
+  return differView(c.conflicts).inside.filter((s) => s.items.some((x) => x.kind === "conflict"));
 }
-
-/** The key points by rules, from the same figures the AI note is written from (used when there is no AI note). */
-function rulePoints(ins: Insights, b: Book, period: string): string[] {
-  const t = b.glance.tiles;
-  const whole = !ins.scope || /^(district-wide|chennai district)$/i.test(ins.scope);
-  const out: string[] = [];
-  out.push(`${num(t.reported)} incident${t.reported === 1 ? " was" : "s were"} reported${whole ? "" : ` in ${ins.scope}`}` +
-    (t.change ? `, ${Math.abs(t.change)}% ${t.change > 0 ? "more" : "fewer"} than ${before(period)}` : t.change === 0 ? `, the same as ${before(period)}` : "") + ".");
-  if (t.deaths || t.injured) out.push([t.deaths ? `${num(t.deaths)} ${t.deaths === 1 ? "person died" : "people died"}` : null,
-    t.injured ? `${num(t.injured)} ${t.injured === 1 ? "was" : "were"} injured` : null].filter(Boolean).join(" and ") + ".");
-  const z = [...b.where].sort((a, x) => x.n - a.n)[0];
-  if (z && whole) out.push(`${z.name} had the most reports (${z.n})${z.kinds.length ? `, mainly ${z.kinds.map(lc).join(" and ")}` : ""}.`);
-  const k = b.citizens.kinds;
-  if (k.length) out.push(`Citizens complained most about ${k.slice(0, 2).map((x) => `${lc(x.label)} (${x.n})`).join(" and ")}.`);
-  // the My Tasks figure (metrics.ts awaiting_check): severe closures and officers' reports, one per group
-  if (t.awaiting || t.leftToDepts) out.push(`${t.awaiting ? `${num(t.awaiting)} closed piece${t.awaiting === 1 ? " of work waits" : "s of work wait"} for your check in My Tasks` : "Nothing waits for your check in My Tasks"}`
-    + `${t.leftToDepts ? `; ${num(t.leftToDepts)} other closure${t.leftToDepts === 1 ? " is" : "s are"} verified by the departments` : ""}.`);
-  return out;
-}
-
-// -------------------------------------------------------------------------------------------------------- the brief --
-
-/** What each AI key point is about, as an icon and a colour. */
-const TOPIC: Record<string, { ic: IconName; c: string }> = {
-  "Lives lost": { ic: "alert", c: "#E5484D" }, Safety: { ic: "shield", c: "#E8590C" }, Grievances: { ic: "chat", c: "#15803D" },
-  News: { ic: "news", c: "#7048E8" }, "Civic services": { ic: "cone", c: "#0E9F6E" }, "Weather & water": { ic: "cloud", c: "#2F80ED" },
-  Rising: { ic: "chart", c: "#C58A00" }, "For you": { ic: "checkc", c: "#0A6B8A" }
-};
 
 /**
- * The key points: one report of the whole period, written by AI from the incidents, citizen grievances, news, weather
- * and water (aibrief.dayBrief, numbers checked), most important first, each tagged and opening its incident. While it
- * is written (a few seconds, once per build) a placeholder; when no model answers, the pipeline's note or the rules'.
+ * The AI's one-line headline of the same view, only when every figure and every "more" or "fewer" in it is one the glance itself states
+ * (opening.ts): otherwise the sentence the code wrote, which is always current.
  */
-function Brief({ ins, b, c }: { ins: Insights; b: Book; c: Console }) {
-  // the key points open in the site's language (the AI writes them in both); the switch here still changes them
+function aiSentence(c: Console, ins: Insights, g: Glance, f: GlanceIn): { en: string; ta: string | null } | null {
+  const b = c.dayBrief?.brief;
+  if (!b?.headline || g.empty) return null;
+  return checkOpening({ asOf: ins.now, en: b.headline, ta: b.headlineTa }, { now: ins.now, hours: PERIODS[c.period].hours,
+    facts: { reported: f.cur.reported ?? 0, prev: f.prev.reported ?? null, severe: f.cur.severe ?? 0, prevSevere: f.prev.severe ?? null, open: f.cur.ongoing ?? 0, overdue: f.overdue,
+      newsOnly: f.newsOnly?.n ?? 0, deaths: f.deaths, injured: f.injured, awaiting: f.awaiting }, extra: glanceNumbers(g) }).opening;
+}
+
+/** "Today at a glance": the Collector's key points for the filters in force. */
+function Today({ ins, b, d, c }: { ins: Insights; b: Book; d?: OverviewData; c: Console }) {
   const [uiLang] = useLang();
   const [lang, setLang] = useState<Lang>("en");
   useEffect(() => { setLang(uiLang === "ta" ? "ta" : "en"); }, [uiLang]);
+  const ta = lang === "ta";
+  const live = sameView(d, c);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const f = useMemo(() => glanceInput(ins, b, live, c), [ins, b, live, c.stories, c.conflicts, c.period, c.zone, c.dept, c.cat, c.taluk, c.scopeName]);
+  const g = useMemo(() => composeGlance(f), [f]);
+  const ai = useMemo(() => aiSentence(c, ins, g, f), [c.dayBrief, ins, g, f]); // eslint-disable-line react-hooks/exhaustive-deps
+  const open = useOpen(ins, b, live, c);
+  const aiText = ai ? (ta ? ai.ta : ai.en) : null;
+
+  const box = useRef<HTMLDivElement>(null);
   const [talking, setTalking] = useState(false);
   const [voice, setVoice] = useState(false);
   useEffect(() => { setVoice(canSpeak()); return () => stopSpeaking(); }, []);
-  const day = c.dayBrief?.brief ?? null;
-  const writing = !c.dayBrief;
-  const story = b.glance.ai ?? b.glance.opening;
-  const hasTa = day ? !!day.headlineTa && day.points.every((p) => p.ta) : !!story?.ta;
-  const ta = lang === "ta" && hasTa;
-  const points: { text: string; topic?: string; ref?: string | null }[] = day
-    ? day.points.map((p) => ({ text: ta ? p.ta! : p.text, topic: p.topic, ref: p.ref }))
-    : (ta ? sentences(story!.ta!) : story?.en ? sentences(story.en) : rulePoints(ins, b, c.periodLabel)).map((text) => ({ text }));
-  const headline = day ? (ta ? day.headlineTa : day.headline) : null;
-  // the warnings have their own line (every source side by side); without it, the IMD line, which the status does not repeat
-  const reasons = b.alerts ? b.status.reasons : b.status.reasons.filter((r) => !(b.status.warning && /IMD/.test(r)));
-  const status = `${STATUS[b.status.level]}${reasons.length ? ` · ${reasons.join(", ")}` : ""}`;
   const listen = () => {
     if (talking) { stopSpeaking(); setTalking(false); return; }
-    const say = [ta ? "" : `District status: ${status}.`, headline ?? "", ...points.map((p) => p.text)].filter(Boolean).join(" ");
-    setTalking(speak(say, ta ? "ta-IN" : "en-IN", () => setTalking(false)));
+    // what is on screen, so the names are read as the translator wrote them
+    const said = [...(box.current?.querySelectorAll<HTMLElement>("[data-say]") ?? [])].map((x) => x.textContent ?? "").filter(Boolean).join(" ");
+    setTalking(speak(said, ta ? "ta-IN" : "en-IN", () => setTalking(false)));
   };
   const pick = (l: Lang) => { stopSpeaking(); setTalking(false); setLang(l); };
-  const old = b.citizens.oldest;
-  const ai = !!day || !!b.glance.ai || !!b.glance.opening;
-  const written = day?.at ?? b.glance.ai?.writtenFor?.replace(/^\d+ \w+, /, "");
+
+  const level = b.status.level, why = b.status.reasons;
+  const name = c.period === "daily" ? "Today at a glance" : `${PERIODS[c.period].label} at a glance`;
+  const warned = !b.today.whole && b.alerts?.banner ? b.alerts.banner.title.split(" · ").slice(0, 2).join(" · ") : null;
   return (
-    <section className="bb-card bb-brief">
-      <Head ic="scroll" title="Key points" note={c.periodLabel.toLowerCase()}>
+    <section className="bb-card bb-brief gl" ref={box}>
+      <Head ic="scroll" title={name}>
+        <span className={`gl-scope${b.today.whole ? "" : " on"}`}><I n={b.today.whole ? "map" : "sliders"} />{b.today.whole ? "Whole district" : c.scopeName}</span>
+        <span className={`bb-status lv-${level}`} title={b.today.whole ? "District status, by fixed rules: deaths, severe incidents, and warnings from IMD, NDMA SACHET and the news" : "Status of this view, by fixed rules: its deaths and severe incidents"} data-tip={why.join(" · ") || undefined}>
+          <i /><b>{STATUS[level]}</b>{why.length > 0 && <span>{why.join(" · ")}</span>}
+        </span>
+        {/* a warning is the whole district's: under a filter it is named as such, never as the view's */}
+        {warned && <button className="gl-wide" onClick={() => c.openRain?.()} title="Open Rain & flooding"><I n="cloud" /><b>District-wide</b><span>{warned}</span></button>}
         <span className="bb-tools">
-          <span className={`bb-ai${ai || writing ? "" : " rules"}`} title={ai ? "Written by AI from the records; numbers checked against the data" : "From the district's records, by rules"}>
-            <I n={ai || writing ? "ai" : "doc"} />{writing ? "Writing…" : ai ? `AI${written ? ` · ${written}` : ""}` : "Rules"}
+          <span className="bb-lang" role="group" aria-label="Language">
+            <button className={ta ? "" : "on"} aria-pressed={!ta} onClick={() => pick("en")}>EN</button>
+            <button className={ta ? "on" : ""} aria-pressed={ta} onClick={() => pick("ta")}>தமிழ்</button>
           </span>
-          {hasTa && !writing && (
-            <span className="bb-lang" role="group" aria-label="Language">
-              <button className={lang === "en" ? "on" : ""} aria-pressed={lang === "en"} onClick={() => pick("en")}>EN</button>
-              <button className={lang === "ta" ? "on" : ""} aria-pressed={lang === "ta"} onClick={() => pick("ta")}>தமிழ்</button>
-            </span>
-          )}
-          {voice && !writing && <button className={`bb-btn${talking ? " talking" : ""}`} onClick={listen} title={talking ? "Stop" : "Read the key points aloud"} aria-pressed={talking}>
+          {voice && <button className={`bb-btn${talking ? " talking" : ""}`} onClick={listen} title={talking ? "Stop" : "Read the key points aloud"} aria-pressed={talking}>
             {talking ? <span className="bb-bars" aria-hidden="true"><i /><i /><i /><i /></span> : <I n="volume" />}{talking ? "Stop" : "Listen"}</button>}
         </span>
       </Head>
-      {/* written by the AI in both languages: the site's translator leaves these words alone */}
-      <div className="bb-body kp" data-no-i18n={ta ? "" : undefined}>
-        <p className={`bb-status lv-${b.status.level}`} title="District status, by fixed rules: deaths, severe incidents, and warnings from IMD, NDMA SACHET and the news">
-          <i /><b>{STATUS[b.status.level]}</b><span>{reasons.length ? reasons.join(" · ") : b.status.warning ? "IMD warning in force" : "Nothing unusual in this period"}</span>
-        </p>
-        <div className="kp-scroll">
-          {writing ? (
-            <div className="kp-wait" aria-live="polite">
-              <span className="kp-sk" /><span className="kp-sk" /><span className="kp-sk short" /><span className="kp-sk" /><span className="kp-sk short" />
-              <small><I n="ai" />Reading the period&apos;s incidents, grievances and news…</small>
-            </div>
-          ) : (
-            <>
-              {headline && <p className="kp-head" lang={ta ? "ta" : "en"}><Emph text={headline} /></p>}
-              <ol className={`kp-list${day ? " ai" : ""}`} lang={ta ? "ta" : "en"} key={`${ta}${!!day}`}>
-                {points.map((p, k) => {
-                  const t = p.topic ? TOPIC[p.topic] ?? TOPIC["For you"] : null;
-                  const body = <>
-                    {t ? <span className="kp-ic" style={{ "--tc": t.c } as React.CSSProperties}><I n={t.ic} /></span> : <span className="kp-no">{k + 1}</span>}
-                    <span className="kp-t">{p.topic && t && <em style={{ color: t.c }}>{p.topic}</em>}<Emph text={p.text} /></span>
-                    {p.ref && <I n="chevr" />}
-                  </>;
-                  return <li key={k}>{p.ref ? <button onClick={() => c.openInc(p.ref!)} title="Open the incident">{body}</button> : <div>{body}</div>}</li>;
-                })}
-              </ol>
-            </>
-          )}
-          {b.critical.length > 0 && (
-            <div className="bb-crit">
-              <span className="bb-lbl" title="Open severe incidents of the last 7 days, deaths first">Critical now</span>
-              <div>
-                {b.critical.map((x) => (
-                  <button key={x.id} onClick={() => c.openInc(x.id)}
-                    title={`${x.title}${x.zone_name ? `, ${x.zone_name}` : ""} · ${x.dead ? `${x.dead} dead · ` : x.injured ? `${x.injured} injured · ` : ""}${x.status}. Click to open.`}>
-                    <i style={{ background: SEV_HEX[x.sev] }} />
-                    <span>{String(x.title || x.type).replace(/^.*?–\s*/, "") || x.type}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          <div className="bb-watch">
-            {b.alerts && b.alerts.agreement !== "none" ? (
-              <p className="bb-fact warn" title={b.alerts.sources.map((x) => `${x.label}: ${x.says}`).join("\n")}>
-                <I n="cloud" /><b>Warnings</b>
-                <span>{b.alerts.agreementText}{b.alerts.stale.length ? ` ${b.alerts.stale.map((x) => x.label).join(", ")} not reporting.` : ""}</span>
-              </p>
-            ) : !b.alerts && b.status.warning ? <p className="bb-fact warn" title={b.status.warning.text}><I n="cloud" /><b>IMD warning</b><span>{b.status.warning.text}</span></p> : null}
-            {old && (
-              <button className="bb-fact" onClick={() => c.openInc(old.id)} title={`${old.title}${old.zone ? `, ${old.zone}` : ""}. Click to open.`}>
-                <I n="clock" /><b>Oldest open complaint</b><span>{old.days} days · {old.title}</span><I n="chevr" />
-              </button>
-            )}
-          </div>
+      <p className="gl-say" lang={ta ? "ta" : "en"}>
+        <span className="gl-hi" data-say="">{`${greeting(ins.now)}, Collector`}</span>
+        {aiText ? <><span data-no-i18n="" data-say="">{aiText}</span><em className="gl-ai" title="Worded by AI from this view's records; every figure checked against the ones below"><I n="ai" />AI</em></> : <span data-say=""><Sentence s={ta ? g.situation.ta : g.situation.en} /></span>}
+      </p>
+      <div className="gl-grid">
+        <div className="gl-nums">
+          {g.figures.map((x) => <Fig key={x.key} x={x} open={open} />)}
+          <Week days={b.today.days} now={ins.now} />
         </div>
-        <small className="bb-src">{day ? `Written by AI at ${day.at} from the period's incidents, citizen grievances, news and weather · numbers checked against the data`
-          : ai ? `Written by AI${written ? ` at ${written}` : ""} from the records · numbers checked against the data` : "From the district's records, by rules."}</small>
+        <Group title="What is happening" icon="pulse" points={g.happening} ta={ta} open={open}
+          none={g.empty ? "Nothing was reported or resolved in this view." : "Nothing stands out in this view."} />
+        <Group title="What needs you" icon="alert" points={g.needs} ta={ta} open={open} none="Nothing waits for you in this view.">
+          {g.needs.length < 4 && b.citizens.oldest && (
+            <button className="bb-fact" onClick={() => c.openInc(b.citizens.oldest!.id)} title="Open the oldest open complaint of this period">
+              <I n="clock" /><b>Oldest open complaint</b><span>{rel(b.citizens.oldest.t, ins.now)}</span><span className="ttl">{b.citizens.oldest.title}</span><I n="chevr" />
+            </button>
+          )}
+        </Group>
+        <Group title="What to do next" icon="tasks" points={g.next} ta={ta} open={open} none="No step is needed from you in this view." />
       </div>
     </section>
   );
 }
 
-// ------------------------------------------------------------------------------------------------ by department --
-
-/**
- * The pipeline's note as a short line: "Incidents of theft, protests, and road accidents were reported in Teynampet
- * and Adyar." reads "Theft, protests, road accidents · Teynampet, Adyar". Else by rules.
- */
-function firstLine(x: Dept, oneZone: boolean): string {
-  const s = x.ai?.en ? sentences(x.ai.en)[0] ?? x.ai.en : null;
-  if (s) {
-    // the AI words it several ways: "were reported in", "were recorded / logged / received in", "came in from"
-    const m = /^(.+?)\s+(?:(?:were|was|have been|has been)\s+(?:reported|recorded|logged|received|seen)|came\s+in)(?:\s+mainly)?(?:\s+(?:in|across|from)\s+(.+?))?\.?$/i.exec(s);
-    if (!m) return s;
-    const list = (t: string) => t.replace(/,?\s+and\s+/gi, ", ").replace(/\s{2,}/g, " ").trim();
-    const what = list(m[1].replace(/^(mostly\s+)?(incidents|issues|cases|reports|complaints)\s+(of|regarding|about|related to|with|including|involving)\s+/i, "")
-      .replace(/\s+(issues|incidents|complaints|cases)$/i, ""));
-    return `${what.charAt(0).toUpperCase()}${what.slice(1)}${m[2] ? ` · ${list(m[2])}` : ""}`;
-  }
-  const kinds = [...new Set(x.items.map((i) => i.type.toLowerCase()))].slice(0, 2);
-  const places = oneZone ? [] : [...new Set(x.items.map((i) => i.zone).filter(Boolean))].slice(0, 2);
-  return `Mostly ${kinds.length ? kinds.join(" and ") : "new reports"}${places.length ? ` in ${places.join(" and ")}` : ""}.`;
+/** What a click on a figure or a point does: the list, the case, the story or the page its figure comes from. */
+function useOpen(ins: Insights, b: Book, live: OverviewData | null, c: Console) {
+  return (o: GlanceOpen) => {
+    switch (o.k) {
+      case "list": return c.openList(o.preset, o.title);
+      case "inc": return c.openInc(o.id);
+      case "act": return c.openAction(o.id);
+      case "zone": return c.setZone(o.zone);
+      case "dept": return c.openDept(o.code);
+      case "story": return c.openStories(o.id);
+      case "differ": { const s = differOf(b, c)[0]; return s ? c.openConflict(s) : undefined; }
+      case "gaps": return c.openGaps();
+      case "rain": return c.openRain?.();
+      case "page": return c.setPage(o.page);
+      case "rise": return c.openPattern({ kind: "spike", cat: o.cat, zone: o.zone, date: o.date });
+      case "news": { const s = live?.allNews?.find((x) => x.id === o.key); return s ? c.openStory(s as Story) : c.openInc(o.key); }
+    }
+  };
 }
 
-/**
- * Each department in one line: what it received, and only what matters (deaths, severe). A line opens in place to a
- * short brief of the department's period (AI, written when opened), what happened in each death, its most serious
- * reports, and every report. The list scrolls inside the card, so an opened department always stays in view.
- */
-function Departments({ b, c }: { b: Book; c: Console }) {
-  const rows = b.departments;
-  const [open, setOpen] = useState<string | null>(null);
-  const listRef = useRef<HTMLUListElement>(null);
-  const toggle = (code: string) => {
-    const next = open === code ? null : code;
-    setOpen(next);
-    if (next) setTimeout(() => listRef.current?.querySelector(`[data-code="${next}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" }), 60);
-  };
+function Fig({ x, open }: { x: Glance["figures"][number]; open: (o: GlanceOpen) => void }) {
+  const d = x.prev == null ? null : x.v - x.prev;
+  const cls = !d || !x.good ? "" : (x.good === "up") === d > 0 ? " good" : " bad";
   return (
-    <section className="bb-card bb-depts">
-      <Head ic="gov" title="Departments" note={`what each received · ${c.periodLabel.toLowerCase()}`} more={rows.length ? () => c.openDepts() : undefined} />
-      {rows.length ? (
-        <ul ref={listRef} className="dp-list">
-          {rows.map((x) => <DeptRow key={x.code} x={x} on={open === x.code} toggle={() => toggle(x.code)} c={c} />)}
-        </ul>
-      ) : <div className="bb-fit"><Calm>No department received a report in this period.</Calm></div>}
-    </section>
+    <button className="gl-f" data-k={x.key} onClick={() => open(x.open)} title="Open the list">
+      <span className="gl-fl"><b>{x.label}</b>{x.sub && <small>{x.sub}</small>}</span>
+      <strong>{num(x.v)}</strong>
+      <em className={`gl-d${cls}`} title={x.prev == null ? undefined : `${num(x.v)} now, ${num(x.prev)} in the period before`}>
+        {d == null ? null : d === 0 ? "=" : <><I n={d > 0 ? "up" : "down"} />{num(Math.abs(d))}</>}
+      </em>
+    </button>
   );
 }
 
-type DeptAi = { brief: string; watch: string; at: string } | null;
-
-function DeptRow({ x, on, toggle, c }: { x: Dept; on: boolean; toggle: () => void; c: Console }) {
-  const [ai, setAi] = useState<DeptAi | undefined>(undefined);
-  const p = c.periodLabel.toLowerCase();
-  // asked when the row is opened (the server remembers a write-up, so opening it again is quick)
-  useEffect(() => {
-    if (!on) return;
-    const qs = new URLSearchParams({ kind: "dept", code: x.code, period: c.period });
-    if (c.zone) qs.set("zone", String(c.zone));
-    if (c.taluk) qs.set("taluk", c.taluk);
-    return watchBrief<DeptAi>(`/api/collector/brief?${qs}`, setAi);
-  }, [on, x.code, c.period, c.zone, c.taluk]);
-  const items = x.items.filter((i) => !x.deaths.some((d) => d.id === i.id)).slice(0, 3);
+/** The last 7 days at the size of a word: reported beside resolved, for the same zone, department and category. */
+function Week({ days, now }: { days: Book["today"]["days"]; now: string }) {
+  const max = Math.max(1, ...days.flatMap((x) => [x.reported, x.resolved]));
+  const h = (v: number) => `${Math.max(v ? 6 : 0, (v / max) * 100).toFixed(0)}%`;
+  const today = now.slice(0, 10);
   return (
-    <li data-code={x.code} className={on ? "on" : ""}>
-      <button className="dp-row" onClick={toggle} aria-expanded={on} title={on ? "Close" : "A short brief of this department's period"}>
-        <span className="bb-dic"><I n={deptIcon(x.code)} /></span>
-        <span className="dp-main">
-          <span className="dp-n">{x.name}</span>
-          {(x.dead > 0 || x.severe > 0) && (
-            <span className="dp-tags">
-              {x.dead > 0 && <em className="dead">{x.dead} dead</em>}
-              {x.severe > 0 && <em className="sev">{x.severe} severe</em>}
-            </span>
-          )}
-        </span>
-        <b className="dp-k" title={`${x.n} reports in the ${p}`}>{num(x.n)}</b>
-        <I n={on ? "chevd" : "chevr"} />
-      </button>
-      {on && (
-        <div className="dp-x">
-          {ai === undefined ? <p className="dp-brief wait"><I n="ai" />Writing a short brief…</p>
-            : <p className="dp-brief">{ai ? <><I n="ai" />{ai.brief}</> : x.ai?.en ?? firstLine(x, c.zone != null)}</p>}
-          {ai?.watch && <p className="dp-watch"><b>Watch</b>{ai.watch}</p>}
-          {x.deaths.length > 0 && (
-            <div className="dp-deaths">
-              <span className="dp-lbl">What happened · {x.dead} {x.dead === 1 ? "death" : "deaths"}</span>
-              {x.deaths.map((d) => (
-                <button key={d.id} className="dp-death" onClick={() => c.openInc(d.id)} title="Open the incident">
-                  <i />
-                  <span><b>{d.title}</b><small>{[`${d.dead} dead${d.injured ? `, ${d.injured} injured` : ""}`, d.place, fmtDate(d.t), d.status].filter(Boolean).join(" · ")}</small></span>
-                  <I n="chevr" />
-                </button>
-              ))}
-            </div>
-          )}
-          {items.length > 0 && (
-            <div className="dp-items">
-              <span className="dp-lbl">Most serious reports</span>
-              {items.map((i) => (
-                <button key={i.id} className="bb-di" onClick={() => c.openInc(i.id)} title="Open the incident">
-                  <i style={{ background: SEV_HEX[i.sev] }} /><span>{i.title}</span><small data-i18n-ctx="status">{i.status}</small>
-                </button>
-              ))}
-            </div>
-          )}
-          <button className="bb-all" onClick={() => c.openList({ dept: x.code, sort: "sev", dir: 1 }, `${x.name}: reported in the ${p}`)}>
-            See all {num(x.n)} reports<I n="chevr" />
-          </button>
-        </div>
-      )}
-    </li>
+    <div className="gl-wk" role="img" aria-label={days.map((x) => `${fmtDate(`${x.day} 00:00:00`)}: ${x.reported} reported, ${x.resolved} resolved`).join("; ")}>
+      <header><span>Last 7 days</span><Legend names={["reported", "resolved"]} /></header>
+      <div>
+        {days.map((x) => (
+          <span key={x.day} className={x.day === today ? "now" : ""} title={`${fmtDate(`${x.day} 00:00:00`)}: ${num(x.reported)} reported, ${num(x.resolved)} resolved${x.day === today ? ", so far" : ""}`}>
+            <i className="a" style={{ height: h(x.reported) }} /><i className="b" style={{ height: h(x.resolved) }} />
+            <small data-no-i18n="">{Number(x.day.slice(8))}</small>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Group({ title, icon, points, ta, open, none, children }: { title: string; icon: IconName; points: GlancePoint[]; ta: boolean; open: (o: GlanceOpen) => void; none: string; children?: React.ReactNode }) {
+  return (
+    <div className="gl-g">
+      <h4 data-say=""><I n={icon} />{title}</h4>
+      {points.length || children ? (
+        <ul lang={ta ? "ta" : "en"}>
+          {points.map((p) => (
+            <li key={p.key}>
+              <button className={`gl-p tn-${p.tone}`} onClick={() => open(p.open)} title={p.act}>
+                <span className="gl-i"><I n={p.icon as IconName} /></span>
+                <span className="gl-t" data-say=""><Sentence s={(ta ? p.ta : p.en) as Seg[]} /></span>
+                <I n="chevr" />
+              </button>
+            </li>
+          ))}
+          {children ? <li>{children}</li> : null}
+        </ul>
+      ) : <Calm>{none}</Calm>}
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------------------------------------ by department --
+
+/** Each department in one line: what it received, what is late, deaths and severe. A click opens its summary (DeptSummary.tsx). */
+function Departments({ b, c }: { b: Book; c: Console }) {
+  const rows = b.departments;
+  return (
+    <section className="bb-card bb-depts">
+      <Head ic="gov" title="Departments" note={`what each received · ${labelLower(c.periodLabel)}`} more={rows.length ? () => c.openDepts() : undefined} />
+      {rows.length ? (
+        <ul className="dp-list two">
+          {rows.map((x) => (
+            <li key={x.code} data-code={x.code}>
+              <button className="dp-row" onClick={() => c.openDept(x.code)} title="Open the department's summary">
+                <span className="bb-dic"><I n={deptIcon(x.code)} /></span>
+                <span className="dp-main">
+                  <span className="dp-n">{x.name}</span>
+                  <span className="dp-tags">
+                    {x.dead > 0 && <em className="dead">{`${num(x.dead)} dead`}</em>}
+                    {x.severe > 0 && <em className="sev">{`${num(x.severe)} severe`}</em>}
+                    {x.overdue > 0 && <em className="late">{`${num(x.overdue)} late`}</em>}
+                    {!x.dead && !x.severe && !x.overdue && <em className="calm">{`${num(x.open)} open`}</em>}
+                  </span>
+                </span>
+                <b className="dp-k" title={`${num(x.n)} reports in the period, ${num(x.open)} still open`}>{num(x.n)}</b>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : <div className="bb-fit"><Calm>No department received a report in this period.</Calm></div>}
+    </section>
   );
 }
 
@@ -376,45 +359,6 @@ function Developing({ ins, c }: { ins: Insights; c: Console }) {
   );
 }
 
-/**
- * The Collector's own datasets (Data Studio) beside the district's: each one's most pressing finding from its saved
- * brief (no model is asked here), opening the dataset in the Studio. Shown only when there are datasets.
- */
-function FromDatasets({ c }: { c: Console }) {
-  const [list, setList] = useState<WatchItem[] | null>(null);
-  useEffect(() => {
-    let live = true;
-    api<{ datasets: WatchItem[] }>("/api/collector/studio/watch").then((r) => live && setList(r.datasets), () => live && setList([]));
-    return () => { live = false; };
-  }, []);
-  if (!list?.length) return null;
-  const open = (id: string) => {
-    try { localStorage.setItem("diq-studio-sel", id); } catch { /* not saved in this browser */ }
-    c.setPage("studio");
-  };
-  const acting = list.filter((d) => d.act > 0).length;
-  return (
-    <section className="bb-card bb-ds">
-      <Head ic="spark" title="From your datasets" n={list.length} note={acting ? `${acting} need${acting === 1 ? "s" : ""} action` : undefined} more={() => c.setPage("studio")} />
-      <ul className="bb-fit">
-        {list.slice(0, 3).map((d) => {
-          const t = d.top[0];
-          return (
-            <li key={d.id}>
-              <button className="bb-item" onClick={() => open(d.id)} title={`Open "${d.name}" in the Data Studio`}>
-                <i style={{ background: t?.priority === "act" ? SEV_HEX.High : t?.priority === "watch" ? SEV_HEX.Medium : SEV_HEX.Low }} />
-                <b>{t?.headline ?? d.verdict}</b>
-                <small>{[d.name, t?.metric ? (t.headline.includes(t.metric) ? t.caption : `${t.metric} ${t.caption}`.trim()) : null,
-                  d.sample ? "sample data" : null].filter(Boolean).join(" · ")}</small>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-  );
-}
-
 function NewsOnly({ ins, c }: { ins: Insights; c: Console }) {
   const rows = ins.gaps as Row[];
   const [ref] = useFit<HTMLUListElement>(rows.map((g) => g.id).join());
@@ -433,7 +377,7 @@ function NewsOnly({ ins, c }: { ins: Insights; c: Console }) {
             </li>
           ))}
         </ul>
-      ) : <div className="bb-fit"><Calm>Every incident in the news has a department record.</Calm></div>}
+      ) : <div className="bb-fit"><Calm>{ins.book?.today.whole ? "Every incident in the news has a department record." : "Nothing in this view is only in the news."}</Calm></div>}
     </section>
   );
 }

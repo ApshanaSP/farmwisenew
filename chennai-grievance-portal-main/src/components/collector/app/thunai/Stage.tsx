@@ -86,12 +86,12 @@ interface Props {
 }
 
 const T = (lang: Lang, en: string, ta: string) => (lang === "ta" ? ta : en);
-const PERIODS = [["daily", "24 hours", "24 மணி"], ["weekly", "7 days", "7 நாள்"], ["monthly", "30 days", "30 நாள்"], ["quarterly", "90 days", "90 நாள்"]] as const;
+const PERIODS = [["daily", "Today", "இன்று"], ["weekly", "7 days", "7 நாள்"], ["monthly", "30 days", "30 நாள்"], ["quarterly", "90 days", "90 நாள்"]] as const;
 // v18: the summary and the readings and prices take any window too
 const SCOPED = new Set(["cases", "map", "dashboard", "trend", "why", "news", "performance", "ranking", "compare", "brief", "summary", "ask", "readings", "prices"]);
 /** v19: an analyst's plan asked over another window (its requests' own times replaced), as the window controls set it */
 // (its heading was for the window it was asked over: code's own heading is used)
-const WINDOW_SAID: Record<string, string> = { daily: "last 24 hours", weekly: "last 7 days", monthly: "last 30 days", quarterly: "last 90 days" };
+const WINDOW_SAID: Record<string, string> = { daily: "today", weekly: "last 7 days", monthly: "last 30 days", quarterly: "last 90 days" };
 const planOver = (plan: unknown, time: { said: string | null; from: string | null; to: string | null; hours: null } | null): unknown => {
   const p = plan as { queries?: Record<string, unknown>[] } | null | undefined;
   // (live roads and a station's latest reading have no window; the whole district stays the whole district)
@@ -150,6 +150,22 @@ function summarySpans(blocks: BlockT[]): number[] {
       case "Answer": return n("Answer") >= 2 || n("Readings") ? 6 : 12;
       default: return 12;
     }
+  });
+}
+
+/**
+ * The brain's answer (its id starts with "b-"): the words beside the first picture, the points under them, every list across the page. With no
+ * picture the words and the points stand side by side.
+ */
+function brainSpans(blocks: BlockT[]): number[] {
+  const pic = !!blocks[1] && ["Ranking", "Chart", "Trend", "Heat", "Kpis", "MapView"].includes(blocks[1].kind);
+  const short = blocks[0]?.kind === "Answer" && blocks[0].text.length <= 520;
+  return blocks.map((b, i) => {
+    if (i === 0) return pic ? (short ? 5 : 6) : blocks[1]?.kind === "Brief" && short ? 6 : 12;
+    if (i === 1 && pic) return short ? 7 : 6;
+    if (i === 1 && b.kind === "Brief" && short) return 6;
+    if (b.kind === "Chart" || b.kind === "Ranking") return 6;
+    return 12;
   });
 }
 
@@ -226,7 +242,7 @@ function Stage(p: Props) {
     if (!root.current?.contains(document.activeElement) || document.activeElement === document.body) titleRef.current?.focus({ preventScroll: true });
   }, [doc.id]);
 
-  const sp = useMemo(() => (doc.recipe === "summary" || doc.blocks.length > 6 ? summarySpans(doc.blocks) : spans(doc.blocks)), [doc.blocks, doc.recipe]);
+  const sp = useMemo(() => (doc.recipe === "answer" && doc.id.startsWith("b-") ? brainSpans(doc.blocks) : doc.recipe === "summary" || doc.blocks.length > 6 ? summarySpans(doc.blocks) : spans(doc.blocks)), [doc.blocks, doc.recipe, doc.id]);
   // v18 (24 Nov, the owner: "a small scrolling space, insights overlapping; I want a large scrolling space where I can see all the insights one
   // by one"): the screen always scrolls as one page, each part at its natural height; no part scrolls inside its own small box
   const fit = false;
@@ -463,6 +479,9 @@ function isEmpty(b: BlockT): boolean {
     case "Readings": case "Ranking": return !b.items.length;
     case "Chart": return !b.values.length;
     case "Heat": return !b.rows.length;
+    case "Table": return !b.rows.length;
+    case "Timeline": return !b.items.length;
+    case "Lines": return !b.labels.length;
     case "Compare": return !b.sides.length;
     case "MapView": return !b.points.length && !(b.shade?.values.length) && !b.outline.length;
     default: return false;
@@ -707,6 +726,44 @@ function BlockBody(p: BP) {
       </>
     );
     case "Note": return <p className="st-note"><I n="info" />{b.text}</p>;
+    // 26 Nov (lib/brain): a result's own table, a timeline, several lines over one time
+    case "Table": return (
+      <>
+        <Head title={b.title} icon="table" sub={b.total > b.rows.length ? T(lang, `${b.rows.length} of ${b.total} shown`, `${b.total}-இல் ${b.rows.length}`) : null} />
+        {!b.rows.length ? <p className="st-empty">{T(lang, "Nothing matches.", "எதுவும் இல்லை.")}</p> : (
+          <div className="st-tablewrap"><table className="st-table st-any">
+            <thead><tr>{b.cols.map((c) => <th key={c.key} className={c.num ? "num" : ""}>{c.label}{c.unit ? <small> ({c.unit})</small> : null}</th>)}</tr></thead>
+            <tbody>{b.rows.map((r, i) => {
+              const open = r.id ? () => a.openCase(r.id!) : null;
+              return (
+                <tr key={`${r.id ?? "r"}-${i}`} className={open ? "drill" : ""} onClick={open ?? undefined} tabIndex={open ? 0 : undefined}
+                  onKeyDown={open ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } } : undefined}>
+                  {r.cells.map((c, k) => <td key={k} className={b.cols[k]?.num ? "num" : ""}>{c == null ? "—" : typeof c === "number" ? fmt(c) : /^https?:\/\//.test(c) ? <a href={c} target="_blank" rel="noreferrer">{T(lang, "Open", "திற")}</a> : c}</td>)}
+                </tr>
+              );
+            })}</tbody>
+          </table></div>
+        )}
+      </>
+    );
+    case "Timeline": return (
+      <>
+        <Head title={b.title} icon="clock" sub={T(lang, `${b.items.length} steps, first to last`, `${b.items.length} நிகழ்வுகள்`)} />
+        <ol className="st-tl">{b.items.map((x, i) => (
+          <li key={i}><span className="dot" aria-hidden="true" /><time>{x.t || "—"}</time><div><p>{x.stage && <b>{x.stage}: </b>}{x.text}</p>{x.by && <small>{x.by}</small>}</div></li>
+        ))}</ol>
+      </>
+    );
+    case "Lines": {
+      const v = p.view ?? "chart";
+      return (
+        <>
+          <Head title={b.title} icon="line"><ViewSwitch id={b.id} views={["chart", "table"]} cur={v} a={a} lang={lang} /></Head>
+          {v === "chart" ? <StageChart spec={{ type: "lines", labels: b.labels, series: b.series, unit: b.unit }} height={280} title={b.title} />
+            : <Table cols={[T(lang, "Period", "காலம்"), ...b.series.map((x) => x.name)]} rows={b.labels.map((l, i) => [l, ...b.series.map((x) => fmt(x.values[i] ?? 0))])} />}
+        </>
+      );
+    }
   }
 }
 

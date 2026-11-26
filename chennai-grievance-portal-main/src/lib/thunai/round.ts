@@ -43,7 +43,7 @@ import { spanScreen } from "./spanned";
 import { isToday, istWall, isWindowSpec, turnWhen, windowOnly } from "./v18/when";
 import { isTopic, topicSaid } from "./v18/topics";
 import { checkSpec, WINDOW_WORDS } from "@/lib/period/read";
-import { analystOn, codePlan, followByCode, makePlan, planFromSlots, type Plan, type PlanFn } from "./v19/plan";
+import { analystOn, codePlan, followByCode, heardRight, makePlan, planFromSlots, type Plan, type PlanFn } from "./v19/plan";
 import { planLine } from "./v19/doc";
 import { analystTakes, notHeldReply } from "./v19/route";
 import { askAnswer } from "./v19/answer";
@@ -89,6 +89,9 @@ import { claudeConfigured } from "@/lib/ai/claude";
 import { timeOf } from "./brief6";
 import { snapshotIdText, snapshotResults, tidySay, type SnapFact, type Snapshot } from "./v11/snapshot";
 import { cityAsk, lastCitySlotsOf, refersToMap } from "@/lib/city/intent";
+import type { BrainUser } from "@/lib/brain/types";
+import { figs as figuresOfLine } from "@/lib/brain/render";
+import type { BrainFn } from "./brainturn";
 
 /** How the sentence was heard (v4): the language the speech was decoded in, how sure the decoder was, and where the words came from. */
 export const Heard = z.object({ lang: z.enum(["en", "ta"]), conf: z.number().min(0).max(1), source: z.enum(["whisper", "captions", "typed"]) });
@@ -658,7 +661,7 @@ function readLabel(r: AgentResult, lang: Lang): string | null {
 // ---- the decision record (lane P2, decisions.ts): every answer a round gives, kept on the audit trail, no citizen text
 
 /** a round's lane as the record names it: the planner's (and a plan from the cache), a general answer, else code's own rules */
-const RECORD_LANE: Record<string, "rules" | "planner" | "chat"> = { planner: "planner", cache: "planner", general: "chat" };
+const RECORD_LANE: Record<string, "rules" | "planner" | "chat"> = { planner: "planner", cache: "planner", general: "chat", brain: "planner" };
 /**
  * What the record keeps of a round that ended with an answer: the Collector's words (decisions.ts cleanQuery takes phones, Aadhaar, e-mails and
  * quoted words out), the data's as-of time, the tools read, the model, the lane and the time taken. Null for a round that is not done, gave no
@@ -722,8 +725,14 @@ export interface RoundDeps {
   reader?: ReadFn | null;
   /** v19: the analyst (v19/plan.ts). Absent: the model's when the reader's is; null: off */
   analyst?: PlanFn | null;
+  /** 26 Nov: the brain (brainturn.ts), asked before every lane. The round routes pass it; absent (tests, the older evaluations) or null: the lanes */
+  brain?: BrainFn | null;
+  /** who the brain answers for, and the conversation's key */
+  brainFor?: { user: BrainUser; key: string };
 }
 type Emit = (e: TurnEvent) => void;
+/** 26 Nov: how long a turn of the brain may take (the browser's longest budget: turnstream.ts LONGEST_MS); most take 4 to 9 s, a cold start more */
+export const BRAIN_BUDGET_MS = 34_500;
 
 /** v19: the last plan each user's Jarvis answered, for a follow-up after its screen was closed (fifteen minutes; a plan holds no figure) */
 const lastPlans = new Map<string, { plan: Plan; at: number }>();
@@ -744,6 +753,7 @@ export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, us
   if (!deps.emit) {
     const o = await roundOnce(b, world, rawHands, user, mem, signal, deps, null);
     stopIfAborted();
+    if (o.lane === "brain") return o;
     const out = await withAide(o, b, world, rawHands, user, signal, deps, start, null);
     stopIfAborted();
     return out;
@@ -755,6 +765,12 @@ export async function planRound(b: RoundBodyT, world: World, rawHands: Hands, us
   send({ ...ids, type: "RUN_STARTED", at: Date.now() });
   const o0 = await roundOnce(b, world, rawHands, user, mem, signal, deps, send);
   stopIfAborted();
+  // 26 Nov: the brain's answer is whole and checked, its sentences already streamed as they were written (brainturn.ts): the screen, then the end
+  if (o0.lane === "brain") {
+    if (o0.result?.stage) send({ ...ids, type: "STATE_SNAPSHOT", snapshot: { stage: o0.result.stage } });
+    send({ ...ids, type: "RUN_FINISHED", out: o0 });
+    return o0;
+  }
   if (!o0.done && o0.steps.length) send({ ...ids, type: "CUSTOM", name: "steps", value: { steps: o0.steps } });
   // v7: a screen built for a question goes up at once and its answer is written by the aide, each checked sentence streamed as it passes
   if (o0.done && o0.result?.stage && aideWanted(o0.result, b.text, o0.lane, !!deps.aide)) {
@@ -955,6 +971,33 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
     return out(served(await spanScreen(b.direct.recipe, b.direct.slots, state, world, hands, b.text, b.direct.lang as Lang)), "direct");
   }
 
+  // 0. (26 Nov) the brain: Claude reads the sentence itself, with the conversation, the screen and every tool, before any word lane. What it may
+  // read holds no citizen's details and it can change nothing, so the word gates below are not asked first (they refused officers' phone
+  // numbers and "close all the pages"). When it cannot answer (Claude off, busy, out of time) the lanes below do, as before
+  if (b.round === 0 && deps.brain && deps.brainFor) {
+    bus?.({ ...ids, type: "CUSTOM", name: "heard", value: { lang, lane: "brain", conf: b.heard?.conf ?? null, speed: "analysis", budgetMs: BRAIN_BUDGET_MS } });
+    const first: { id: string | null; label: string; at: number } = { id: null, label: "", at: 0 };
+    const endStep = (ok = true) => { if (!first.id) return; const ms = Date.now() - first.at; trace.push({ label: first.label, ms, ok }); bus?.({ ...ids, type: "STEP_FINISHED", stepName: first.label, id: first.id, ms, ok }); first.id = null; };
+    const step = (label: string) => { endStep(); first.id = `${b.turnId}-${b.round}-${stepN++}`; first.label = label; first.at = Date.now(); bus?.({ ...ids, type: "STEP_STARTED", stepName: label, id: first.id }); };
+    step(lang === "ta" ? "புரிந்துகொள்கிறேன்" : "Understanding what you asked");
+    const got = await deps.brain({ body: b, world, user: deps.brainFor.user, key: deps.brainFor.key, notes: mem.notes, signal, until: t0 + BRAIN_BUDGET_MS - 900,
+      progress: (l) => step(l[lang]),
+      sentence: bus ? (text, l, figures) => bus({ ...ids, type: "TEXT_MESSAGE_CONTENT", messageId: `${b.turnId}-${b.round}-say`, delta: text, lang: l, figures }) : undefined
+    }).catch((e) => { if ((e as Error).name === "AbortError" || signal?.aborted) throw e; console.warn(`[jarvis brain] ${(e as Error).message?.slice(0, 200)}`); return null; });
+    endStep(!!got);
+    if (got) {
+      let r: AgentResult = got.result;
+      // one of the console's own live screens asked for by name: built as it always is, with the brain's words
+      const sc = got.out.screen;
+      if (sc && (RECIPES as readonly string[]).includes(sc.recipe)) {
+        const s = await screenFrom(sc.recipe as Recipe, sc.slots, lang === "ta" ? "திரையைத் திறக்கிறேன்" : "Opening the screen").catch(() => null);
+        if (s?.kind === "do" && s.stage) { const said = r.say ?? r.reply ?? s.say ?? ""; r = { ...s, lang: r.lang, steps: r.steps, say: said, model: r.model, note: "brain", stage: { ...s.stage, voice: { by: "aide7", model: r.model, figures: figuresOfLine(said).slice(0, 200) } } }; }
+      }
+      telemetry("turn", { lane: "brain", ms: Date.now() - t0, tokens: got.out.tokens.input + got.out.tokens.output, calls: got.out.rounds, ok: true, round: b.round, turn: b.turnId });
+      return { done: true, result: served(r), steps: [], trace, tokens: got.out.tokens.input + got.out.tokens.output, calls: got.out.rounds, hops: [got.out.model], lane: "brain", cached: false, timing: { ...stagesAt, toolsDone: Date.now() } };
+    }
+  }
+
   // 1. refused in code, before any model, on every round of a turn (a later round has the same words and the same rules)
   const route = routeByRules(b.text, world, !!stage);
   if (b.round === 0 && bus) {
@@ -1137,7 +1180,7 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
     if (lane19 && analystTakes(rd, null, b.text, onAsk) !== "never") {
       const got = await timed(lang === "ta" ? "என்ன தேவை என்று ஆராய்கிறேன்" : "Working out what to look up", () => planP);
       // (no model could plan it: a plain follow-up of the last plan is still code's to make: "tell me all", "the second", "only two")
-      let plan: Plan | null = got?.plan ?? followByCode(b.text, lastPlan, world) ?? (onAsk && /^\W*(?:and|for the|only|just|in the|not)\b/i.test(b.text) ? null : codePlan(b.text, world));
+      let plan: Plan | null = got?.plan ?? followByCode(heardRight(b.text), lastPlan, world) ?? (onAsk && /^\W*(?:and|for the|only|just|in the|not)\b/i.test(b.text) ? null : codePlan(heardRight(b.text), world));
       // a time the analyst left out that only the reader could read ("last weekend", "on the 20th")
       if (got?.plan && rd?.time?.said && plan?.kind === "answer" && TIME_SAID.test(`${b.text} ${plan.understood}`) && plan.queries.every((q) => !q.time)) plan = { ...plan, queries: plan.queries.map((q) => ({ ...q, time: rd!.time })) };
       telemetry("analyst", { kind: plan?.kind ?? null, view: plan?.view ?? null, plan: plan ? planLine(plan) : null, ms: got?.ms ?? null, model: got?.model ?? null, turn: b.turnId });

@@ -15,6 +15,7 @@ import { RowDataPacket } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
 import { PERIODS, asOf, periodSince, periodWindow, type Period } from "@/lib/collector/intel";
+import { periodBefore } from "@/lib/period/day";
 import { closedOnTimeSql, pastDueSql } from "@/lib/reference/metrics";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
@@ -176,12 +177,12 @@ async function patterns(dept: string, s: InsightScope, now: string): Promise<Bui
     ],
     charts: [{ kind: "hbar", title: "Wards with the most grievances", labels: wards.map((r) => `Ward ${r.ward}${r.zone ? ` · ${r.zone}` : ""}`), values: wards.map((r) => Number(r.n)), unit: "grievances" }],
     tables: [{
-      title: `By type, against the ${PERIODS[s.period].prev}`,
+      title: `By type, against ${periodBefore(s.period, now)}`,
       columns: ["Type", "This period", "Before", "Change"],
       rows: rows.map((r) => [r.l, n(r.cur), n(r.prev), chg(r)])
     }],
     notes: [
-      rising.length ? `${rising.slice(0, 3).map((r) => `${r.l} (${n(r.cur)}, ${chg(r)})`).join(", ")} ${rising.length === 1 ? "is" : "are"} rising on the ${PERIODS[s.period].prev}.` : `No complaint type is rising on the ${PERIODS[s.period].prev}.`,
+      rising.length ? `${rising.slice(0, 3).map((r) => `${r.l} (${n(r.cur)}, ${chg(r)})`).join(", ")} ${rising.length === 1 ? "is" : "are"} rising on ${periodBefore(s.period, now)}.` : `No complaint type is rising on ${periodBefore(s.period, now)}.`,
       top ? `Ward ${top.ward}${top.zone ? ` (${top.zone})` : ""} reported the most (${plural(Number(top.n), "grievance")}, ${n(Number(top.open ?? 0))} still open)${wards[1] ? `, then Ward ${wards[1].ward} (${n(Number(wards[1].n))})` : ""}.` : null,
       falling[0] ? `${falling[0].l} fell to ${n(falling[0].cur)} from ${n(falling[0].prev)}.` : null,
       news ? `${plural(news, "grievance")} also reached the news; these are the ones the public sees.` : null
@@ -231,7 +232,7 @@ async function work(dept: string, s: InsightScope, now: string): Promise<Built> 
   return {
     ...head, newest: now,
     kpis: [
-      { label: "Grievances", value: n(total), sub: change == null ? `${n(Number(k.complaints ?? 0))} citizen complaints` : `${change >= 0 ? "+" : "−"}${pct(Math.abs(change))} vs. ${PERIODS[s.period].prev}`, tone: "info" },
+      { label: "Grievances", value: n(total), sub: change == null ? `${n(Number(k.complaints ?? 0))} citizen complaints` : `${change >= 0 ? "+" : "−"}${pct(Math.abs(change))} vs. ${periodBefore(s.period, now).replace(/^the /, "")}`, tone: "info" },
       { label: "Closed", value: pct((closed / total) * 100), sub: `${n(closed)} of ${n(total)}${hrs != null ? ` · ${took(hrs)} on average` : ""}`, tone: closed / total >= 0.7 ? "low" : "med" },
       { label: "Closed on time", value: closed ? pct((onTime / closed) * 100) : "—", sub: "within the deadline", tone: closed && onTime / closed < 0.7 ? "high" : "low" },
       { label: "Open past deadline", value: n(Number(k.overdue ?? 0)), sub: `of ${n(Number(k.open ?? 0))} still open`, tone: Number(k.overdue) ? "sev" : "low" },
@@ -247,7 +248,7 @@ async function work(dept: string, s: InsightScope, now: string): Promise<Built> 
       rows: repeats.map((r) => [r.place ?? "—", r.type ?? "—", n(Number(r.n)), n(Number(r.open ?? 0)), n(Number(r.total ?? 0))])
     }],
     notes: [
-      `${plural(total, "grievance")} ${change == null ? `${total === 1 ? "was" : "were"} reported` : `${total === 1 ? "was" : "were"} reported, ${change >= 0 ? "up" : "down"} ${pct(Math.abs(change))} on the ${PERIODS[s.period].prev}`}; ${pct((closed / total) * 100)} are closed${hrs != null ? `, in ${took(hrs)} on average` : ""}.`,
+      `${plural(total, "grievance")} ${change == null ? `${total === 1 ? "was" : "were"} reported` : `${total === 1 ? "was" : "were"} reported, ${change >= 0 ? "up" : "down"} ${pct(Math.abs(change))} on ${periodBefore(s.period, now)}`}; ${pct((closed / total) * 100)} are closed${hrs != null ? `, in ${took(hrs)} on average` : ""}.`,
       closed ? `${pct((onTime / closed) * 100)} of the closed ones met their deadline.` : null,
       Number(k.overdue) ? `${plural(Number(k.overdue), "open grievance")} ${Number(k.overdue) === 1 ? "is" : "are"} past the deadline${byZone[0] ? `, most in ${byZone[0].l} (${n(Number(byZone[0].v))})` : ""}.` : "No open grievance is past its deadline.",
       slow ? `${slow.l} takes the longest to close (${n1(Number(slow.days))} days on average).` : null,

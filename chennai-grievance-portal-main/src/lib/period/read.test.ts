@@ -47,8 +47,10 @@ describe("one meaning per phrase, in three languages", () => {
     ["incidents in the last 7 days", { kind: "window", key: "weekly" }],
     ["complaints in the last 30 days", { kind: "window", key: "monthly" }],
     ["complaints this month", { kind: "window", key: "monthly" }],
-    ["how much rain in the last 24 hours", { kind: "window", key: "daily" }],
-    ["கடந்த 24 மணி நேரத்தில் எவ்வளவு மழை", { kind: "window", key: "daily" }],
+    // (26 Nov 2026: the Daily window is the calendar day, so a count of 24 hours is that count)
+    ["how much rain in the last 24 hours", { kind: "hours", hours: 24, n: 24, unit: "hour" }],
+    ["கடந்த 24 மணி நேரத்தில் எவ்வளவு மழை", { kind: "hours", hours: 24, n: 24, unit: "hour" }],
+    ["the daily report", { kind: "window", key: "daily" }],
     ["last 90 days", { kind: "window", key: "quarterly" }],
     ["what changed since yesterday", { kind: "window", key: "daily" }],
     ["last 10 days", { kind: "hours", hours: 240, n: 10, unit: "day" }],
@@ -120,10 +122,11 @@ describe("days and ranges of days (p7-merge-04): one reading for both lanes", ()
 });
 
 describe("dates, from the store's now", () => {
-  // 25 Nov 2026, the owner: the dashboard showed 7 severe cases and Jarvis, counting since midnight, another number
-  it("today is the dashboard's Daily window, the last 24 hours, with no dates of its own", () => {
+  // 25 Nov 2026, the owner: the dashboard showed 7 severe cases and Jarvis, counting since midnight, another number; 26 Nov: it is the day since 12 AM
+  it("today is the dashboard's Daily window, with no dates of its own", () => {
     const s = spanOf({ kind: "day", back: 0 }, NOW)!;
-    expect([s.key, s.range, s.hours, s.label.en]).toEqual(["daily", null, null, "last 24 hours"]);
+    expect([s.key, s.range, s.hours, s.label.en]).toEqual(["daily", null, null, "today"]);
+    expect(spanOf({ kind: "day", back: 0 }, "2026-11-07 01:00:00")!.label.en).toBe("since the start of yesterday");
     expect(needsDates({ kind: "day", back: 0 })).toBe(false);
     expect(heldBy(s, NOW)).toBe("daily");
   });

@@ -2,7 +2,7 @@ import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 // fixall-board-resolved-01 (noted on reviewerE-04): the officer Board's Resolved tile said "Resolved in 24 h" and "Resolved this week /
-// month / quarter", but it counts the department's grievances first reported in the console's window (the last 24 hours, or the last 7, 30
+// month / quarter", but it counts the department's grievances first reported in the console's window (today since 12 AM, or the last 7, 30
 // or 90 days back from now) that are now verified (officer/data.ts resolvedTile). The label now says that, in English and in Tamil.
 vi.mock("@/components/manu/PetitionOriginal", () => ({ default: () => null }));
 vi.mock("@/components/collector/app/SatMap", () => ({ default: () => null }));
@@ -29,14 +29,14 @@ const tile = (period: keyof typeof PERIODS) => {
 
 describe("fixall-board-resolved-01: the officer's Resolved tile says what it counts", () => {
   for (const period of Object.keys(PERIODS) as (keyof typeof PERIODS)[]) {
-    it(`${period}: reported in ${PERIODS[period].label.toLowerCase()}, never a calendar day, week, month or quarter`, () => {
+    it(`${period}: reported in its window, never a calendar week, month or quarter`, () => {
       const label = tile(period)?.props?.label ?? "";
-      expect(label).toBe(`Resolved, reported in ${PERIODS[period].label.toLowerCase()}`);
-      expect(label).not.toMatch(/today|this (day|week|month|quarter)|in 24 h$/i);
+      expect(label).toBe(period === "daily" ? "Resolved, reported today (since 12 AM)" : `Resolved, reported in ${PERIODS[period].label.toLowerCase()}`);
+      expect(label).not.toMatch(/this (day|week|month|quarter)|24 h/i);
     });
   }
   it("in Tamil, the same window with its number, reported and then resolved", () => {
-    expect(translate("Resolved, reported in last 24 hours")).toBe("கடந்த 24 மணி நேரத்தில் பதிவாகி, தீர்க்கப்பட்டவை");
+    expect(translate("Resolved, reported today (since 12 AM)")).toBe("இன்று (நள்ளிரவு 12 மணி முதல்) பதிவாகி, தீர்க்கப்பட்டவை");
     expect(translate("Resolved, reported in last 7 days")).toBe("கடந்த 7 நாட்களில் பதிவாகி, தீர்க்கப்பட்டவை");
     expect(translate("Resolved, reported in last 90 days")).toBe("கடந்த 90 நாட்களில் பதிவாகி, தீர்க்கப்பட்டவை");
   });

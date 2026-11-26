@@ -192,7 +192,7 @@ export function systemPrompt(w: World): string {
 
 THE CONSOLE
 Pages: overview (map, priority list, zone table), briefing (the morning brief), trends (charts over time), environment (rain gauges, air quality, reservoirs/lakes), studio (Data Studio, uploaded datasets).
-Filters (all on the same view; set several at once in ONE "view" step): zone 1-15, department, category, taluk, severity (Severe = critical/urgent/serious, High, Medium, Low). Period: daily (today/24h), weekly (7 days), monthly (30 days), quarterly (90 days).
+Filters (all on the same view; set several at once in ONE "view" step): zone 1-15, department, category, taluk, severity (Severe = critical/urgent/serious, High, Medium, Low). Period: daily (today, since 12 AM), weekly (7 days), monthly (30 days), quarterly (90 days).
 The overview map: mapMode zones|taluks; layers severe, complaint, other, added (added sources), stations (rain/air gauges).
 Panels: news (latest news), stories (developing stories), conflicts, gaps (in the news but not in records), nextdoor (neighbouring districts), markets (mandi prices), zones (zone table), depts (departments), sources (data sources), review (review queue), workspace (saved views), export, customize, palette (search), assistant (Ask District IQ chat), map (Ask the Map), trail (audit trail), memory.
 

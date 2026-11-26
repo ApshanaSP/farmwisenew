@@ -54,7 +54,8 @@ describe("windowIn reads the same window in every language, ending and script", 
     for (const t of ["cases past the deadline this week", "severe cases past deadline this week", "high priority cases past the deadline this week", "the last complaint this month", "previous status this week"]) expect(windowIn(t), t).toBeNull();
   });
   it("the console's own windows are the periods; any other count is not", () => {
-    expect(heldPeriod(24)).toBe("daily"); expect(heldPeriod(168)).toBe("weekly"); expect(heldPeriod(720)).toBe("monthly"); expect(heldPeriod(2160)).toBe("quarterly");
+    // (24 hours back is none of them: Daily is the calendar day, lib/period/day.ts)
+    expect(heldPeriod(24)).toBeNull(); expect(heldPeriod(168)).toBe("weekly"); expect(heldPeriod(720)).toBe("monthly"); expect(heldPeriod(2160)).toBe("quarterly");
     for (const h of [1, 72, 336, 1440]) expect(heldPeriod(h)).toBeNull();
   });
 });
@@ -82,13 +83,13 @@ describe("a Tamil month is the month", () => {
 describe("every lane that reads a window agrees with the reader (RC-06)", () => {
   const sentences: [string, "daily" | "weekly" | "monthly" | "quarterly" | null][] = [
     ["show complaints in the last 7 days", "weekly"], ["pona 3 maasam complaints", "quarterly"], ["கடந்த 3 மாதங்களில் புகார்கள்", "quarterly"], ["pona moonu maasam complaints", "quarterly"],
-    ["complaints last 90 days", "quarterly"], ["complaints in the last 24 hours", "daily"], ["கடந்த 30 நாட்களில் புகார்கள்", "monthly"], ["pona 30 naal la complaints", "monthly"],
+    ["complaints last 90 days", "quarterly"], ["complaints in the last 24 hours", null], ["கடந்த 30 நாட்களில் புகார்கள்", "monthly"], ["pona 30 naal la complaints", "monthly"],
     ["pona 2 vaaram complaints", null], ["கடந்த 2 வாரங்களில் புகார்கள்", null], ["complaints in the last 3 days", null], ["last 14 days complaints", null]
   ];
   // QA pass 7 merge with pass 4's eec8c840: both rules lanes read time through one shared reader (lib/period/read.ts, pass 7's P6-022/23 and
   // pass4-open-16/17 fix, kept over pass 4's windowspan reading in those lanes). A count the console holds is that window in every lane; a count
   // it does not hold ("pona 2 vaaram", "last 3 days") is answered over its own span, the same in the three languages, instead of handed on.
-  const SPAN_HOURS: Record<string, number> = { "pona 2 vaaram complaints": 336, "கடந்த 2 வாரங்களில் புகார்கள்": 336, "complaints in the last 3 days": 72, "last 14 days complaints": 336 };
+  const SPAN_HOURS: Record<string, number> = { "pona 2 vaaram complaints": 336, "கடந்த 2 வாரங்களில் புகார்கள்": 336, "complaints in the last 3 days": 72, "complaints in the last 24 hours": 24, "last 14 days complaints": 336 };
   it("the fast lane's period and the Ask readers say the same period", () => {
     for (const [t, p] of sentences) {
       expect(periodIn(` ${t.toLowerCase()} `), `quick: ${t}`).toBe(p);

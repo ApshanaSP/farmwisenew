@@ -567,11 +567,11 @@ c("jlog.clear", "chat", NEVER, N("clears the list of what was asked of Jarvis"),
 // ---------------------------------------------------------------------------------------------------------------- Jarvis's own UI --
 c("hud.stopTalking", "hud", "A", S({ a: "stop" }), "Stop talking|stop speaking|be quiet", "பேச்சை நிறுத்து|பேசாதே", "pesradha niruthu|stop talking");
 c("hud.mute", "hud", "A", P(".hud-btn[aria-pressed]", { own: true }), "Mute|mute the microphone|unmute|turn the microphone back on", "மைக்கை மூடு|மைக்கைத் திற", "mic mute pannu|mic on pannu");
-c("hud.type", "hud", "A", P(".hud-btn[aria-expanded]:not(.hud-qs)", { own: true }), "Type instead|type|keyboard", "தட்டச்சு|தட்டச்சு செய்", "type pannu|keyboard");
+c("hud.type", "hud", "A", P(".hud-btn[aria-expanded]:not(.hud-qs):not(.hud-pill-b)", { own: true }), "Type instead|type|keyboard", "தட்டச்சு|தட்டச்சு செய்", "type pannu|keyboard");
 c("hud.questions", "hud", "A", P(".hud-qs", { own: true }), "Questions|my questions in Jarvis", "கேள்விகள்|என் கேள்விகள்", "questions|en questions");
 c("hud.close", "hud", "A", S({ a: "off" }), "Close Jarvis|close Jarvis and go back", "ஜார்விஸை மூடு|ஜார்விஸை மூடி திரும்பு", "jarvis close pannu|jarvis-a mooduu");
 c("hud.firstUse", "hud", "A", P("button::understood, open it|புரிந்தது, திற", { own: true }), "Understood, open it|understood", "புரிந்தது, திற|புரிந்தது", "purinjudhu open pannu|understood");
-c("hud.answer.card", "hud", "A", P(".hud-pill", { own: true }), "Show the answer|show the answer card", "பதிலைக் காட்டு|பதில் அட்டை", "answer kaattu|answer card");
+c("hud.answer.card", "hud", "A", P(".hud-pill-b", { own: true }), "Show the answer|show the answer card", "பதிலைக் காட்டு|பதில் அட்டை", "answer kaattu|answer card");
 c("hud.answer.card:fold", "hud", "A", P(".hud-x::fold this answer away|இந்தப் பதிலைச் சிறிதாக்கு", { own: true }), "Fold this answer away|fold the answer", "இந்தப் பதிலைச் சிறிதாக்கு|பதிலைச் சுருக்கு", "answer fold pannu");
 c("hud.answer.card:close", "hud", "A", P(".hud-x::close this answer|இந்தப் பதிலை மூடு", { own: true }), "Close this answer|close the answer", "இந்தப் பதிலை மூடு|பதிலை மூடு", "answer close pannu");
 c("hud.answer.openFull", "hud", "A", P(".hud-ans-acts button", { own: true }), "Open full screen|show the answer full screen", "முழுத் திரையில் பார்|முழுத் திரை", "full screen la paaru|full screen open");

@@ -29,11 +29,11 @@ export interface ChipNames {
 }
 
 const DISTANCES = [100, 200, 300, 500, 1000, 2000];
-const PERIODS: [string, Period | null][] = [["1", { kind: "last_days", days: 1, offset: 0 }], ["7", { kind: "last_days", days: 7, offset: 0 }],
+const PERIODS: [string, Period | null][] = [["1", { kind: "day", offset: 0 }], ["7", { kind: "last_days", days: 7, offset: 0 }],
   ["30", { kind: "last_days", days: 30, offset: 0 }], ["90", { kind: "last_days", days: 90, offset: 0 }], ["all", null]];
 
 const incTake = (p: Plan) => p.steps.find((s) => s.op === "take" && s.layer === "incidents") as Extract<Step, { op: "take" }> | undefined;
-const periodKey = (p: Period | null | undefined) => (!p ? "all" : p.kind === "last_days" && p.offset === 0 ? String(p.days) : "custom");
+const periodKey = (p: Period | null | undefined) => (!p ? "all" : p.kind === "day" && p.offset === 0 ? "1" : p.kind === "last_days" && p.days !== 1 && p.offset === 0 ? String(p.days) : "custom");
 
 /** The chips of a plan; `defaults` names the parts the question did not state. */
 export function planChips(plan: Plan, names: ChipNames, defaults: string[] = []): PlanChip[] {

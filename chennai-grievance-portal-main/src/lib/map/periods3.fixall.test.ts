@@ -84,7 +84,11 @@ describe("comparisons and bounds", () => {
     "follow-up '%s': goes to the AI, never a plain period edit", (q) => {
       expect(route(q, planOf("open flooding in zone 13")!.plan)).toBeNull();
     });
-  it.each([["நேற்றை விட அதிகமா?", 1], ["nethai vida jaasthiya?", 1], ["pona maasathai vida?", 30]] as [string, number][])(
+  it.each(["நேற்றை விட அதிகமா?", "nethai vida jaasthiya?"])("follow-up '%s' compares today so far with yesterday by this time", (q) => {
+    const c = planOf(q, planOf("open flooding in zone 13")!.plan)?.plan.steps.find((s) => s.op === "change") as Extract<Step, { op: "change" }> | undefined;
+    expect([c?.now, c?.before]).toEqual([{ kind: "day", offset: 0 }, { kind: "day", offset: 1, so_far: true }]);
+  });
+  it.each([["pona maasathai vida?", 30]] as [string, number][])(
     "follow-up '%s' compares the window it names", (q, days) => {
       const c = planOf(q, planOf("open flooding in zone 13")!.plan)?.plan.steps.find((s) => s.op === "change") as Extract<Step, { op: "change" }> | undefined;
       expect(c?.now).toEqual({ kind: "last_days", days, offset: 0 });

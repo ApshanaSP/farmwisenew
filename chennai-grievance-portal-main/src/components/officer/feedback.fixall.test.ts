@@ -19,7 +19,7 @@ const fb = (did: number, decision: string, note: string | null = null) =>
 
 const ov = (feedback: ReturnType<typeof fb>[], feedbackCounts: Record<string, number>) => ({
   counts: { new: 0, action: 0, sent: 0, verified: 0, returned: 0, serious: 0, overdue: 0, newSerious: 0, due: 0 },
-  periodInfo: { label: "Last 24 hours", buckets: 12, hours: 24 }, byType: [], map: { sevCounts: [] }, trend: [], byArea: { rows: [] }, news: [],
+  periodInfo: { label: "Today (since 12 AM)", buckets: 12, hours: 24 }, byType: [], map: { sevCounts: [] }, trend: [], byArea: { rows: [] }, news: [],
   feedback, feedbackCounts
 }) as unknown as OfficerOverview;
 

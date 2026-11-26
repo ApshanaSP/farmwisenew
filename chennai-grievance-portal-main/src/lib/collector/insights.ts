@@ -7,6 +7,7 @@ import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
 import { OPEN_NOW, PERIODS, PLACE_FILTERS, asOf, attentionRows, awaitingByDept, explain, periodSince, periodWindow, scopeWhere, type Focus, type Period } from "@/lib/collector/intel";
+import { periodBefore, periodHours, periodInfo, periodLower } from "@/lib/period/day";
 import { categories, placeResolver } from "@/lib/collector/nlp";
 import { addedItems, mandi, mandiMarkets, mandiWeekly, type MandiMarkets } from "@/lib/collector/sources";
 import { briefingBook } from "@/lib/collector/briefbook";
@@ -42,7 +43,7 @@ async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
 interface Scope { period: Period; zone: number | null; dept: string | null; cat: string | null; taluk: string | null }
 
 function where(s: Scope, now: string, opts: { hours?: number; offset?: number; noCat?: boolean; range?: [string, string] } = {}) {
-  // the period window (daily = the last 24 hours) unless a fixed number of hours is asked for, or whole calendar buckets (a range: from, before)
+  // the period window (daily = today since 12 AM) unless a fixed number of hours is asked for, or whole calendar buckets (a range: from, before)
   const win = opts.range
     ? { sql: "i.first_reported_at >= ? AND i.first_reported_at < ?", params: [...opts.range] }
     : periodWindow(s.period, now, "i.first_reported_at", opts.offset ?? 0, opts.hours);
@@ -153,8 +154,14 @@ async function insightsFresh(period: Period, zone: number | null, dept: string |
   const B = !part || part === "briefing", T = !part || part === "trends", E = !part || part === "environment";
   const none = Promise.resolve([] as Row[]);
   const when = (on: boolean, run: () => Promise<Row[]>) => (on ? run() : none);
+  // the unusual rises of a department's or a taluk's view: those with a report of its own behind them, counted over its own reports
+  // (a category view keeps to its category; the taluk and the category were not applied)
+  const own: string[] = [], ownP: unknown[] = [];
+  if (dept) (own.push("d.lead_dept = ?"), ownP.push(dept));
+  if (s.taluk) (own.push("d.taluk_code = ?"), ownP.push(s.taluk));
+  const ownSql = own.length ? `, (SELECT COUNT(*) FROM incidents d WHERE ${own.join(" AND ")} AND d.category_code = a.category_code AND d.zone_no = a.zone_no AND DATE(d.first_reported_at) = a.date AND d.first_reported_at <= ?) AS dept_observed` : "";
   // locations needing review: open incidents of the last 30 days (or the period, if longer) with no zone
-  const rw = where({ ...s, zone: null }, now, { hours: Math.max(PERIODS[period].hours, 720) });
+  const rw = where({ ...s, zone: null }, now, { hours: Math.max(periodHours(period, now), 720) });
 
   // whole buckets: the 12 complete weeks (Monday to Monday) and the 6 calendar months, so the oldest of each holds all its days (PB-066, PB-162)
   const tk = trendKeys(now);
@@ -206,10 +213,10 @@ async function insightsFresh(period: Period, zone: number | null, dept: string |
     // a department's view keeps to the patterns with a report of its own behind them, counted over its own reports (BUG-027, PB-078):
     // not every pattern of a kind it sometimes leads, with the district's count
     when(T || B, () => q(`SELECT a.*, DATE_FORMAT(a.date, '%Y-%m-%d') AS day, a.category_code AS cat, a.zone_no AS zone
-       ${dept ? ", (SELECT COUNT(*) FROM incidents d WHERE d.lead_dept = ? AND d.category_code = a.category_code AND d.zone_no = a.zone_no AND DATE(d.first_reported_at) = a.date AND d.first_reported_at <= ?) AS dept_observed" : ""}
-       FROM anomalies a WHERE a.date > DATE(?) - INTERVAL 21 DAY ${zone ? "AND a.zone_no = ?" : ""}
+       ${ownSql}
+       FROM anomalies a WHERE a.date > DATE(?) - INTERVAL 21 DAY ${zone ? "AND a.zone_no = ?" : ""} ${s.cat ? "AND a.category_code = ?" : ""}
        ORDER BY a.date DESC, a.ratio DESC`,
-      [...(dept ? [dept, now] : []), now, ...(zone ? [zone] : [])])),
+      [...(own.length ? [...ownP, now] : []), now, ...(zone ? [zone] : []), ...(s.cat ? [s.cat] : [])])),
     when(T, () => q(`SELECT h.hotspot_id AS id, h.category_code AS cat, h.incidents, h.incidents_30d, ${HOT_OPEN} AS open, h.lat, h.lon, h.wards, h.top_place,
               DATE_FORMAT(h.first_seen, '%Y-%m-%d') AS first_seen, DATE_FORMAT(h.last_seen, '%Y-%m-%d') AS last_seen
        FROM hotspots h WHERE h.incidents_30d >= 3 ORDER BY h.incidents_30d DESC LIMIT 60`)),
@@ -244,8 +251,8 @@ async function insightsFresh(period: Period, zone: number | null, dept: string |
   // (24 Nov: and not what the news desk read as none of the administration's business, newsdesk.ts)
   const offDesk = await offDeskIncidents(gapsAll.map((g) => String(g.id)));
   const gaps = gapsAll.filter((g) => !elsewhere(String(g.title ?? "")) && !offDesk.has(String(g.id)));
-  const anomalies = anomaliesAll.filter(unusualEnough).filter((a: Row) => !dept || Number(a.dept_observed) > 0)
-    .map((a: Row) => (dept ? { ...a, observed: Number(a.dept_observed) } : a)); // too few reports to call unusual (R-18)
+  const anomalies = anomaliesAll.filter(unusualEnough).filter((a: Row) => !own.length || Number(a.dept_observed) > 0)
+    .map((a: Row) => (own.length ? { ...a, observed: Number(a.dept_observed) } : a)); // too few reports to call unusual (R-18)
   const zn = new Map<number, string>();
   const wardZone = new Map<number, number>();
   for (const z of zoneNames) { zn.set(Number(z.zone_no), z.zone_name); wardZone.set(Number(z.ward_no), Number(z.zone_no)); }
@@ -272,7 +279,7 @@ async function insightsFresh(period: Period, zone: number | null, dept: string |
   // beside it say (opening.ts); a summary of an older window ("more incidents" beside a live "78% fewer") is not shown
   const checked = brief?.ai_summary
     ? checkOpening({ asOf: brief.as_of ? String(brief.as_of) : null, en: String(brief.ai_summary), ta: brief.ai_summary_ta ? String(brief.ai_summary_ta) : null },
-      { now, hours: PERIODS[period].hours,
+      { now, hours: PERIODS[period].hours, from: period === "daily" ? periodSince(period, now) : null,
         facts: { reported: n, prev: Number(P.n ?? 0), severe: sev, prevSevere: Number(P.severe ?? 0), open, overdue, multi: Number(K.multi ?? 0),
           newsOnly: gaps.length, complaints: Number(K.complaints ?? 0) },
         extra: ch == null ? [] : [Math.abs(ch)] })
@@ -289,8 +296,8 @@ async function insightsFresh(period: Period, zone: number | null, dept: string |
   const scope =[zone ? zn.get(zone) : null, dept ? deptRows.find((d) => d.code === dept)?.name ?? dept : null, s.cat ? catLabel.get(s.cat) : null,
     s.taluk ? taluks.find((t) => t.code === s.taluk)?.name + " taluk" : null].filter(Boolean).join(", ") || "Chennai district";
   const headline = [
-    `${plural(n, "incident")} ${n === 1 ? "was" : "were"} reported in ${scope} (${PERIODS[period].label.toLowerCase()})` +
-      (ch == null ? "." : `, ${ch === 0 ? "the same as" : `${Math.abs(ch)}% ${ch > 0 ? "more than" : "fewer than"}`} the previous period.`),
+    `${plural(n, "incident")} ${n === 1 ? "was" : "were"} reported in ${scope} (${periodLower(period, now)})` +
+      (ch == null ? "." : `, ${ch === 0 ? "the same as" : `${Math.abs(ch)}% ${ch > 0 ? "more than" : "fewer than"}`} ${period === "daily" ? periodBefore(period, now) : "the previous period"}.`),
     `${plural(open, "incident")} ${open === 1 ? "is" : "are"} still open${overdue ? `, ${overdue} of them past the deadline` : ""}; ${plural(sev, "severe event")}.`,
     Number(K.multi) ? `${plural(Number(K.multi), "incident")} came from more than one source, and ${plural(gaps.length, "incident")} ${gaps.length === 1 ? "appears" : "appear"} only in the news.` : null
   ].filter(Boolean) as string[];
@@ -433,19 +440,19 @@ async function insightsFresh(period: Period, zone: number | null, dept: string |
     .catch(orEmpty("insights:twins"))).map((r) => String(r.title))) : new Set<string>();
   const places = T ? reviewLocations(unplaced.filter((r) => !placedTwins.has(String(r.title ?? ""))), wards, await placeResolver().catch(() => () => null)) : null;
   // Items from sources the Collector added: civic issues first, then the newest.
-  const added = B ? await addedItems({ now, days: Math.max(1, Math.round(PERIODS[period].hours / 24)), since: periodSince(period, now), zone, dept, cat: s.cat, taluk: s.taluk }, 60)
+  const added = B ? await addedItems({ now, days: Math.max(1, Math.round(periodHours(period, now) / 24)), since: periodSince(period, now), zone, dept, cat: s.cat, taluk: s.taluk }, 60)
     : { items: [] as Row[], pins: [] as Row[], count: 0, civic: 0, placed: 0, days: 0 };
   const fromSources = [...added.items].sort((a, b) => Number(b.is_incident) - Number(a.is_incident) || String(b.t).localeCompare(String(a.t))).slice(0, 5);
 
   const md = [
-    `# Collector's Briefing: ${scope}`, `_${PERIODS[period].label}, data as of ${now}_`, "", "## At a glance", ...headline.map((h) => `- ${h}`),
+    `# Collector's Briefing: ${scope}`, `_${periodInfo(period, now).label}, data as of ${now}_`, "", "## At a glance", ...headline.map((h) => `- ${h}`),
     conditions ? `- Conditions: ${conditions}.` : "", market.length ? `- Markets: ${market.join("; ")}.` : "", "", "## Needs your attention",
     ...attention.map((a, j) => `${j + 1}. **${a.title}** (${a.sev}, ${a.zone ?? "Chennai"}; ${a.status}). What happened: ${a.why.summary} ` +
       `Why it needs you: ${a.why.attention.join("; ")}. Evidence: ${a.evidence}.${a.next ? ` Next: ${a.next.owner ?? ""} - ${a.next.text}.` : ""} \`${a.id}\``),
     handledByDepts ? `\n_${plural(handledByDepts, "other open incident")} ${handledByDepts === 1 ? "is" : "are"} routine and left to the departments._` : "",
     emerging.length ? "\n## Emerging patterns" : "", ...emerging.map((e) => `- ${e.text}`),
     gaps.length ? `\n## In the news, not in department records\n- ${plural(gaps.length, "incident")}; top: ${gaps.slice(0, 3).map((g) => g.title).join("; ")}.` : "",
-    fromSources.length ? `\n## From added sources\n_${plural(added.count, "item")} in the last ${added.days} days from sources you added; ${added.civic} read as civic issues._` : "",
+    fromSources.length ? `\n## From added sources\n_${plural(added.count, "item")} ${period === "daily" ? periodLower(period, now) : `in the last ${added.days} days`} from sources you added; ${added.civic} read as civic issues._` : "",
     ...fromSources.map((i) => `- **${i.title}** (${[i.source, i.place ?? i.zone_name, String(i.t).slice(0, 16)].filter(Boolean).join(", ")})` +
       `${i.category_label ? `: ${i.category_label}` : ""}.${i.url ? ` Source: ${i.url}` : ""}`)
   ].filter((x) => x !== "").join("\n");

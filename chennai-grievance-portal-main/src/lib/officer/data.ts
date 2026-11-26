@@ -9,7 +9,7 @@
  *   collector_decisions  the Collector's verify / return (reopen) / resolve / reject
  *
  * The latest of those wins; without either, the pipeline's status decides the stage.
- * Every panel follows the period (the Collector's windows: Daily = the last 24 hours,
+ * Every panel follows the period (the Collector's windows: Daily = today since 12 AM, lib/period/day.ts,
  * Weekly .. Quarterly = the last 7, 30, 90 days of reports) and the zone / taluk filter.
  * "Now" is the pipeline's as-of time, so the windows line up with the data. The data
  * itself is only what the pipeline's hourly collection loads; nothing here fetches it.
@@ -19,7 +19,8 @@ import { emailRef } from "@/lib/security/stamp";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import type { PoolConnection } from "mysql2/promise";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
-import { PERIODS, asOf, contactsFor, exportMeta, overview, periodSince, periodWindow, type Period } from "@/lib/collector/intel";
+import { asOf, contactsFor, exportMeta, overview, periodSince, periodWindow, type Period } from "@/lib/collector/intel";
+import { periodInfo } from "@/lib/period/day";
 import { collectionStatus } from "@/lib/collector/sources";
 import { OFFICER, deptConfig } from "./departments";
 import { STAGE_LABEL, TAB_STAGES, feedbackKind, nextStep, type FeedbackKind, type Stage, type Tab } from "./stages";
@@ -236,7 +237,7 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
   const win = windowWhere(now, s);
   // what was reported in the period (the trend, by type, the news): a case sent back from an older period is work, not a new grievance
   const rep = windowWhere(now, s, true);
-  const P = PERIODS[s.period];
+  const P = periodInfo(s.period, now);
   // trend buckets run from the start of the window (midnight for Daily), like the Collector's charts
   const since = periodSince(s.period, now);
   const bucketSecs = (P.hours * 3600) / P.buckets;
@@ -369,7 +370,7 @@ async function deptBoard(dept: string, s: Scope) {
 export async function resolvedTile(dept: DeptProfile, s: Scope) {
   const now = await asOf();
   const b = withStage(dept.code, now);
-  const P = PERIODS[s.period];
+  const P = periodInfo(s.period, now);
   const since = periodSince(s.period, now);
   const cur = windowWhere(now, s), prev = windowWhere(now, s, false, 1);
   const [[c], [p], series] = await Promise.all([

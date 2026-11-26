@@ -96,8 +96,8 @@ describe("one rule for 'waiting for your check' (LT-07)", () => {
 });
 
 describe("every figure says what it counts and over which window (LT-08)", () => {
-  it("past deadline: the tile's 24 hours and the any-date figure are told apart", () => {
-    expect(labelled("past_deadline", "daily")).toBe("Past deadline, still open · reported in the last 24 hours");
+  it("past deadline: the tile's day and the any-date figure are told apart", () => {
+    expect(labelled("past_deadline", "daily")).toBe("Past deadline, still open · reported today (since 12 AM)");
     expect(labelled("past_deadline_any", "daily")).toBe("Past deadline, any date · any date");
     expect(caption("awaiting_check", "weekly")).toMatch(/updated in the last 7 days$/);
     for (const m of Object.values(METRICS)) expect(m.measure.length).toBeGreaterThan(5);

@@ -12,6 +12,7 @@ import { actionForOne, fit, type Hands, type Slots } from "../screens";
 import type { BlockT, Bilingual, NextStepT, ScopeT, StageDocT } from "../stage";
 import type { PeriodKey, World } from "../types";
 import type { Dim } from "./adtributor";
+import { dayWords } from "@/lib/period/day";
 
 export type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 export type Lang = "en" | "ta";
@@ -94,16 +95,25 @@ export function segIn(dim: Dim, ta: string): string {
 
 // ------------------------------------------------------------------ the window in words --
 
-const HOURS: Record<PeriodKey, string> = { daily: "24", weekly: "7", monthly: "30", quarterly: "90" };
-/** "the last 24 hours" and "the 24 hours before", in both languages: the screen's tiles carry the same words, so their figures are on it. */
-export function windowWords(p: PeriodKey): { now: Bilingual; before: Bilingual; inNow: Bilingual; label: Bilingual } {
-  const n = HOURS[p];
-  const unit = p === "daily" ? bi("hours", "மணி நேர") : bi("days", "நாள்");
-  const now = bi(`the last ${n} ${unit.en}`, `கடந்த ${n} ${unit.ta}த்துல`.replace("நாள்த்துல", "நாள்ல"));
+const DAYS: Record<PeriodKey, string> = { daily: "1", weekly: "7", monthly: "30", quarterly: "90" };
+/**
+ * "the last 7 days" and "the 7 days before", in both languages: the screen's tiles carry the same words, so their figures are on it. Daily is
+ * the calendar day so far, against the same hours a day earlier (lib/period/day.ts): "today" and "yesterday by this time".
+ */
+export function windowWords(p: PeriodKey): { now: Bilingual; before: Bilingual; inNow: Bilingual; over: Bilingual; label: Bilingual } {
+  if (p === "daily") {
+    const w = dayWords(), small = w.en.inWords !== "today";
+    const now = bi(w.en.inWords, small ? "நேத்து தொடக்கத்துல இருந்து இதுவரைல" : "இன்னைக்கு இதுவரைல");
+    const before = bi(w.en.prev, small ? "முந்தாநாள் இதே நேரத்துல" : "நேத்து இதே நேரத்துல");
+    return { now, inNow: now, over: now, before, label: bi(`${w.en.inWords} against ${w.en.prev}`, `${w.ta.inWords}, ${w.ta.prev} உடன்`) };
+  }
+  const n = DAYS[p];
+  const unit = bi("days", "நாள்");
+  const now = bi(`the last ${n} ${unit.en}`, `கடந்த ${n} ${unit.ta}ல`);
   return {
-    now, inNow: bi(`in the last ${n} ${unit.en}`, now.ta),
-    before: bi(`the ${n} ${unit.en} before`, `அதுக்கு முன்னாடி ${n} ${unit.ta}த்துல`.replace("நாள்த்துல", "நாள்ல")),
-    label: bi(`last ${n} ${unit.en} against the ${n} before`, `கடந்த ${n} ${p === "daily" ? "மணி நேரம்" : "நாள்"}, அதற்கு முந்தைய ${n}-உடன்`)
+    now, inNow: bi(`in the last ${n} ${unit.en}`, now.ta), over: bi(`over the last ${n} ${unit.en}`, now.ta),
+    before: bi(`the ${n} ${unit.en} before`, `அதுக்கு முன்னாடி ${n} ${unit.ta}ல`),
+    label: bi(`last ${n} ${unit.en} against the ${n} before`, `கடந்த ${n} நாள், அதற்கு முந்தைய ${n}-உடன்`)
   };
 }
 

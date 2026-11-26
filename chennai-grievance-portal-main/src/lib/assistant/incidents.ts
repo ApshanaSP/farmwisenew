@@ -8,7 +8,8 @@ import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
 import { closedLateSql, closedOnTimeSql, isPastDeadline, pastDueSql } from "@/lib/reference/metrics";
-import { asOf, explain, incident as incidentFull, OPEN_NOW, periodSinceWindow, periodWindow, PERIODS, type Period } from "@/lib/collector/intel";
+import { asOf, explain, incident as incidentFull, OPEN_NOW, periodSinceWindow, periodWindow, wholeDayWindow, type Period } from "@/lib/collector/intel";
+import { periodLower } from "@/lib/period/day";
 import { categories } from "@/lib/collector/nlp";
 import type { ActionItem, EvidenceItem, IncidentDetail, IncidentItem, TimelineStep } from "@/lib/assistant/answer";
 import { orEmpty } from "@/lib/fallback";
@@ -42,7 +43,7 @@ export interface IncidentFilters {
   hours?: number | null;
   /** a locality inside the zone ("Velachery"), matched on the incident's place: narrower than the zone */
   place?: string | null;
-  /** windows back from now (1 = yesterday when the window is a day) */
+  /** windows back from now; with a daily period, whole calendar days back (1 = yesterday, 12 AM to 12 AM) */
   offset?: number;
   /** only open incidents past their deadline */
   overdue?: boolean;
@@ -70,8 +71,12 @@ function where(f: IncidentFilters, now: string, hours?: number, off = 0, col = "
   const h = hours ?? f.hours ?? null;
   // a calendar range already IS the window ("yesterday" is its own day): the offset is for rolling windows only, or it would be moved back twice (BUG-018, PB-003)
   const k = off + (f.range ? 0 : f.offset ?? 0);
+  // "yesterday", "the day before yesterday" (26 Nov: the Daily window is the day so far, so one day back from it is not yesterday): whole
+  // calendar days, and the day before them as the comparison; the comparison of today itself is the same hours a day earlier (periodWindow)
+  const day = !f.range && f.period === "daily" && (f.offset ?? 0) > 0 && (h == null || h === 24);
   // a calendar window (a month, "since 1 October"): its exact bounds; the window before it has the same length
   const w = f.range ? rangeWindow(f.range, k, col)
+    : day ? wholeDayWindow(now, col, k)
     : openEnd && k === 0 ? periodSinceWindow(f.period, now, col, h ?? undefined) // closed time: a decision made since the refresh counts
     : periodWindow(f.period, now, col, k, h ?? undefined);
   const parts = [w.sql], params: unknown[] = [...w.params];
@@ -454,4 +459,4 @@ export async function actionsFor(id: string): Promise<{ title: string; items: Ac
   return { title: String(r.title || r.type), items };
 }
 
-export const periodLabel = (p: Period) => PERIODS[p].label.toLowerCase();
+export const periodLabel = (p: Period, now?: string | null) => periodLower(p, now);

@@ -64,7 +64,7 @@ const PAGES: PageKey[] = ["overview", "work"];
 const PAGE_TITLE: Record<PageKey, string> = { overview: "Overview", work: "Work & insights" };
 const PERIOD_WORD: Record<Period, string> = { daily: "Daily", weekly: "Weekly", monthly: "Monthly", quarterly: "Quarterly" };
 const PERIOD_HINT: Record<Period, string> = {
-  daily: "Daily: the last 24 hours, up to now", weekly: "Weekly: the last 7 days", monthly: "Monthly: the last 30 days", quarterly: "Quarterly: the last 90 days"
+  daily: "Daily: today, from 12 AM to now", weekly: "Weekly: the last 7 days", monthly: "Monthly: the last 30 days", quarterly: "Quarterly: the last 90 days"
 };
 
 export interface ListData { rows: Row[]; total: number; page: number; per: number; awaiting?: number; awaitingNote?: { en: string; ta: string } | null }

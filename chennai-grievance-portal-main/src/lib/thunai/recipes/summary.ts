@@ -226,7 +226,7 @@ export async function summaryRecipe(c: RecipeCtx): Promise<SummaryPart> {
   const up = pct(inc.n, inc.prev);
   const lead = countWords(subj, inc.n);
   addPoint(held
-    ? bi(`${lead.en} ${over}, ${inc.prev === inc.n ? "the same as" : inc.n > inc.prev ? "up from" : "down from"} ${spoken(inc.prev)} in ${w.prev.label.en}${up != null && inc.prev !== inc.n ? ` (${up > 0 ? "+" : ""}${up}%)` : ""}.`,
+    ? bi(`${lead.en} ${over}, ${inc.prev === inc.n ? "the same as" : inc.n > inc.prev ? "up from" : "down from"} ${spoken(inc.prev)} ${inBefore(w.prev.label.en)}${up != null && inc.prev !== inc.n ? ` (${up > 0 ? "+" : ""}${up}%)` : ""}.`,
       `${whenLine.ta} ${lead.ta}; ${w.prev.label.ta} ${spoken(inc.prev)}${up != null && inc.prev !== inc.n ? ` (${up > 0 ? "+" : ""}${up}%)` : ""}.`)
     : bi(`${lead.en} ${over} (no change is given: the window before reaches back before the records begin).`, `${whenLine.ta} ${lead.ta}.`), casesDrill({}, L("All incidents", "எல்லா சம்பவங்களும்")));
   const kindTa = (k: { cat: string; label: string }) => CAT_LABEL_TA[k.cat] ?? k.label;
@@ -378,7 +378,7 @@ export async function summaryRecipe(c: RecipeCtx): Promise<SummaryPart> {
 
   // ---- the spoken line: how it stands, the leading kind, the urgent one, one reading
   const enS: string[] = [], taS: string[] = [];
-  enS.push(inc.n ? `${lead.en} came in ${over}${held ? `, against ${spoken(inc.prev)} in ${w.prev.label.en.replace(/ \(.*\)$/, "")}` : ""}.` : `Nothing was reported${subj.whereW ? ` in ${subj.whereW.en}` : ""}${subj.kindW ? ` for ${subj.kindW.en.toLowerCase()}` : ""}${subj.deptW ? ` for ${subj.deptW.en}` : ""} ${over}.`);
+  enS.push(inc.n ? `${lead.en} came in ${over}${held ? `, against ${spoken(inc.prev)} ${inBefore(w.prev.label.en.replace(/ \(.*\)$/, ""))}` : ""}.` : `Nothing was reported${subj.whereW ? ` in ${subj.whereW.en}` : ""}${subj.kindW ? ` for ${subj.kindW.en.toLowerCase()}` : ""}${subj.deptW ? ` for ${subj.deptW.en}` : ""} ${over}.`);
   taS.push(inc.n ? `${whenLine.ta} ${lead.ta} வந்திருக்கு; முன்னாடி ${spoken(inc.prev)}.` : `${whenLine.ta} ${subj.whereW ? `${inTa(subj.whereW.ta)} ` : ""}எதுவும் பதிவாகல.`);
   if (inc.kinds[0] && inc.n >= 3 && inc.kinds[0].n >= 2 && !(subj.cats?.length === 1)) { enS.push(`Most were ${inc.kinds[0].label.toLowerCase().replace(/&/g, "and")}, ${spoken(inc.kinds[0].n)}.`); taS.push(`அதிகம் ${kindTa(inc.kinds[0])}, ${spoken(inc.kinds[0].n)}.`); }
   if (inc.severe || inc.overdue) { enS.push(`${spoken(inc.severe)} ${inc.severe === 1 ? "is" : "are"} severe and ${spoken(inc.overdue)} ${inc.overdue === 1 ? "is" : "are"} past ${inc.overdue === 1 ? "its" : "their"} deadline.`); taS.push(`${spoken(inc.severe)} கடுமையானவை, ${spoken(inc.overdue)} கெடு தாண்டியவை.`); }
@@ -404,6 +404,8 @@ export async function summaryRecipe(c: RecipeCtx): Promise<SummaryPart> {
 const dayOf = (t: string) => { const m = t.match(/^(\d{4})-(\d{2})-(\d{2})/)!; return { day: Number(m[3]), month: Number(m[2]) - 1, year: Number(m[1]) }; };
 /** the last whole day before an exclusive bound */
 const lastDay = (to: string) => new Date(Date.parse(`${to.replace(" ", "T")}+05:30`) - 1000 + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
+/** "in the 7 days before", "yesterday by this time" (the Daily window's comparison takes no "in") */
+const inBefore = (label: string): string => (/ by this time$/.test(label) ? label : `in ${label}`);
 const whenOf = (w: Win): StageDocT["when"] => (w.custom ? { en: clip(w.label.en, 160), ta: clip(w.label.ta, 200), from: w.from, to: w.to } : null);
 
 /** the summary's own slots, as checkScreen keeps them (screens.ts Slots) */

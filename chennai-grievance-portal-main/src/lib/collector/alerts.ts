@@ -8,7 +8,7 @@
  *             all-India feed is read (https://sachet.ndma.gov.in/cap_public_website/rss/rss_india.xml), at most every
  *             15 minutes, and only alerts that name Chennai are kept; each one's CAP file gives its severity and expiry.
  *             The last copy is kept in data/aws-cache/ for when the site cannot be reached.
- *   News      articles of the last 48 hours typed as alerts (reporttype.ts: forecasts and warnings). From each headline: the hazard, its
+ *   News      articles of today and the two days before typed as alerts (reporttype.ts: forecasts and warnings). From each headline: the hazard, its
  *             name (Cyclone Arnab), the colour level, the districts it is for and when. An AI reads the headlines when
  *             one is available (in the background; the rules' reading is used until it answers); either way the code,
  *             not the AI, decides whether Chennai is one of the districts the alert is for.
@@ -24,6 +24,7 @@ import { z } from "zod";
 import intelPool from "@/lib/collector/db";
 import { generateJson, aiStatus } from "@/lib/ai/gateway";
 import { isOccasion, stormName } from "@/lib/collector/idioms";
+import { dayWindow } from "@/lib/period/day";
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -199,22 +200,28 @@ const AiRead = z.object({
 type AiReadT = z.infer<typeof AiRead>;
 declare global {
   // eslint-disable-next-line no-var
-  var __alertAi: { key: string; out: Map<string, AlertRead> | null; busy: Promise<void> | null } | undefined;
+  var __alertAi: { out: Map<string, AlertRead>; asked: Map<string, number>; busy: Promise<void> | null } | undefined;
 }
+/** a headline's reading is kept by its own words, so the same headline under a new build's id keeps it */
+const readKey = (text: string) => text.toLowerCase().replace(/\s+/g, " ").trim().slice(0, 220);
+const READS_KEPT = 400;
+const READ_AGAIN_MS = 10 * 60_000;
 
 /**
- * The AI's reading of the headlines (hazard, name, level, the districts the alert is for, when), in the background: null
- * until it has answered for exactly these headlines. The districts are only what the headline lists; Chennai's
- * membership is still decided by chennaiUnder().
+ * The AI's reading of the headlines (hazard, name, level, the districts the alert is for, when), in the background. The
+ * districts are only what the headline lists; Chennai's membership is still decided by chennaiUnder().
+ * 26 Nov: one reading per headline, kept (it was one for the whole list: a new headline, or a build that gave a report another id, threw
+ * every reading away, and the banner went back to the rules' reading until the AI answered for exactly the new list, or for good when it
+ * did not). Only headlines not read yet are asked about; a call that fails is tried again later and takes nothing away.
  */
-function aiReads(docs: { id: string; text: string }[]): Map<string, AlertRead> | null {
-  if (!docs.length || !aiStatus().available) return null;
-  const key = docs.map((d) => d.id).sort().join(",");
+export function aiReads(docs: { id: string; text: string }[]): Map<string, AlertRead> | null {
+  if (!docs.length) return null;
+  const g = (global.__alertAi ??= { out: new Map(), asked: new Map(), busy: null });
   const textOf = new Map(docs.map((d) => [d.id, d.text]));
-  const g = (global.__alertAi ??= { key: "", out: null, busy: null });
-  if (g.key === key && g.out) return g.out;
-  if (g.key !== key && !g.busy) {
-    g.key = key; g.out = null;
+  const todo = docs.filter((d) => !g.out.has(readKey(d.text)) && Date.now() - (g.asked.get(readKey(d.text)) ?? 0) > READ_AGAIN_MS).slice(0, 40);
+  if (todo.length && !g.busy && aiStatus().available) {
+    for (const d of todo) g.asked.set(readKey(d.text), Date.now());
+    while (g.asked.size > READS_KEPT) g.asked.delete(g.asked.keys().next().value!);
     g.busy = generateJson<AiReadT>({
       role: "fast", name: "alert-headlines", schema: AiRead, temperature: 0, maxOutputTokens: 4000, user: "system", background: true, timeoutMs: 40_000,
       system: "You read weather and disaster warning headlines from Tamil Nadu news. For each, give: hazard (none when the headline is not about weather or a " +
@@ -223,27 +230,32 @@ function aiReads(docs: { id: string; text: string }[]): Map<string, AlertRead> |
         "Karthigai Deepam is only the day the rain falls on, so storm_name is empty and occasion is Karthigai Deepam. Then the alert colour level if the headline states " +
         "one, else none; the districts the warning is FOR, exactly as named (not districts only asked about, e.g. 'Will Chennai be affected?' does not put Chennai in the " +
         "list); when it applies (today, tomorrow, a date) or empty. Never guess.",
-      prompt: docs.map((d) => `${d.id}: ${d.text}`).join("\n")
+      prompt: todo.map((d) => `${d.id}: ${d.text}`).join("\n")
     }).then((r) => {
-      if (g.key !== key) return;
-      g.out = new Map(r.object.items.map((x) => [x.id, {
+      for (const x of r.object.items) if (textOf.has(x.id)) g.out.set(readKey(textOf.get(x.id)!), {
         hazard: x.hazard === "none" ? null : x.hazard,
         // the model's answer is checked against the headline itself: a name counts only beside the storm word, and never a festival
         name: isOccasion(x.storm_name) || (!!x.storm_name.trim() && x.occasion.trim().toLowerCase() === x.storm_name.trim().toLowerCase()) ? null : stormName(x.storm_name, textOf.get(x.id)),
         level: (x.level === "red" ? 3 : x.level === "orange" ? 2 : x.level === "yellow" ? 1 : null) as Level | null,
         districts: x.districts.map((d) => d.trim()).filter(Boolean), districtCount: x.districts.length || null,
         chennaiNamed: false, when: x.when.trim() || null
-      }]));
+      });
+      while (g.out.size > READS_KEPT) g.out.delete(g.out.keys().next().value!);
     }).catch((e) => console.warn(`[alerts] AI headline reading: ${(e as Error).message.slice(0, 160)}`))
       .finally(() => { g.busy = null; });
   }
-  return null;
+  const have = docs.flatMap((d) => { const r = g.out.get(readKey(d.text)); return r ? [[d.id, r] as const] : []; });
+  return have.length ? new Map(have) : null;
 }
 
 // -------------------------------------------------------------------- lane --
 
-/** how far back warning news counts: a cyclone is reported for days before it arrives */
-export const NEWS_HOURS = 48;
+/**
+ * How far back warning news counts: a cyclone is reported for days before it arrives. 26 Nov: whole days, from 12 AM two days before the desk's
+ * day (48 hours and the day so far), so no report leaves the alert, and no alert the page, in the middle of a day.
+ */
+export const NEWS_DAYS = 2;
+const newsFrom = (now: string) => dayWindow(now, NEWS_DAYS).from;
 export interface NewsAlert { id: string; title: string; titleEn: string | null; publisher: string | null; t: string; url?: string | null }
 export interface ImdDay { day: string; level: number; text: string }
 export interface FeedState { source: string; label: string; metric: string; newest: string | null; maxHours: number }
@@ -286,11 +298,11 @@ export function lane(i: { now: string; imd: ImdDay[]; sachet: SachetItem[]; news
   const imdLevel = (imdToday?.level ?? 0) as Level;
   const imdSays = !imdNext.length ? "no reading" : imdNext.map((d) => `${d.day === today ? "today" : fmtWhen(d.day + " 00:00:00")}: ${d.level ? `${LEVEL_NAME[d.level]} (${d.text})` : "no warning"}`).join("; ");
   // ---- SACHET: alerts naming Chennai still in force
-  const live = i.sachet.filter((s) => s.chennai && (!s.expires || s.expires >= i.now) && hoursBetween(s.t, i.now) <= 24);
+  const live = i.sachet.filter((s) => s.chennai && (!s.expires || s.expires >= i.now) && s.t >= dayWindow(i.now, 1).from);
   const sachetLevel = live.reduce<Level>((a, s) => Math.max(a, capLevel(s.severity)) as Level, 0);
   const sachetTop = [...live].sort((a, b) => capLevel(b.severity) - capLevel(a.severity) || b.t.localeCompare(a.t))[0];
   // ---- news: each alert article read (the AI's reading where it has one), grouped into the main event
-  const news = i.news.filter((n) => hoursBetween(n.t, i.now) <= NEWS_HOURS).map((n) => {
+  const news = i.news.filter((n) => n.t >= newsFrom(i.now)).map((n) => {
     const r = readHeadline(n.titleEn, n.title), ai = i.reads?.get(n.id);
     const m: AlertRead = ai ? { ...r, hazard: ai.hazard ?? r.hazard, name: stormName(ai.name, n.titleEn, n.title) ?? r.name, level: ai.level ?? r.level,
       districts: ai.districts.length ? ai.districts : r.districts, districtCount: ai.districtCount ?? r.districtCount, when: ai.when ?? r.when } : r;
@@ -419,8 +431,8 @@ export async function alertLane(now: string): Promise<AlertLane> {
        FROM observations WHERE source = 'imd' AND metric = 'imd_warning_level' AND observed_at >= DATE(?) ORDER BY observed_at LIMIT 60`, [now]).catch(() => [] as Row[]),
     q(`SELECT d.doc_id AS id, d.title, d.title_en, d.publisher, d.url, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t FROM documents d
        WHERE d.source_kind = 'news' AND d.report_type = 'alert' AND COALESCE(d.publisher_tier, '') NOT IN ('social', 'aggregator')
-         AND d.published_at > (? - INTERVAL 48 HOUR) AND d.published_at <= ?
-       ORDER BY d.published_at DESC LIMIT 80`, [now, now]).catch(() => [] as Row[]),
+         AND d.published_at >= ? AND d.published_at <= ?
+       ORDER BY d.published_at DESC, d.doc_id LIMIT 80`, [newsFrom(now), now]).catch(() => [] as Row[]),
     Promise.all(HAZARD_FEEDS.map(async (f) => {
       const [r] = await q(`SELECT DATE_FORMAT(MAX(observed_at), '%Y-%m-%d %H:%i:%s') AS t FROM observations WHERE source = ? AND metric = ? AND observed_at <= ?`, [f.source, f.metric, now]).catch(() => [] as Row[]);
       return { ...f, newest: r?.t ?? null };
@@ -432,7 +444,7 @@ export async function alertLane(now: string): Promise<AlertLane> {
     sachetChennai().catch(() => ({ items: [] as SachetItem[], error: "unreachable", at: null }))
   ]);
   const docs = (news as Row[]).map((n) => ({ id: String(n.id), title: String(n.title ?? ""), titleEn: n.title_en ? String(n.title_en) : null, publisher: n.publisher ?? null, t: String(n.t), url: n.url ?? null }));
-  const reads = aiReads(docs.slice(0, 40).map((d) => ({ id: d.id, text: d.titleEn && d.titleEn !== d.title ? `${d.titleEn} (${d.title})` : d.title })));
+  const reads = aiReads(docs.map((d) => ({ id: d.id, text: d.titleEn && d.titleEn !== d.title ? `${d.titleEn} (${d.title})` : d.title })));
   return lane({
     now, sachet: sachet.items, news: docs, reads,
     imd: imdDays(imd as Row[]),

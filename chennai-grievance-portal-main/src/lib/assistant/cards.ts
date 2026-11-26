@@ -5,7 +5,7 @@
  * language, and their validation against the store's codes.
  */
 import crypto from "crypto";
-import { COVERS, EXAMPLES, PERIOD_LABEL, TEXT, voiceLang, type Lang } from "@/lib/assistant/lang";
+import { COVERS, EXAMPLES, TEXT, periodLabelIn, voiceLang, type Lang } from "@/lib/assistant/lang";
 import { fmtValue } from "@/lib/assistant/chartspec";
 import { emptySources, type AnswerCard, type ConsoleAction, type ConsoleActionName, type Kpi, type Period, type Scope } from "@/lib/assistant/answer";
 import type { RefNames } from "@/lib/assistant/scope";
@@ -109,7 +109,7 @@ const ACTION_LABEL: Record<ConsoleActionName, (a: ConsoleAction, n: RefNames, la
   filter_taluk: (a, n, l) => { const t = n.taluks.get(a.taluk!); const nm = (l === "ta" ? t?.nameTa : null) ?? t?.name ?? a.taluk!;
     return L(`Filter the console to ${nm} taluk`, `கன்சோலை ${nm} வட்டத்திற்கு வடிகட்டு`, `Console-a ${nm} taluk ku filter pannu`)[l]; },
   filter_cat: (a, n, l) => { const nm = n.cats.get(a.cat!)?.label ?? a.cat!; return L(`Show ${nm} only`, `${nm} மட்டும் காட்டு`, `${nm} mattum kaattu`)[l]; },
-  set_period: (a, _n, l) => { const p = PERIOD_LABEL[a.period as Period][l]; return L(`Set the console to ${p.toLowerCase()}`, `கன்சோலை ${p} என மாற்று`, `Console-a ${p} ku maathu`)[l]; },
+  set_period: (a, _n, l) => { const p = periodLabelIn(a.period as Period, l); return L(`Set the console to ${p.charAt(0).toLowerCase()}${p.slice(1)}`, `கன்சோலை ${p} என மாற்று`, `Console-a ${p} ku maathu`)[l]; },
   open_incident: (a, _n, l) => L(`Open ${a.id}`, `${a.id} ஐத் திற`, `${a.id} open pannu`)[l],
   open_story: (_a, _n, l) => L("Open developing stories", "வளரும் செய்திகளைத் திற", "Developing stories open pannu")[l],
   open_briefing: (_a, _n, l) => L("Open the Briefing page", "சுருக்க அறிக்கைப் பக்கத்தைத் திற", "Briefing page open pannu")[l],

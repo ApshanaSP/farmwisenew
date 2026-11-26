@@ -16,6 +16,7 @@ import { useMapAsk } from "@/components/collector/app/askmap/useMapAsk";
 import { I, type IconName } from "@/components/collector/app/icons";
 import { Kpi, OfficerCard } from "@/components/collector/app/Overview";
 import { Cnt, Empty, deptIcon, fullTitle, rel, type Row } from "@/components/collector/app/lib";
+import { labelLower } from "@/lib/period/day";
 import type { Ctx } from "./OfficerApp";
 import { BeforeRainStrip } from "./BeforeRainTasks";
 import { OfficerAttention } from "./OfficerAttention";
@@ -81,12 +82,12 @@ export function ResolvedKpi({ c, label, style }: { c: Ctx; label: string; style:
   );
 }
 /**
- * The officer's Resolved tile counts the department's grievances first reported in the console's window (the last 24 hours, or the last
+ * The officer's Resolved tile counts the department's grievances first reported in the console's window (today since 12 AM, or the last
  * 7, 30 or 90 days back from now) that are now verified (resolvedTile, windowWhere on first_reported_at). It said "Resolved this week /
  * month / quarter" and "Resolved in 24 h": calendar words, and closings, neither of which it counts (fixall-board-resolved-01; the
  * Collector's tile and Ask District IQ were corrected the same way: console-sync-01, reviewerE-04). Tamil in i18n/ta.ts.
  */
-export const resolvedLabel = (P: { label: string }) => `Resolved, reported in ${P.label.toLowerCase()}`;
+export const resolvedLabel = (P: { label: string }) => `Resolved, reported ${/^last\b/i.test(P.label) ? "in " : ""}${labelLower(P.label)}`;
 
 export const RESOLVED_LIST_TITLE = "Resolved: verified by the Collector or closed by your department";
 
@@ -160,7 +161,7 @@ function DeptSnap({ c, openContacts }: { c: Ctx; openContacts: () => void }) {
   const s = c.ov.board.snapshot as Row;
   const k = c.ov.counts;
   const head = (s.contacts as Row[] | undefined)?.find((x) => x.dept_code === c.dept.code) ?? c.ov.head;
-  const period = `${c.ov.periodInfo.word} · ${c.ov.periodInfo.label.toLowerCase()}`;
+  const period = `${c.ov.periodInfo.word} · ${labelLower(c.ov.periodInfo.label)}`;
   return (
     <>
       <div className="snap-t">
@@ -209,7 +210,7 @@ function NewsCard({ c, openNews }: { c: Ctx; openNews: () => void }) {
               <span className="loc">{(i.outletNames as string[] | undefined)?.length ? (i.outletNames as string[]).join(", ") : "News"} · {i.zone_name ?? "Chennai"} · {rel(i.t, c.now)}</span>
             </span>
           </button>
-        )) : <Empty>No news about {c.dept.short} {c.ov.period === "daily" ? "in the last 24 hours" : "in this period"}.</Empty>}
+        )) : <Empty>No news about {c.dept.short} {c.ov.period === "daily" ? labelLower(c.ov.periodInfo.label) : "in this period"}.</Empty>}
       </div>
     </>
   );

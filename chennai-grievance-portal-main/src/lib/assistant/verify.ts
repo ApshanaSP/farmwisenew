@@ -25,6 +25,7 @@ const PATTERNS: RegExp[] = [
   /\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, // 29/09
   /\b\d{1,2}:\d{2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?/gi, // 6:43 PM, 18:43
   /\b\d{1,2}\.\d{2}\s*(?:am|pm|a\.m\.|p\.m\.)/gi, // 6.43 pm (a dot only with am/pm: 97.65 is a number)
+  /\b12\s?(?:am\b|a\.m\.)/gi, // "today (since 12 AM)": the Daily window's own start
   /\b(?:19|20)\d{2}\b/g, // years
   /\b(?:zone|ward|zones|wards|மண்டலம்|மண்டல|வார்டு)\s*(?:no\.?\s*)?\d{1,3}(?:\s*(?:and|&|,|to|-)\s*\d{1,3})*/gi, // Zone 9, wards 64 and 65
   /\bw\/e\b/gi,

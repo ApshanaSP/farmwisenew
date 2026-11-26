@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
 import { I } from "./icons";
 import { Empty, SEVS, SEV_HEX, deptIcon, fullTitle, rel, sevTone, type Row } from "./lib";
+import { labelIn } from "@/lib/period/day";
 import type { Console } from "./CollectorApp";
 import "./attention.css";
 
@@ -98,7 +99,7 @@ function SevList({ d, c }: { d: OverviewData; c: Console }) {
               </button>
             )}
           </div>
-        )) : <Empty>No open {tab.toLowerCase()} incidents {c.periodLabel.toLowerCase()}.</Empty>}
+        )) : <Empty>No open {tab.toLowerCase()} incidents {labelIn(c.periodLabel)}.</Empty>}
       </div>
     </>
   );

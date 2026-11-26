@@ -109,7 +109,7 @@ export async function situationRecipe(c: RecipeCtx): Promise<RecipePart> {
 
   // the spoken line: how it stands, the link, the conditions, what I'd do
   const where = zone ? bi(`In ${zone.en}`, inTa(zone.ta)) : bi("Across the district", "மாவட்டம் முழுக்க");
-  const en: string[] = [`${where.en}, ${spoken(now)} incidents came in over ${win.now.en} against ${spoken(before)} ${win.before.en}.`];
+  const en: string[] = [`${where.en}, ${spoken(now)} incidents came in ${win.over.en} against ${spoken(before)} ${win.before.en}.`];
   const ta: string[] = [`${where.ta} ${win.now.ta} ${spoken(now)} சம்பவங்கள் வந்திருக்கு, ${win.before.ta} ${spoken(before)}.`];
   const placeEn = zone ? ` in ${zone.en}` : "", placeTa = zone ? `${inTa(zone.ta)} ` : "";
   if (afterRain) {

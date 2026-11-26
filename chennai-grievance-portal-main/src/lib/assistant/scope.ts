@@ -2,7 +2,7 @@
  * The console scope every answer is computed for: period, zone, department, category and
  * taluk, exactly the filters on the Collector console. A question is sent with the
  * console's current filters and answered for them unless it says otherwise, and every
- * answer prints its scope ("Last 7 days · Teynampet (Zone 9) · all departments · as of ...").
+ * answer prints its scope ("Today (since 12 AM) · ...", "Last 7 days · Teynampet (Zone 9) · all departments · as of ...").
  */
 import fs from "fs";
 import path from "path";
@@ -10,7 +10,7 @@ import { z } from "zod";
 import { RowDataPacket } from "mysql2";
 import intelPool from "@/lib/collector/db";
 import { exportMeta } from "@/lib/collector/intel";
-import { PERIOD_LABEL, TEXT, type Lang } from "@/lib/assistant/lang";
+import { TEXT, periodLabelIn, type Lang } from "@/lib/assistant/lang";
 
 export const PERIOD_KEYS = ["daily", "weekly", "monthly", "quarterly"] as const;
 
@@ -20,7 +20,7 @@ export const ScopeSchema = z.object({
   dept: z.string().regex(/^[A-Z0-9-]{2,20}$/).nullable().default(null),
   cat: z.string().regex(/^[A-Z_]{3,40}$/).nullable().default(null),
   taluk: z.string().regex(/^TLK-[A-Z]{3}$/).nullable().default(null),
-  /** windows back from now: 1 with a daily period = yesterday */
+  /** windows back from now: 1 with a daily period = yesterday, the whole calendar day (12 AM to 12 AM) */
   offset: z.number().int().min(0).max(3).optional()
 });
 export type AssistantScope = z.infer<typeof ScopeSchema>;
@@ -102,7 +102,7 @@ export function fmtAsOf(asOf: string, lang: Lang): string {
 /** The scope line printed on every answer card, in the reply language. */
 export function describeScope(s: AssistantScope & { offset?: number }, n: RefNames, lang: Lang, asOf?: string): string {
   const prevDay = s.offset === 1 && s.period === "daily";
-  const parts: string[] = [prevDay ? ({ en: "Previous day (yesterday)", ta: "நேற்று", tanglish: "Nethu (previous day)" } as Record<Lang, string>)[lang] : PERIOD_LABEL[s.period][lang]];
+  const parts: string[] = [prevDay ? ({ en: "Previous day (yesterday)", ta: "நேற்று", tanglish: "Nethu (previous day)" } as Record<Lang, string>)[lang] : periodLabelIn(s.period, lang, asOf)];
   if (s.zone != null) {
     const z = n.zones.get(s.zone);
     const name = lang === "ta" ? z?.nameTa ?? z?.name : z?.name;

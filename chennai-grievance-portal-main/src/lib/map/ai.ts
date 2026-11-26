@@ -241,7 +241,7 @@ function system(cats: string[], depts: string[], zones?: { zone: number; name: s
     "With intent other than city, city is none.",
     "A single word or two is a question too: a layer (\"school\", \"atm\", \"tasmac\") lists that layer; a kind of problem (\"garbage\", \"kuppai\", \"potholes\") shows those open incidents; a place (\"Adyar\", \"ward 178\") shows the open incidents in it. Never refuse them.",
     "Each step is one flat object with every field; a field a step does not use is none. Areas: area_kind with area_id (ward, zone), area_code (taluk), or area_ref with area_radius_m (point); compare uses area_* for A and b_* for B. Periods: period_days with period_offset (0 = ending now).",
-    "Calendar periods (period_calendar, period_days none): today = day offset 0 (since midnight), yesterday = day offset 1, last week / last month / last quarter = week, month or quarter offset 1 (the calendar one before).",
+    "Calendar periods (period_calendar, period_days none): today = day offset 0 (since 12 AM), yesterday = day offset 1, last week / last month / last quarter = week, month or quarter offset 1 (the calendar one before).",
     "This week, last 7 days, this month and last 30 days count back from now: period_days 7 or 30, period_calendar none.",
     "A change compares two equal windows counted back from now: period_days with period_offset 0, before_days the same, before_offset 1; never a calendar period so far (today, this week) against a whole one.",
     "Examples (each step shows only its fields with a value; every other field is none):",

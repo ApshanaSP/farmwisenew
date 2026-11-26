@@ -292,7 +292,7 @@ export function Palette({ open, onClose, actions, search, ask, askMap }: {
                 );
               }) : <div className="empty">{q.trim().length < 2 ? "Type at least two letters." : busy ? "Searching…" : "No matches. Try a zone, street, department or incident ID."}</div>}
             </div>
-            <div className="pal-f"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> open</span><span><kbd>/</kbd> search anywhere</span></div>
+            <div className="pal-f"><span title="The search is of the whole district and any date: the filters do not apply">Whole district, any date</span><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> open</span><span><kbd>/</kbd> search anywhere</span></div>
           </motion.div>
         </>
       )}
@@ -318,9 +318,10 @@ export function bellGroups(items: BellItem[], nowMs: number): { l: string; rows:
   ].filter((g) => g.rows.length);
 }
 /** Alerts: the bell shakes once when new alerts arrive; the popover groups them (bellGroups) under the period they are from. */
-export function Bell({ items, unread, open, onToggle, onPick, onMarkRead, nowMs, period }: {
+export function Bell({ items, unread, open, onToggle, onPick, onMarkRead, nowMs, period, scope }: {
   items: BellItem[]; unread: number; open: boolean; onToggle: () => void; onPick: (id: string) => void; onMarkRead: () => void; nowMs: number;
   /** the console's period, "Last 7 days" (the bell's alerts are the period's) */ period: string;
+  /** the console's filters in words, "District-wide" with none: the alerts follow them */ scope?: string;
 }) {
   const prev = useRef(unread);
   const [shake, setShake] = useState(0);
@@ -336,7 +337,7 @@ export function Bell({ items, unread, open, onToggle, onPick, onMarkRead, nowMs,
         {open && (
           <motion.div className="pop bellpop" initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4 }}
             transition={{ duration: T.fast }} style={{ transformOrigin: "top right" }}>
-            <div className="pop-h">{`Severe and high · ${period.toLowerCase()}`}<button className="lnk" onClick={onMarkRead}>Mark all read</button></div>
+            <div className="pop-h"><span>{`Severe and high · ${period.toLowerCase()}`}{scope && <small>{scope}</small>}</span><button className="lnk" onClick={onMarkRead}>Mark all read</button></div>
             {groups.length ? groups.map((g) => (
               <div key={g.l}>
                 <div className="pop-g">{g.l}</div>

@@ -63,7 +63,7 @@ export default function AskOverlay({ ask, role, toast, onOpen, layersMenu, overl
     const label = r?.kind === "answer" ? r.answer?.headline.replace(/ · (map layer ready|வரைபட அடுக்கு தயார்)\.?$/, "") : r?.kind === "brief" ? r.brief?.label.en : null;
     return (
       <div className="ampills">
-        <button className="ampill" onClick={() => { setFocusBox(true); ask.setGrown(true); }} title="Ask the map a question, in English or Tamil" aria-label="Ask the map"
+        <button className="ampill" onClick={() => { setFocusBox(true); ask.setGrown(true); }} title="Ask the map a question, in English or Tamil. It answers for the zone or taluk chosen; the period, department and category are read from the question" aria-label="Ask the map"
           onMouseEnter={prefetchPanel} onFocus={prefetchPanel}>
           <I n="search" />{label ? <span className="ans">{label}</span> : <span>{compact ? "Ask the map" : "Ask the map…"}</span>}
         </button>

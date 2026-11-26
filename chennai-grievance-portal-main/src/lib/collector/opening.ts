@@ -2,12 +2,13 @@
  * The briefing's AI opening (the pipeline's stored summary of a period, briefings.ai_summary, and the briefing book's daily "situation"
  * note, briefing_notes) is shown under "Written by AI from today's figures; every number is checked against the data". The pipeline wrote
  * it for the window of its own build (to its as_of) and checked its numbers against that build's facts; the console shows the live figures
- * of its own rolling window beside it. hunt2-ops-12: a summary of the week to 6 Nov said "more incidents than the previous period" beside
- * the live week's "78% fewer".
+ * of its own window beside it. hunt2-ops-12: a summary of the week to 6 Nov said "more incidents than the previous period" beside
+ * the live week's "78% fewer". Since 26 Nov 2026 the console's Daily is the calendar day from 12 AM, while the pipeline's is the 24 hours to
+ * its build: a stored daily summary is of the same window only around midnight, so it is all but never shown and the live figures are.
  *
  * So a stored summary is shown as today's only when
  *   1. it is the summary of the console's window: its as_of is the console's now, within a twentieth of the period (at least 2 hours, as
- *      builds run hourly and the notes take a few minutes to write);
+ *      builds run hourly and the notes take a few minutes to write), and it begins where the console's window begins (`from`);
  *   2. every claim of a rise or a fall it makes, clause by clause, about all incidents or about severe ones, agrees with the live change of
  *      that figure (a percentage it states must be that change; "about the same" is within 5%; "sharply", "doubled", "halved" need a
  *      change that size); a clause that says both ways, or a percentage it cannot place, keeps it off;
@@ -25,9 +26,11 @@ export interface LiveFacts {
 }
 export interface StoredOpening { asOf: string | null; en: string | null; ta: string | null }
 export interface LiveBrief {
-  /** the console's now and the period's length in hours: the window the live figures are for */
+  /** the console's now, and the length in hours of the window the pipeline writes this period's summary for (its as_of back) */
   now: string;
   hours: number;
+  /** where the live figures' window begins (IST), when it is not `hours` back from now: Daily's 12 AM */
+  from?: string | null;
   facts: LiveFacts;
   /** other figures on the page a summary may state without a noun the checker knows */
   extra?: number[];
@@ -186,6 +189,10 @@ export function checkOpening(s: StoredOpening, live: LiveBrief): CheckedOpening 
   const slackH = Math.max(2, live.hours / 20);
   if (Math.abs(now - at) / 3_600_000 > slackH) {
     return { opening: null, why: `written for the window to ${String(s.asOf).slice(0, 16)}, not the console's window to ${live.now.slice(0, 16)}` };
+  }
+  const start = live.from ? ms(live.from) : NaN, began = at - live.hours * 3_600_000;
+  if (Number.isFinite(start) && Math.abs(began - start) / 3_600_000 > slackH) {
+    return { opening: null, why: `counts the ${live.hours} hours to ${String(s.asOf).slice(0, 16)}, not the console's window from ${String(live.from).slice(0, 16)}` };
   }
   const wrong = contradiction(en, live.facts, live.extra ?? []);
   if (wrong) return { opening: null, why: wrong };

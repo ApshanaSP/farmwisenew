@@ -64,10 +64,17 @@ import { NEWS_ASKED, isWarningQuestion, newsLines, warningAnswer, warningCard, w
 import { mapCard } from "@/lib/map/assistant";
 import { syncEpoch } from "@/lib/collector/epoch";
 import { zoneNoIn } from "@/lib/zone-no";
+import { periodLower } from "@/lib/period/day";
 import { cityTopic, type CityRow, type CityRanked } from "@/lib/city/now";
 import { cityAsk } from "@/lib/city/intent";
+import { askBrain, brainOn } from "@/lib/brain";
+import { cardOf as brainCard } from "@/lib/brain/render";
+import { forget as forgetBrain } from "@/lib/brain/memory";
+import { serverWorld } from "@/lib/thunai/world";
 
 type Row = Record<string, any>;
+/** 26 Nov: how long the chat waits for the brain before its older lanes answer */
+const BRAIN_CHAT_MS = 45_000;
 export type Stage = "understanding" | "fetching" | "drawing";
 
 export interface ChatInput {
@@ -304,9 +311,9 @@ export function sinceReset<T extends { role?: string; context?: unknown }>(turns
   return turns;
 }
 
-/** The period an answer covers when the question names none: the whole quarter, not just the console's last 24 hours. */
+/** The period an answer covers when the question names none: the whole quarter, not just the console's day. */
 export const DEFAULT_PERIOD = "quarterly" as const;
-const PERIOD_TEXT = { daily: "last 24 hours", weekly: "last 7 days", monthly: "last 30 days", quarterly: "last 90 days" } as const;
+const periodText = (p: Scope["period"]): string => (p === "daily" ? periodLower(p) : `the ${periodLower(p)}`);
 
 const SMALLTALK = /^\s*(hi|hello|hey|thanks|thank you|thx|good (morning|afternoon|evening|night)|vanakkam|nandri|ok|okay|bye)\b|^\s*(வணக்கம்|நன்றி)/i;
 /** the whole message is a greeting, thanks or goodbye (not "hi, how many accidents today?"); "ok" stays with the router */
@@ -317,12 +324,13 @@ const PERIOD_WORDS = new RegExp(`${YESTERDAY.source}|${/\b(today'?s?|yesterday|n
 export function periodFromWords(m: string): Scope["period"] | null {
   // "open for more than 7 days", "pending over 30 days": how long something has been open, not the period asked about
   m = m.replace(/\b(for\s+)?(more than|longer than|older than|beyond)\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b|\bfor\s+over\s+(\d+|seven|thirty|an?|one|two|three)\s+(days?|weeks?|months?)\b/gi, " ");
-  // "what changed since yesterday": the last day against the day before
+  // "what changed since yesterday": the day so far against yesterday by this time
   if (/\bsince (yesterday|last night)\b/i.test(m)) return "daily";
   // a count of time in any of the three languages is read by the one window reader: the console's own windows are periods, any other count is customWindow's (SKG1-20..22)
   const counted = windowIn(m);
   if (counted) return counted.kind === "span" ? heldPeriod(counted.hours) : null;
-  if (/\b(today'?s?|24 ?h(ou)?rs?|last day)\b|இன்று|இன்றைய|innaiki/i.test(m)) return "daily";
+  // ("the last 24 hours" is no window of the console's: customWindow counts it as it says, back from now)
+  if (/\b(today'?s?)\b|இன்று|இன்றைய|innaiki/i.test(m)) return "daily";
   if (/\b(this week|last week|weekly|7 days|seven days|indha week|intha week|pona week)\b|இந்த வாரம்|indha vaaram/i.test(m)) return "weekly";
   if (/\b(this month|last month|monthly|30 days|thirty days)\b|இந்த மாதம்|maasam/i.test(m)) return "monthly";
   if (/\b(quarter|quarterly|90 days|three months)\b|காலாண்டு/i.test(m)) return "quarterly";
@@ -575,7 +583,7 @@ async function llmRoute(i: ChatInput, message: string, detected: string, base: S
   let deptAlt: Route["alt"] = null;
   const cw = customWindow(message);
   if (cw) {
-    if (scope.period !== cw.period) o.assumptions.push(`The ${cw.label}: figures from tools that only know fixed periods cover the ${PERIOD_TEXT[cw.period]}.`);
+    if (scope.period !== cw.period || (cw.period === "daily" && !cw.range)) o.assumptions.push(`The ${cw.label}: figures from tools that only know fixed periods cover ${periodText(cw.period)}.`);
     scope.period = cw.period;
     o.scope.period = cw.period;
     // "yesterday": the previous day's window, for the tools as for the lists
@@ -1258,7 +1266,8 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
         selectedNewsStoryId: single ? null : prevCtx?.selectedNewsStoryId ?? null, lastVisualization: card.chart?.type ?? null };
     }
     // what was corrected, shown on the card ("Understood as: tomato price") and kept in the sources
-    if (spelled.fixes.length && card.kind !== "refusal") {
+    // (26 Nov: the brain read the words as they were typed)
+    if (spelled.fixes.length && card.kind !== "refusal" && !(plan as { brain?: boolean } | null)?.brain) {
       card.understood = message;
       card.sources.assumptions.unshift(`Read ${spelled.fixes.map((f) => `"${f.from}" as "${f.to}"`).join(", ")}.`);
     }
@@ -1275,6 +1284,23 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
     return { card, sessionId, messageId };
   };
 
+  // 0. (26 Nov) the brain (lib/brain): Claude with every tool and the whole conversation, the same one that answers as Jarvis. The rules, the router
+  // and the older lanes below stand behind it (Claude off, busy, or out of time), and keep pinned answers and today's insights
+  if (!i.pinId && !i.insightKey && brainOn() && !RESET.test(message) && !ONLY_SMALLTALK.test(typed)) {
+    i.stage("fetching");
+    const con = { page: null, period: i.scope.period, zone: i.scope.zone, dept: i.scope.dept, cat: i.scope.cat, taluk: i.scope.taluk, dataset: null };
+    const seed: { user: string; assistant: string }[] = [];
+    for (let k = 0; k + 1 < turns.length; k++) if (turns[k].role === "user" && turns[k + 1].role === "assistant") seed.push({ user: String(turns[k].content_text ?? ""), assistant: String(turns[k + 1].content_text ?? turns[k + 1].headline ?? "") });
+    const b = await askBrain({ text: typed, channel: "chat", user: { email: i.user, role: i.lockDept ? "department_officer" : i.role ?? "collector", lockDept: i.lockDept ?? null }, world: await serverWorld(), console: con, key: `chat:${sessionId}`,
+      seed, signal: i.signal, until: Date.now() + BRAIN_CHAT_MS, lang: i.language === "ta" || i.language === "tanglish" ? "ta" : i.language === "en" ? "en" : null, progress: () => i.stage("fetching") })
+      .catch((e) => { if (i.signal?.aborted) throw e; console.warn(`[assistant] brain: ${(e as Error).message?.slice(0, 200)}`); return null; });
+    if (b) {
+      i.stage("drawing");
+      lang = b.answer.lang === "ta" ? "ta" : "en";
+      return finish(brainCard(b, card0(null), await serverWorld()), { intent: "brain", brain: true, model: b.model, tools: b.evidence.map((e) => e.tool), rounds: b.rounds });
+    }
+  }
+
   // 1. checks in code, before any model
   // on the words as typed, and on the corrected ones (a misspelt "delet all complaints" is still refused)
   let guard = await codeGuard(typed);
@@ -1284,7 +1310,7 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   if (guard?.kind === "off_topic") return finish(refusalCard(card0(null), null, guard.topic), { intent: "out_of_scope", guard: guard.topic });
 
   // "reset", "start over", "clear the chat": the conversation's memory starts again
-  if (RESET.test(message)) return finish(resetCard(card0(null)), { intent: "reset" });
+  if (RESET.test(message)) { forgetBrain(`chat:${sessionId}`); return finish(resetCard(card0(null)), { intent: "reset" }); }
 
   // a message that is only a greeting, thanks or goodbye ("hi", "thank you!", "வணக்கம்") is answered at once: "hi" once took 5 s
   // (a router call, the place lookup and the search index, all for a greeting)
@@ -2365,7 +2391,7 @@ function bulkFinish(card: AnswerCard, route: Route, names: RefNames, lang: Lang,
   const topZone = [...zones].sort((a, b) => Number(b.n ?? 0) - Number(a.n ?? 0))[0];
   const topDept = [...depts].sort((a, b) => Number(b.n ?? 0) - Number(a.n ?? 0))[0];
   const chips = [
-    route.scope.period !== "daily" ? { en: "Last 24 hours only", ta: "கடந்த 24 மணி நேரம் மட்டும்", tanglish: "Last 24 hours mattum" }[lang] : null,
+    route.scope.period !== "daily" ? { en: "Today only", ta: "இன்று மட்டும்", tanglish: "Inniki mattum" }[lang] : null,
     topZone ? only(`${topZone.name}`) : null, topDept ? only(`${topDept.name}`) : null,
     { en: "Severe incidents only", ta: "கடுமையான சம்பவங்கள் மட்டும்", tanglish: "Severe incidents mattum" }[lang]
   ].filter(Boolean) as string[];

@@ -1,17 +1,21 @@
 /**
  * Page 2, the Collector's daily briefing: what happened, told as a story. Figures come from the store by rules; the
- * AI notes are the pipeline's (district_intel briefing_notes: the opening, a brief per department about the last 24
- * hours, the news digest, health and law notes), each written only from computed facts with every number checked.
+ * AI notes are the pipeline's (district_intel briefing_notes: the opening, a brief per department, the news digest,
+ * health and law notes), each written only from computed facts with every number checked. The pipeline counts the 24
+ * hours to its build; the Daily here is the calendar day from 12 AM (lib/period/day.ts), so a note that states a count
+ * is shown only when it is of this window and says the live figures (opening.ts), else the live figures speak.
  * A section without its note falls back to rule-based text, so the page never depends on the AI.
  */
 import { RowDataPacket } from "mysql2";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
-import { OPEN_NOW, PERIODS, awaitingCheck, explain, periodSinceWindow, periodWindow, type Period } from "@/lib/collector/intel";
+import { OPEN_NOW, PERIODS, awaitingCheck, explain, kpiBlock, list, periodSinceWindow, periodWindow, snapCommon, type Period } from "@/lib/collector/intel";
 import { orEmpty } from "@/lib/fallback";
 import { alertLane } from "@/lib/collector/alerts";
-import { pctChange } from "@/lib/reference/metrics";
+import { pastDueSql, pctChange } from "@/lib/reference/metrics";
 import { checkOpening } from "@/lib/collector/opening";
+import { dayByDay, scopeFilters } from "@/lib/collector/daily";
+import { dayStart } from "@/lib/period/day";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-028) */
 const EFF = effectiveSql(ops("collector_decisions"));
@@ -30,21 +34,15 @@ const n = (v: unknown) => Number(v ?? 0);
 
 export interface BookScope { period: Period; zone: number | null; dept: string | null; cat: string | null; taluk: string | null }
 
-/** Filters for incidents (no time window). */
-function filters(s: BookScope, a = "i") {
-  const parts: string[] = [], params: unknown[] = [];
-  if (s.zone) (parts.push(`${a}.zone_no = ?`), params.push(s.zone));
-  if (s.dept) (parts.push(`${a}.lead_dept = ?`), params.push(s.dept));
-  if (s.cat) (parts.push(`${a}.category_code = ?`), params.push(s.cat));
-  if (s.taluk) (parts.push(`${a}.taluk_code = ?`), params.push(s.taluk));
-  return { sql: parts.length ? " AND " + parts.join(" AND ") : "", params };
-}
+/** Filters for incidents (no time window): the one reader the charts use too (daily.ts). */
+const filters = (s: BookScope) => scopeFilters(s);
 
 const CRIME = ["CRIME_VIOLENT", "CRIMES_AGAINST_WOMEN", "CRIME_PROPERTY", "SUICIDE_SELF_HARM", "DRUGS_LIQUOR", "PUBLIC_ORDER", "ROAD_ACCIDENT", "MISSING_PERSON"];
 const SEV_ORDER = "FIELD(i.severity_level, 'Severe', 'High', 'Medium', 'Low')";
 // built when read, not at load: the status reads officer steps only while their table is there (effective.ts officerStepsOn, rechecked)
 const INC = () => `i.incident_id AS id, ${TITLE} AS title, i.category_label AS type, i.category_code AS cat, i.lead_dept AS dept, dp.name AS dept_name,
-  i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, ${EFF.status} AS status, ${EFF.open} AS open,
+  dp.head AS dept_head, i.zone_no AS zone, i.zone_name, i.ward_no AS ward, i.place_text AS loc, i.severity_level AS sev, ${EFF.status} AS status, ${EFF.open} AS open,
+  DATE_FORMAT(i.sla_due_at, '%Y-%m-%d %H:%i:%s') AS sla_due,
   i.citizen_complaints AS complaints, i.source_count, i.sources, i.member_count, i.priority_score AS priority, i.sla_breached AS breached,
   i.severity_reasons, i.priority_reasons, i.attention_reason, i.outlet_count, i.media_only, i.dead, i.injured, i.lat, i.lon,
   i.ai_summary, i.ai_attention, i.ai_next_step, DATE_FORMAT(i.first_reported_at, '%Y-%m-%d %H:%i:%s') AS t`;
@@ -56,26 +54,28 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
   const W = `${win.sql}${f.sql}`, WP = [...win.params, ...f.params];
   const P = `${prev.sql}${f.sql}`, PP = [...prev.params, ...f.params];
   const whole = !s.zone && !s.dept && !s.cat && !s.taluk;
-  const cw = periodWindow(s.period, now, "i.first_reported_at", 0, Math.max(PERIODS[s.period].hours, 24 * 7));
+  const scope = { period: s.period, zone: s.zone, dept: s.dept, cat: s.cat, taluk: s.taluk };
   const closed = periodSinceWindow(s.period, now, EFF.closedAt);
   const wk = periodWindow(s.period, now, "i.first_reported_at", 0, 168), pwk = periodWindow(s.period, now, "i.first_reported_at", 1, 168);
 
   const [tiles, tilesPrev, awaiting, critical, deptRows, deptItems, zones, zoneKinds, notes, warn, beds, law, lawPrev, kinds, oldest,
-    resolved, resolvedTop, catNow, catPrev, disease, diseasePrev, diseaseZones, deathRows, lane] = await Promise.all([
+    resolved, resolvedTop, catNow, catPrev, disease, diseasePrev, diseaseZones, deathRows, lane, kpi, common, unchecked, zonePrev, days] = await Promise.all([
     q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(COALESCE(i.dead, 0)) AS dead, SUM(COALESCE(i.injured, 0)) AS injured,
               SUM(i.media_only) AS news_only FROM incidents i WHERE ${W}`, WP),
     q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe FROM incidents i WHERE ${P}`, PP),
     // the same rule as My Tasks (metrics.ts awaiting_check, LT-07): "128 waiting" beside "My Tasks 0" was two definitions
     awaitingCheck({ period: s.period, zone: s.zone, dept: s.dept, cat: s.cat, taluk: s.taluk }, now).then((t) => [{ n: t.n, left: t.leftToDepts }]),
-    q(`SELECT ${INC()} ${FROM} WHERE ${cw.sql}${f.sql} AND ${OPEN} = 1 AND i.severity_level = 'Severe'
-       ORDER BY COALESCE(i.dead, 0) DESC, i.priority_score DESC LIMIT 4`, [...cw.params, ...f.params]),
+    // the open cases of the view, the most serious first: the period's own (it looked back 7 days whatever the period said)
+    q(`SELECT ${INC()} ${FROM} WHERE ${W} AND ${OPEN} = 1 AND i.severity_level IN ('Severe', 'High')
+       ORDER BY ${SEV_ORDER}, COALESCE(i.dead, 0) DESC, i.priority_score DESC LIMIT 20`, WP),
     // departments: only what came in during the period
-    q(`SELECT i.lead_dept AS code, dp.name, dp.head, COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(COALESCE(i.dead, 0)) AS dead
+    q(`SELECT i.lead_dept AS code, dp.name, dp.head, COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(COALESCE(i.dead, 0)) AS dead,
+              SUM(${OPEN}) AS open, SUM(${OPEN} = 1 AND ${pastDueSql(now)}) AS overdue
        ${FROM} WHERE ${W} GROUP BY i.lead_dept, dp.name, dp.head ORDER BY severe DESC, n DESC`, WP),
     q(`SELECT * FROM (SELECT ${INC()}, ROW_NUMBER() OVER (PARTITION BY i.lead_dept ORDER BY ${SEV_ORDER}, COALESCE(i.dead, 0) DESC, i.first_reported_at DESC) AS rk
        ${FROM} WHERE ${W}) x WHERE rk <= 4`, WP),
     q(`SELECT i.zone_no AS zone, i.zone_name AS name, COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe
-       FROM incidents i WHERE ${W} AND i.zone_no IS NOT NULL GROUP BY i.zone_no, i.zone_name ORDER BY severe DESC, n DESC LIMIT 6`, WP),
+       FROM incidents i WHERE ${W} AND i.zone_no IS NOT NULL GROUP BY i.zone_no, i.zone_name ORDER BY severe DESC, n DESC`, WP),
     q(`SELECT zone, label FROM (SELECT i.zone_no AS zone, i.category_label AS label, ROW_NUMBER() OVER (PARTITION BY i.zone_no ORDER BY COUNT(*) DESC) AS rn
        FROM incidents i WHERE ${W} AND i.zone_no IS NOT NULL GROUP BY i.zone_no, i.category_label) x WHERE rn <= 2`, WP),
     safe(q(`SELECT section, item_key, text_en, text_ta, extra, written_for, DATE_FORMAT(as_of, '%Y-%m-%d %H:%i:%s') AS as_of FROM briefing_notes`)),
@@ -85,8 +85,9 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
     q(`SELECT i.category_code AS cat, COUNT(*) AS n FROM incidents i WHERE ${P} AND i.category_code IN (?) GROUP BY 1`, [...PP, CRIME]),
     q(`SELECT i.category_label AS label, SUM(i.citizen_complaints) AS n FROM incidents i WHERE ${W} AND i.citizen_complaints > 0
        GROUP BY 1 ORDER BY n DESC LIMIT 4`, WP),
-    q(`SELECT ${INC()}, DATEDIFF(?, i.first_reported_at) AS days ${FROM} WHERE ${OPEN} = 1 AND i.citizen_complaints > 0${f.sql}
-       AND i.first_reported_at > (? - INTERVAL 180 DAY) ORDER BY i.first_reported_at LIMIT 1`, [now, ...f.params, now]),
+    // the oldest open citizen complaint of the period (it ignored the period: "any date, up to 180 days")
+    q(`SELECT ${INC()}, DATEDIFF(?, i.first_reported_at) AS days ${FROM} WHERE ${W} AND ${OPEN} = 1 AND i.citizen_complaints > 0
+       ORDER BY i.first_reported_at LIMIT 1`, [now, ...WP]),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${closed.sql}${f.sql} AND ${EFF.status} = 'Resolved'`, [...closed.params, ...f.params]),
     q(`SELECT ${INC()} ${FROM} WHERE ${closed.sql}${f.sql} AND ${EFF.status} = 'Resolved' AND i.severity_level IN ('Severe', 'High')
        ORDER BY i.severity_level = 'Severe' DESC, i.priority_score DESC LIMIT 3`, [...closed.params, ...f.params]),
@@ -98,14 +99,30 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
        AND i.zone_name IS NOT NULL GROUP BY 1 ORDER BY n DESC LIMIT 3`, [...wk.params, ...f.params]),
     // every incident with a death in the period: the department rows say what happened
     q(`SELECT ${INC()} ${FROM} WHERE ${W} AND COALESCE(i.dead, 0) > 0 ORDER BY i.dead DESC, i.first_reported_at DESC LIMIT 40`, WP),
-    alertLane(now).catch((e) => (console.warn(`[briefbook] alerts lane: ${(e as Error).message}`), null))
+    alertLane(now).catch((e) => (console.warn(`[briefbook] alerts lane: ${(e as Error).message}`), null)),
+    // "Today at a glance": the tiles' own figures for these filters (the Overview's functions, so a tile and a point are one number)
+    kpiBlock(scope, now),
+    snapCommon(scope, now),
+    // "Severe, not yet checked" (any date): the list the Overview's tile opens, so the same count
+    list({ ...scope, sev: null, status: "critical", place: null, q: null, sort: "sev", dir: 1, page: 0, scope: "all" }).then((r) => r.incidents, () => null),
+    q(`SELECT i.zone_no AS zone, COUNT(*) AS n FROM incidents i WHERE ${P} AND i.zone_no IS NOT NULL GROUP BY i.zone_no`, PP),
+    dayByDay(s, now)
   ]);
 
-  // ---- AI notes (the pipeline's, district-wide, last 24 hours)
+  // ---- AI notes (the pipeline's, district-wide, of the 24 hours to its build)
   const daily = s.period === "daily";
   const ai = (section: string, key = "") => {
     const x = notes.find((r) => r.section === section && String(r.item_key ?? "") === key);
     return x ? { en: String(x.text_en), ta: x.text_ta ? String(x.text_ta) : null, writtenFor: x.written_for ? String(x.written_for) : null, asOf: x.as_of ? String(x.as_of) : null } : null;
+  };
+
+  // a note that states counts, shown only when it is of this window and every figure in it is the live one (a stored 24-hour count is not
+  // today's: lib/period/day.ts); a note with no figure is words about a longer pattern
+  const sameWindow = { now, hours: PERIODS[s.period].hours, from: daily ? dayStart(now) : null };
+  const holds = (x: ReturnType<typeof ai>, facts: { reported: number; severe: number; deaths: number }) => {
+    if (!x) return null;
+    const c = checkOpening({ asOf: x.asOf, en: x.en, ta: x.ta }, { ...sameWindow, facts: { ...facts, prev: null } });
+    return c.opening ? { ...x, en: c.opening.en, ta: c.opening.ta } : null;
   };
 
   // ---- the day in numbers (only four)
@@ -117,32 +134,35 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
 
   // ---- district status, by fixed rules (not the AI). Warnings come from the alerts lane (IMD, NDMA SACHET and the
   // news side by side, alerts.ts): "no IMD warning" alone hid a cyclone eleven outlets were reporting (LT-01).
+  // A zone's, department's or category's view is judged on its own deaths and severe incidents: the warnings are the district's.
   const reasons: string[] = [];
   let level: "normal" | "watchful" | "alert" = "normal";
-  if (lane?.status.level === "alert") (level = "alert", reasons.push(...lane.status.reasons));
+  const warned = whole ? lane?.status ?? null : null;
+  if (warned?.level === "alert") (level = "alert", reasons.push(...warned.reasons));
   if (deaths >= 3) (level = "alert", reasons.push(`${deaths} deaths`));
   if (severe >= 15) (level = "alert", reasons.push(`${severe} severe incidents`));
   if (level !== "alert") {
     if (deaths >= 1) (level = "watchful", reasons.push(`${deaths} death${deaths === 1 ? "" : "s"}`));
     if (severe >= 5) (level = "watchful", reasons.push(`${severe} severe incidents`));
-    if (lane?.status.level === "watchful") (level = "watchful", reasons.push(...lane.status.reasons));
+    if (warned?.level === "watchful") (level = "watchful", reasons.push(...warned.reasons));
   }
   // without the lane (it failed), the IMD reading as before
-  if (!lane && warning) (level = warning.level >= 2 ? "alert" : level === "normal" ? "watchful" : level, reasons.push(`IMD ${["", "yellow", "orange", "red"][Math.min(3, warning.level)]} warning`));
+  if (whole && !lane && warning) (level = warning.level >= 2 ? "alert" : level === "normal" ? "watchful" : level, reasons.push(`IMD ${["", "yellow", "orange", "red"][Math.min(3, warning.level)]} warning`));
 
   // ---- departments: what came in, with the incidents themselves
   const departments = deptRows.map((d) => ({
     code: d.code as string, name: (d.name ?? d.code) as string, head: d.head as string | null, n: n(d.n), severe: n(d.severe), dead: n(d.dead),
+    open: n(d.open), overdue: n(d.overdue),
     items: deptItems.filter((x) => x.dept === d.code).map((x) => ({ id: x.id as string, title: (x.title || x.type) as string, type: x.type as string,
       zone: x.zone_name as string | null, loc: x.loc as string | null, sev: x.sev as string, status: x.status as string, t: x.t as string, dead: n(x.dead) })),
-    ai: daily && whole ? ai("departments", d.code) : null,
+    ai: daily && whole ? holds(ai("departments", d.code), { reported: n(d.n), severe: n(d.severe), deaths: n(d.dead) }) : null,
     deaths: deathRows.filter((x) => x.dept === d.code).map((x) => ({ id: x.id as string, title: (x.title || x.type) as string, type: x.type as string,
       place: [x.loc, x.zone_name].filter(Boolean).filter((v, k, a) => a.indexOf(v) === k).join(", ") || null, dead: n(x.dead), injured: n(x.injured),
       status: x.status as string, t: x.t as string, what: explain(x).summary }))
   }));
 
   // ---- where it is happening
-  const where = zones.map((z) => ({ zone: n(z.zone), name: z.name as string, n: n(z.n), severe: n(z.severe),
+  const where = zones.slice(0, 6).map((z) => ({ zone: n(z.zone), name: z.name as string, n: n(z.n), severe: n(z.severe),
     kinds: zoneKinds.filter((k) => n(k.zone) === n(z.zone)).map((k) => String(k.label)) }));
 
   // ---- news: the AI digest, else the most-covered Chennai incident stories
@@ -174,33 +194,54 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
     return { cat: c, label: (r?.label as string | undefined) ?? LABELS[c] ?? c, now: n(r?.n), prev: lawPrevBy.get(c) ?? 0 };
   }).filter((r) => r.now || r.prev);
 
-  // ---- good news: resolved, and kinds of trouble that fell
   const prevCat = new Map(catPrev.map((r) => [r.cat, n(r.n)]));
+  // ---- good news: resolved, and kinds of trouble that fell
   const falling = catNow.map((r) => ({ label: r.label as string, now: n(r.n), prev: prevCat.get(r.cat) ?? 0 }))
     .filter((r) => r.prev >= 5 && r.now < r.prev).sort((a, b) => (a.now - a.prev) / a.prev - (b.now - b.prev) / b.prev).slice(0, 3);
+
+  const criticalRows = critical.filter((i) => i.sev === "Severe").slice(0, 4);
+  const plain = new Map(critical.map((i) => [String(i.id), explain(i)]));
+  const prevZone = new Map(zonePrev.map((z) => [n(z.zone), n(z.n)]));
+  // what "Today at a glance" is composed from (glance.ts): the tiles and lists of these filters, nothing of the district under a filter
+  const today = {
+    whole,
+    kpi: { cur: kpi.cur as Record<string, number>, prev: kpi.prev as Record<string, number> },
+    overdue: common.overdue, deaths, injured: n(T.injured), awaiting: n(awaiting[0]?.n), unchecked: unchecked as number | null,
+    kinds: catNow.map((r) => ({ cat: String(r.cat), label: String(r.label), n: n(r.n), prev: prevCat.get(r.cat) ?? 0 })).sort((a, b) => b.n - a.n).slice(0, 5),
+    zones: zones.map((z) => ({ zone: n(z.zone), name: String(z.name), n: n(z.n), prev: prevZone.get(n(z.zone)) ?? 0 })).sort((a, b) => b.n - a.n).slice(0, 5),
+    // severe cases, and high ones the attention rules say need the Collector (intel.ts explain)
+    cases: critical.filter((i) => i.sev === "Severe" || plain.get(String(i.id))?.needsYou).slice(0, 4).map((i) => ({
+      id: String(i.id), title: String(i.title || i.type), type: String(i.type), sev: String(i.sev), zone: (i.zone_name as string | null) ?? null, loc: (i.loc as string | null) ?? null,
+      dept: (i.dept as string | null) ?? null, deptName: (i.dept_name as string | null) ?? null, deptHead: (i.dept_head as string | null) ?? null, dead: n(i.dead),
+      next: plain.get(String(i.id))?.next ?? null, t: String(i.t) })),
+    fatal: deathRows[0] ? { id: String(deathRows[0].id), title: String(deathRows[0].title || deathRows[0].type), dead: n(deathRows[0].dead) } : null,
+    days
+  };
 
   // the pipeline wrote its opening for the data of its own run ("110 matters await your verification"): it is shown only when it is the note
   // of this window and says what the live figures beside it say (opening.ts, the same check as the briefing's opening, hunt2-ops-12);
   // otherwise the rules' opening, always current, is used instead
   const written = daily && whole ? ai("situation") : null;
-  const checked = written ? checkOpening({ asOf: written.asOf, en: written.en, ta: written.ta }, { now, hours: PERIODS[s.period].hours,
+  const checked = written ? checkOpening({ asOf: written.asOf, en: written.en, ta: written.ta }, { ...sameWindow,
     facts: { reported, prev: before, severe, prevSevere: n(tilesPrev[0]?.severe), deaths, injured: n(T.injured), awaiting: n(awaiting[0]?.n),
-      newsOnly: n(T.news_only) }, extra: [Math.abs(change ?? 0), critical.length] }) : null;
+      newsOnly: n(T.news_only) }, extra: [Math.abs(change ?? 0), criticalRows.length] }) : null;
   if (checked?.why) console.info(`[briefbook] AI opening not shown: ${checked.why}`);
   const situation = written && checked?.opening ? { ...written, en: checked.opening.en, ta: checked.opening.ta } : null;
   return {
     status: { level, reasons, warning },
     // what each source says about warnings for Chennai, and whether they agree (alerts.ts)
-    alerts: lane ? { sources: lane.sources, agreement: lane.agreement, agreementText: lane.agreementText, stale: lane.stale, fallback: lane.fallback } : null,
+    alerts: lane ? { sources: lane.sources, agreement: lane.agreement, agreementText: lane.agreementText, stale: lane.stale, fallback: lane.fallback,
+      banner: lane.banner, officialLevel: lane.officialLevel, hazard: lane.event?.hazard ?? null } : null,
+    today,
     glance: { ai: situation, opening: situation ? null : opening,
       tiles: { reported, change, severe, deaths, injured: n(T.injured), awaiting: n(awaiting[0]?.n), leftToDepts: n(awaiting[0]?.left), newsOnly: n(T.news_only) } },
-    critical: critical.map((i) => ({ ...i, why: explain(i), dead: n(i.dead), injured: n(i.injured) }) as Row & { why: ReturnType<typeof explain>; dead: number; injured: number }),
+    critical: criticalRows.map((i) => ({ ...i, why: explain(i), dead: n(i.dead), injured: n(i.injured) }) as Row & { why: ReturnType<typeof explain>; dead: number; injured: number }),
     departments, where, news, newsAi: newsIds.length > 0,
     health: { ai: ai("health"), beds: beds.map((b) => ({ name: String(b.name), pct: Math.round(n(b.value)) })),
       disease: { now: n(disease[0]?.n), prev: n(diseasePrev[0]?.n), zones: diseaseZones.map((z) => String(z.zone)) } },
     law: { ai: ai("law"), rising: lawRows.filter((r) => r.now > r.prev), falling: lawRows.filter((r) => r.now < r.prev) },
     citizens: { kinds: kinds.map((k) => ({ label: String(k.label), n: n(k.n) })),
-      oldest: oldest[0] ? { id: oldest[0].id as string, title: (oldest[0].title || oldest[0].type) as string, zone: oldest[0].zone_name as string | null, days: n(oldest[0].days) } : null },
+      oldest: oldest[0] ? { id: oldest[0].id as string, title: (oldest[0].title || oldest[0].type) as string, zone: oldest[0].zone_name as string | null, days: n(oldest[0].days), t: String(oldest[0].t) } : null },
     good: { resolved: n(resolved[0]?.n), serious: resolvedTop.map((i) => ({ id: i.id as string, title: (i.title || i.type) as string, zone: i.zone_name as string | null })), falling }
   };
 }

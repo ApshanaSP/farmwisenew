@@ -478,12 +478,15 @@ async function runIncidents(q0: Query, c: AskCtx, now: string): Promise<Result> 
   }
   let total = valueOf(got.t, q.measure) ?? 0;
   // a share: of every incident in the same place and window
-  let whole: number | null = null;
+  let whole: number | null = null, wholeWords: Bi | null = null;
   if (q.measure === "share" && !q.by) {
     // ("what percent of police cases are resolved" is of the police cases; "what share are the police's" is of all of them)
-    const state = q.sev.length > 0 || !!q.status || !!q.harm || !!q.from || !!q.older_days;
-    const subject = q.depts.length > 0 || !!q.group || q.cats.length > 0 || q.words.length > 0;
-    const all: Query = { ...q, sev: [], status: null, harm: null, from: null, older_days: null, ...(state && subject ? {} : { depts: [], group: null, cats: [], words: [] }),
+    // ("what percent of the severe cases are unresolved" is of the severe ones; "what percent of the open cases are severe" of the open ones:
+    // shape.ts shareOf reads which from the sentence)
+    const asked = !!q.status || !!q.harm || !!q.from || !!q.older_days, sevOf = q.sev.length > 0 && asked && q.part !== "sev+state";
+    const state = q.sev.length > 0 || asked;
+    const subject = q.depts.length > 0 || !!q.group || q.cats.length > 0 || q.words.length > 0 || sevOf;
+    const all: Query = q.part === "sev" ? { ...q, sev: [] } : q.part === "dept" ? { ...q, depts: [] } : { ...q, sev: sevOf ? q.sev : [], status: null, harm: null, from: null, older_days: null, ...(state && subject ? {} : { depts: [], group: null, cats: [], words: [] }),
       // ("what share does Adyar have": of the whole district)
       ...(!state && !subject ? { zones: [], place: null, taluk: null, ward: null, clock_from: null, clock_to: null } : {}) };
     const wh = reported(win, limits(all, w, now, { lockDept: c.lockDept })), part = reported(win, limits(q, w, now, { lockDept: c.lockDept }));
@@ -492,9 +495,12 @@ async function runIncidents(q0: Query, c: AskCtx, now: string): Promise<Result> 
     const have = n(p?.n);
     total = whole ? Math.round((have / whole) * 1000) / 10 : 0;
     const ofWhat = whatWords({ ...all, measure: "count" }, w);
+    wholeWords = ofWhat;
     notes.push(bi(`${have} of ${whole} ${ofWhat.en} reported ${win.label.en.startsWith("last") ? `in the ${win.label.en}` : `(${win.label.en})`}.`, `${ofWhat.ta}: ${whole} இல் ${have}.`));
   }
   const res: Result = { ...blank(q, win, w, notes, null), asOf: now, total, totals: got.t, prev: q.measure === "share" ? null : { total: valueOf(got.p, q.measure) ?? 0, label: bi(win.prev.label.en, win.prev.label.ta), held: win.prevHeld } };
+  // (the tile names the whole: "Share of all incidents" stood over a share of the severe ones)
+  if (wholeWords) res.measure = bi(`share of ${wholeWords.en}`, `${wholeWords.ta} இல் பங்கு`);
   if (q.by) {
     res.groups = q.per ? await perGroups(q, w, win, now, c.lockDept ?? null) : await incidentGroups(q, w, win, now, c.lockDept ?? null);
     // a ranking with nothing in it, with no time said ("which street in Adyar floods the most", on a dry day): as far back as it takes
@@ -518,7 +524,7 @@ async function runIncidents(q0: Query, c: AskCtx, now: string): Promise<Result> 
       const before = new Map(was.map((g) => [g.key, g.m?.n ?? 0]));
       // (one that has none now is a fall too)
       for (const g of was) if (!res.groups.some((x) => x.key === g.key)) res.groups.push({ ...g, m: { ...g.m!, n: 0 } });
-      for (const g of res.groups) { const p = before.get(g.key) ?? 0, v = g.m?.n ?? 0; g.value = v - p; g.sub = bi(`${v} now, ${p} in ${win.prev.label.en}`, `இப்போது ${v}, முன்பு ${p}`); }
+      for (const g of res.groups) { const p = before.get(g.key) ?? 0, v = g.m?.n ?? 0; g.value = v - p; g.sub = bi(`${v} now, ${p} ${/^(?:yesterday|the day before)/.test(win.prev.label.en) ? "" : "in "}${win.prev.label.en}`, `இப்போது ${v}, முன்பு ${p}`); }
       if (q.order === "least") res.groups = res.groups.filter((g) => g.value < 0); else res.groups = res.groups.filter((g) => g.value > 0);
       res.prev = null;
       res.total = got.t.n - got.p.n;

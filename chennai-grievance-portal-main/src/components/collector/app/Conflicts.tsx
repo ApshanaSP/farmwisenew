@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { I } from "./icons";
 import { Empty, fmtShort, plural, rel } from "./lib";
+import { labelLower } from "@/lib/period/day";
 import type { Console } from "./CollectorApp";
 import type { Difference, StoryConflicts } from "@/lib/collector/conflicts";
 
 /** "Deaths, Place": the facts a story's outlets disagree on. */
 export const diffFields = (s: StoryConflicts) => [...new Set(s.items.map((d) => d.field))].join(", ");
-export const hasConflict = (s: StoryConflicts) => s.items.length > 0;
+/** some of them still stand (the settled ones stay listed, "resolved at 2:20 PM: the reports now agree") */
+export const hasConflict = (s: StoryConflicts) => s.items.some((d) => !d.resolved);
 
 /** The badge on a news story whose outlets disagree. */
 export function DiffBadge({ s }: { s: StoryConflicts }) {
@@ -29,6 +31,7 @@ function DiffCard({ d, compact }: { d: Difference; compact?: boolean }) {
       <div className="dx-h">
         <b>{d.field}</b>
         {d.by === "ai" && <em className="dx-ai" title="AI read the reports side by side; every figure was checked against its report"><I n="ai" />AI-checked</em>}
+        {d.resolved && <em className="dx-done" title="The difference stays on the list until the day is over"><I n="checkc" />{d.resolved}</em>}
       </div>
       <p className="dx-what">{d.what}</p>
       <div className="dx-vs" style={{ gridTemplateColumns: `repeat(${Math.min(d.claims.length, 3)},minmax(0,1fr))` }}>
@@ -54,7 +57,7 @@ export function ConflictBox({ items }: { items: Difference[] }) {
   if (!items.length) return null;
   return (
     <div className="dx-box">
-      <div className="iv-t"><I n="compare" />Reports differ<span>confirm before quoting</span></div>
+      <div className="iv-t"><I n="compare" />{items.some((d) => !d.resolved) ? <>Reports differ<span>confirm before quoting</span></> : "Reports differed"}</div>
       <ul className="dx-list">{items.map((d, k) => <DiffCard key={k} d={d} compact />)}</ul>
     </div>
   );
@@ -96,23 +99,42 @@ export function useStoryConflicts(c: Console, ids: string[], title: string, id: 
   return known ? known.items : own?.key === key ? own.items : null;
 }
 
+/** The stories the Differ tab shows: all of them, or under a filter those linked to an incident inside it and, apart, those no incident is on record for. */
+export function differView(cf: Console["conflicts"]): { inside: StoryConflicts[]; wide: StoryConflicts[]; out: number } {
+  if (!cf) return { inside: [], wide: [], out: 0 };
+  if (!cf.scope) return { inside: cf.stories, wide: [], out: 0 };
+  const inside = new Set(cf.scope.inside), wide = new Set(cf.scope.wide);
+  return { inside: cf.stories.filter((s) => inside.has(s.id)), wide: cf.stories.filter((s) => wide.has(s.id)), out: cf.scope.out };
+}
+
 /** Latest news, "Reports differ" tab: each story whose outlets disagree, with what differs in one line. */
 export function ConflictList({ c, now }: { c: Console; now: string }) {
   const cf = c.conflicts;
   if (!cf) return <Empty>Comparing the outlets&apos; reports…</Empty>;
-  if (!cf.stories.length) return <Empty>The outlets agree on every story {c.period === "daily" ? "of the last 24 hours" : "in this period"} ({plural(cf.checked, "story", "stories")} with 2 or more outlets on the same incident checked).</Empty>;
+  const v = differView(cf);
+  if (!v.inside.length && !v.wide.length && v.out > 0) return <Empty>No story linked to an incident in {c.scopeName} differs. {plural(v.out, "story", "stories")} elsewhere in the district {v.out === 1 ? "does" : "do"}.</Empty>;
+  if (!cf.stories.length) return <Empty>The outlets agree on every story {c.period === "daily" ? labelLower(c.periodLabel) : "in this period"} ({plural(cf.checked, "story", "stories")} with 2 or more outlets on the same incident checked).</Empty>;
+  const row = (s: StoryConflicts) => (
+    <button key={s.id} className="brief dx-row" onClick={() => c.openConflict(s)} title="See what each outlet says">
+      <span className="bic t-high"><I n="compare" /></span>
+      <span style={{ minWidth: 0, flex: 1 }}>
+        <b>{s.title}</b>
+        <span className="dx-one"><em>{diffFields(s)}</em>{!hasConflict(s) && s.items[0].resolved ? `${s.items[0].resolved} · ` : ""}{s.items[0].what}</span>
+        <span className="loc">{plural(s.outlets, "outlet")} · {rel(latest(s), now)}</span>
+      </span>
+    </button>
+  );
+  if (!cf.scope) return <>{v.inside.map(row)}</>;
   return (
     <>
-      {cf.stories.map((s) => (
-        <button key={s.id} className="brief dx-row" onClick={() => c.openConflict(s)} title="See what each outlet says">
-          <span className="bic t-high"><I n="compare" /></span>
-          <span style={{ minWidth: 0, flex: 1 }}>
-            <b>{s.title}</b>
-            <span className="dx-one"><em>{diffFields(s)}</em>{s.items[0].what}</span>
-            <span className="loc">{plural(s.outlets, "outlet")} · {rel(latest(s), now)}</span>
-          </span>
-        </button>
-      ))}
+      <p className="scope-note"><I n="pin" /><span>{v.inside.length ? "Linked to an incident in" : "No story differs that is linked to an incident in"} {c.scopeName}</span></p>
+      {v.inside.map(row)}
+      {v.wide.length > 0 && (
+        <>
+          <p className="scope-note wide" title="The filters follow a story's incident. These stories have none on record, so no zone, taluk, department or category."><I n="map" /><span>District-wide: no incident on record</span></p>
+          {v.wide.map(row)}
+        </>
+      )}
     </>
   );
 }

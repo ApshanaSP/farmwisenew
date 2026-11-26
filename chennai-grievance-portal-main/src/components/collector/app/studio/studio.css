@@ -581,9 +581,6 @@
 .dic .ds-sugg{flex:none;display:flex;flex-wrap:wrap;gap:5px;padding:0 12px 8px}
 .dic .ds-sugg button{padding:5px 10px;border-radius:999px;font-size:11.5px;color:var(--text-2);border:1px solid var(--line-3);background:var(--surface-2);text-align:left;line-height:1.3;transition:all .15s;animation:ds-rise .4s var(--ease) both}
 .dic .ds-sugg button:hover:not(:disabled){color:var(--text);border-color:var(--accent-line);background:var(--accent-soft)}
-/* the console's "Ask District IQ" button floats at the bottom right: the input and the last items stay clear of it */
-.dic.fit .ds-story,.dic.fit .ds-alerts{padding-bottom:62px}
-.dic.fit .ds-ask-f{margin-right:66px!important}
 .dic .ds-ask-f{flex:none;display:flex;align-items:center;gap:5px;margin:0 12px 12px;padding:4px 4px 4px 12px;border-radius:13px;background:var(--surface-2);border:1px solid var(--line-3);transition:border-color .15s,box-shadow .15s}
 .dic .ds-ask-f:focus-within{border-color:var(--accent-line);box-shadow:var(--ring)}
 .dic .ds-ask-f input{flex:1;min-width:0;border:0;background:transparent;outline:none;font-size:12.5px;height:30px}

@@ -49,7 +49,7 @@ describe("v6: a live holdout run's room", () => {
   });
   it("Claude's requests left count too, at about 3K tokens a request", () => {
     const l = new Ledger(new MemoryStore());
-    l.record("anthropic", "claude-haiku-5-5", { tokens: 1000, requests: 1990 }); // (v15: 2,000 requests a day, ledger.ts)
+    l.record("anthropic", "claude-haiku-5-5", { tokens: 1000, requests: 11_990 }); // (26 Nov: 12,000 requests a day for Haiku, ledger.ts)
     expect(runRoom(l, { leads: true, model: "claude-haiku-5-5" })).toEqual({ who: "anthropic", left: 10 * 3000 });
   });
 });

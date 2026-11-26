@@ -125,7 +125,7 @@ describe("PB-300: the fixed labels of the Briefing page have their Tamil", () =>
   const norm = (t: string) => t.replace(/&apos;/g, "'").replace(/\s+/g, " ").trim().replace(/\d+/g, "#");
   // the labels in the observed run (docs/qa/pass4/evidence/journeys/collector/ta-03): the fixed words only, not a title, a name or a date
   const OBSERVED = ["Critical now", "Warnings", "Oldest open complaint", "IMD warning", "First report", "Arrest", "Death", "Warning", "Action", "Update", "Watchful", "Normal", "Alert",
-    "# reports · # outlets", "# report · # outlet", "· updated", "what each received · last 24 hours", "Developing stories"];
+    "# reports · # outlets", "# report · # outlet", "· updated", "what each received · today (since 12 AM)", "Developing stories"];
   it.each(OBSERVED)("%s", (l) => expect(keys.has(l.toLowerCase()), l).toBe(true));
   it("the story stages are a closed list: each has its Tamil", () => {
     const m = /STAGE_COL: Record<string, string> = \{([^}]+)\}/.exec(read("src/components/collector/app/Stories.tsx"));

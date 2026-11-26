@@ -48,7 +48,7 @@ export const T: Record<Lang, Strings> = {
     suggest: ["Where to focus", "Severe incidents", "Lakes & reservoirs", "Today's briefing"], scopeNow: "Answering for", insightsNow: "Today's insights",
     history: "Conversation history", noHistory: "No earlier conversations yet.", question1: "question", questionN: "questions",
     opening: "Opening the answers…", openFailed: "Could not open this. Click to try again.",
-    searchChats: "Search conversations", today: "Today", earlier: "Earlier", regenerate: "Answer again", editQ: "Edit question", hideSide: "Close the chat view", defaultPeriod: "Last 90 days", periodTip: "Answers cover the last 90 days unless the question names a period (today, this week, this month)",
+    searchChats: "Search conversations", today: "Today", earlier: "Earlier", regenerate: "Answer again", editQ: "Edit question", hideSide: "Close the chat view", defaultPeriod: "Last 90 days", periodTip: "With no time in the question, figures are for the period the console shows, and open work is counted whole; the answer says which",
     allZones: "All zones", allDepts: "All departments", checked: (n) => `${n} figure${n === 1 ? "" : "s"} checked`,
     checkedTip: "Every figure in this answer was checked against the data before it was shown", openIncident: "Open incident"
   },
@@ -73,7 +73,7 @@ export const T: Record<Lang, Strings> = {
     suggest: ["கவனம் தேவைப்படும் இடம்", "கடுமையான சம்பவங்கள்", "ஏரிகள்", "இன்றைய அறிக்கை"], scopeNow: "இதற்கான பதில்", insightsNow: "இன்றைய தகவல்கள்",
     history: "உரையாடல் வரலாறு", noHistory: "முந்தைய உரையாடல்கள் இல்லை.", question1: "கேள்வி", questionN: "கேள்விகள்",
     opening: "பதில்களைத் திறக்கிறது…", openFailed: "திறக்க முடியவில்லை. மீண்டும் தட்டுங்கள்.",
-    searchChats: "உரையாடல்களைத் தேடு", today: "இன்று", earlier: "முன்பு", regenerate: "மீண்டும் பதில் தா", editQ: "கேள்வியைத் திருத்து", hideSide: "அரட்டைப் பார்வையை மூடு", defaultPeriod: "கடந்த 90 நாட்கள்", periodTip: "கேள்வியில் காலம் சொல்லாவிட்டால் கடந்த 90 நாட்களுக்கான பதில் (இன்று, இந்த வாரம், இந்த மாதம் என்று சொல்லலாம்)",
+    searchChats: "உரையாடல்களைத் தேடு", today: "இன்று", earlier: "முன்பு", regenerate: "மீண்டும் பதில் தா", editQ: "கேள்வியைத் திருத்து", hideSide: "அரட்டைப் பார்வையை மூடு", defaultPeriod: "கடந்த 90 நாட்கள்", periodTip: "கேள்வியில் காலம் இல்லையெனில், கன்சோல் காட்டும் காலத்துக்கான எண்கள் தரப்படும்; நிலுவைப் பணி முழுவதும் எண்ணப்படும்; எது என்று பதில் சொல்லும்",
     allZones: "அனைத்து மண்டலங்கள்", allDepts: "அனைத்துத் துறைகள்", checked: (n) => `${n} எண்கள் சரிபார்க்கப்பட்டன`,
     checkedTip: "இந்தப் பதிலில் உள்ள ஒவ்வொரு எண்ணும் காட்டும் முன் தரவுடன் சரிபார்க்கப்பட்டது", openIncident: "சம்பவத்தைத் திற"
   },
@@ -97,7 +97,7 @@ export const T: Record<Lang, Strings> = {
     suggest: ["Enga focus pannanum", "Severe incidents", "Lakes", "Innaikku briefing"], scopeNow: "Indha scope-ku", insightsNow: "Innaikku insights",
     history: "Pazhaya conversations", noHistory: "Munnadi conversations illa.", question1: "kelvi", questionN: "kelvigal",
     opening: "Badhilgal open aagudhu…", openFailed: "Open aagala. Thirumba click pannunga.",
-    searchChats: "Conversations thedu", today: "Innaikku", earlier: "Munnadi", regenerate: "Thirumba answer pannu", editQ: "Kelviya maathu", hideSide: "Chat view-a moodu", defaultPeriod: "Last 90 naal", periodTip: "Kelviyila period sollalana last 90 naal-ku answer varum (innaikku, indha vaaram, indha maasam nu sollalam)",
+    searchChats: "Conversations thedu", today: "Innaikku", earlier: "Munnadi", regenerate: "Thirumba answer pannu", editQ: "Kelviya maathu", hideSide: "Chat view-a moodu", defaultPeriod: "Last 90 naal", periodTip: "Kelviyila time illana, console kaatura period-ku numbers varum; open work mulusa count aagum; edhu nu answer sollum",
     allZones: "Ella zones", allDepts: "Ella departments", checked: (n) => `${n} numbers check pannom`,
     checkedTip: "Indha answer-la ovvoru number-um data-oda check panni dhaan kaattinom", openIncident: "Incident-a open pannu"
   }

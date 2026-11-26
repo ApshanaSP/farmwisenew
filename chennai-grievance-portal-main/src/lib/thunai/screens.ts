@@ -42,6 +42,7 @@ import { MAX_BLOCKS } from "./stage";
 import { OutsideRecords, beforeRecords, isToday, isWindowSpec, istWall, overWords } from "./v18/when";
 import { withAbout, withDrills } from "./v18/drills";
 import { spanOf } from "@/lib/period/read";
+import { dayWords } from "@/lib/period/day";
 import type { WinHands } from "./v18/window";
 
 type Row = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -173,12 +174,12 @@ export interface Built { doc: StageDocT; runs: string[] }
 
 // ------------------------------------------------------------------ words --
 
-// the console's daily window is the last 24 hours, said so: "today" is the calendar day since midnight (lib/period/read.ts), and a screen over the 24 hours that said
-// "today" put figures of yesterday evening under the word (QA pass 7, review break A4, the P6-022 class)
-const PERIOD_EN: Record<PeriodKey, string> = { daily: "the last 24 hours", weekly: "this week", monthly: "the last 30 days", quarterly: "the last 90 days" };
+// the console's daily window is the calendar day since 12 AM (lib/period/day.ts, 26 Nov): "today", and from 12 AM to 6 AM "since 12 AM yesterday",
+// said at the moment the screen is made (a screen over the 24 hours that said "today" put figures of yesterday evening under the word: QA pass 7, break A4)
+const PERIOD_EN: Record<PeriodKey, string> = { get daily() { return dayWords().en.inWords; }, weekly: "this week", monthly: "the last 30 days", quarterly: "the last 90 days" };
 /** the period as an adverb after a noun: "cases today", "cases this week", "cases in the last 30 days" (never "cases the last 30 days", QA4 G1: AUD-NF-16, audit-understanding-20) */
-const inPeriod = (p: PeriodKey): string => (p === "weekly" ? PERIOD_EN[p] : `in ${PERIOD_EN[p]}`);
-const PERIOD_TA: Record<PeriodKey, string> = { daily: "கடந்த 24 மணி நேரத்தில்", weekly: "இந்த வாரம்", monthly: "கடந்த 30 நாட்களில்", quarterly: "கடந்த 90 நாட்களில்" };
+const inPeriod = (p: PeriodKey): string => (p === "weekly" || p === "daily" ? PERIOD_EN[p] : `in ${PERIOD_EN[p]}`);
+const PERIOD_TA: Record<PeriodKey, string> = { get daily() { return dayWords().ta.inWords; }, weekly: "இந்த வாரம்", monthly: "கடந்த 30 நாட்களில்", quarterly: "கடந்த 90 நாட்களில்" };
 const SEV_TA: Record<string, string> = { Severe: "கடுமையான", High: "அதிக முக்கியத்துவ", Medium: "நடுத்தர", Low: "குறைந்த" };
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -504,7 +505,7 @@ export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w:
   // kinds ("crimes") is the summary's too: the console's list filters one kind at a time
   const span = slots.span && isWindowSpec(slots.span) ? slots.span : null;
   if (h.win) {
-    // ("today" is the console's own 24 hours on these: "what are my tasks today" stays the tasks)
+    // ("today" is the console's own Daily on these: "what are my tasks today" stays the tasks)
     if (span && !isToday(span) && SPAN_TO_SUMMARY.has(recipe)) { if (recipe === "advise") c.slots = { ...slots, view: "cases" }; recipe = "summary"; }
     else if (recipe === "cases" && (slots.family || slots.place) && !(slots.span && !span)) { recipe = "summary"; c.slots = { ...slots, view: "cases" }; }
     // v18 round 2: the cases of dates the console's span reader leaves undated (before the records begin): the summary's list says so
@@ -994,9 +995,9 @@ function cannotSpan(c: Ctx, spec: PeriodSpec): Part {
   void spec;
   // every figure said is on the screen: the windows it can show are named in the note too
   return { title: heardTitle(c, bi("Cases", "சம்பவங்கள்")), takeaway: null,
-    say: bi("I can't count that stretch of time here. Ask District IQ can, or I can show the last 24 hours, 7, 30 or 90 days.", "அந்தக் காலத்தை இங்கே எண்ண முடியாது. District IQ-இடம் கேளுங்கள், அல்லது கடந்த 24 மணி நேரம், 7, 30, 90 நாட்களைக் காட்டலாம்."),
-    blocks: [{ kind: "Note", id: "span", text: L(c, "This stretch of time is not one of the console's windows (the last 24 hours, 7, 30 or 90 days), and these figures could not be counted for it.",
-      "இந்தக் காலம் கன்சோலின் சாளரங்களில் (கடந்த 24 மணி நேரம், 7, 30, 90 நாட்கள்) ஒன்றல்ல; இதற்கு இந்த எண்ணிக்கைகளை எண்ண முடியவில்லை.") }] };
+    say: bi("I can't count that stretch of time here. Ask District IQ can, or I can show today, or the last 7, 30 or 90 days.", "அந்தக் காலத்தை இங்கே எண்ண முடியாது. District IQ-இடம் கேளுங்கள், அல்லது இன்று, கடந்த 7, 30, 90 நாட்களைக் காட்டலாம்."),
+    blocks: [{ kind: "Note", id: "span", text: L(c, "This stretch of time is not one of the console's windows (today, the last 7, 30 or 90 days), and these figures could not be counted for it.",
+      "இந்தக் காலம் கன்சோலின் சாளரங்களில் (இன்று, கடந்த 7, 30, 90 நாட்கள்) ஒன்றல்ல; இதற்கு இந்த எண்ணிக்கைகளை எண்ண முடியவில்லை.") }] };
 }
 
 async function spanCases(c: Ctx, spec: PeriodSpec): Promise<Part> {
@@ -1111,18 +1112,20 @@ async function periodCompare(c: Ctx, key: PeriodKey): Promise<Part> {
   const pct = r.prev ? Math.round((Math.abs(diff) / r.prev) * 100) : null;
   const dir = diff > 0 ? "up" : diff < 0 ? "down" : "level";
   const cur = r.cmp.cur.label, before = r.cmp.prev.label;
+  // "12 today against 9 yesterday by this time"; "40 in the last 7 days against 31 in the week before"
+  const day = key === "daily", inCur = day ? cur.en : `in the ${cur.en}`, inBefore = day ? before.en : `in ${before.en}`;
   const en = dir === "level"
-    ? `${capFirst(what)} are level: ${spoken(r.n)} in the ${cur.en}, the same as in ${before.en}.`
-    : `${capFirst(what)} are ${dir}: ${spoken(r.n)} in the ${cur.en} against ${spoken(r.prev)} in ${before.en}${pct != null ? `, ${pct}% ${dir === "up" ? "higher" : "lower"}` : ""}.`;
+    ? `${capFirst(what)} are level: ${spoken(r.n)} ${inCur}, the same as ${inBefore}.`
+    : `${capFirst(what)} are ${dir}: ${spoken(r.n)} ${inCur} against ${spoken(r.prev)} ${inBefore}${pct != null ? `, ${pct}% ${dir === "up" ? "higher" : "lower"}` : ""}.`;
   const ta = dir === "level"
     ? `${subjectTa}: ${cur.ta} ${spoken(r.n)}, ${before.ta} அதே அளவு.`
     : `${subjectTa}: ${cur.ta} ${spoken(r.n)}, ${before.ta} ${spoken(r.prev)}; ${pct != null ? `${pct}% ` : ""}${dir === "up" ? "அதிகம்" : "குறைவு"}.`;
   c.notes.push(bi(`Two windows of equal length: ${r.cmp.label.en}. Incidents first reported in each, with the console's filters for ${where.en || "the district"}.`,
     `சம நீளமுள்ள இரண்டு காலங்கள்: ${r.cmp.label.ta}. ஒவ்வொன்றிலும் முதலில் பதிவான சம்பவங்கள், ${where.ta || "மாவட்டம்"} கன்சோல் வடிகட்டிகளுடன்.`));
-  const beforeTa = key === "daily" ? "முந்தைய நாள்" : key === "weekly" ? "முந்தைய வாரம்" : key === "monthly" ? "முந்தைய மாதம்" : "முந்தைய காலாண்டு";
+  const beforeTa = day ? before.ta : key === "weekly" ? "முந்தைய வாரம்" : key === "monthly" ? "முந்தைய மாதம்" : "முந்தைய காலாண்டு";
   return {
-    title: bi(`${subject}${where.en ? ` · ${where.en}` : ""} · ${r.cmp.cur.label.en} against the ${key === "daily" ? "day" : key === "weekly" ? "week" : key === "monthly" ? "month" : "quarter"} before`,
-      `${subjectTa}${where.ta ? ` · ${where.ta}` : ""} · ${r.cmp.cur.label.ta}, ${beforeTa}டன் ஒப்பீடு`),
+    title: bi(`${subject}${where.en ? ` · ${where.en}` : ""} · ${r.cmp.cur.label.en} against ${day ? before.en : `the ${key === "weekly" ? "week" : key === "monthly" ? "month" : "quarter"} before`}`,
+      `${subjectTa}${where.ta ? ` · ${where.ta}` : ""} · ${r.cmp.cur.label.ta}, ${day ? `${beforeTa} உடன் ஒப்பீடு` : `${beforeTa}டன் ஒப்பீடு`}`),
     takeaway: bi(en, ta),
     say: bi(en, ta),
     blocks: [{ kind: "Kpis", id: "kpis", title: L(c, "Against the period before", "முந்தைய காலத்துடன் ஒப்பீடு"), items: [

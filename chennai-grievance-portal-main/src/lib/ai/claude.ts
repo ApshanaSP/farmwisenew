@@ -796,3 +796,100 @@ export async function claudeStreamText(a: ClaudeTextArgs, onText: (t: string) =>
   if (res.stop_reason === "refusal") { telemetry("claude_stop", { model, why: "refusal" }); throw Object.assign(new Error(`Claude declined ${a.name}`), { [BILLED]: { model, inputTokens: out.inputTokens, outputTokens: out.outputTokens, cacheReadTokens: out.cacheReadTokens, cacheWriteTokens: out.cacheWriteTokens } }); }
   return out;
 }
+
+// ------------------------------------------------------------ the brain: messages with tools --
+
+export interface ClaudeToolsArgs {
+  name: string;
+  model: string;
+  system: Anthropic.Beta.BetaTextBlockParam[];
+  tools: Anthropic.Beta.BetaToolUnion[];
+  messages: Anthropic.Beta.BetaMessageParam[];
+  maxTokens: number;
+  effort: Effort;
+  /** false: answer without thinking first (Haiku 5.5 only; Sonnet 5.5 gets between_tools) */
+  think: boolean;
+  timeoutMs: number;
+  /** nothing heard by now: the same request is sent once more, and the first to begin is used (its neighbour is dropped) */
+  hedgeMs?: number;
+  signal?: AbortSignal;
+  toolChoice?: Anthropic.Beta.BetaToolChoice;
+  /** a tool's input as it is written (the answer tool's spoken sentences): the block's index, the tool's name, the JSON so far */
+  onToolJson?: (index: number, tool: string, json: string) => void;
+}
+export interface ClaudeToolsResult { message: Anthropic.Beta.BetaMessage; model: string; ms: number; inputTokens: number; outputTokens: number; cacheReadTokens: number; cacheWriteTokens: number }
+
+/**
+ * 26 Nov: one request of the brain's tool loop (lib/brain/loop.ts), streamed. The same rules as every other Claude call: JARVIS_CLAUDE_OFF stops it, the
+ * owner's spend ceiling holds (the margin is held while it is out, a request never answered is counted at its worst, every billed answer is
+ * recorded), a refused key is remembered, a 429 cools the model and throws ClaudeBusyError.
+ */
+export async function claudeTools(a: ClaudeToolsArgs): Promise<ClaudeToolsResult> {
+  if (claudeOff()) throw new Error("Claude is switched off (JARVIS_CLAUDE_OFF=1).");
+  const c = client();
+  const off = a.think ? {} : NO_THINK.test(a.model) ? { thinking: { type: "disabled" as const } } : BETWEEN_TOOLS.test(a.model) ? { thinking: { type: "between_tools" as const } } : {};
+  const body = {
+    model: a.model, max_tokens: a.maxTokens, system: a.system, tools: a.tools, messages: a.messages, output_config: { effort: a.effort },
+    ...(a.toolChoice ? { tool_choice: a.toolChoice } : {}), ...off,
+    ...(FALLBACKS.test(a.model) ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const } : {})
+  };
+  const t0 = Date.now();
+  let res: Anthropic.Beta.BetaMessage;
+  beginClaude();
+  try {
+    interface Lane { ac: AbortController; done: Promise<Anthropic.Beta.BetaMessage> }
+    const lanes: Lane[] = [];
+    let first: Lane | null = null;
+    const open = (): Lane => {
+      const ac = new AbortController();
+      const stream = c.beta.messages.stream(body as never, { timeout: Math.max(1000, a.timeoutMs - (Date.now() - t0)), signal: a.signal ? AbortSignal.any([a.signal, ac.signal]) : ac.signal });
+      const lane: Lane = { ac, done: stream.finalMessage() as Promise<Anthropic.Beta.BetaMessage> };
+      const names = new Map<number, string>(), json = new Map<number, string>();
+      stream.on("streamEvent", (e: Anthropic.Beta.BetaRawMessageStreamEvent) => {
+        if (!first) {
+          first = lane;
+          for (const o of lanes) if (o !== lane) { o.ac.abort(); recordEstimate(a.model, Math.ceil(JSON.stringify(body).length / 8), 60); /* (most of it is read from the cache) */ }
+        }
+        if (first !== lane || !a.onToolJson) return;
+        if (e.type === "content_block_start" && e.content_block.type === "tool_use") { names.set(e.index, e.content_block.name); json.set(e.index, ""); }
+        if (e.type === "content_block_delta" && e.delta.type === "input_json_delta" && names.has(e.index)) {
+          const all = (json.get(e.index) ?? "") + e.delta.partial_json;
+          json.set(e.index, all);
+          try { a.onToolJson!(e.index, names.get(e.index)!, all); } catch { /* a listener never breaks the call */ }
+        }
+      });
+      lanes.push(lane);
+      return lane;
+    };
+    let again: ReturnType<typeof setTimeout> | undefined;
+    try {
+      res = await new Promise<Anthropic.Beta.BetaMessage>((ok, no) => {
+        let lost = 0;
+        const run = (l: Lane) => void l.done.then(ok, (e) => { lost++; if (first === l || (!first && lost >= lanes.length)) no(e); });
+        run(open());
+        if (a.hedgeMs) again = setTimeout(() => { if (!first && !a.signal?.aborted && a.timeoutMs - (Date.now() - t0) > 2500) run(open()); }, a.hedgeMs);
+      });
+    } finally { clearTimeout(again); }
+  } catch (e) {
+    if (!(e instanceof Anthropic.APIError && typeof e.status === "number")) recordEstimate(a.model, JSON.stringify(body).length, Math.min(body.max_tokens, 1500));
+    heard({ name: a.name, model: a.model, outcome: a.signal?.aborted ? "aborted" : outcomeOf(e), ms: Date.now() - t0, path: "json", compact: false, warm: false });
+    if (a.signal?.aborted) throw e;
+    if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError) { refusedKey(e); throw new Error(`The Claude API refused the key (${e.status}).`); }
+    if (e instanceof Anthropic.RateLimitError) { ledger().cool("anthropic", a.model, Math.min(COOL_BUSY_MS, retryAfter(e, 20) * 1000)); telemetry("fallback_429", { provider: "anthropic", model: a.model, status: 429, fallback: "next-rung" }); throw new ClaudeBusyError(retryAfter(e, 20), "rate limited"); }
+    if (e instanceof Anthropic.BadRequestError && /credit balance/i.test(e.message)) { ledger().cool("anthropic", a.model, COOL_NO_CREDIT_MS); keyRefused("anthropic", 400, "no credit left"); throw new Error("The Claude API account has no credit left."); }
+    if (e instanceof Anthropic.APIConnectionTimeoutError) throw new ClaudeBusyError(10, `no answer in ${Math.round(a.timeoutMs / 1000)} s`);
+    if (e instanceof Anthropic.APIError && typeof e.status === "number" && e.status >= 500) throw new ClaudeBusyError(retryAfter(e, 15), `HTTP ${e.status}`);
+    if (e instanceof Anthropic.APIConnectionError) throw new ClaudeBusyError(10, "connection failed");
+    throw e;
+  } finally {
+    endClaude();
+  }
+  keyWorks("anthropic");
+  recordClaude(res.model || a.model, res.usage);
+  heard({ name: a.name, model: a.model, outcome: res.stop_reason === "refusal" ? "refusal" : res.stop_reason === "max_tokens" ? "max_tokens" : "ok", ms: Date.now() - t0, path: "json", compact: false, warm: false }, res);
+  if (res.stop_reason === "refusal" || res.stop_reason === "max_tokens") telemetry("claude_stop", { model: a.model, why: res.stop_reason });
+  const u = res.usage;
+  return { message: res, model: res.model || a.model, ms: Date.now() - t0, inputTokens: u.input_tokens + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0), outputTokens: u.output_tokens,
+    cacheReadTokens: u.cache_read_input_tokens ?? 0, cacheWriteTokens: u.cache_creation_input_tokens ?? 0 };
+}
+export type { Anthropic };

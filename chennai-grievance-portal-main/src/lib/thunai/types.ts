@@ -41,7 +41,8 @@ export type Step =
   | { a: "mode"; mode: OutMode }
   | { a: "speed"; faster: boolean }
   | { a: "handsfree"; on: boolean }
-  | { a: "workspace"; op: "save" | "open"; name: string | null }
+  /** `id` (26 Nov): the very version to open ("last week's version"), found on the server */
+  | { a: "workspace"; op: "save" | "open"; name: string | null; id?: number | null }
   | { a: "undo"; n: number }
   | { a: "stop" }
   | { a: "off" }

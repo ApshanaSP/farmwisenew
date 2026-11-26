@@ -9,6 +9,8 @@ const h = vi.hoisted(() => ({ claude: true, logged: 0, snapshots: 0, snapshotOut
 vi.mock("@/lib/collector/guard", () => ({ collectorSession: async () => ({ email: "c@x", userId: 7, role: "collector" }) }));
 vi.mock("@/lib/rate-limit", () => ({ checkRateLimit: () => ({ allowed: true }) }));
 vi.mock("@/lib/collector/intel", () => ({ exportMeta: async () => ({ build_id: "b1" }) }));
+vi.mock("@/lib/brain", () => ({ brainOn: () => false }));
+vi.mock("@/lib/thunai/brainturn", () => ({ brainTurn: async () => null }));
 vi.mock("@/lib/thunai/data", () => ({ serverHands: () => ({}) }));
 vi.mock("@/lib/thunai/decisions", () => ({ logDecision: () => { h.logged++; } }));
 vi.mock("@/lib/thunai/store", () => ({ readMemory: () => ({ notes: [], habits: {} }) }));

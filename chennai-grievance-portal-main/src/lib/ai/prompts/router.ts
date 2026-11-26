@@ -127,7 +127,7 @@ deadline ("overdue", "missed the deadline", "delayed", "SLA breached"); keep ans
 Ids: copy refIncidentId / refStoryId exactly from the message or the "Previous answer" section; never invent one.
 
 Scope: the console scope is given. Put in "scope" only what the latest message changes (null = keep the console's); list in "clear" filters the
-message removes ("whole district" clears zone and taluk). Periods: today / last 24 hours = daily; yesterday = daily (code reads it as the previous day); this week = weekly; this month / last 30 days =
+message removes ("whole district" clears zone and taluk). Periods: today = daily (since 12 AM); last 24 hours = daily too (code counts those hours exactly); yesterday = daily (code reads it as the whole previous day); this week = weekly; this month / last 30 days =
 monthly; this quarter / last 90 days = quarterly. Zones are 1-15. Use the codes listed below, and the resolved place given when there is one: a
 locality or zone -> zone; a revenue taluk ("Egmore taluk") -> taluk.
 visual = true when the answer is best understood as a picture, whether or not the message says so: it asks for one (chart, graph, diagram,

@@ -8,7 +8,7 @@ import type { Lang } from "@/lib/assistant/lang";
 import { bestType, checkChart } from "@/lib/assistant/chartspec";
 import type { ToolResult } from "@/lib/assistant/types";
 import type { ChartSpec, DataRow, Dataset, Display, Field, Kpi } from "@/lib/assistant/answer";
-import { PERIOD_LABEL } from "@/lib/assistant/lang";
+import { periodLabelIn } from "@/lib/assistant/lang";
 
 type Row = Record<string, any>;
 
@@ -50,7 +50,7 @@ const CHANGE_WORDS = /\b(improv\w*|better|worse|worsen\w*|chang\w*|compared?|vs\
 function bucketLabel(to: string, unit: string): string {
   const d = new Date(to.replace(" ", "T") + "+05:30");
   const day = d.toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" });
-  if (unit === "2 hours") return d.toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" });
+  if (unit === "2 hours") return d.toLocaleTimeString("en-US", { timeZone: "Asia/Kolkata", hour: "numeric", hour12: true });
   return unit === "week" ? `w/e ${day}` : day;
 }
 
@@ -58,7 +58,8 @@ export function present(r: ToolResult, question: string, lang: Lang): Presentati
   const d = r.data as Row;
   const none: Presentation = { datasets: [], chart: null, kpis: [], table: null, display: "text" };
   if (!d) return none;
-  const period = r.scope ? PERIOD_LABEL[r.scope.period].en.toLowerCase() : "";
+  const label = r.scope ? periodLabelIn(r.scope.period, "en", r.asOf) : "";
+  const period = label.charAt(0).toLowerCase() + label.slice(1);
 
   switch (r.tool) {
     case "overview_kpis": {
@@ -397,7 +398,7 @@ export function present(r: ToolResult, question: string, lang: Lang): Presentati
       const unit = String(d.unit);
       const ds: Dataset = { id: "series", title: "Incidents over time", normal: d.normal ? { lo: d.normal.lo, hi: d.normal.hi, basis: `usual range (10th-90th percentile) of the ${d.normal.n} ${unit}s before` } : null,
         fields: [F.time("bucket", unit === "2 hours" ? "Time" : unit === "week" ? "Week ending" : "Day"), F.int("n", "Incidents reported"), F.int("severe", "Severe"), F.int("open", "Still open")],
-        rows: (d.buckets as Row[]).map((b) => ({ bucket: bucketLabel(b.to, unit), n: b.n, severe: b.severe, open: b.open })) };
+        rows: (d.buckets as Row[]).map((b) => ({ bucket: bucketLabel(unit === "2 hours" ? b.from : b.to, unit), n: b.n, severe: b.severe, open: b.open })) };
       return { datasets: [ds], chart: spec({ type: "line", dataset: "series", x: "bucket", y: ["n"], normalBand: !!d.normal, sort: "none", highlight: "max",
         title: "Incidents reported over time", subtitle: `Per ${unit}, ${period}` }), kpis: [], table: null, display: "chart" };
     }

@@ -4,6 +4,7 @@
  * English words (the Collector types Tanglish in Latin letters). Pure.
  */
 import type { Period } from "./plan";
+import { dayWords } from "@/lib/period/day";
 import type { LayerId, Sev } from "./types";
 
 export type Lang = "en" | "ta" | "tanglish";
@@ -107,10 +108,10 @@ export function periodWords(p: Period | null, lang: Lang): string {
     return ta ? `அதற்கு முந்தைய ${p.days} நாட்கள்` : p.offset === 1 ? `the ${p.days} days before` : `${p.days} days, ${p.offset} periods back`;
   }
   if (p.kind === "month") return ta ? (p.offset === 0 ? "இந்த மாதம்" : `${p.offset} மாதம் முன்`) : p.offset === 0 ? "this calendar month" : p.offset === 1 ? "last calendar month" : `the calendar month ${p.offset} months back`;
-  // the calendar periods Jarvis and Ask District IQ say the same way (src/lib/period/read.ts): today since midnight, the calendar week before
+  // the calendar periods Jarvis and Ask District IQ say the same way (src/lib/period/read.ts): today since 12 AM (lib/period/day.ts), the calendar week before
   if (p.kind === "day") {
-    if (ta) return p.offset === 0 ? "இன்று, நள்ளிரவு முதல்" : p.offset === 1 ? "நேற்று" : p.offset === 2 ? "நேற்று முன்தினம்" : `${p.offset} நாட்கள் முன்`;
-    return p.offset === 0 ? "today, since midnight" : p.offset === 1 ? "yesterday" : p.offset === 2 ? "the day before yesterday" : `the calendar day ${p.offset} days back`;
+    if (ta) return p.offset === 0 ? dayWords().ta.plain : p.so_far && p.offset === 1 ? dayWords().ta.prev : p.offset === 1 ? "நேற்று" : p.offset === 2 ? "நேற்று முன்தினம்" : `${p.offset} நாட்கள் முன்`;
+    return p.offset === 0 ? dayWords().en.plain : p.so_far && p.offset === 1 ? dayWords().en.prev : p.offset === 1 ? "yesterday" : p.offset === 2 ? "the day before yesterday" : `the calendar day ${p.offset} days back`;
   }
   if (p.kind === "week") {
     if (ta) return p.offset === 0 ? "இந்த வாரம், திங்கள் முதல்" : p.offset === 1 ? "கடந்த வாரம், திங்கள் முதல் ஞாயிறு வரை" : `${p.offset} வாரங்கள் முன்`;
@@ -132,7 +133,7 @@ export function periodWords(p: Period | null, lang: Lang): string {
 export function inPeriodWords(p: Period | null): string {
   const w = periodWords(p, "en");
   if (!p) return "at any time";
-  if (p.kind === "day") return p.offset <= 2 ? w.replace(", since midnight", " since midnight") : `on ${w}`;
+  if (p.kind === "day") return p.offset <= 2 ? w : `on ${w}`;
   if (p.kind === "last_days" && p.offset === 0) return `in the ${w}`;
   if (p.kind === "range") return /^(today|yesterday|the day before|since|between|from|reported|on|in)\b/.test(w) ? w : /^(last|past)\b/.test(w) ? `in the ${w}` : /^\d/.test(w) ? `on ${w}` : `in ${w}`;
   if (p.offset === 0 && p.kind !== "last_days") return `in ${w}`;

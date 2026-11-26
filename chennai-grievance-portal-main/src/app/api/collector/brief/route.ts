@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams;
   const bad = refuseBadFilter(p);
   if (bad) return bad;
-  const scope = { period: parsePeriod(p.get("period")), zone: parseZone(p.get("zone")), dept: parseDept(p.get("dept")), taluk: parseTaluk(p.get("taluk")) };
+  const scope = { period: parsePeriod(p.get("period")), zone: parseZone(p.get("zone")), dept: parseDept(p.get("dept")), taluk: parseTaluk(p.get("taluk")), cat: parseCat(p.get("cat")) };
   try {
     switch (p.get("kind")) {
       case "day": return NextResponse.json(await soon(dayBrief(scope, s.email)));

@@ -44,6 +44,15 @@ export interface HudProps {
 
 const reducedMotion = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 const isTa = (t: string) => /[஀-௿]/.test(t);
+/**
+ * The room the console leaves for Jarvis's bar (its dock's height, 24 px around it), in steps of 44 px, and never more than 26 % of the
+ * screen (132 px at least): a tall stack of cards rises over the page instead of squeezing it away.
+ */
+export function hudRoom(dockH: number, screenH: number): number {
+  const need = Math.max(0, dockH) + 24;
+  const step = 88 + Math.max(0, Math.ceil((need - 88) / 44)) * 44;
+  return Math.round(Math.min(step, Math.max(132, screenH * 0.26)));
+}
 /** the core's size in the bar, in CSS pixels: the canvas is drawn at this size, not scaled down from a bigger one */
 export const CORE_PX = 40;
 /** the core's shortest frame: every second frame on a 144 Hz screen (about 72 fps), every frame at 60 Hz (measured: 15 ms gave 47 fps at 144 Hz) */
@@ -124,22 +133,11 @@ function Core({ v, anchor, glow }: { v: VisualState; anchor: RefObject<HTMLSpanE
 }
 
 /** The latest answer, in one small card in the corner: the question, the words, the key figures, the screen to open again. */
-function AnswerCorner({ asked, answer, p, lang, pill, setPill }: { asked: string; answer: string; p: HudPanel | null; lang: "en" | "ta"; pill: boolean; setPill: (v: boolean) => void }) {
+function AnswerCorner({ asked, answer, p, lang, setPill }: { asked: string; answer: string; p: HudPanel | null; lang: "en" | "ta"; setPill: (v: boolean) => void }) {
   const ta = lang === "ta";
   // v13 (21 Nov review, finding 1 6): a city screen shows in place on the map, this card its answer; Details opens its Stage, that same screen
   const city = p?.recipe === "city";
   const open = () => { if (p?.slots) window.dispatchEvent(new CustomEvent("jarvis:open-pin", { detail: { id: p.id, recipe: p.recipe, slots: p.slots, title: p.title, ...(city ? { full: true } : {}) } })); };
-  if (pill) {
-    const label = p?.title || asked || answer;
-    return (
-      <button className="hud-pill" lang={lang} onClick={() => setPill(false)} aria-expanded={false} data-testid="answer-pill"
-        title={ta ? "பதிலைக் காட்டு" : "Show the answer"} aria-label={`${ta ? "பதிலைக் காட்டு" : "Show the answer"}: ${label}`}>
-        <i className="hud-pill-dot" aria-hidden="true" />
-        <span lang={isTa(label) ? "ta" : "en"}>{label}</span>
-        <I n="chevd" />
-      </button>
-    );
-  }
   return (
     <article className="hud-ans" lang={lang} data-testid="answer">
       <header>
@@ -192,12 +190,47 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
     const el = dock.current;
     if (!el || typeof ResizeObserver !== "function") return;
     const root = document.documentElement;
-    const set = () => root.style.setProperty("--hud-dock-h", `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    // --hud-room (26 Nov, "no overlaps"): what the page under the bar leaves free for it (dock.css). It moves in steps and shrinks only after
+    // two calm seconds, so the page does not jump with every line Jarvis says
+    let room = 0, calm: ReturnType<typeof setTimeout> | null = null;
+    const apply = (v: number) => { room = v; root.style.setProperty("--hud-room", `${v}px`); };
+    const set = () => {
+      const h = Math.ceil(el.getBoundingClientRect().height);
+      root.style.setProperty("--hud-dock-h", `${h}px`);
+      const want = hudRoom(h, window.innerHeight);
+      if (calm) { clearTimeout(calm); calm = null; }
+      if (want > room) apply(want);
+      else if (want < room) calm = setTimeout(() => apply(want), 2000);
+    };
     set();
     const ro = new ResizeObserver(set);
     ro.observe(el);
-    return () => { ro.disconnect(); root.style.removeProperty("--hud-dock-h"); };
+    window.addEventListener("resize", set);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", set);
+      if (calm) clearTimeout(calm);
+      root.style.removeProperty("--hud-dock-h");
+      root.style.removeProperty("--hud-room");
+    };
   }, []);
+  // the answer's card starts under the console's band, so it never lies over the top bar, the filters or the counts (hud.css); measured
+  // while the card is up (the page under it may change)
+  const cardUp = !stageOpen && !pill && !!(s.answer || s.panels[0]);
+  useEffect(() => {
+    if (!cardUp) return;
+    const root = document.documentElement;
+    let last = "";
+    const set = () => {
+      const r = document.querySelector(".dic .band")?.getBoundingClientRect();
+      const v = `${Math.round(r && r.height > 0 ? Math.min(Math.max(r.bottom, 64), window.innerHeight * 0.4) : 64)}px`;
+      if (v !== last) { last = v; root.style.setProperty("--band-end", v); }
+    };
+    set();
+    const t = setInterval(set, 1500);
+    window.addEventListener("resize", set);
+    return () => { clearInterval(t); window.removeEventListener("resize", set); };
+  }, [cardUp]);
   useEffect(() => {
     if (!reducedMotion()) return;
     const t = setInterval(() => { if (level.current) level.current.style.transform = `scaleX(${hud.level().toFixed(2)})`; }, 120);
@@ -243,7 +276,7 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
   const a = s.actions;
   return (
     <div className={`hud${stageOpen ? " with-stage" : ""}${powered ? "" : " powering"}`} data-core={s.core} data-visual={vis} data-mic={hot ? "hot" : "off"} data-testid="hud" data-no-i18n lang={lang}>
-      {!stageOpen && (s.answer || panel) && <AnswerCorner asked={s.asked} answer={s.answer} p={panel} lang={lang} pill={pill} setPill={setPill} />}
+      {!stageOpen && !pill && (s.answer || panel) && <AnswerCorner asked={s.asked} answer={s.answer} p={panel} lang={lang} setPill={setPill} />}
       <div className="hud-dock" ref={dock}>
         <div className="hud-cards" lang={lang}>
           {s.interjection && <InterjectionCard x={s.interjection} lang={lang} a={a} />}
@@ -272,6 +305,11 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
             {s.strip.budgetLow && <div className="hud-notice warn" lang={lang}>{ta ? "கொஞ்சம் பொறுங்கள்: அடுத்த கேள்விக்கு \"ஜார்விஸ்\" என்று முதலில் சொல்லுங்கள்" : "Too much talk in the room: say \"Jarvis\" first for your next question"}</div>}
           </div>
           <div className="hud-acts">
+            {/* the folded answer: one of the bar's own buttons (26 Nov: floating, it lay over the department filter) */}
+            {!stageOpen && pill && (s.answer || panel) && (
+              <button className="hud-btn hud-pill-b" data-testid="answer-pill" onClick={() => setPill(false)} aria-expanded={false}
+                title={`${ta ? "பதிலைக் காட்டு" : "Show the answer"}: ${panel?.title || s.asked || s.answer}`}><i className="hud-pill-dot" aria-hidden="true" />{ta ? "பதில்" : "Answer"}</button>
+            )}
             <QueueBadge n={s.queue} lang={lang} onOpen={a.onQueue} />
             {s.core === "speaking" && <button className="hud-btn" onClick={onStop}><I n="stop" />{ta ? "பேச்சை நிறுத்து" : "Stop talking"}</button>}
             <button className={`hud-btn${muted ? " pri" : ""}`} onClick={onMute} aria-pressed={muted} title={muted ? (ta ? "மைக்கைத் திற" : "Turn the microphone back on") : (ta ? "மைக்கை மூடு: எனக்குக் கேட்காது" : "Turn the microphone off: I won't hear you")}>

@@ -25,6 +25,8 @@ import { SQL, deadlineState, falseDeadlineClaims, isPastDeadline, pastDueSql, wi
 import { searchGroups } from "@/lib/collector/searchwords";
 import { scrubCitizenDetails, CLOSED_BY_DEPARTMENT } from "@/lib/collector/scrub";
 import { sevLabel } from "@/lib/sev-label";
+import { PERIODS, dayStart, dayWindow, periodHours, periodInfo, wholeDay, type Period } from "@/lib/period/day";
+import { keepDay } from "@/lib/collector/daynews";
 
 /** The wall clock in IST, "YYYY-MM-DD HH:MM:SS". */
 const istWall = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
@@ -37,18 +39,8 @@ async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
   return r as unknown as T[];
 }
 
-/**
- * The console's reporting windows: the last 24 hours and the last 7, 30 and 90 days back from now (periodWindow), not a calendar day, week,
- * month or quarter. `resolved` is the Resolved tile's name on the console and in the PDF, which says that window: it said "Resolved today"
- * and "Resolved this week" (console-sync-01, hunt2-ops-10).
- */
-export const PERIODS = {
-  daily: { hours: 24, buckets: 12, unit: "Day", prev: "yesterday", label: "Last 24 hours", word: "Daily", resolved: "Resolved, last 24 hours" },
-  weekly: { hours: 168, buckets: 7, unit: "Week", prev: "prev. week", label: "Last 7 days", word: "Weekly", resolved: "Resolved, last 7 days" },
-  monthly: { hours: 720, buckets: 30, unit: "Month", prev: "prev. month", label: "Last 30 days", word: "Monthly", resolved: "Resolved, last 30 days" },
-  quarterly: { hours: 2160, buckets: 13, unit: "Quarter", prev: "prev. quarter", label: "Last 90 days", word: "Quarterly", resolved: "Resolved, last 90 days" }
-} as const;
-export type Period = keyof typeof PERIODS;
+/** The console's reporting windows: the table and its words are in lib/period/day.ts (Daily is the calendar day from 12 AM). */
+export { PERIODS, periodInfo, type Period, type PeriodInfo } from "@/lib/period/day";
 export type Overview = Awaited<ReturnType<typeof overview>>;
 export type IncidentDetail = NonNullable<Awaited<ReturnType<typeof incident>>>;
 
@@ -136,8 +128,8 @@ let asOfCache: { at: number; value: string; epoch: number } | null = null;
 
 /**
  * The console's "now" as an IST wall-clock string "YYYY-MM-DD HH:MM:SS": the time the page is
- * opened, so every period window ends at the current moment (Daily at 5:30 PM covers yesterday
- * 5:30 PM to now), not at the pipeline's last refresh. A later pipeline as-of wins (clock skew).
+ * opened, so every period window ends at the current moment (Daily at 5:30 PM covers 12 AM to
+ * now), not at the pipeline's last refresh. A later pipeline as-of wins (clock skew).
  */
 /** The console's time for code that cannot wait (a text built from rows already read): the last asOf() answer, never behind the clock. */
 export function asOfNow(): string {
@@ -171,15 +163,22 @@ export interface Scope {
   dept?: string | null;
   cat?: string | null;
   taluk?: string | null;
-  offset?: number; // 1 = the previous window
+  /** 1 = the window before, to set this one against: the 7 days before; for Daily the same hours one day earlier */
+  offset?: number;
+  /** a whole calendar day instead of the period: 1 = yesterday, 12 AM to 12 AM (the assistants' "yesterday") */
+  day?: number;
 }
 
 /**
- * The time window of a period over a timestamp column, rolling back from `now`: Daily is the
- * last 24 hours (opened at 5:30 PM, it covers yesterday 5:30 PM to now; offset 1 = the 24 hours
- * before that). Weekly, monthly and quarterly are the last 7, 30 and 90 days. `hours` overrides.
+ * The time window of a period over a timestamp column. Daily is the calendar day from 12 AM to now, and offset 1 the same hours
+ * one day earlier (lib/period/day.ts). Weekly, monthly and quarterly are the last 7, 30 and 90 days back from `now`, and offset 1
+ * the same length just before. `hours` overrides: that many hours back from now, whatever the period.
  */
 export function periodWindow(period: Period, now: string, col = "i.first_reported_at", off = 0, hours?: number): { sql: string; params: unknown[] } {
+  if (hours == null && period === "daily") {
+    const w = dayWindow(now, off);
+    return { sql: `${col} >= ? AND ${col} <= ?`, params: [w.from, w.to] };
+  }
   const h = hours ?? PERIODS[period].hours;
   return { sql: `${col} > (? - INTERVAL ? HOUR) AND ${col} <= (? - INTERVAL ? HOUR)`, params: [now, h * (off + 1), now, h * off] };
 }
@@ -189,11 +188,19 @@ export function periodWindow(period: Period, now: string, col = "i.first_reporte
  * pipeline's): no upper bound, so a decision made since the refresh counts "so far" (the earlier windows keep both bounds).
  */
 export function periodSinceWindow(period: Period, now: string, col: string, hours?: number): { sql: string; params: unknown[] } {
+  if (hours == null && period === "daily") return { sql: `${col} >= ?`, params: [dayStart(now)] };
   return { sql: `${col} > (? - INTERVAL ? HOUR)`, params: [now, hours ?? PERIODS[period].hours] };
+}
+
+/** A whole calendar day over a timestamp column, 12 AM to 12 AM: 1 = yesterday ("yesterday" in the assistants; the tiles' comparison is periodWindow offset 1). */
+export function wholeDayWindow(now: string, col = "i.first_reported_at", back = 1): { sql: string; params: unknown[] } {
+  const d = wholeDay(now, back);
+  return { sql: `${col} >= ? AND ${col} < ?`, params: [d.from, d.before] };
 }
 
 /** Start of the period as an IST wall-clock string ("YYYY-MM-DD HH:MM:SS"). */
 export function periodSince(period: Period, now: string): string {
+  if (period === "daily") return dayStart(now);
   const t = new Date(now.replace(" ", "T") + "Z").getTime() - PERIODS[period].hours * 3600_000;
   return new Date(t).toISOString().slice(0, 19).replace("T", " ");
 }
@@ -201,7 +208,7 @@ export function periodSince(period: Period, now: string): string {
 /** WHERE clause over `incidents i` for a period window, zone and department. */
 export function scopeWhere(s: Scope, now: string, closed = false): { sql: string; params: unknown[] } {
   // `closed`: the window is when the incident was closed (the Collector's decision counts at once), not when it was reported
-  const win = closed
+  const win = s.day ? wholeDayWindow(now, closed ? EFF.closedAt : "i.first_reported_at", s.day) : closed
     ? ((s.offset ?? 0) === 0 ? periodSinceWindow(s.period, now, EFF.closedAt) : periodWindow(s.period, now, EFF.closedAt, s.offset ?? 0))
     : periodWindow(s.period, now, "i.first_reported_at", s.offset ?? 0);
   const parts = [win.sql];
@@ -334,17 +341,19 @@ const NEWS_TIERS = "('established', 'regional', 'official')";
 /** Daily round-ups ("Chennai Latest News Today…") list many unrelated items, so they are not one story. */
 const ROUNDUP = /latest news today|news today live|live updates|top news|news highlights|#gallery/i;
 
+const NEWS_DOC = `d.doc_id, d.story_id, d.story_role, d.title, d.title_en, d.lang, d.url, d.publisher, d.publisher_domain, d.publisher_tier, d.place_text, d.ai_place, d.ai_orgs,
+            d.category_code, d.report_type, d.linked_incident_id, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t`;
 /**
  * The period's articles from recognised news media, split by the news desk (newsdesk.ts): what belongs on the Collector's desk and what
  * was left out. An article the desk has not read yet follows the rules: linked to an incident or about a category the district handles,
- * and not off-topic or about another district (newsrel.ts).
+ * and not off-topic or about another district (newsrel.ts). What was listed today stays listed until the day rolls over, unless the
+ * article itself was corrected (daynews.ts): a new build's labels and grouping take nothing off the page.
  */
 async function newsDocs(period: Period, now: string): Promise<{ kept: Row[]; left: Row[] }> {
   const w = periodWindow(period, now, "d.published_at");
-  wantDays(Math.ceil(PERIODS[period].hours / 24));
+  wantDays(Math.ceil(periodHours(period, now) / 24));
   const docs = (await q(
-    `SELECT d.doc_id, d.story_id, d.story_role, d.title, d.title_en, d.lang, d.url, d.publisher, d.publisher_domain, d.publisher_tier, d.place_text, d.ai_place, d.ai_orgs,
-            d.category_code, d.report_type, d.linked_incident_id, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t
+    `SELECT ${NEWS_DOC}
      FROM documents d WHERE d.is_district = 1 AND d.title IS NOT NULL AND d.publisher_tier IN ${NEWS_TIERS} AND ${w.sql}
      ORDER BY d.published_at DESC LIMIT 6000`,
     w.params
@@ -361,7 +370,12 @@ async function newsDocs(period: Period, now: string): Promise<{ kept: Row[]; lef
       if (asked && relevantNews(r, english(r))) kept.push(r);
     }
   }
-  return { kept, left };
+  return keepDay({ kept, left }, now, periodSince(period, now), {
+    find: (ids, urls) => q(`SELECT ${NEWS_DOC} FROM documents d WHERE d.title IS NOT NULL AND (d.doc_id IN (?) OR d.url IN (?))`, [ids.length ? ids : [""], urls.length ? urls : [""]]),
+    verdict: (r) => deskOf(r.title, r.title_en)?.v ?? null,
+    listing: (r) => ROUNDUP.test(String(r.title)) || isListing(r.title, r.title_en),
+    build: async () => { const m = await exportMeta().catch(() => ({} as Record<string, string>)); return String(m.build_id ?? m.exported_at ?? ""); }
+  });
 }
 
 /** What the news desk left out of the period's news, newest first, each with its reason ("See more" > Left out). */
@@ -883,7 +897,7 @@ function bucketSeries(rows: Row[], n: number, key: string): number[] {
 }
 
 export async function kpiBlock(s: Scope, now: string) {
-  const p = PERIODS[s.period];
+  const p = periodInfo(s.period, now);
   const cur = scopeWhere(s, now);
   const prev = scopeWhere({ ...s, offset: 1 }, now);
   // the breakdowns under each tile (severe still open, incidents behind the complaints, severe or high among the ongoing,
@@ -893,7 +907,7 @@ export async function kpiBlock(s: Scope, now: string) {
     SUM(i.severity_level = 'Severe' AND ${OPEN_NOW}) AS severe_open, SUM(${OPEN_NOW} AND i.citizen_complaints > 0) AS complaint_inc,
     SUM(${OPEN_NOW} AND (i.severity_level = 'Severe' OR i.severity_level = 'High')) AS urgent, COUNT(*) AS reported`;
   const bucketSecs = (p.hours * 3600) / p.buckets;
-  const since = periodSince(s.period, now); // daily: 12 buckets of 2 hours over the last 24 hours
+  const since = periodSince(s.period, now); // daily: buckets of 2 hours from 12 AM (12 AM, 2 AM, ...) up to the one now is in
   // "Resolved" is what was closed in the window (by when it closed), the same as Ask District IQ's count: not what was reported in the
   // window and is closed now (182 against 1,166 resolved this week, PB-214)
   const done = `${EFF.open} = 0 AND ${EFF.status} = 'Resolved'`;
@@ -976,7 +990,7 @@ export async function overview(period: Period, zone: number | null, dept: string
   const cat = focus.cat ?? null, taluk = focus.taluk ?? null;
   const s: Scope = { period, zone, dept, cat, taluk };
   const w = scopeWhere(s, now);
-  const p = PERIODS[period];
+  const p = periodInfo(period, now);
   // Zone shading and the zone table follow the department filter but cover every zone.
   const all = scopeWhere({ period, zone: null, dept, cat, taluk }, now);
   // The department list follows zone and period, never the department filter itself.
@@ -1079,7 +1093,7 @@ export async function overview(period: Period, zone: number | null, dept: string
       // to a department view (an officer's overview never carries another department's incidents, BUG-026) and to the zone, taluk and
       // category the Collector chose (console-sync-11: it read the period and the department only)
       `SELECT ${ROW()} ${FROM} WHERE ${w.sql} AND ${OPEN_NOW} AND i.severity_level IN ('Severe', 'High')
-       ORDER BY ${SEV_RANK}, i.citizen_complaints DESC LIMIT 6`,
+       ORDER BY ${SEV_RANK}, i.citizen_complaints DESC, i.priority_score DESC, i.first_reported_at DESC, i.incident_id LIMIT 6`, // (ties broken: a new build never reshuffles the six)
       w.params
     ),
     Promise.all([
@@ -1210,6 +1224,8 @@ export async function overview(period: Period, zone: number | null, dept: string
     // a quarter holds over a thousand stories (1 MB): the newest 250 are sent, with the full count
     allNews: allNews ? allNews.slice(0, 250) : null,
     allNewsTotal: allNews ? allNews.length : 0,
+    /** every story of the period by what the news desk says (the list holds the newest 250): all = act + know; areas of work */
+    allNewsCounts: allNews ? newsCounts(allNews) : null,
     bottom: {
       /** by department (no department filter) or by category (a department is selected) */
       byDept: byDept.map((r) => ({ code: (r.code as string | undefined) ?? null, l: String(r.l ?? r.code ?? "Other"), v: Number(r.v) })),
@@ -1225,6 +1241,18 @@ export async function overview(period: Period, zone: number | null, dept: string
 }
 
 const SEV_LEVELS = ["Severe", "High", "Medium", "Low"] as const;
+
+/** The period's news stories counted as the "See more" tabs show them: needing action, for information, and by area of work. */
+export function newsCounts(stories: { desk?: { v: string; area?: string | null } | null }[]) {
+  const areas: Record<string, { act: number; know: number }> = {};
+  let act = 0;
+  for (const s of stories) {
+    const a = s.desk?.v === "act";
+    if (a) act++;
+    if (s.desk?.area) (areas[s.desk.area] ??= { act: 0, know: 0 })[a ? "act" : "know"]++;
+  }
+  return { act, know: stories.length - act, areas };
+}
 
 /** What the department officer reported when asking for verification: the latest officer step. */
 async function officerActions(ids: string[]): Promise<Record<string, Row>> {
@@ -1297,7 +1325,7 @@ async function deptSnapshot(code: string, s: Scope, now: string) {
  * console can show readings for the selected zone (or the nearest station).
  */
 async function environment(period: Period, now: string) {
-  const days = Math.max(7, Math.round(PERIODS[period].hours / 24));
+  const days = Math.max(7, Math.round(periodHours(period, now) / 24));
   const [rainDays, rain, aqi, lakes, real] = await Promise.all([
     q(
       `SELECT DATE_FORMAT(date, '%Y-%m-%d') AS d, rain_intensity AS v, rain_event AS ev FROM world_calendar
@@ -1576,6 +1604,8 @@ export interface ListFilter {
   taluk?: string | null;
   /** incidents with no exact place (see PLACE_FILTERS) */
   place?: PlaceFilter | null;
+  /** only incidents with at least one citizen complaint (the Open complaints tile) */
+  complaints?: boolean;
   status: string | null;
   q: string | null;
   sort: "t" | "sev" | "c" | "r" | "d";
@@ -1613,6 +1643,7 @@ export async function list(f: ListFilter) {
   if (f.cat) (where.push("i.category_code = ?"), params.push(f.cat));
   if (f.taluk) (where.push("i.taluk_code = ?"), params.push(f.taluk));
   if (f.place) where.push(PLACE_FILTERS[f.place]);
+  if (f.complaints) where.push("i.citizen_complaints > 0");
   // "open" matches the severity tile: news complaints handed to a department are not listed as incidents.
   if (st === "awaiting" && f.scope === "period") { /* the rule is set above */ }
   else if (st === "open") where.push(OPEN_NOW);

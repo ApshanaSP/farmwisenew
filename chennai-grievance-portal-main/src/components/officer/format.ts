@@ -65,7 +65,8 @@ export function grievanceBriefing(ov: OfficerOverview, area: string | null): str
       : "No severe or high-severity grievance is open.",
     ov.byType[0] ? `Most complaints were about ${ov.byType[0].l.toLowerCase()} (${n(ov.byType[0].v)} of ${n(total)}).` : null,
     ov.byArea.rows[0] ? `${ov.byArea.rows[0].l} has the most open grievances (${n(ov.byArea.rows[0].v)}).` : null,
-    trend.length >= 4 && (early || late)
+    // (a day's halves are its night and its daytime: no rise is read from them)
+    ov.period !== "daily" && trend.length >= 4 && (early || late)
       ? late > early ? `Reports rose in the second half of the period (${n(late)} against ${n(early)}).`
         : late < early ? `Reports fell in the second half of the period (${n(late)} against ${n(early)}).` : "Reports were steady across the period."
       : null,

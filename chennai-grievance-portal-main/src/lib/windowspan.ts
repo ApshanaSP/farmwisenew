@@ -119,9 +119,12 @@ function span(n: number, unit: Unit, said: string): WindowRead {
   return { kind: "span", n, unit, hours, said };
 }
 
-/** The console's window that is exactly this many hours (24, 168, 720, 2160), or null: a stretch the console does not hold (336 hours, 3 days). */
-export function heldPeriod(hours: number): "daily" | "weekly" | "monthly" | "quarterly" | null {
-  return hours === 24 ? "daily" : hours === 168 ? "weekly" : hours === 720 ? "monthly" : hours === 2160 ? "quarterly" : null;
+/**
+ * The console's window that is exactly this many hours back (168, 720, 2160), or null: a stretch the console does not hold (336 hours, 3 days).
+ * 24 hours is none of them: Daily is the calendar day since 12 AM (lib/period/day.ts), and "the last 24 hours" is counted as it says.
+ */
+export function heldPeriod(hours: number): "weekly" | "monthly" | "quarterly" | null {
+  return hours === 168 ? "weekly" : hours === 720 ? "monthly" : hours === 2160 ? "quarterly" : null;
 }
 
 /**

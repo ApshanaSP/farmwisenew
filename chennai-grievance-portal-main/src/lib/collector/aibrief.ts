@@ -16,7 +16,8 @@ import { RowDataPacket } from "mysql2";
 import { generateJson } from "@/lib/ai/gateway";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
-import { OPEN_NOW, PERIODS, asOf, asOfNow, awaitingCheck, newsStories, periodWindow, type Period } from "@/lib/collector/intel";
+import { OPEN_NOW, asOf, asOfNow, awaitingCheck, newsStories, periodWindow, type Period } from "@/lib/collector/intel";
+import { dayWords, periodLower } from "@/lib/period/day";
 import { isPastDeadline, pastDueSql, pctChange, unusualEnough } from "@/lib/reference/metrics";
 import { categories, tamilNames } from "@/lib/collector/nlp";
 import { numbersHold, when } from "@/lib/collector/analysis";
@@ -119,13 +120,15 @@ Write every number in digits exactly as the facts give it (67, not sixty-seven; 
 
 // ------------------------------------------------------------------- scope --
 
-export interface BriefScope { period: Period; zone: number | null; dept: string | null; taluk: string | null }
+/** the console's filters, every one of them (the category was left out: a category view's key points were the whole district's) */
+export interface BriefScope { period: Period; zone: number | null; dept: string | null; taluk: string | null; cat?: string | null }
 
 function filters(s: BriefScope, a = "i") {
   const parts: string[] = [], params: unknown[] = [];
   if (s.zone) (parts.push(`${a}.zone_no = ?`), params.push(s.zone));
   if (s.dept) (parts.push(`${a}.lead_dept = ?`), params.push(s.dept));
   if (s.taluk) (parts.push(`${a}.taluk_code = ?`), params.push(s.taluk));
+  if (s.cat) (parts.push(`${a}.category_code = ?`), params.push(s.cat));
   return { sql: parts.length ? " AND " + parts.join(" AND ") : "", params };
 }
 
@@ -226,7 +229,14 @@ async function dayFacts(s: BriefScope) {
   const f = filters(s);
   const win = periodWindow(s.period, now), prev = periodWindow(s.period, now, "i.first_reported_at", 1);
   const W = `${win.sql}${f.sql}`, WP = [...win.params, ...f.params];
-  const whole = !s.zone && !s.dept && !s.taluk;
+  const whole = !s.zone && !s.dept && !s.taluk && !s.cat;
+  // unusual rises of the view: of its zone and category, and, for a department's or a taluk's view, only those with a report of its own
+  // behind them, counted over its own reports (as insights.ts does; they followed only the zone)
+  const own: string[] = [], ownP: unknown[] = [];
+  if (s.dept) (own.push("d.lead_dept = ?"), ownP.push(s.dept));
+  if (s.taluk) (own.push("d.taluk_code = ?"), ownP.push(s.taluk));
+  const ownSql = own.length ? `, (SELECT COUNT(*) FROM incidents d WHERE ${own.join(" AND ")} AND d.category_code = a.category_code AND d.zone_no = a.zone_no
+         AND DATE(d.first_reported_at) = a.date AND d.first_reported_at <= ?) AS own` : "";
   const [tot, before, serious, gKinds, gZones, gTop, overdue, awaiting, depts, spikes, warn, env, scopeName] = await Promise.all([
     q(`SELECT COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe, SUM(COALESCE(i.dead, 0)) AS dead, SUM(COALESCE(i.injured, 0)) AS injured,
               SUM(i.citizen_complaints) AS complaints, SUM(i.citizen_complaints > 0) AS ginc, SUM(i.media_only) AS news_only, SUM(${OPEN}) AS open
@@ -241,17 +251,20 @@ async function dayFacts(s: BriefScope) {
     q(`SELECT ${INC()} ${FROM} WHERE ${W} AND i.citizen_complaints > 0 ORDER BY i.citizen_complaints DESC, ${SEV_ORDER} LIMIT 5`, WP),
     q(`SELECT COUNT(*) AS n FROM incidents i WHERE ${OPEN} = 1 AND ${pastDueSql(await asOf())} AND i.citizen_complaints > 0${f.sql}`, f.params),
     // My Tasks' figure (metrics.ts awaiting_check), not every open item flagged for the Collector
-    awaitingCheck({ period: s.period, zone: s.zone, dept: s.dept, cat: null, taluk: s.taluk }, now).then((t) => [{ n: t.n, left: t.leftToDepts }]),
+    awaitingCheck({ period: s.period, zone: s.zone, dept: s.dept, cat: s.cat ?? null, taluk: s.taluk }, now).then((t) => [{ n: t.n, left: t.leftToDepts }]),
     q(`SELECT dp.name, COUNT(*) AS n, SUM(i.severity_level = 'Severe') AS severe ${FROM} WHERE ${W} GROUP BY dp.name ORDER BY n DESC LIMIT 5`, WP),
-    q(`SELECT a.category_code AS cat, a.zone_no AS zone, a.observed, a.ratio, a.kind, a.rise_days, DATE_FORMAT(a.date, '%Y-%m-%d') AS day
-       FROM anomalies a WHERE a.date > DATE(?) - INTERVAL 3 DAY ${s.zone ? "AND a.zone_no = ?" : ""} ORDER BY a.ratio DESC LIMIT 4`, s.zone ? [now, s.zone] : [now]).catch(orEmpty("aibrief:178")),
+    q(`SELECT a.category_code AS cat, a.zone_no AS zone, a.observed, a.ratio, a.kind, a.rise_days, DATE_FORMAT(a.date, '%Y-%m-%d') AS day${ownSql}
+       FROM anomalies a WHERE a.date > DATE(?) - INTERVAL 3 DAY ${s.zone ? "AND a.zone_no = ?" : ""} ${s.cat ? "AND a.category_code = ?" : ""} ORDER BY a.ratio DESC LIMIT ${own.length ? 40 : 4}`,
+      [...(own.length ? [...ownP, now] : []), now, ...(s.zone ? [s.zone] : []), ...(s.cat ? [s.cat] : [])])
+      .then((r) => (own.length ? r.filter((a) => n(a.own) > 0).map((a) => ({ ...a, observed: n(a.own) }) as Row).slice(0, 4) : r)).catch(orEmpty("aibrief:178")),
     q(`SELECT value, detail FROM observation_signals WHERE metric = 'imd_warning_level' ORDER BY value DESC LIMIT 1`).catch(orEmpty("aibrief:179")),
     q(`SELECT metric, ROUND(AVG(value), 1) AS v FROM (
          SELECT o.metric, o.place_id, o.value, ROW_NUMBER() OVER (PARTITION BY o.metric, o.place_id ORDER BY o.observed_at DESC) rn
          FROM observations o WHERE o.metric IN ('rainfall_24h_mm', 'aqi', 'lake_pct_full') AND o.observed_at <= ?) x WHERE rn = 1 GROUP BY metric`, [now]).catch(orEmpty("aibrief:182")),
     scopeLabel(s)
   ]);
-  const lane = await alertLane(now).catch((e) => (console.warn(`[aibrief] alerts lane: ${(e as Error).message}`), null));
+  // the warnings, the rain, the air and the reservoirs are the district's: a filtered view's key points never lead with them
+  const lane = whole ? await alertLane(now).catch((e) => (console.warn(`[aibrief] alerts lane: ${(e as Error).message}`), null)) : null;
   const alert = alertFacts(lane);
   const imdSays = lane?.sources.find((x) => x.key === "imd")?.says;
   const zn = new Map((await q(`SELECT DISTINCT zone_no, zone_name FROM ref_wards`)).map((z) => [n(z.zone_no), String(z.zone_name)]));
@@ -263,9 +276,9 @@ async function dayFacts(s: BriefScope) {
     // what the administration must act on first, then the most covered
     .sort((a, b) => Number(b.desk?.v === "act") - Number(a.desk?.v === "act") || b.outletNames.length - a.outletNames.length || String(b.t).localeCompare(String(a.t))).slice(0, 10) : [];
   const lines = [
-    `Scope: ${scopeName}. Period: ${PERIODS[s.period].label.toLowerCase()} (to ${when(now)}).`,
+    `Scope: ${scopeName}. Period: ${periodLower(s.period, now)} (to ${when(now)}).`,
     ...alert.lines,
-    `Incidents reported: ${n(T.n)}${ch == null ? "" : ` (${ch === 0 ? "the same as" : `${Math.abs(ch)}% ${ch > 0 ? "more than" : "fewer than"}`} the period before, which had ${n(before[0]?.n)})`}.` +
+    `Incidents reported: ${n(T.n)}${ch == null ? "" : ` (${ch === 0 ? "the same as" : `${Math.abs(ch)}% ${ch > 0 ? "more than" : "fewer than"}`} ${s.period === "daily" ? dayWords(now).en.prev : "the period before"}, which had ${n(before[0]?.n)})`}.` +
       ` Severe: ${n(T.severe)}. Deaths: ${n(T.dead)}. Injured: ${n(T.injured)}. Still open: ${n(T.open)}. Seen only in the news, no department record: ${n(T.news_only)}.`,
     serious.length ? "Deaths and severe incidents:" : "No death or severe incident.",
     ...serious.map(incLine),
@@ -276,11 +289,11 @@ async function dayFacts(s: BriefScope) {
     `Open grievances past their deadline (any date): ${n(overdue[0]?.n)}.`,
     depts.length ? `By department: ${depts.map((d) => `${d.name ?? "unassigned"} ${n(d.n)}${n(d.severe) ? ` (${n(d.severe)} severe)` : ""}`).join("; ")}.` : "",
     spikes.filter(unusualEnough).length ? `Unusual rises: ${spikes.filter(unusualEnough).map((a) => `${catLabel.get(a.cat) ?? a.cat} in ${zn.get(n(a.zone)) ?? "the district"}: ${n(a.observed)} reports ` +
-      `${a.kind === "slow_rise" ? `in ${n(a.rise_days)} days to ${when(a.day)}` : `on ${when(a.day)}`}, ${Math.round(n(a.ratio))} times the usual`).join("; ")}.` : "",
+      `${a.kind === "slow_rise" ? `in ${n(a.rise_days)} days to ${when(a.day)}` : `on ${when(a.day)}`}, ${own.length ? "part of an unusual rise there" : `${Math.round(n(a.ratio))} times the usual`}`).join("; ")}.` : "",
     news.length ? "In the news (stories the news desk kept for the Collector, those needing action first):" : "",
     ...news.map((x) => `- ${one(x.title, 150)}${x.desk?.gist ? ` (${one(x.desk.gist, 240)})` : ""} · ${x.outletNames.length} outlet${x.outletNames.length === 1 ? "" : "s"}${x.loc ? ` · ${x.loc}` : ""}` +
       `${x.incident ? ` · in our records [${x.incident}]${x.complaints ? ` with ${x.complaints} citizen complaints` : ""}` : " · news only, no department record"}`),
-    [imdSays && imdSays !== "no reading" ? `IMD for Chennai: ${one(imdSays, 200)}.` : warn[0] && n(warn[0].value) >= 1 ? `IMD warning: ${one(warn[0].detail, 200)}` : "No IMD warning.",
+    !whole ? "" : [imdSays && imdSays !== "no reading" ? `IMD for Chennai: ${one(imdSays, 200)}.` : warn[0] && n(warn[0].value) >= 1 ? `IMD warning: ${one(warn[0].detail, 200)}` : "No IMD warning.",
       envV.rainfall_24h_mm != null ? `Rain in 24 h: ${envV.rainfall_24h_mm} mm.` : "", envV.aqi != null ? `Air quality: AQI ${Math.round(envV.aqi)}.` : "",
       envV.lake_pct_full != null ? `Drinking-water reservoirs: ${envV.lake_pct_full}% full.` : ""].filter(Boolean).join(" "),
     `Closed work waiting for the Collector's check in My Tasks (severe incidents and officers' reports): ${n(awaiting[0]?.n)}; other closures verified by the departments: ${n(awaiting[0]?.left)}.`
@@ -295,6 +308,7 @@ async function scopeLabel(s: BriefScope) {
   if (s.zone) parts.push(String((await q(`SELECT zone_name FROM ref_wards WHERE zone_no = ? LIMIT 1`, [s.zone]))[0]?.zone_name ?? `Zone ${s.zone}`) + " zone");
   if (s.taluk) parts.push(String((await q(`SELECT name FROM ref_taluks WHERE taluk_code = ?`, [s.taluk]))[0]?.name ?? s.taluk) + " taluk");
   if (s.dept) parts.push(String((await q(`SELECT name FROM ref_departments WHERE code = ?`, [s.dept]))[0]?.name ?? s.dept));
+  if (s.cat) parts.push(categories().find((c) => c.code === s.cat)?.label ?? s.cat);
   return parts.join(", ") || "Chennai district";
 }
 
@@ -350,7 +364,7 @@ export async function deptBrief(s: BriefScope, dept: string, user: string): Prom
   const T = tot[0] ?? {};
   if (!n(T.n)) return null;
   const facts = [
-    `Department: ${name[0]?.name ?? dept}. Period: ${PERIODS[s.period].label.toLowerCase()} (to ${when(now)}).`,
+    `Department: ${name[0]?.name ?? dept}. Period: ${periodLower(s.period, now)} (to ${when(now)}).`,
     `Received: ${n(T.n)} incidents. Severe: ${n(T.severe)}. Deaths: ${n(T.dead)}. Injured: ${n(T.injured)}. Still open: ${n(T.open)}, ${n(T.overdue)} past deadline. Citizen complaints: ${n(T.complaints)}.`,
     `Kinds: ${kinds.map((k) => `${k.label} (${n(k.n)})`).join(", ")}.`,
     "Incidents, most serious first:", ...rows.map(incLine)

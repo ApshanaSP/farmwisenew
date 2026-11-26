@@ -12,6 +12,8 @@ import { decisionOf, planRound, RoundBody, type RoundOut } from "@/lib/thunai/ro
 import { readMemory } from "@/lib/thunai/store";
 import { roundStream } from "@/lib/thunai/streamturn";
 import { serverWorld } from "@/lib/thunai/world";
+import { brainOn } from "@/lib/brain";
+import { brainTurn } from "@/lib/thunai/brainturn";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -47,7 +49,9 @@ export async function POST(req: NextRequest) {
   // ceiling reached) every planner turn waited on it, and its stale refresh froze the conversation, for a picture no turn used (RC3)
   const snapshot = () => (claudeConfigured() ? districtSnapshot() : Promise.resolve(null));
   const run = async (emit?: (e: TurnEvent) => void) => record(await planRound(parsed.data, await serverWorld(), serverHands({ email: s.email, role: "collector", lockDept: null }, req.signal), `collector:${s.userId}`,
-    { notes: mem.notes.map((n) => n.text), habits: mem.habits }, req.signal, { dataVersion: () => exportMeta().then((m) => m.build_id ?? m.exported_at ?? ""), speculate: true, emit, snapshot }));
+    { notes: mem.notes.map((n) => n.text), habits: mem.habits }, req.signal, { dataVersion: () => exportMeta().then((m) => m.build_id ?? m.exported_at ?? ""), speculate: true, emit, snapshot,
+      // 26 Nov: the brain answers first (lib/brain); the lanes of round.ts stand behind it
+      brain: brainOn() ? brainTurn : null, brainFor: { user: { email: s.email, role: "collector", lockDept: null }, key: `voice:${s.userId}` } }));
   // v15: the keep-warm's heavy steps wait while a round is answered (keepwarm.ts busy)
   const done = busy();
   const runBusy = (emit?: (e: TurnEvent) => void) => run(emit).finally(done);

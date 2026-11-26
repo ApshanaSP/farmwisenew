@@ -90,16 +90,20 @@ describe("counts, hours, dates and ages get the reader's window", () => {
 });
 
 describe("a comparison is a change between two equal windows", () => {
-  it.each([["is open flooding up or down in zone 13", 7], ["garbage complaints compared with yesterday", 1], ["pona maasatha vida garbage complaints", 30],
-    ["நேற்றை விட வெள்ளம் அதிகமா", 1], ["garbage complaints up from last month", 30]] as [string, number][])("%s: the last %i days against the ones before", (q, days) => {
+  it.each([["is open flooding up or down in zone 13", 7], ["pona maasatha vida garbage complaints", 30],
+    ["garbage complaints up from last month", 30]] as [string, number][])("%s: the last %i days against the ones before", (q, days) => {
     const c = changeOf(planOf(q)?.plan);
     expect(c?.now).toEqual({ kind: "last_days", days, offset: 0 });
     expect(c?.before).toEqual({ kind: "last_days", days, offset: 1 });
   });
-  it("a follow-up 'up or down?' compares the answer's own window; 'compared to yesterday' the last 24 hours", () => {
+  it.each(["garbage complaints compared with yesterday", "நேற்றை விட வெள்ளம் அதிகமா"])("%s: today so far against yesterday by this time", (q) => {
+    const c = changeOf(planOf(q)?.plan);
+    expect([c?.now, c?.before]).toEqual([{ kind: "day", offset: 0 }, { kind: "day", offset: 1, so_far: true }]);
+  });
+  it("a follow-up 'up or down?' compares the answer's own window; 'compared to yesterday' today so far", () => {
     const first = planOf("open flooding in zone 13")!.plan;
     expect(changeOf(planOf("up or down?", first)?.plan)).toMatchObject({ now: { kind: "last_days", days: 7, offset: 0 }, before: { kind: "last_days", days: 7, offset: 1 } });
-    expect(changeOf(planOf("compared to yesterday", first)?.plan)).toMatchObject({ now: { kind: "last_days", days: 1, offset: 0 }, before: { kind: "last_days", days: 1, offset: 1 } });
+    expect(changeOf(planOf("compared to yesterday", first)?.plan)).toMatchObject({ now: { kind: "day", offset: 0 }, before: { kind: "day", offset: 1, so_far: true } });
   });
   it("a whole calendar period said as the window is compared with the one before it", () => {
     expect(changeWindows({ kind: "month", offset: 1 })).toEqual({ now: { kind: "month", offset: 1 }, before: { kind: "month", offset: 2 } });
@@ -110,11 +114,11 @@ describe("a comparison is a change between two equal windows", () => {
 describe("the model's plans follow the same rules", () => {
   const kids = (period: Period | null): Step[] => [{ op: "take", as: "a", layer: "incidents", filter: F(period), where: null }, { op: "take", as: "f1", layer: "schools", filter: null, where: null },
     { op: "within", as: "w", of: "a", near: ["f1"], meters: 500 }];
-  it("a model's change on 'today' compares the last 24 hours with the 24 before, not today so far with all of yesterday", () => {
+  it("a model's change on 'today' compares today so far with yesterday by this time, not with all of yesterday", () => {
     const m = model([...kids({ kind: "day", offset: 0 }), { op: "change", as: "chg", of: "w", now: { kind: "day", offset: 0 }, before: { kind: "day", offset: 1 } }]);
     const out = fitModelPlan(m, "has flooding near kids' schools gone up today compared to yesterday", NOW);
-    expect(changeOf(out)).toMatchObject({ now: { kind: "last_days", days: 1, offset: 0 }, before: { kind: "last_days", days: 1, offset: 1 } });
-    expect(takeOf(out)?.filter?.period).toEqual({ kind: "last_days", days: 1, offset: 0 });
+    expect(changeOf(out)).toMatchObject({ now: { kind: "day", offset: 0 }, before: { kind: "day", offset: 1, so_far: true } });
+    expect(takeOf(out)?.filter?.period).toEqual({ kind: "day", offset: 0 });
   });
   it("'last week compared to the week before': the calendar week against the one before it", () => {
     const m = model([...kids({ kind: "last_days", days: 7, offset: 0 }), { op: "change", as: "chg", of: "w", now: { kind: "last_days", days: 7, offset: 0 }, before: { kind: "last_days", days: 7, offset: 1 } }]);
