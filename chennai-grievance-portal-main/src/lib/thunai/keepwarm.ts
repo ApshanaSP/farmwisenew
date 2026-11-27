@@ -11,6 +11,12 @@
  *   build  right after a newer hourly build is swapped in (store.ts onBuildSwap), which starts every store-keyed cache again
  *
  * What a pass does, in this order (each step waits for the one before):
+ *   cases        27 Nov: the brain's `cases` table (brain/sql.ts refreshCases), made again in slices only when the build or a decision changed:
+ *                after the start, after a new build and on a tick while the console is in use (a reload may have brought another
+ *                PC's decisions). Before, the first question after any data-epoch move made it again, 1.6 s and more on the one thread.
+ *   lexicon      27 Nov: the day's names for Jarvis's lanes (v10/lexserver.ts warmLexicon), built in slices once a build; when it is held
+ *                the lexicon route answers at once (it built it on the request when Jarvis opened: the hosted copy's 7-8 s stalls).
+ *                Both are quick when nothing changed. Not on the hour's pass (a new build has its own).
  *   city-hourly  the rain rehearsal's memory and reach, the past rains and the traffic, power and train impacts (one computation an IST
  *                hour, or a build: the first city question of an hour took 7.8 s at 06:37:44). Every pass. v14: while someone is on the
  *                console the engine answers from the last settled base and the last hour's memory and marks the rebuild due
@@ -19,7 +25,8 @@
  *                SETTLE_MS and Jarvis not used for QUIET_MS (review findings 0-6 and scenarios 3: the 7-17 s rebuild held the one
  *                thread for whoever asked first; on a timer it held it for whoever was speaking then).
  *   city-live    live traffic (TomTom's own 5-minute cache) and the city answers for traffic and rain (lib/city/now.ts), only while active
- *   insights     the whole district's insights and overview, daily and weekly (assistant/tools.ts warmInsights), only while active
+ *   insights     the whole district's insights and overview, daily and weekly (assistant/tools.ts warmInsights), only while active, and
+ *                (27 Nov) not while Jarvis was used in the last RECENT_MS: it held the hosted copy's one core 3.8-6.4 s every 75 s
  *   snapshot     THE DISTRICT NOW (v11/snapshot.ts), only while active and Claude leads (claudeConfigured: no one else attaches it)
  *   prompt       the Claude planner's prompt cache (claudeWarm with round.ts plannerWarm, 20 s), only while Jarvis was used in the last
  *                15 minutes and Claude leads, at most once in 4 minutes (the cache keeps a prefix 5), and always last
@@ -47,9 +54,11 @@ export const QUIET_MS = 90_000;
 export const SETTLE_MS = 2 * 60_000;
 /** v14: a pass this long after the console is opened again, so the first question finds the reads warm */
 export const RESUME_MS = 1_000;
+/** 27 Nov: the insights step waits until Jarvis has not been used (heard, asked, opened) for this long */
+export const RECENT_MS = 60_000;
 
 export type WarmWhy = "start" | "tick" | "hour" | "build";
-export type WarmStep = "city-hourly" | "city-fresh" | "city-live" | "insights" | "snapshot" | "prompt";
+export type WarmStep = "cases" | "lexicon" | "city-hourly" | "city-fresh" | "city-live" | "insights" | "snapshot" | "prompt";
 type Who = "collector" | "jarvis";
 
 interface State {
@@ -188,13 +197,15 @@ export function msToIstHour(now: number = Date.now()): number {
  * The steps of one pass, in order. Pure: what runs for this trigger, given who is active, whether Claude leads and (v14) whether it is a
  * quiet moment for the hour's rain rebuild.
  */
-export function planPass(why: WarmWhy, o: { active: boolean; jarvis: boolean; claude: boolean; promptDue: boolean; quiet?: boolean }): WarmStep[] {
+export function planPass(why: WarmWhy, o: { active: boolean; jarvis: boolean; claude: boolean; promptDue: boolean; quiet?: boolean; /** 27 Nov: Jarvis used in the last RECENT_MS */ recent?: boolean }): WarmStep[] {
   // a tick is only for a console in use; the other triggers always warm the hourly parts, which hold for the hour (v14: with no one on
   // the console that is the rebuild itself, which then stalls no one; v13's skip moved it onto the morning's first question)
   if (why === "tick" && !o.active) return [];
-  const out: WarmStep[] = ["city-hourly"];
+  // 27 Nov: Jarvis's data of the build first (the cases table, the day's names): after the start, a new build, and on a tick in use
+  const out: WarmStep[] = why === "hour" ? ["city-hourly"] : ["cases", "lexicon", "city-hourly"];
   if (o.active && o.quiet) out.push("city-fresh");
-  if (o.active) out.push("city-live", "insights");
+  if (o.active) out.push("city-live");
+  if (o.active && !o.recent) out.push("insights");
   if (o.active && o.claude) out.push("snapshot");
   if (o.jarvis && o.claude && o.promptDue) out.push("prompt");
   return out;
@@ -204,6 +215,15 @@ export function planPass(why: WarmWhy, o: { active: boolean; jarvis: boolean; cl
 export type StepRunners = Partial<Record<WarmStep, () => Promise<unknown>>>;
 
 const STEPS: Record<WarmStep, () => Promise<unknown>> = {
+  cases: async () => {
+    // (the brain's table: only when the brain answers; the older planner's reads do not use it)
+    if (process.env.DATA_BACKEND !== "aws" || !(await import("@/lib/brain")).brainOn()) return null;
+    return (await import("@/lib/brain/sql")).warmCases();
+  },
+  lexicon: async () => {
+    const [lex, world] = await Promise.all([import("@/lib/thunai/v10/lexserver"), import("@/lib/thunai/world")]);
+    return lex.warmLexicon(await world.serverWorld());
+  },
   "city-hourly": async () => {
     const eng = await import("@/lib/rehearsal/engine");
     await eng.rehearsalState();
@@ -276,16 +296,20 @@ export async function runPass(why: WarmWhy, o: { steps?: StepRunners; claude?: (
     try { claude = o.claude ? o.claude() : (await import("@/lib/ai/claude")).claudeConfigured(); } catch { claude = false; }
     const active = activeWithin("collector", ACTIVE_MS, t0);
     const quiet = active && !activeWithin("jarvis", QUIET_MS, t0) && t0 - (seen().since ?? 0) >= SETTLE_MS;
-    plan = planPass(why, { active, jarvis: activeWithin("jarvis", ACTIVE_MS, t0), claude, promptDue: t0 - k.promptAt >= PROMPT_EVERY_MS, quiet });
+    plan = planPass(why, { active, jarvis: activeWithin("jarvis", ACTIVE_MS, t0), claude, promptDue: t0 - k.promptAt >= PROMPT_EVERY_MS, quiet, recent: activeWithin("jarvis", RECENT_MS, t0) });
     for (const step of plan) {
       // v15: a question being answered goes first; the pass's own steps wait for it (tests pass their own steps and do not wait)
       if (!o.steps) {
         // v16: a tick's heavy step waits for a real pause in the conversation, else waits for the next tick
         if (why === "tick" && step !== "prompt") { if (!(await untilQuietFor(TICK_QUIET_MS, TICK_QUIET_MAX_MS))) { times[step] = 0; continue; } }
         else await untilQuiet();
+        // 27 Nov: Jarvis was used while this pass waited: the insights wait for a pass after it has been let be for RECENT_MS
+        if (step === "insights" && activeWithin("jarvis", RECENT_MS)) { times[step] = 0; continue; }
       }
       const ts = now();
-      try { await asBackground(o.steps?.[step] ?? STEPS[step]); } catch (e) { console.warn(`[jarvis warm] ${step} failed: ${(e as Error)?.message?.slice(0, 160)}`); }
+      // (a test that passes its own steps runs only those: a step it leaves out does nothing)
+      const run = o.steps ? (o.steps[step] ?? (async () => undefined)) : STEPS[step];
+      try { await asBackground(run); } catch (e) { console.warn(`[jarvis warm] ${step} failed: ${(e as Error)?.message?.slice(0, 160)}`); }
       times[step] = now() - ts;
       await breathe();
     }

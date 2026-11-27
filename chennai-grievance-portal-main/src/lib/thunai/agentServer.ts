@@ -10,7 +10,10 @@ import { AgentPlanLenient, AgentPlanSchema, directScreen, runThunaiAgent, type A
 import { PlanBody, screenOf } from "./brain";
 import type { Hands } from "./screens";
 import { checkStage, RECIPES, type StageContext } from "./stage";
-import { asksCount, offTopic, quickScreen } from "./quick";
+import { asksCount, quickScreen } from "./quick";
+import { detectLang } from "./normalise";
+import { scopeOf } from "@/lib/topicguard/scope";
+import { offTopicReply } from "@/lib/topicguard/reply";
 import { spanScreen } from "./spanned";
 import type { Lang, World } from "./types";
 
@@ -46,13 +49,14 @@ export async function handleAgent(b: AgentBodyT, world: World, rawHands: Hands, 
   if (b.direct) return served(await spanScreen(b.direct.recipe, b.direct.slots, state, world, hands, b.text, b.direct.lang as Lang));
   // the everyday questions (severe cases, a place's news, prices, air, rain, lakes, why, where) are answered from the data
   // at once by rules, in the language they were asked in; the model is asked only when the rules are not sure
-  // Jarvis answers only about the district: anything else gets a polite "ask me about the district" and no model call
-  if (offTopic(b.text, world)) {
-    const lang: Lang = /[\u0B80-\u0BFF]/.test(b.text) ? "ta" : "en";
-    const reply = lang === "ta"
-      ? "மன்னிக்கவும், சென்னை மாவட்டத்தின் தரவு பற்றி மட்டுமே என்னால் பதில் சொல்ல முடியும்: புகார்கள், சம்பவங்கள், செய்திகள், மழை மற்றும் வெள்ளம், காற்றின் தரம், ஏரிகள், சந்தை விலைகள், துறைகள். இவற்றைப் பற்றிக் கேளுங்கள்."
-      : "Sorry, I can only answer questions about Chennai district's data on this console: complaints and incidents, news, rain and flooding, air quality, reservoirs, market prices and departments. Please ask me about those.";
-    return { kind: "refuse", lang, reply, steps: [], stage: null, stageOp: null, say: null, options: [], rounds: 0, calls: [], model: null, ms: 0, note: "off-topic" };
+  // Jarvis answers only about the district (27 Nov, the topic guard, lib/topicguard): a question about nothing in it ("When was Dhoni's
+  // retirement?") gets the one fixed decline and no model call. A match or a film inside a district question stays in ("traffic near Chepauk
+  // for the IPL match"), and so does a short follow-up that leans on the thread. (quick.ts offTopic declined real district questions; it stays
+  // for the holdout and QA live tests only.) kind chat, as the round's decline: a refusal plays the "blocked" sound
+  const sc = scopeOf(b.text, { world, follows: (b.turns?.length ?? 0) > 0 });
+  if (sc.verdict === "out") {
+    const lang: Lang = detectLang(b.text);
+    return { kind: "chat", lang, reply: offTopicReply(lang, { topic: sc.topic, voice: true }), steps: [], stage: null, stageOp: null, say: null, options: [], rounds: 0, calls: [], model: null, ms: 0, note: "offtopic" };
   }
   const quick = quickScreen(b.text, world);
   if (quick) {

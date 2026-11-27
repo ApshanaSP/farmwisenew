@@ -15,8 +15,11 @@
  *   news media   an incident known only from the news, and only from sites that are not news media (property blogs,
  *                trading apps, aggregators, content farms: newsrel.isNewsMedia), is taken out of the build, so the
  *                console's counts, map, lists and assistant follow official news media only.
- *   report kinds a news article that is a forecast, government work, a rescue, a roundup, an opinion or a promotion
- *                (reporttype.ts) is news, not an incident: its news-only incident leaves the build (LT-03).
+ *   report kinds a news article that is a forecast, government work, the end of an earlier event, a roundup, an opinion or a
+ *                promotion is news, not an incident (LT-03): by the AI news desk's kind for a story it has read, else by the
+ *                word rules (reporttype.ts). Its labels say so, and the news desk step takes its news-only incident out.
+ *   news desk    the desk's verdicts (newsdesk.ts): its English headlines for Tamil reports, and the incidents that are not
+ *                incidents out (a police case or harm in the headline stays, flagged for review).
  *   news sanity  history items, gas deaths, one story filed as many incidents, death counts said again by the
  *                fixed rule (LT-04), animal deaths, one-outlet death tolls (newssanity.ts).
  *   clusters     incidents that are the same problem in the same area (neighbouring streets, the same street or
@@ -35,7 +38,7 @@ import { NON_INCIDENT_KINDS, reportKind, type ReportKind } from "@/lib/collector
 import { CITY_ONLY, clusterIncidents, placeKey } from "@/lib/collector/cluster";
 import { MASS_DEATHS, STATEWIDE_COUNT, animalDeathsOnly, casualties, casualtyMerges, isArchival, labelNumbers, isGasNotDisease, notAnIncident, storyMerges, type NewsIncident } from "@/lib/collector/newssanity";
 import { websiteCases } from "@/lib/manu/cases";
-import { deskOf, headOf } from "@/lib/collector/deskbook";
+import { deskOf, headOf, type Verdict } from "@/lib/collector/deskbook";
 
 type Row = Record<string, any>;
 const istNow = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 19).replace("T", " ");
@@ -376,34 +379,119 @@ function mergeInto(db: DB, from: string, to: string) {
 
 // ------------------------------------------------------------ report kinds --
 
+/** What the desk leaves out that cannot be an incident: a match, a film or a game, a feature, a price list (a verdict from before the desk gave a kind). */
+const NO_EVENT = new Set(["sport", "entertainment", "feature", "listing"]);
+/** Words of a police case or of harm: an incident whatever the desk's kind (a star booked for fraud, a fire at a film set), kept for a check. */
+const CASE_WORDS = /\b(police|arrest\w*|book(?:ed|s)|case|fir|held|remand\w*|seiz\w*|raid\w*|theft|steal\w*|stole\w*|fraud|cheat\w*|scam|dead|dies|died|death|killed|injur\w*|missing|accident|fire|collaps\w*)\b|போலீஸ்|காவல்|கைது|வழக்கு|மோசடி|திருட்டு|கொலை|பலி|உயிரிழ|காயம்|விபத்து|மாயம்/i;
+
+/** One news article's kind, and who decided it. */
+export interface ArticleKind {
+  /** null: nothing decisive (the pipeline's labels stand), or held */
+  kind: ReportKind | null;
+  by: "desk" | "rules";
+  /** the desk reads it as this (not an incident), but its headline names a police case or harm: the incident stays, for a check */
+  held?: ReportKind;
+}
+
 /**
- * Each news article's kind from its headline (reporttype.ts): a forecast, government work, a rescue, a roundup, an
- * opinion or a promotion is news, not an incident. The article keeps its place in the news lists with report_type set
- * to that kind and is_incident = 0 (alerts reach the alerts lane through it); a news-only incident whose every article
- * is such a report is taken out of the build, so only incidents carry a severity and reach the counts.
+ * 27 Nov 2026: the news desk's kind for a report it has read (newsdesk.ts); for one it has not, the word rules' (reporttype.ts),
+ * exactly as before. A desk verdict from before the desk gave a kind counts as one only for a match, a film, a game, a feature or a
+ * listing (what it could decide then). `rule` is reportKind() of the headline, worked out once per build.
+ */
+export function articleKind(v: Verdict | null, rule: ReportKind | null, title: unknown, en: unknown): ArticleKind {
+  const desk = v?.kind ?? (v && v.v === "skip" && !v.real && NO_EVENT.has(v.skip) && rule !== "incident" ? "other" : undefined);
+  if (!desk) return { kind: rule, by: "rules" };
+  if (desk !== "incident" && CASE_WORDS.test(plainEvents(`${title ?? ""} ${en ?? ""}`))) return { kind: null, by: "desk", held: desk };
+  return { kind: desk, by: "desk" };
+}
+
+/** The pipeline's own labels for news that is not an incident: finer than the desk's "other" or "opinion" (Ask District IQ leaves out sport and business by them). */
+const PIPELINE_NEWS = new Set(["service_notice", "announcement", "court", "politics", "entertainment_sport", "business", "opinion_feature"]);
+type Labels = { type: string | null; inc: number };
+
+/** The report_type and is_incident an article should carry: `was` is the pipeline's, `cur` what the build holds now. */
+function labelsFor(a: ArticleKind, was: Labels, cur: Labels, linked: boolean): Labels {
+  if (!a.kind || (a.kind === "incident" && a.by === "rules")) return cur;
+  if (a.kind !== "incident") {
+    // not an incident; a forecast is labelled one whatever the pipeline said (the alerts lane reads the label)
+    const keep = a.by === "desk" && a.kind !== "alert" && was.type != null && PIPELINE_NEWS.has(was.type);
+    return { type: keep ? was.type : a.kind, inc: 0 };
+  }
+  // the desk reads an incident: a word rule's label (this build's, or the pipeline's copy of the rules) is undone
+  if (!cur.type || !(NON_INCIDENT_KINDS as string[]).includes(cur.type)) return cur;
+  return { type: was.type && !(NON_INCIDENT_KINDS as string[]).includes(was.type) ? was.type : "incident", inc: linked ? 1 : cur.inc };
+}
+
+/**
+ * Every news article's pipeline labels and what the word rules make of its headline, kept in the build once (_report_kinds), so a
+ * later verdict can put back a label the rules changed, and the rules run once per build, not after each of the desk's sweeps. Its
+ * English headline is the pipeline's too: applyDesk replaces title_en with the desk's own, and the next pass must read the article
+ * the same way (27 Nov: "Marina Loop Road occupation case" named a case, the desk's headline did not, and a second pass took it out).
+ */
+function ruleBook(db: DB): Map<string, { rule: ReportKind | null; was: Labels; en: string | null }> {
+  const labelled = has(db, "documents", "report_type") && has(db, "documents", "is_incident");
+  if (!has(db, "_report_kinds")) {
+    const en = has(db, "documents", "title_en") ? "title_en" : "NULL";
+    const docs = db.prepare(`SELECT doc_id AS id, title, ${en} AS en${labelled ? ", report_type AS type, is_incident AS inc" : ""} FROM documents WHERE source_kind = 'news'`).all() as Row[];
+    tx(db, () => {
+      db.exec(`CREATE TABLE _report_kinds (doc_id TEXT PRIMARY KEY, rule TEXT, was_type TEXT, was_incident INTEGER, title_en TEXT)`);
+      const ins = db.prepare(`INSERT OR IGNORE INTO _report_kinds VALUES (?, ?, ?, ?, ?)`);
+      for (const d of docs) ins.run(String(d.id), reportKind(d.en, d.title), d.type ?? null, d.inc == null ? 0 : Number(d.inc), d.en ?? null);
+    });
+  }
+  const out = new Map<string, { rule: ReportKind | null; was: Labels; en: string | null }>();
+  for (const r of db.prepare(`SELECT doc_id AS id, rule, was_type AS type, was_incident AS inc, title_en AS en FROM _report_kinds`).all() as Row[])
+    out.set(String(r.id), { rule: (r.rule as ReportKind | null) ?? null, was: { type: r.type ?? null, inc: Number(r.inc) || 0 }, en: r.en ?? null });
+  return out;
+}
+
+/** What each news article of the build is, by the desk's kind or the rules', with the labels it holds now. */
+function articleKinds(db: DB) {
+  const book = ruleBook(db);
+  const en = has(db, "documents", "title_en") ? "title_en" : "NULL";
+  const labelled = has(db, "documents", "report_type") && has(db, "documents", "is_incident");
+  const docs = db.prepare(`SELECT doc_id AS id, linked_incident_id AS inc, title, ${en} AS en, ${has(db, "documents", "lang") ? "lang" : "NULL AS lang"}
+    ${labelled ? ", report_type AS type, is_incident AS isinc" : ""} FROM documents WHERE source_kind = 'news'`).all() as Row[];
+  return { labelled, docs: docs.map((d) => {
+    const b = book.get(String(d.id));
+    const en = b ? b.en : d.en;
+    const rule = b ? b.rule : reportKind(en, d.title);
+    return { d, b, a: articleKind(deskOf(d.title, en), rule, d.title, en) };
+  }) };
+}
+
+/** report_type and is_incident put right on every article whose kind says otherwise; how many by kind. */
+function relabel(db: DB, kinds: ReturnType<typeof articleKinds>): Record<string, number> {
+  const by: Record<string, number> = {};
+  if (!kinds.labelled) return by;
+  const changes: [Labels, string][] = [];
+  for (const { d, b, a } of kinds.docs) {
+    const cur = { type: d.type ?? null, inc: Number(d.isinc) || 0 };
+    const want = labelsFor(a, b?.was ?? cur, cur, !!d.inc);
+    if (want.type === cur.type && want.inc === cur.inc) continue;
+    changes.push([want, String(d.id)]);
+    by[String(want.type)] = (by[String(want.type)] ?? 0) + 1;
+  }
+  if (changes.length) tx(db, () => {
+    const up = db.prepare(`UPDATE documents SET report_type = ?, is_incident = ? WHERE doc_id = ?`);
+    for (const [w, id] of changes) up.run(w.type, w.inc, id);
+  });
+  return by;
+}
+
+/**
+ * Each news article's kind (27 Nov 2026: the news desk's for a story it has read, else the word rules' as before): a forecast,
+ * government work, the end of an earlier event, a roundup, an opinion or a promotion is news, not an incident. The article keeps
+ * its place in the news lists with report_type set to that kind and is_incident = 0 (alerts reach the alerts lane through it).
+ * Nothing leaves the build here: a news-only incident whose every article is such a report is taken out by applyDesk, the next
+ * step, where the desk's verdicts also act (and a report the desk reads as an incident is never taken out by a word).
  */
 export function reportKinds(db: DB) {
   if (!has(db, "documents", "report_type") || !has(db, "documents", "is_incident")) return;
-  const en = has(db, "documents", "title_en") ? "title_en" : "NULL";
-  const docs = db.prepare(`SELECT doc_id AS id, linked_incident_id AS inc, title, ${en} AS en FROM documents WHERE source_kind = 'news'`).all() as Row[];
-  const kinds = new Map<string, ReportKind>();
-  for (const d of docs) {
-    const k = reportKind(d.en, d.title);
-    if (k && NON_INCIDENT_KINDS.includes(k)) kinds.set(String(d.id), k);
-  }
-  const byInc = new Map<string, Row[]>();
-  for (const d of docs) if (d.inc) (byInc.get(d.inc) ?? byInc.set(d.inc, []).get(d.inc)!).push(d);
-  const media = has(db, "incidents", "media_only")
-    ? (db.prepare(`SELECT incident_id AS id FROM incidents WHERE media_only = 1`).all() as Row[]).map((r) => String(r.id)) : [];
-  const notIncidents = media.filter((id) => byInc.get(id)?.length && byInc.get(id)!.every((d) => kinds.has(String(d.id))));
-  tx(db, () => {
-    const up = db.prepare(`UPDATE documents SET report_type = ?, is_incident = 0 WHERE doc_id = ?`);
-    for (const [id, k] of kinds) up.run(k, id);
-    if (notIncidents.length) dropIncidents(db, notIncidents);
-  });
-  const by = [...kinds.values()].reduce<Record<string, number>>((a, k) => ((a[k] = (a[k] ?? 0) + 1), a), {});
-  console.log(`[derive] news kinds: ${Object.entries(by).map(([k, n]) => `${n} ${k}`).join(", ") || "none"}; `
-    + `${notIncidents.length} news-only incidents that were not incidents taken out`);
+  const kinds = articleKinds(db);
+  const by = relabel(db, kinds);
+  const desk = kinds.docs.filter((x) => x.a.by === "desk").length;
+  console.log(`[derive] news kinds (${desk} articles by the news desk, the rest by the rules): ${Object.entries(by).map(([k, n]) => `${n} ${k}`).join(", ") || "no labels changed"}`);
 }
 
 /**
@@ -525,8 +613,9 @@ export function newsSanity(db: DB) {
       .filter((r) => new Set((db.prepare(`SELECT publisher FROM documents WHERE linked_incident_id = ?`).all(r.id) as Row[]).map((d) => d.publisher)).size < 2);
     const review = has(db, "incidents", "needs_review") && has(db, "incidents", "review_reason");
     for (const r of hold)
-      db.prepare(`UPDATE incidents SET dead_reported = dead, dead = NULL${review ? ", needs_review = 1, review_reason = ?" : ""} WHERE incident_id = ?`)
-        .run(...(review ? [`${r.dead} deaths reported by one news outlet only: confirm before counting`, r.id] : [r.id]));
+      // the reason is added beside one the news desk already gave (news-desk@2 runs first), never over it
+      db.prepare(`UPDATE incidents SET dead_reported = dead, dead = NULL${review ? ", needs_review = 1, review_reason = CASE WHEN COALESCE(review_reason, '') = '' THEN ? ELSE review_reason || '; ' || ? END" : ""} WHERE incident_id = ?`)
+        .run(...(review ? [`${r.dead} deaths reported by one news outlet only: confirm before counting`, `${r.dead} deaths reported by one news outlet only: confirm before counting`, r.id] : [r.id]));
     if (wideCount.length) console.log(`[derive] news: ${wideCount.length} statewide casualty counts not added to Chennai's`);
     if (archival.length || gas.length || groups.size || hold.length || animals.length)
       console.log(`[derive] news: ${archival.length} history, horoscope or obituary items left out, ${gas.length} gas deaths recategorised, ${animals.length} animal deaths not counted as people, `
@@ -536,45 +625,64 @@ export function newsSanity(db: DB) {
 
 // --------------------------------------------------------------- news desk --
 
-/** What the desk leaves out that cannot be an incident: a match, a film or a game, a feature, a price list. A petty theft, a fraud, a private case is one. */
-const NO_EVENT = new Set(["sport", "entertainment", "feature", "listing"]);
-/** Words of a police case or of harm: an incident whatever the desk's reason (a star booked for fraud, a fire at a film set). */
-const CASE_WORDS = /\b(police|arrest\w*|book(?:ed|s)|case|fir|held|remand\w*|seiz\w*|raid\w*|theft|steal\w*|stole\w*|fraud|cheat\w*|scam|dead|dies|died|death|killed|injur\w*|missing|accident|fire|collaps\w*)\b|போலீஸ்|காவல்|கைது|வழக்கு|மோசடி|திருட்டு|கொலை|பலி|உயிரிழ|காயம்|விபத்து|மாயம்/i;
+/** The desk's kinds in words, for an incident held for a check. */
+const KIND_WORDS: Record<ReportKind, string> = {
+  incident: "an incident", alert: "a forecast or warning", government_action: "government work or an order", resolution: "the end of an earlier event",
+  roundup: "a roundup of several stories", opinion: "a statement, opinion or feature", other: "a promotion, event or other news"
+};
 
 /**
- * The news desk's verdicts (newsdesk.ts) on the articles of this build: a Tamil report's machine translation is replaced by
- * the desk's own English headline ("Alva Box parcel! Modern phone theft in Thiruviga town" was one), and a news-only incident
- * whose every article is a match, a film, a game, a feature or a listing (a football draw filed as a High incident, an article
- * about a video game filed as theft) leaves the build. Anything that could be a case the police or a department holds stays,
- * even when the desk keeps it off the news list (a petty theft): its count is the departments', not the news list's.
+ * The news desk's verdicts (newsdesk.ts) on the articles of this build, at each build and after each of its sweeps:
+ *   - a Tamil report's machine translation is replaced by the desk's own English headline ("Alva Box parcel! Modern phone theft
+ *     in Thiruviga town" was one);
+ *   - 27 Nov 2026: each article's report_type and is_incident follow the desk's kind (a later verdict relabels it), and a
+ *     news-only incident whose every article is not an incident leaves the build: by the desk's kind for what it has read (a
+ *     forecast, government work, a football draw, an article about a video game), by the word rules for what it has not (as
+ *     before, when reportKinds took them out). A report the desk reads as an incident stays whatever its words ("girl kidnapped,
+ *     police rescue her"), and so does a petty theft, a fraud or a private case: its count is the departments', not the news list's;
+ *   - when the desk reads a report as not an incident but its headline names a police case or harm (a star booked for fraud), the
+ *     incident stays, flagged for review with the reason.
  */
-export function applyDesk(db: DB): { titles: number; dropped: number } {
-  if (!has(db, "documents", "title_en") || !has(db, "documents", "linked_incident_id")) return { titles: 0, dropped: 0 };
-  const docs = db.prepare(`SELECT doc_id AS id, linked_incident_id AS inc, title, title_en AS en, lang FROM documents WHERE source_kind = 'news' AND title IS NOT NULL`).all() as Row[];
+export function applyDesk(db: DB): { titles: number; dropped: number; review: number; relabelled: number } {
+  if (!has(db, "documents", "title_en") || !has(db, "documents", "linked_incident_id")) return { titles: 0, dropped: 0, review: 0, relabelled: 0 };
+  const kinds = articleKinds(db);
   const titles = new Map<string, string>();
-  const byInc = new Map<string, { judged: number; none: number; n: number }>();
-  for (const d of docs) {
-    const v = deskOf(d.title, d.en);
-    const head = d.lang !== "en" ? headOf(d.title) : "";
+  const byInc = new Map<string, { none: number; held: number; n: number; as?: ReportKind }>();
+  for (const { d, a } of kinds.docs) {
+    const head = d.title != null && d.lang !== "en" ? headOf(d.title) : "";
     if (head && head !== d.en) titles.set(String(d.id), head);
     if (!d.inc) continue;
-    const x = byInc.get(String(d.inc)) ?? byInc.set(String(d.inc), { judged: 0, none: 0, n: 0 }).get(String(d.inc))!;
+    const x = byInc.get(String(d.inc)) ?? byInc.set(String(d.inc), { none: 0, held: 0, n: 0 }).get(String(d.inc))!;
     x.n++;
-    if (v) { x.judged++; if (v.v === "skip" && !v.real && NO_EVENT.has(v.skip) && reportKind(d.en, d.title) !== "incident" && !CASE_WORDS.test(plainEvents(`${d.title} ${d.en ?? ""}`))) x.none++; }
+    if (a.held) { x.held++; x.as ??= a.held; } else if (a.kind && a.kind !== "incident") x.none++;
   }
   const media = has(db, "incidents", "media_only")
     ? (db.prepare(`SELECT incident_id AS id FROM incidents WHERE media_only = 1`).all() as Row[]).map((r) => String(r.id)) : [];
   const drop = media.filter((id) => { const x = byInc.get(id); return !!x && x.n > 0 && x.none === x.n; });
-  if (!titles.size && !drop.length) return { titles: 0, dropped: 0 };
-  tx(db, () => {
+  const hold = media.filter((id) => { const x = byInc.get(id); return !!x && x.held > 0 && x.none + x.held === x.n; })
+    .map((id) => [id, `The news desk reads this report as ${KIND_WORDS[byInc.get(id)!.as!]}, but its headline names a police case or harm: check whether it is an incident`] as const);
+  const by = relabel(db, kinds);
+  const relabelled = Object.values(by).reduce((s, n) => s + n, 0);
+  let review = 0;
+  if (titles.size || drop.length || hold.length) tx(db, () => {
     const up = db.prepare(`UPDATE documents SET title_en = ? WHERE doc_id = ?`);
     for (const [id, t] of titles) up.run(t, id);
     if (drop.length) dropIncidents(db, drop);
+    if (hold.length) {
+      if (!has(db, "incidents", "needs_review")) db.exec(`ALTER TABLE incidents ADD COLUMN needs_review INTEGER`);
+      if (!has(db, "incidents", "review_reason")) db.exec(`ALTER TABLE incidents ADD COLUMN review_reason TEXT`);
+      // another check already asked for (a death toll from one outlet) is kept beside this one; laid over again, nothing changes
+      const flag = db.prepare(`UPDATE incidents SET needs_review = 1, review_reason = CASE WHEN COALESCE(review_reason, '') = '' THEN ?
+        ELSE review_reason || '; ' || ? END WHERE incident_id = ? AND instr(COALESCE(review_reason, ''), ?) = 0`);
+      for (const [id, why] of hold) review += Number(flag.run(why, why, id, why).changes);
+    }
   });
   // incidents headed by a machine translation take the better one
   if (titles.size) newsHeadlines(db);
-  console.log(`[derive] news desk: ${titles.size} Tamil headlines translated again, ${drop.length} news-only incidents that were not events taken out`);
-  return { titles: titles.size, dropped: drop.length };
+  if (titles.size || drop.length || review || relabelled)
+    console.log(`[derive] news desk: ${titles.size} Tamil headlines translated again, ${relabelled} articles relabelled (${Object.entries(by).map(([k, n]) => `${n} ${k}`).join(", ") || "none"}), `
+      + `${drop.length} news-only incidents that were not incidents taken out, ${review} held for review (the desk says not an incident, the headline names a case or harm)`);
+  return { titles: titles.size, dropped: drop.length, review, relabelled };
 }
 
 // -------------------------------------------------------------- newspapers --
@@ -651,9 +759,11 @@ onBuild("readable-headlines@3", headlines);
 onBuild("news-headlines@1", newsHeadlines);
 onBuild("places-from-reports@2", places);
 onBuild("news-media-only@2", newsMedia); // @2: its articles and events are unlinked from the incidents it drops (RC-38)
-onBuild("report-kinds@4", reportKinds); // @2: season death tallies are roundups (R-04); @3-4: drives, statements, lake levels, trade news
+onBuild("report-kinds@5", reportKinds); // @2: season death tallies are roundups (R-04); @3-4: drives, statements, lake levels, trade news; @5: the desk's kind first, nothing removed here
+// the AI news desk's verdicts kept so far; later ones are laid over as they come (newsdesk.ts). @2: its kinds decide what is not an
+// incident, and it takes out what reportKinds used to, so it runs where that did: before the same-story merges of news-sanity
+onBuild("news-desk@2", (db) => { applyDesk(db); });
 onBuild("news-sanity@7", newsSanity);
-onBuild("news-desk@1", (db) => { applyDesk(db); }); // the AI news desk's verdicts kept so far; later ones are laid over as they come (newsdesk.ts)
 onBuild("newspapers@2", newspapers); // after the articles and incidents that leave the build have left it
 onBuild("website-cases@1", websiteCases); // paper petitions and online complaints (lib/manu/cases.ts): before the clusters, so they group too
 onBuild("incident-clusters@4", clusters);

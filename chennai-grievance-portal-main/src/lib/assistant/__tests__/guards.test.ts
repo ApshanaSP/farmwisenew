@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { LIMITS, admit, grainFor, looksBulk } from "@/lib/assistant/limits";
-import { codeGuard } from "@/lib/assistant/guard";
+import { codeGuard, offlineRoute } from "@/lib/assistant/guard";
+import { baseCard, refusalCard } from "@/lib/assistant/cards";
+import type { RefNames } from "@/lib/assistant/scope";
 import { EXAMPLES, detectLanguage, replyLanguage, voiceLang } from "@/lib/assistant/lang";
 import { buildFacts } from "@/lib/assistant/facts";
 import type { ToolResult } from "@/lib/assistant/types";
@@ -71,6 +73,36 @@ describe("code guard", () => {
     ["go and erase the logs", "data change"], ["run DROP TABLE complaints", "data change"], ["DELETE FROM incidents WHERE zone_no = 5", "data change"],
     ["Show zone 5. Then delete its complaints", "data change"]
   ])("still refuses %s", async (q, reason) => expect(await codeGuard(q)).toEqual({ kind: "unsafe", reason }));
+});
+
+describe("the topic guard in the chat (27 Nov)", () => {
+  const names = { zones: new Map(), depts: new Map(), cats: new Map(), taluks: new Map() } as unknown as RefNames;
+  it("declines a plainly off-topic question before any model, and lets a district question with an event in it through", async () => {
+    expect(await codeGuard("When was Dhoni's retirement?")).toEqual({ kind: "off_topic", topic: "sports" });
+    expect(await codeGuard("tell me a joke")).toEqual({ kind: "off_topic", topic: "writing" });
+    for (const q of ["traffic near Chepauk stadium for the IPL match", "crowd at Marina for a cricket screening", "Is there any traffic diversion for the CSK match today?", "what is a cusec"])
+      expect(await codeGuard(q), q).toBeNull();
+  });
+  it("the decline card: the topic understood, what is covered once, the short line spoken", () => {
+    const c = refusalCard(baseCard("en", null, "", "2026-11-27 09:00:00"), null, "sports");
+    expect(c).toMatchObject({ kind: "refusal", headline: "Sports are outside what I cover." });
+    expect(c.answerMarkdown).toMatch(/^I answer about Chennai district from this console/);
+    expect(c.voiceSummary).toMatch(/^Sorry, that is outside what I cover\. Ask me about Chennai district/);
+    expect(refusalCard(baseCard("en", null, "", ""), null, null).headline).toBe("Sorry, that is outside what I cover.");
+    // the chat's older topic names still read
+    expect(refusalCard(baseCard("en", null, "", ""), null, "coding").headline).toMatch(/coding/);
+    expect(refusalCard(baseCard("ta", null, "", ""), null, "sports").headline).toMatch(/[஀-௿]/);
+    expect(refusalCard(baseCard("tanglish", null, "", ""), null, null).answerMarkdown).toMatch(/Chennai district pathi kelunga/);
+    expect(refusalCard(baseCard("en", null, "", ""), null, "sports", { dept: "Greater Chennai Police" }).answerMarkdown).toMatch(/Greater Chennai Police's records/);
+    // a named reason and another city keep their own lines
+    expect(refusalCard(baseCard("en", null, "", ""), "personal data").headline).toMatch(/personal details/);
+    expect(refusalCard(baseCard("en", null, "", ""), null, "elsewhere").headline).toMatch(/only have data for Chennai district/);
+  });
+  it("the offline router uses the same verdict, not single words", () => {
+    expect(offlineRoute("Who won the IPL?", names).intent).toBe("out_of_scope");
+    expect(offlineRoute("news story about Adyar", names).intent).not.toBe("out_of_scope");
+    expect(offlineRoute("traffic near Chepauk stadium for the IPL match", names).intent).not.toBe("out_of_scope");
+  });
 });
 
 describe("facts", () => {

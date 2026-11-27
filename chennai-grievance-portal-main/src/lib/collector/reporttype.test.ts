@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { reportKind, type ReportKind } from "./reporttype";
+import { NON_INCIDENT_KINDS, REPORT_KINDS, reportKind, type ReportKind } from "./reporttype";
 
 // Real headlines the console listed as incidents between 22 and 26 Oct 2026 (LT-03), and what each one is.
 const CASES: [string, ReportKind | null][] = [
@@ -90,4 +90,17 @@ const CASES: [string, ReportKind | null][] = [
 
 describe("report kind from the headline (LT-03)", () => {
   for (const [title, want] of CASES) it(`${want}: ${title.slice(0, 70)}`, () => expect(reportKind(title)).toBe(want));
+});
+
+// 27 Nov 2026: the news desk answers with one of these kinds, and the rules stand in only for what it has not read
+describe("the kinds the news desk and the rules share", () => {
+  it("are seven, and every one but incident is news, not an incident", () => {
+    expect([...REPORT_KINDS]).toEqual(["incident", "alert", "government_action", "resolution", "roundup", "opinion", "other"]);
+    expect(NON_INCIDENT_KINDS).toEqual(REPORT_KINDS.filter((k) => k !== "incident"));
+  });
+  it("the fallback is unchanged: what the rules got wrong is the desk's to put right, not a new word here", () => {
+    // INC-20261125-D5F8CE and INC-20261109-029F3E were taken out by these readings before the desk could read them
+    expect(reportKind("Chennai: 5-year-old girl kidnapped after going to school - Police rescued her immediately")).toBe("resolution");
+    expect(reportKind("Silver worth Rs 1 crore looted")).toBe("government_action");
+  });
 });

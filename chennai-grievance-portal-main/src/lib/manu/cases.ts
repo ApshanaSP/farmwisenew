@@ -2,7 +2,9 @@
  * Turns a filed petition or online complaint into a real case. The officer and Collector consoles read the build's incidents, and the
  * pipeline that makes them never sees what the website saves on the AWS store (it reads complaints from MySQL), so without this a new
  * filing reaches nobody. A case is added at once when it is filed (addCaseLive), and again to each new build as it loads (websiteCases),
- * from the durable store. A filing the pipeline already holds (same complaint number) is left alone.
+ * from the durable store. A filing the pipeline already holds (same complaint number) is not added again: the work done on its website
+ * case moves to the pipeline's case id (adoptPipelineIds), and a petition's case keeps the department, kind and urgency the desk gave it
+ * (keepPetitionCase).
  */
 import type { DatabaseSync } from "node:sqlite";
 import { createHash } from "crypto";
@@ -80,6 +82,138 @@ const RANK: Record<string, number> = { Severe: 4, High: 3, Medium: 2, Low: 1 };
 
 async function known(db: Db, code: string): Promise<boolean> {
   return (await db.all(`SELECT 1 AS x FROM events WHERE event_id = ? OR (source = 'grievance' AND source_record_id = ?) LIMIT 1`, [eventIdFor(code), code])).length > 0;
+}
+
+// ------------------------------------------------------------------ the id handover --
+
+/**
+ * The website's own rows that name a case by its id: the officer's steps and reports, the Collector's decisions, instructions and
+ * follow-ups, hand-made action updates, and the desk's petitions. `one`: the case id is the table's key (one row per case).
+ */
+const CASE_ROWS: { t: string; one?: boolean }[] = [
+  { t: "officer_steps" }, { t: "officer_reports" }, { t: "collector_decisions" }, { t: "outbound_emails" }, { t: "followups" }, { t: "action_updates" },
+  { t: "petitions" }, { t: "dept_assignments", one: true }
+];
+
+/**
+ * Where a website table is on this database: the durable store's copy when it is attached (a build, whose own tables are in main), so a
+ * change lands in the saved file (its triggers note it, and the saving copy sends it to AWS); else main (a single test database).
+ */
+async function tableAt(db: Db, t: string, col = "incident_id"): Promise<string | null> {
+  const attached = (await db.all(`SELECT 1 AS x FROM pragma_database_list WHERE name = 'durable'`)).length > 0;
+  for (const schema of attached ? ["durable", "main"] : ["main"]) {
+    const cols = await db.all(`SELECT name FROM pragma_table_info(?, ?)`, [t, schema]);
+    if (cols.length) return cols.some((c) => String(c.name).toLowerCase() === col) ? `${schema}."${t}"` : null;
+  }
+  return null;
+}
+
+/**
+ * The id handover (the integration review, 27 Nov). A filing is a case INC-W-<code> from the moment it is filed (addCaseLive), and the
+ * officer and the Collector work on that id. The hourly pipeline then imports the same complaint as its event GRV-<code> inside an incident
+ * of its own (INC-<date>-<hash>), and the next build no longer adds the INC-W case (known()). Every step, report, decision, instruction,
+ * follow-up and petition link written in that first hour stayed on the INC-W id that no build held any more: the case went back to New,
+ * its report and photos left the drawer, and a department's close turned Open again.
+ *
+ * Here those rows move to the id the build gives the filing, once that id is in the build and the INC-W case is not. Idempotent: a moved
+ * row names an id that is not INC-W any more, so a second run finds nothing to move. A table keyed by the case id itself keeps the row the
+ * new id already has. Returns how many website ids were handed over.
+ *
+ * Each handover is written to the audit log (old id, new id, how many rows of each table): the audit rows of the work itself keep the INC-W
+ * id they were written with, and without this nothing linked them to the decisions and steps that now name the pipeline's case.
+ */
+export async function adoptPipelineIds(db: Db): Promise<number> {
+  const tables: { t: string; at: string; one: boolean }[] = [];
+  for (const { t, one } of CASE_ROWS) {
+    const at = await tableAt(db, t);
+    if (at) tables.push({ t, at, one: !!one });
+  }
+  if (!tables.length) return 0;
+  const log = await tableAt(db, "audit_log", "record_id");
+  const waiting = new Set<string>();
+  for (const { at } of tables)
+    for (const r of await db.all(`SELECT DISTINCT incident_id AS id FROM ${at} WHERE incident_id LIKE 'INC-W-%'`)) waiting.add(String(r.id));
+  let moved = 0;
+  for (const w of waiting) {
+    const code = w.slice("INC-W-".length);
+    if (!code) continue;
+    // a build that still holds the website's own case is one the rows were written on: they stay
+    if ((await db.all(`SELECT 1 AS x FROM incidents WHERE incident_id = ? LIMIT 1`, [w])).length) continue;
+    const [to] = await db.all(`SELECT e.incident_id AS id FROM events e JOIN incidents i ON i.incident_id = e.incident_id
+      WHERE (e.event_id = ? OR (e.source = 'grievance' AND e.source_record_id = ?)) AND e.incident_id <> ? ORDER BY e.event_id = ? DESC LIMIT 1`,
+      [eventIdFor(code), code, w, eventIdFor(code)]);
+    if (!to?.id) continue;
+    const rows: Record<string, number> = {};
+    for (const { t, at, one } of tables) {
+      const [n] = await db.all(`SELECT COUNT(*) AS n FROM ${at} WHERE incident_id = ?`, [w]);
+      if (Number(n?.n)) rows[t] = Number(n.n);
+      if (one) {
+        // the new id's own row wins; the old one goes
+        await db.run(`UPDATE OR IGNORE ${at} SET incident_id = ? WHERE incident_id = ?`, [to.id, w]);
+        await db.run(`DELETE FROM ${at} WHERE incident_id = ?`, [w]);
+      } else await db.run(`UPDATE ${at} SET incident_id = ? WHERE incident_id = ?`, [to.id, w]);
+    }
+    if (log) {
+      try {
+        await db.run(`INSERT INTO ${log} (actor, action, table_name, record_id, before_value, after_value) VALUES ('district-iq', 'case:handover', 'incidents', ?, ?, ?)`,
+          [String(to.id), JSON.stringify({ incident_id: w }), JSON.stringify({ incident_id: String(to.id), complaint_code: code, rows })]);
+      } catch (e) {
+        console.warn(`[manu] handover of ${w} not audited: ${(e as Error).message}`);
+      }
+    }
+    moved++;
+  }
+  if (moved) console.log(`[manu] ${moved} website case${moved === 1 ? "" : "s"} handed over to the build's case ids`);
+  return moved;
+}
+
+/**
+ * A filed petition the pipeline imported as one of its own complaints: the pipeline reads it as an online complaint of the portal's
+ * department (General Administration for every department outside GCC), from the citizen app, at its own severity, so the case lost the
+ * department the petition officer chose, its kind, its Manu label and its urgency (the integration review: CMWSSB, Police, Health and
+ * Revenue petitions all sat under GCC-GAD as "Other", Low). On a case of that one petition only (a case that also holds other reports is
+ * the pipeline's to judge), the build's case gets them back: the petition's department, its kind when it has one, the Manu channel, at
+ * least High when urgent, and never a later deadline than the petitioner was given. Changes only the in-memory build.
+ */
+async function keepPetitionCase(db: Db, c: CaseInput): Promise<boolean> {
+  const [e] = await db.all(`SELECT event_id, incident_id AS id FROM events WHERE (event_id = ? OR (source = 'grievance' AND source_record_id = ?)) AND incident_id IS NOT NULL
+    ORDER BY event_id = ? DESC LIMIT 1`, [eventIdFor(c.code), c.code, eventIdFor(c.code)]);
+  if (!e?.id || String(e.id).startsWith("INC-W-")) return false; // the website's own case already has them
+  const [m] = await db.all(`SELECT COUNT(*) AS n FROM incident_members WHERE incident_id = ?`, [e.id]);
+  if (Number(m?.n) !== 1) return false;
+  const [i] = await db.all(`SELECT * FROM incidents WHERE incident_id = ?`, [e.id]);
+  if (!i) return false;
+  const [cat] = c.category && c.category !== "OTHER" ? await db.all(`SELECT category_code, label, family FROM ref_categories WHERE category_code = ?`, [c.category]) : [];
+  const set: string[] = [], args: unknown[] = [];
+  const put = (col: string, v: unknown) => { if (col in i && i[col] !== v) { set.push(`${col} = ?`); args.push(v); } };
+  put("lead_dept", c.dept);
+  put("depts_involved", c.dept);
+  if (cat) { put("category_code", cat.category_code); put("category_label", cat.label); put("family", cat.family); }
+  put("channels", "manu");
+  if (c.urgent && (RANK[String(i.severity_level)] ?? 0) < RANK.High) {
+    put("severity_level", "High");
+    put("severity_score", Math.max(Number(i.severity_score) || 0, 75));
+    put("severity_reasons", [i.severity_reasons, "Urgent petition given at the Collector's office"].filter(Boolean).join("; "));
+  }
+  if (c.urgent) {
+    put("attention_flag", 1);
+    put("attention_reason", "Urgent petition given at the Collector's office");
+    put("priority_score", Math.max(Number(i.priority_score) || 0, 90));
+  }
+  const due = wall(i.sla_due_at), mine = wall(c.dueAt);
+  if (mine && (!due || mine < due)) {
+    put("sla_due_at", mine);
+    const first = wall(i.first_reported_at) || c.filedAt;
+    put("sla_hours", Math.max(1, Math.round((Date.parse(`${mine.replace(" ", "T")}Z`) - Date.parse(`${first.replace(" ", "T")}Z`)) / 3_600_000)));
+  }
+  if (!set.length) return false;
+  await db.run(`UPDATE incidents SET ${set.join(", ")} WHERE incident_id = ?`, [...args, e.id]);
+  // the report itself, as the drawer's sources and the lists read it: a Manu petition of its department
+  const ev = await columns(db, "events");
+  const evSet = [ev.has("channel") ? "channel = 'manu'" : null, ev.has("lead_dept") ? "lead_dept = ?" : null].filter(Boolean);
+  if (evSet.length) await db.run(`UPDATE events SET ${evSet.join(", ")} WHERE event_id = ?`, [...(ev.has("lead_dept") ? [c.dept] : []), e.event_id]);
+  if ((await columns(db, "incident_members")).has("channel")) await db.run(`UPDATE incident_members SET channel = 'manu' WHERE event_id = ?`, [e.event_id]);
+  return true;
 }
 
 /** The event, its membership of the case, and the first line of its timeline. */
@@ -263,8 +397,12 @@ export function petitionCase(p: Row): CaseInput {
   };
 }
 
-/** Build step (derive.ts): every filing the website holds goes into each new build. */
-export async function websiteCases(db: DatabaseSync): Promise<void> {
+/**
+ * Build step (derive.ts): every filing the website holds goes into each new build. `handover: false` skips the id handover
+ * (adoptPipelineIds), which writes the durable store: a build not served yet (its hook runs before the swap and outside the store's write
+ * lock) can leave it to the run on the served build after the swap (lib/aws/store.ts websiteCasesOnServed). Default: on.
+ */
+export async function websiteCases(db: DatabaseSync, opts: { handover?: boolean } = {}): Promise<void> {
   const wrap: Db = {
     // straight on the build, not through the store's queries: personal values are unlocked here (lib/pii.ts)
     all: async (sql, params = []) => (db.prepare(sql).all(...(params as never[])) as Row[]).map((r) => decryptRow(r as Record<string, unknown>) as Row),
@@ -272,7 +410,10 @@ export async function websiteCases(db: DatabaseSync): Promise<void> {
   };
   const has = async (t: string) => (await wrap.all(`SELECT name FROM pragma_table_info('${t}')`)).length > 0;
   if (!(await has("incidents")) || !(await has("events")) || !(await has("ref_wards"))) return;
-  let added = 0;
+  let added = 0, kept = 0, handed = 0;
+  // first the id handover: the work done on a filing's INC-W case follows it to the case this build gives it (adoptPipelineIds)
+  if (opts.handover !== false)
+    try { handed = await adoptPipelineIds(wrap); } catch (e) { console.warn(`[manu] case ids not handed over: ${(e as Error).message}`); }
   // online complaints first: a petition may have joined an online complaint's case, and that case must be in the build before the
   // petition looks for it (the petitions went first, so such a petition got a case of its own: QA pass 6, P5-031). An online
   // complaint never joins another case, so it needs nothing from the petitions.
@@ -302,9 +443,18 @@ export async function websiteCases(db: DatabaseSync): Promise<void> {
     // a case of its own (reviewer1-07). A petition only ever joins a case its owner made, never another joiner's.
     for (const p of await wrap.all(`SELECT * FROM petitions WHERE status = 'filed' AND complaint_code IS NOT NULL ORDER BY COALESCE(attached, 0), filed_at, id`)) {
       const c = petitionCase(p);
+      // the pipeline imported it as a complaint of its own: its case keeps what the petition officer chose (keepPetitionCase)
+      if (await known(wrap, c.code)) {
+        try { if (await keepPetitionCase(wrap, c)) kept++; } catch (e) { console.warn(`[manu] petition ${c.code}'s case not corrected: ${(e as Error).message}`); }
+        continue;
+      }
       if (Number(p.attached) === 1 && p.incident_id && (await attachToCase(wrap, String(p.incident_id), c))) { added++; continue; }
       if (await addCase(wrap, c)) added++;
     }
   }
   if (added) console.log(`[manu] ${added} website filings added to this build`);
+  if (kept) console.log(`[manu] ${kept} petitions' department, kind and urgency kept on the pipeline's cases`);
+  // run again on the build being served (lib/aws/store.ts, after a build swap or a reload of the durable store), a change must reach the
+  // caches at once; on a build not served yet the swap empties them anyway
+  if (added || kept || handed) bumpDataEpoch();
 }

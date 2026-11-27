@@ -54,7 +54,7 @@ This file is the assistant's own reference. Each entry says what an element show
 - IMD: district warning (every 10 minutes), rain gauges at 8:30 and 17:30.
 - CPCB: hourly AQI stations. CFM-DSS / Chennai Flood Monitor: river gauges, live rain (every 10 minutes).
 - CMWSSB (Chennai Metro Water): storage of 6 drinking-water reservoirs, read hourly.
-- AGMARKNET (data.gov.in): vegetable and fruit prices at 8 Uzhavar Sandhai markets.
+- TN Department of Agricultural Marketing & Agri Business (agrimark.tn.gov.in): retail vegetable and fruit prices at 8 Uzhavar Sandhai farmer markets in and around Chennai, read daily (AGMARKNET's API asks for a CAPTCHA since October and is not used).
 - NDMA SACHET: disaster alerts naming Chennai, every 15 minutes.
 - TomTom: live traffic incidents every 5 minutes, road colours every 2.
 - OpenStreetMap: roads, facilities, water bodies. GCC website: officer contacts. DataMeet: ward outlines.
@@ -150,7 +150,7 @@ Defaults for this page, unless an entry says otherwise. Source: the district int
 - Shows: open incidents past their deadline, reported in the period. Filters: ALL. Click: list "Open and past deadline". API: `snapshot.overdue`.
 
 ### Severe, not yet checked (tile)
-- Shows: open severe incidents no officer has confirmed on the ground, or that a department sent for checking. Worked out: open and Severe and (not verified or awaiting the Collector), or an officer's completion report not yet decided. Any date, not the period.
+- Shows: open severe incidents no officer has confirmed on the ground, or that a department sent for checking. Worked out: open and Severe and (not verified or awaiting the Collector, or an officer's completion report not yet decided). A less severe case an officer sent for approval is in My tasks, not here. Any date, not the period.
 - Filters: zone, taluk, department, category; NOT the period (by design). Click: list of any date. API: `snapshot.critical`.
 
 ### Zone snapshot (when a zone is chosen): Zonal officer (GCC), Past deadline, Busiest department
@@ -193,19 +193,19 @@ Defaults for this page, unless an entry says otherwise. Source: the district int
 - Shows: live traffic, N = spots needing action now, whole city. Read every 5 minutes. Filters: none (district-wide). API: /api/traffic `counts.action`.
 
 ### By severity (card)
-- Shows: open incidents by level, the same problem reported several times shown once; four tabs with counts and their share; "N need you · shown first"; each row: title, the reason (if it needs you), zone, department, age, "N merged", and "Act" for severe ones ("Sent" when an instruction went out).
+- Shows: open incidents by level, the same problem reported several times shown once; four tabs with counts and their share; "N need you · shown first"; each row: title, the reason (if it needs you), zone, department, age, "N merged", and "Act" for severe ones ("Sent" when an instruction went out). One line per row (title, then one line of facts cut with "…"); hover for the whole reason, place, department and age.
 - Worked out: one row per merged group under the group's most severe member; 12 most urgent rows per level by priority; ones that need you first.
 - Source: incidents. Filters: ALL. Click: opens the incident and highlights it on the map; "Act" opens Take action; "See all" the list.
 - Code: Attention.tsx SevList; intel.ts overview sevRows. API: `severity.counts`, `severity.rows[]`.
 
 ### My tasks (tab of the same card)
-- Shows: closed work on severe incidents waiting for the Collector's check, one per group; whether a report with photos came; "N other closures verified by departments".
-- Worked out: the department marked done in the period (Severe, citizen complaint, still open, no Collector decision), plus every completion report an officer sent from its console, whatever its date. The department closes everything else itself.
+- Shows: closed work on severe incidents, and any case a department sent for the Collector's approval, waiting for the Collector's check, one per group; whether a report with photos came; "N other closures verified by departments".
+- Worked out: the department marked done in the period (Severe, citizen complaint, still open, no Collector decision), plus every completion report an officer sent from its console, of any severity and whatever its date. The department closes everything else itself.
 - Filters: ALL. Click: opens the remarks and photos in place. Verify closes the whole group (asks for the password); Send back reopens it; Ask opens Take action to request a report.
 - Code: Attention.tsx TaskList; intel.ts awaitingRule, awaitingCheck. API: `tasks.rows`, `tasks.count`, `tasks.leftToDepts`. POST /api/collector/decisions.
 
 ### Latest news: News
-- Shows: news stories of the period that belong on the Collector's desk, each with the news desk's line, "Needs action" or "For information", area of work, outlets, place and age; "Reports differ" or "Also a grievance / Severe incident · no citizen complaint yet".
+- Shows: news stories of the period that belong on the Collector's desk, each with the news desk's line, "Needs action" or "For information", area of work, outlets, place and age; "Reports differ" or "Also a grievance / Severe incident · no citizen complaint yet". A story only (or first) in Tamil shows its Tamil headline as published, with the English line under it; a story with English and Tamil reports shows English first with the Tamil headline under it; with the site in Tamil, only the Tamil headline.
 - Worked out: district articles from established, regional and official outlets (no blogs or social); the same event from any outlet and language is one story; the AI news desk keeps act and know, skips the rest; until an article is read, rules decide. Newest 250 stories shown, tab number = all.
 - Source: documents (news monitor) + data/aws-cache/newsdesk.json. Filters: period only. When a zone, taluk, department or category is set, the list changes to news linked to incidents in that filter (no count on the tab).
 - Click: the incident if it has one, else the news popup. "See more": full list.
@@ -424,7 +424,7 @@ Defaults: Filters: none except each card's own station picker. Code: components/
 
 ### Vegetable and fruit prices
 - Shows: four views: Prices today / Latest prices (one line per item: average, change, cheapest and dearest market, two-week line), Compare markets (8 markets side by side), Around Chennai and Tamil Nadu (weekly averages). "Red ▲ = price went up since the market's last report." Prices older than 3 days are called "Latest prices" with their age, never today.
-- Worked out: ₹ per kg = modal price per quintal / 100; only items sold in 2 or more markets in the simple list; average of the market's latest prices of the last 3 days. Source: AGMARKNET market prices (mandi_market_prices, mandi_weekly, mandi_prices). API: insights?part=environment `markets`.
+- Worked out: ₹ per kg = modal price per quintal / 100 (the modal price is the middle of the market's low and high); only items sold in 2 or more markets in the simple list; average of the market's latest prices of the last 3 days. Around Chennai is the weekly average of the 8 markets; the Tamil Nadu tab is AGMARKNET's state series and is hidden once it is 3 weeks old (it stopped on the week of 24 Oct). Source: Uzhavar Sandhai retail prices from the TN Agricultural Marketing department (data/aws-cache/tn-prices.json with mandi_market_prices; mandi_weekly and mandi_prices for the state). API: insights?part=environment `markets`.
 
 ### Mandi prices (Full screen)
 - Shows: the same, every commodity at every market. A click on a market shows its price list.

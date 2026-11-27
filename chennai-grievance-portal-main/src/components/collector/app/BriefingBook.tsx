@@ -127,8 +127,9 @@ export function glanceInput(ins: Insights, b: Book, live: OverviewData | null, c
     overdue: snap?.overdue ?? t.overdue, deaths: t.deaths, injured: t.injured, awaiting: live ? live.tasks.count : t.awaiting,
     unchecked: snap?.critical ?? t.unchecked, kinds: t.kinds, zones: t.zones, depts: b.departments.map((x) => ({ code: x.code, name: x.name, n: x.n, overdue: x.overdue })),
     cases: t.cases.map((x) => ({ ...x, acted: acted.has(x.id) })), fatal: t.fatal,
-    news: story ? { title: story.title, outlets: story.outletNames.length, act: story.desk?.v === "act", key: story.id, incident: story.incident }
-      : linked ? { title: String(linked.news_title ?? linked.title ?? linked.type), outlets: linked.outletNames?.length ?? 0, act: false, key: String(linked.id), incident: String(linked.id) } : null,
+    // the Tamil headline as published goes with the English one: the Tamil sentence names the story by it (glance.ts)
+    news: story ? { title: story.title, ta: story.original ?? null, outlets: story.outletNames.length, act: story.desk?.v === "act", key: story.id, incident: story.incident }
+      : linked ? { title: String(linked.news_title ?? linked.title ?? linked.type), ta: linked.news_ta ? String(linked.news_ta) : null, outlets: linked.outletNames?.length ?? 0, act: false, key: String(linked.id), incident: String(linked.id) } : null,
     story: thread ? { id: thread.id, title: thread.title, events: thread.events.length } : null,
     differ: differ.length ? { n: differ.length, title: differ[0].title, field: differ[0].items[0]?.field ?? "Details" } : null,
     newsOnly: ins.gaps.length ? { n: ins.gaps.length, deptName: gap?.[0] ?? null, deptN: gap?.[1] ?? 0 } : null,
@@ -285,6 +286,23 @@ function Week({ days, now }: { days: Book["today"]["days"]; now: string }) {
   );
 }
 
+/**
+ * A key point's sentence (DeptSummary's Sentence), with a name already in Tamil as published (a Tamil headline: glance.ts `raw`) marked
+ * translate="no", so the site's translator leaves it as the outlet wrote it.
+ */
+function GlanceSentence({ s }: { s: Seg[] }) {
+  const out: React.ReactNode[] = [];
+  let run: Seg[] = [];
+  s.forEach((x, k) => {
+    if (typeof x === "string" || !x.raw) { run.push(x); return; }
+    if (run.length) out.push(<Sentence key={`r${k}`} s={run} />);
+    run = [];
+    out.push(<em key={k} className="seg-nm" lang="ta" translate="no">{x.nm}</em>);
+  });
+  if (run.length) out.push(<Sentence key="end" s={run} />);
+  return <>{out}</>;
+}
+
 function Group({ title, icon, points, ta, open, none, children }: { title: string; icon: IconName; points: GlancePoint[]; ta: boolean; open: (o: GlanceOpen) => void; none: string; children?: React.ReactNode }) {
   return (
     <div className="gl-g">
@@ -295,7 +313,7 @@ function Group({ title, icon, points, ta, open, none, children }: { title: strin
             <li key={p.key}>
               <button className={`gl-p tn-${p.tone}`} onClick={() => open(p.open)} title={p.act}>
                 <span className="gl-i"><I n={p.icon as IconName} /></span>
-                <span className="gl-t" data-say=""><Sentence s={(ta ? p.ta : p.en) as Seg[]} /></span>
+                <span className="gl-t" data-say=""><GlanceSentence s={(ta ? p.ta : p.en) as Seg[]} /></span>
                 <I n="chevr" />
               </button>
             </li>

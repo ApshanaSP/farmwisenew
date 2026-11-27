@@ -42,7 +42,15 @@ const nextConfig = {
   // App Router has no /_next/data URLs, which is all else this switch changes.
   skipMiddlewareUrlNormalize: true,
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // Jarvis's files in public/thunai (27 Nov, the hosted copy): Next serves public/ with max-age=0, so every Jarvis open fetched the 7.4 MB
+      // wake word model again (a full 200, not a 304) and the worker and worklet with it. The models are kept a week and never asked again
+      // in that time (give a changed model a new file name); the worker, the worklet and the wake replies a day.
+      { source: "/thunai/:model([A-Za-z0-9_-]+\\.onnx)", headers: [{ key: "Cache-Control", value: "public, max-age=604800, immutable" }] },
+      { source: "/thunai/:file(kws\\.worker\\.js|ears\\.worklet\\.js)", headers: [{ key: "Cache-Control", value: "public, max-age=86400" }] },
+      { source: "/thunai/wake/:file([A-Za-z0-9_.-]+)", headers: [{ key: "Cache-Control", value: "public, max-age=86400" }] }
+    ];
   },
   reactStrictMode: true,
   // Dev server only (`npm run dev`): keep compiled pages and API routes for an hour instead of dropping them after a minute

@@ -11,6 +11,8 @@ import { emptySources, type AnswerCard, type ConsoleAction, type ConsoleActionNa
 import type { RefNames } from "@/lib/assistant/scope";
 import type { Presentation } from "@/lib/assistant/datasets";
 import type { Fact } from "@/lib/assistant/types";
+import { offTopicCovers, offTopicHead, offTopicReply } from "@/lib/topicguard/reply";
+import type { ScopeTopic } from "@/lib/topicguard/scope";
 
 export function baseCard(lang: Lang, scope: Scope | null, scopeLine: string, asOf: string): AnswerCard {
   return {
@@ -40,29 +42,24 @@ const WHY: Record<string, Record<Lang, string>> = {
     "GCC directory-la irukkira officials-ku mattum dhaan official follow-up mail draft panna mudiyum.")
 };
 
-/** The topic a code check recognised, named in the refusal so the Collector sees the question was understood. */
-const TOPIC: Record<string, Record<Lang, string>> = {
-  sports: L("Sports results are outside the data I work with.", "விளையாட்டு முடிவுகள் என் தரவில் இல்லை.", "Sports results en data-la illa."),
-  entertainment: L("Films and entertainment are outside the data I work with.", "திரைப்படம், பொழுதுபோக்கு பற்றிய தகவல் என் தரவில் இல்லை.", "Movies, entertainment pathi en data-la illa."),
-  coding: L("I don't help with programming; I answer from the district's data.", "நிரலாக்க உதவி என்னால் தர முடியாது; மாவட்டத் தரவிலிருந்து மட்டுமே பதில் தருவேன்.", "Coding help panna mudiyaadhu; district data-la irundhu mattum answer pannuven."),
-  writing: L("I don't write poems, stories or jokes; I answer from the district's data.", "கவிதை, கதை, நகைச்சுவை எழுத மாட்டேன்; மாவட்டத் தரவிலிருந்து மட்டுமே பதில் தருவேன்.", "Poem, story, joke ezhudha maatten; district data-la irundhu mattum answer pannuven."),
-  general: L("General-knowledge questions are outside the data I work with.", "பொது அறிவுக் கேள்விகள் என் தரவில் இல்லை.", "General knowledge kelvigal en data-la illa."),
-  finance: L("Markets, shares and crypto are outside the data I work with.", "பங்குச் சந்தை, கிரிப்டோ பற்றிய தகவல் என் தரவில் இல்லை.", "Share market, crypto pathi en data-la illa."),
-  astrology: L("Horoscopes are outside the data I work with.", "ஜாதகம், ராசிபலன் என் தரவில் இல்லை.", "Horoscope, rasi palan en data-la illa."),
-  cooking: L("Recipes are outside the data I work with.", "சமையல் குறிப்புகள் என் தரவில் இல்லை.", "Recipes en data-la illa."),
-  homework: L("I don't do homework or exam questions; I answer from the district's data.", "வீட்டுப்பாடம், தேர்வுக் கேள்விகளுக்கு உதவ மாட்டேன்; மாவட்டத் தரவிலிருந்து மட்டுமே பதில் தருவேன்.", "Homework, exam kelvigalukku help panna maatten; district data mattum."),
-  politics: L("I don't give political opinions; I report what the district's data shows.", "அரசியல் கருத்துகள் சொல்ல மாட்டேன்; மாவட்டத் தரவு காட்டுவதை மட்டும் சொல்வேன்.", "Political opinion solla maatten; district data enna kaattudho adhu mattum."),
-  elsewhere: L("I only have data for Chennai district, not other cities or districts.", "சென்னை மாவட்டத் தரவு மட்டுமே என்னிடம் உள்ளது; மற்ற நகரங்கள், மாவட்டங்கள் இல்லை.", "Chennai district data mattum dhaan irukku; vera city, district illa.")
-};
-const OUTSIDE = L("That question is outside the Chennai district data I work with.", "அந்தக் கேள்வி நான் பயன்படுத்தும் சென்னை மாவட்டத் தரவுக்கு வெளியே உள்ளது.",
-  "Andha kelvi en Chennai district data-ku veliya irukku.");
+/** Another city or district: the chat's own line (Jarvis says the console holds Chennai district only). */
+const ELSEWHERE = L("I only have data for Chennai district, not other cities or districts.", "சென்னை மாவட்டத் தரவு மட்டுமே என்னிடம் உள்ளது; மற்ற நகரங்கள், மாவட்டங்கள் இல்லை.", "Chennai district data mattum dhaan irukku; vera city, district illa.");
+/** the chat's older topic names, read as the topic guard's (topicguard/scope.ts) */
+const TOPIC_ALIAS: Record<string, ScopeTopic> = { coding: "tech", general: "trivia" };
+const SCOPE_TOPICS = new Set<string>(["sports", "entertainment", "tech", "writing", "trivia", "finance", "astrology", "cooking", "homework", "politics"]);
 
-/** A refusal: why (a named reason or topic) as the headline, what the assistant covers once below it, and questions to try. */
-export function refusalCard(base: AnswerCard, reason: string | null, topic: string | null = null): AnswerCard {
+/**
+ * A refusal: why (a named reason) as the headline, what the assistant covers once below it, and questions to try. A question outside District
+ * IQ (27 Nov, the topic guard) is declined in the one sentence every assistant uses (topicguard/reply.ts): the topic understood as the headline
+ * when it is known, else "Sorry, that is outside what I cover.", then what is covered (an officer's: their department's records).
+ */
+export function refusalCard(base: AnswerCard, reason: string | null, topic: string | null = null, o: { dept?: string | null } = {}): AnswerCard {
   const lang = base.language;
-  const head = reason && WHY[reason] ? WHY[reason][lang] : topic && TOPIC[topic] ? TOPIC[topic][lang] : OUTSIDE[lang];
-  return { ...base, kind: "refusal", display: "text", headline: head, answerMarkdown: COVERS[lang], voiceSummary: `${head} ${TEXT.refusal[lang]}`,
-    chips: EXAMPLES[lang].slice(0, 3), scope: null, scopeLine: "" };
+  const card = { ...base, kind: "refusal" as const, display: "text" as const, chips: EXAMPLES[lang].slice(0, 3), scope: null, scopeLine: "" };
+  if (reason && WHY[reason]) return { ...card, headline: WHY[reason][lang], answerMarkdown: COVERS[lang], voiceSummary: `${WHY[reason][lang]} ${TEXT.refusal[lang]}` };
+  if (topic === "elsewhere") return { ...card, headline: ELSEWHERE[lang], answerMarkdown: COVERS[lang], voiceSummary: `${ELSEWHERE[lang]} ${TEXT.refusal[lang]}` };
+  const t = topic ? TOPIC_ALIAS[topic] ?? (SCOPE_TOPICS.has(topic) ? (topic as ScopeTopic) : null) : null;
+  return { ...card, headline: offTopicHead(lang, t), answerMarkdown: offTopicCovers(lang, { dept: o.dept ?? null }), voiceSummary: offTopicReply(lang, { dept: o.dept ?? null, voice: true }) };
 }
 
 export function clarifyCard(base: AnswerCard, question: string): AnswerCard {

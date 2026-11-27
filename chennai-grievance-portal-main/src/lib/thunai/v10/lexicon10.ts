@@ -15,7 +15,7 @@
  */
 import { isEnglishWord } from "../english";
 import type { World } from "../types";
-import { fold, tokensOf } from "../v8/match";
+import { fold, looseKey, tokensOf } from "../v8/match";
 import { placeWord } from "../v8/lang8";
 import { classOf, earKey, earKeyJoined, earSim, type EntityClass } from "./phon10";
 
@@ -59,23 +59,75 @@ const STORM_TA = /(?:^|\s)([஀-௿]{3,})\s+புயல்/gu;
 
 const sid = (kind: string, key: string) => `${kind}:${key}`;
 
-interface Acc { kind: EntityKind; cls: EntityClass | null; spell: Map<string, number>; docs: Map<string, string | null>; key: string }
+interface Acc { kind: EntityKind; cls: EntityClass | null; spell: Map<string, number>; docs: Map<string, string | null>; key: string; /** when it was made (the first-made of two that both sound alike wins) */ seq: number }
+
+/** the two keys earSim compares first: v8's Tamil-loose key and the ear key. earSim(a, b) >= 0.97 only when one of them is equal (see sameThing) */
+const looseOf = (k: string): string => looseKey(fold(k).replace(/\s+/g, ""));
+
+type LexWorld = Pick<World, "zones" | "places" | "taluks" | "depts"> & Partial<Pick<World, "bodies">>;
 
 /** Build the lexicon. `stories`: the store's week, newest first (newsfind.ts storeStories); `world`: the district's lists. */
-export function buildLexicon(stories: LexStory[], world: Pick<World, "zones" | "places" | "taluks" | "depts"> & Partial<Pick<World, "bodies">>, o: { outlets?: string[] } = {}): Entity10[] {
+export function buildLexicon(stories: LexStory[], world: LexWorld, o: { outlets?: string[] } = {}): Entity10[] {
+  const steps = lexiconSteps(stories, world, o);
+  for (;;) { const r = steps.next(); if (r.done) return r.value; }
+}
+
+/**
+ * The same lexicon, built a slice at a time with the thread let go between slices (setImmediate), so a server request that comes meanwhile
+ * is answered (the hosted copy's one core held 7-8 s while Jarvis opened: the report of 27 Nov, cause 2).
+ */
+export async function buildLexiconYielding(stories: LexStory[], world: LexWorld, o: { outlets?: string[] } = {}): Promise<Entity10[]> {
+  const steps = lexiconSteps(stories, world, o);
+  for (;;) {
+    const r = steps.next();
+    if (r.done) return r.value;
+    await new Promise<void>((res) => setImmediate(res));
+  }
+}
+
+/** how much work (spellings added or matched) between two yields of lexiconSteps */
+const SLICE = 150;
+
+/** buildLexicon's work, yielding every SLICE spellings; its return value is the lexicon */
+function* lexiconSteps(stories: LexStory[], world: LexWorld, o: { outlets?: string[] }): Generator<void, Entity10[], void> {
   const acc = new Map<string, Acc>();
+  // (27 Nov) the entries by kind and each of earSim's two first keys: the one-consonant-apart match below compared each spelling with every
+  // entry made so far (20.9 s for 2,142 stories on the owner's PC); only an entry with one of these keys equal can reach 0.97
+  const byKey = new Map<string, Acc[]>();
+  const keep = (k: string, a: Acc) => { const l = byKey.get(k); if (l) l.push(a); else byKey.set(k, [a]); };
+  let seq = 0, work = 0;
   const add = (kind: EntityKind, spelling: string, doc: LexStory | null, cls: EntityClass | null = null) => {
+    work++;
     const sp = spelling.normalize("NFC").trim();
     const key = earKeyJoined(sp);
     if (!sp || key.replace(/^a/, "").length < 2) return;
     // one entry per thing: the same kind and a sound key equal, or one consonant apart in a long key with the spellings close ("Akvan"/"Akwan")
     let hit: Acc | undefined = acc.get(sid(kind, key));
-    if (!hit) for (const a of acc.values()) if (a.kind === kind && a.key.length >= 5 && earSim(a.key, key) >= 0.97) { hit = a; break; }
-    const a = hit ?? { kind, cls, spell: new Map<string, number>(), docs: new Map<string, string | null>(), key };
+    if (!hit) {
+      const lk = looseOf(key), ek = earKey(key);
+      // the first-made entry that sounds the same (as the scan over every entry in the order made found it)
+      for (const a of [...(lk ? byKey.get(`${kind}|l|${lk}`) ?? [] : []), ...(ek ? byKey.get(`${kind}|e|${ek}`) ?? [] : [])]) {
+        if (a.key.length >= 5 && (!hit || a.seq < hit.seq) && acc.get(sid(a.kind, a.key)) === a && earSim(a.key, key) >= 0.97) hit = a;
+      }
+    }
+    const a = hit ?? { kind, cls, spell: new Map<string, number>(), docs: new Map<string, string | null>(), key, seq: seq++ };
     a.spell.set(sp, (a.spell.get(sp) ?? 0) + 1);
     if (doc && a.docs.size < 40) a.docs.set(doc.id, doc.t ?? null);
     if (cls && !a.cls) a.cls = cls;
-    if (!hit) acc.set(sid(kind, key), a);
+    if (!hit) {
+      acc.set(sid(kind, key), a);
+      if (key.length >= 5) { const lk = looseOf(key), ek = earKey(key); if (lk) keep(`${kind}|l|${lk}`, a); if (ek) keep(`${kind}|e|${ek}`, a); }
+    }
+  };
+  const due = (): boolean => { if (work < SLICE) return false; work = 0; return true; };
+  // (27 Nov) a headline's class once per headline, each word's once per build: it was worked out again for every name run of the headline,
+  // each word against every class word by ear, which was nine tenths of the 20.9 s (the profile of the owner's week of news)
+  const wordClass = new Map<string, EntityClass | null>();
+  const titleClass = new Map<string, EntityClass | null>();
+  const classOfTitle = (title: string): EntityClass | null => {
+    let c = titleClass.get(title);
+    if (c === undefined) { c = headlineClass(title, wordClass); titleClass.set(title, c); }
+    return c;
   };
   // 1. storms and names in the news. A name comes from Latin letters (an English headline or a story's English title); a Tamil-script word
   // only adds a spelling to a name already found that sounds the same ("அர்லேகர்" to "Arlekar"), else it is let go: a Tamil headline's
@@ -83,6 +135,7 @@ export function buildLexicon(stories: LexStory[], world: Pick<World, "zones" | "
   // புயல் is a storm whatever its letters (the class word is the evidence).
   const tamilRuns: { run: string; s: LexStory }[] = [];
   for (const s of stories) {
+    if (due()) yield;
     for (const title of [s.title, s.titleEn].filter((x): x is string => !!x)) {
       for (const m of title.matchAll(STORM_EN)) {
         const w = (m[1] ?? m[2] ?? "").trim();
@@ -93,7 +146,7 @@ export function buildLexicon(stories: LexStory[], world: Pick<World, "zones" | "
       for (const m of title.matchAll(STORM_TA)) { const w = m[1]; if (w && !placeWord(w)) tamilRuns.push({ run: w, s }); }
       for (const run of nameRuns(title)) {
         if (/[஀-௿]/u.test(run)) tamilRuns.push({ run, s });
-        else add("name", run, s, headlineClass(title));
+        else add("name", run, s, classOfTitle(title));
       }
     }
   }
@@ -101,6 +154,8 @@ export function buildLexicon(stories: LexStory[], world: Pick<World, "zones" | "
   const storms = [...acc.values()].filter((a) => a.kind === "storm");
   for (const a of [...acc.values()]) {
     if (a.kind !== "name") continue;
+    work += 1 + storms.length;
+    if (due()) yield;
     const st = storms.find((x) => [...x.spell.keys()].some((sp) => [...a.spell.keys()].some((sa) => earSim(sp, sa) >= 0.9)));
     if (st) { for (const [sp, k] of a.spell) st.spell.set(sp, (st.spell.get(sp) ?? 0) + k); for (const [d, t] of a.docs) st.docs.set(d, t); acc.delete(sid("name", a.key)); }
   }
@@ -109,18 +164,22 @@ export function buildLexicon(stories: LexStory[], world: Pick<World, "zones" | "
   // Kanimozhi on the real store (19 Nov). The rest are let go.
   const known = [...acc.values()].filter((a) => a.kind === "storm" || a.kind === "name");
   for (const { run, s } of tamilRuns) {
+    work++;
+    if (due()) yield;
     const hit = known.find((a) => a.docs.has(s.id) && a.key.replace(/^a/, "").length >= 3 && [...a.spell.keys()].some((sp) => !/[஀-௿]/u.test(sp) && earSim(sp, run) >= 0.9));
     if (hit) hit.spell.set(run, (hit.spell.get(run) ?? 0) + 1);
   }
   // 2. the district's places, zones and taluks (English and Tamil), the departments and bodies, the outlets
   for (const z of world.zones) { add("place", z.name, null); if (z.ta) add("place", z.ta, null); }
   for (const t of world.taluks ?? []) { add("place", t.name, null); if (t.ta) add("place", t.ta, null); }
-  for (const p of world.places) { add("place", p.name, null); for (const al of p.aliases ?? []) add("place", al, null); }
+  for (const p of world.places) { if (due()) yield; add("place", p.name, null); for (const al of p.aliases ?? []) add("place", al, null); }
   for (const d of [...(world.depts ?? []), ...(world.bodies ?? [])]) add("dept", d.name, null);
   for (const n of o.outlets ?? []) add("outlet", n, null);
   // the entries, the most named first
   const out: Entity10[] = [];
   for (const a of acc.values()) {
+    work++;
+    if (due()) yield;
     const spellings = [...a.spell.entries()].sort((x, y) => y[1] - x[1] || x[0].length - y[0].length).map((x) => x[0]);
     const docs = [...a.docs.entries()].sort((x, y) => String(y[1] ?? "").localeCompare(String(x[1] ?? ""))).map((x) => x[0]);
     const core = spellings.find((x) => /^[\p{Script=Latin}\s.'-]+$/u.test(x)) ?? spellings[0];
@@ -133,8 +192,12 @@ export function buildLexicon(stories: LexStory[], world: Pick<World, "zones" | "
 const KIND_ORDER: Record<EntityKind, number> = { storm: 0, name: 1, place: 2, dept: 3, outlet: 4 };
 
 /** a headline's class word, if any ("protest", "fire"): the class its names may be said with */
-const headlineClass = (title: string): EntityClass | null => {
-  for (const w of title.split(/[^\p{L}\p{M}]+/u)) { const c = classOf(w); if (c && c !== "storm") return c; }
+const headlineClass = (title: string, memo?: Map<string, EntityClass | null>): EntityClass | null => {
+  for (const w of title.split(/[^\p{L}\p{M}]+/u)) {
+    let c = memo?.get(w);
+    if (c === undefined) { c = classOf(w); memo?.set(w, c); }
+    if (c && c !== "storm") return c;
+  }
   return null;
 };
 

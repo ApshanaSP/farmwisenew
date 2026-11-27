@@ -118,7 +118,7 @@ const SPOKEN_SOURCE: Record<string, { en: string; ta: string }> = {
   dept_followups: { en: "the department follow-ups", ta: "துறை பின்தொடர்வுகள்" },
   resolution_times: { en: "the resolution times", ta: "தீர்வு நேரங்கள்" },
   environment: { en: "the rain, air and lake gauges", ta: "மழை, காற்று, ஏரி அளவீடுகள்" },
-  mandi_prices: { en: "the AGMARKNET market prices", ta: "AGMARKNET சந்தை விலைகள்" },
+  mandi_prices: { en: "the Uzhavar Sandhai market prices", ta: "உழவர் சந்தை விலைகள்" },
   briefing: { en: "the morning briefing", ta: "காலைச் சுருக்கம்" },
   change_drivers: { en: "the change breakdown", ta: "மாற்றப் பகுப்பாய்வு" },
   incident_series: { en: "the incident series", ta: "சம்பவத் தொடர்" },

@@ -108,3 +108,35 @@ describe("newsSanity on a build (the 13 Oct 2026 briefing: '101 deaths in 24 hou
     expect(JSON.stringify(db.prepare(`SELECT * FROM incidents ORDER BY incident_id`).all())).toBe(before);
   });
 });
+
+// 27 Nov 2026: the word rules relabel the articles at build time but take no incident out; the news desk step does (derive.desk.test.ts)
+describe("reportKinds on a build", async () => {
+  const { DatabaseSync } = await import("node:sqlite");
+  const { reportKinds } = await import("./derive");
+  const fresh = () => {
+    const db = new DatabaseSync(":memory:");
+    db.exec(`CREATE TABLE incidents (incident_id TEXT PRIMARY KEY, title TEXT, media_only INTEGER);
+      CREATE TABLE documents (doc_id TEXT, linked_incident_id TEXT, title TEXT, title_en TEXT, lang TEXT, source_kind TEXT, report_type TEXT, is_incident INTEGER);
+      INSERT INTO incidents VALUES ('INC-RAIN', 'Yellow alert', 1), ('INC-BOATS', 'Boats', 1), ('INC-FIRE', 'Fire', 1);
+      INSERT INTO documents VALUES ('d1', 'INC-RAIN', '''Yellow'' alert for Chennai today', NULL, 'en', 'news', 'incident', 1),
+        ('d2', 'INC-BOATS', '17 low-lying areas in Chennai vulnerable, 113 boats ready, says GCC chief', NULL, 'en', 'news', 'announcement', 1),
+        ('d3', 'INC-FIRE', 'Large fire at a factory near Chennai', NULL, 'en', 'news', 'incident', 1);`);
+    return db;
+  };
+  it("labels a forecast and government work as news, and takes no incident out", () => {
+    const db = fresh();
+    reportKinds(db);
+    expect((db.prepare(`SELECT incident_id AS id FROM incidents ORDER BY 1`).all() as { id: string }[]).map((r) => r.id)).toEqual(["INC-BOATS", "INC-FIRE", "INC-RAIN"]);
+    expect(db.prepare(`SELECT doc_id AS id, report_type AS t, is_incident AS i, linked_incident_id AS l FROM documents ORDER BY 1`).all()).toEqual([
+      { id: "d1", t: "alert", i: 0, l: "INC-RAIN" }, { id: "d2", t: "government_action", i: 0, l: "INC-BOATS" }, { id: "d3", t: "incident", i: 1, l: "INC-FIRE" }]);
+  });
+  it("keeps the pipeline's labels for the news desk step, and is a no-op the second time", () => {
+    const db = fresh();
+    reportKinds(db);
+    expect(db.prepare(`SELECT doc_id AS id, rule, was_type AS t, was_incident AS i FROM _report_kinds ORDER BY 1`).all()).toEqual([
+      { id: "d1", rule: "alert", t: "incident", i: 1 }, { id: "d2", rule: "government_action", t: "announcement", i: 1 }, { id: "d3", rule: "incident", t: "incident", i: 1 }]);
+    const before = JSON.stringify(db.prepare(`SELECT * FROM documents ORDER BY doc_id`).all());
+    reportKinds(db);
+    expect(JSON.stringify(db.prepare(`SELECT * FROM documents ORDER BY doc_id`).all())).toBe(before);
+  });
+});

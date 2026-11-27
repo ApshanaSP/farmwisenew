@@ -13,7 +13,8 @@ export const dynamic = "force-dynamic";
 /**
  * Completion report: remarks plus at least one photo of the finished work (multipart form: `remarks`, `photos`
  * repeated, `step`). A severe grievance is sent to the Collector for verification (`step=send`, "Sent to
- * Collector"); any other is closed by the department itself (`step=close`, "Verified").
+ * Collector"); any other is closed by the department itself (`step=close`, "Verified"), or sent to the Collector
+ * when the officer wants the Collector's approval (`step=send`; the owner's decision of 27 Nov).
  */
 export async function POST(req: NextRequest, routeCtx: { params: Promise<{ id: string }> }) {
   const params = await routeCtx.params;
@@ -50,7 +51,10 @@ export async function POST(req: NextRequest, routeCtx: { params: Promise<{ id: s
   const refusal = stepRefusal(step, String(detail.grievance.stage), detail.grievance.sev as string | null);
   if (refusal) return NextResponse.json({ error: refusal }, { status: 409 });
   // closing a case, or sending it to the Collector, is confirmed for exactly these remarks and photos
-  const c = await requireConfirm(req, ctx.session, "officer_report", step === "close" ? `Close case ${params.id} with your report` : `Send case ${params.id} to the Collector for verification`,
+  // a severe case goes for the Collector's verification; any other the officer chose to send goes for the Collector's approval (the words
+  // the officer's button and toast use)
+  const purpose = detail.grievance.sev === "Severe" ? "verification" : "approval";
+  const c = await requireConfirm(req, ctx.session, "officer_report", step === "close" ? `Close case ${params.id} with your report` : `Send case ${params.id} to the Collector for ${purpose}`,
     { id: params.id, step, remarks, photos: photos.map((x) => createHash("sha256").update(x.buf).digest("hex")) });
   if (!c.ok) return c.res;
   const dir = newPhotoDir();

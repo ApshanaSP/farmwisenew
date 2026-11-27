@@ -59,9 +59,12 @@ export function parseLakePage(html: string): LakeDay | null {
     const key = cells[0].toUpperCase();
     if (key === "TOTAL") {
       const cap = num(cells[2]), st = num(cells[4]);
-      if (cap && st != null) total = { capacityMcft: cap, storageMcft: st, pct: num(cells[5]) ?? Math.round((st / cap) * 1000) / 10, lastYearMcft: num(cells[9]) };
+      if (!total && cap && st != null) total = { capacityMcft: cap, storageMcft: st, pct: num(cells[5]) ?? Math.round((st / cap) * 1000) / 10, lastYearMcft: num(cells[9]) };
       continue;
     }
+    // (27 Nov) a reservoir once: the page of 26 Nov carried its table twice, so each lake was kept twice for the day, and the build hook
+    // (derive.ts cmwssb-reservoirs) failed on observation_signals' one row per lake (UNIQUE metric, place_id) on every build
+    if (rows.some((r) => r.key === key)) continue;
     const p = PLACES[key];
     const cap = num(cells[2]), st = num(cells[4]);
     if (!p || !cap || st == null) continue;
@@ -75,13 +78,38 @@ export function parseLakePage(html: string): LakeDay | null {
     const cap = rows.reduce((a, r) => a + r.capacityMcft, 0), st = rows.reduce((a, r) => a + r.storageMcft, 0);
     total = { capacityMcft: cap, storageMcft: st, pct: Math.round((st / cap) * 1000) / 10, lastYearMcft: null };
   }
-  return { date, rows, total };
+  return { date, rows, total: ownTotal(rows, total) };
+}
+
+/**
+ * (27 Nov review) The TOTAL row of a page that listed every reservoir k times sums all k copies: 26 Nov's said 26,444 mcft of capacity
+ * and 10,396 stored for the six's 13,222 and 5,198 (the % full is the same). When the row is a whole multiple of the reservoirs' own
+ * capacity, its sums are divided back; any other page's TOTAL stands as published.
+ */
+function ownTotal(rows: LakeRow[], total: LakeDay["total"]): LakeDay["total"] {
+  const cap = rows.reduce((a, r) => a + r.capacityMcft, 0);
+  const k = cap > 0 ? Math.round(total.capacityMcft / cap) : 1;
+  if (k < 2 || Math.abs(total.capacityMcft - k * cap) > 0.005 * total.capacityMcft) return total;
+  const per = (v: number) => Math.round((v / k) * 100) / 100;
+  return { capacityMcft: per(total.capacityMcft), storageMcft: per(total.storageMcft), pct: total.pct, lastYearMcft: total.lastYearMcft == null ? null : per(total.lastYearMcft) };
+}
+
+/** A day's rows with each reservoir once (the first kept): the saved file of 26 Nov holds every lake twice for that day. */
+export function oncePerLake(d: LakeDay): LakeDay {
+  const seen = new Set<string>();
+  const rows = (d.rows ?? []).filter((r) => (seen.has(r.key) ? false : (seen.add(r.key), true)));
+  // (27 Nov review) and its total the reservoirs' own: the file saved on 27 Nov holds 26 Nov's six rows once but the page's doubled TOTAL
+  const total = d.total && rows.length ? ownTotal(rows, d.total) : d.total;
+  return rows.length === (d.rows ?? []).length && total === d.total ? d : { ...d, rows, total };
 }
 
 function load(): Saved {
   if (G.saved) return G.saved;
   try { G.saved = JSON.parse(fs.readFileSync(FILE, "utf8")) as Saved; } catch { G.saved = { days: {}, todayFetchedAt: 0, error: null }; }
-  return G.saved!;
+  const s = G.saved!;
+  s.days ??= {};
+  for (const [k, d] of Object.entries(s.days)) s.days[k] = oncePerLake(d);
+  return s;
 }
 function save(s: Saved) {
   try {
@@ -142,7 +170,7 @@ export async function cmwssbLakes(now: string, days = 10): Promise<Lakes | null>
   }
   const dates = Object.keys(s.days).filter((d) => d <= today).sort().slice(-days);
   if (!dates.length) return null;
-  const last = s.days[dates[dates.length - 1]];
+  const last = oncePerLake(s.days[dates[dates.length - 1]]);
   const stations: LakeStation[] = last.rows.map((r) => {
     const hist = dates.map((d) => s.days[d].rows.find((x) => x.key === r.key)).filter(Boolean) as LakeRow[];
     const at = dates.filter((d) => s.days[d].rows.some((x) => x.key === r.key));

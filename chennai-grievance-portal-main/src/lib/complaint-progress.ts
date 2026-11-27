@@ -123,9 +123,10 @@ export async function incidentsOf(codes: string[]): Promise<Map<string, string>>
 }
 
 /**
- * Who will check the finished work of the case a complaint was filed into: the Collector for a severe case, else the department itself
- * (only a severe case may be sent to the Collector: officer/data.ts). Null when the case is not in this build. The citizen's tracker was
- * not told, and promised every complaint the Collector's verification (officer-day-06).
+ * Who will check the finished work of the case a complaint was filed into: the Collector for a severe case, and for any other case the
+ * department sent to the Collector for approval (27 Nov: an officer may send any open case, officer/data.ts); else the department itself.
+ * Null when the case is not in this build. The citizen's tracker was not told, and promised every complaint the Collector's verification
+ * (officer-day-06).
  */
 export async function checkerOf(code: string): Promise<"collector" | "department" | null> {
   return (await caseFacts(code))?.checker ?? null;
@@ -140,7 +141,26 @@ export async function caseFacts(code: string): Promise<{ checker: "collector" | 
   if (!id) return null;
   const [rows] = await intelPool.query<RowDataPacket[]>(`SELECT severity_level, sla_due_at FROM incidents WHERE incident_id = ? LIMIT 1`, [id]);
   if (!rows[0]) return null;
-  return { checker: String(rows[0].severity_level) === "Severe" ? "collector" : "department", dueAt: rows[0].sla_due_at ? str(rows[0].sla_due_at) || null : null };
+  const severe = String(rows[0].severity_level) === "Severe";
+  return { checker: severe || (await sentToCollector(id)) ? "collector" : "department", dueAt: rows[0].sla_due_at ? str(rows[0].sla_due_at) || null : null };
+}
+
+/**
+ * Whether the department's latest step on this case is a send to the Collector that the Collector has not sent back since (false before
+ * the officer tables exist). A sent-back case is the department's again, to close itself or send again: the tracker promised the
+ * Collector's check all the same (the Collector's My Tasks and verify gate end a send at a reopen too).
+ */
+async function sentToCollector(incidentId: string): Promise<boolean> {
+  const latest = (order: string) => intelPool.query<RowDataPacket[]>(`SELECT step, ${fmt("at")} AS at FROM ${ops("officer_steps")} WHERE incident_id = ? ORDER BY ${order} LIMIT 1`, [incidentId]);
+  try {
+    const [r] = await latest("at DESC, step_id DESC").catch(() => latest("at DESC"));
+    if (String(r[0]?.step ?? "") !== "send") return false;
+    const [back] = await intelPool.query<RowDataPacket[]>(
+      `SELECT 1 AS x FROM ${ops("collector_decisions")} WHERE incident_id = ? AND decision = 'reopen' AND decided_at >= ? LIMIT 1`, [incidentId, str(r[0].at)]).catch(() => [[] as RowDataPacket[]]);
+    return !back.length;
+  } catch {
+    return false;
+  }
 }
 
 /** The complaint numbers filed into these incidents. */

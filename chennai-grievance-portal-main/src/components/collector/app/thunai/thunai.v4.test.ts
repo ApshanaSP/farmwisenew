@@ -79,8 +79,10 @@ describe("captions only while hearing (defect 10)", () => {
     // so a cut-off rest waits as any spoken line does; it was taken for typed text; merge 2026-11-20: and the owner's wake mic hand-over, parkWake;
     // v11, 20 Nov: the status says "Go ahead" while the parked microphone is handed over, hud wakeOpening;
     // v14, 21 Nov, review scenarios 2: with no recogniser running, the device's wake opens at once and its reply waits for the quiet on Jarvis's
-    // ears, wakeWait "listen" and conductor replyWhenQuiet; the recogniser's own name-alone wait is in wake.ts)
-    expect(crypto.createHash("sha256").update(src.slice(a, b)).digest("hex")).toBe("cc391ada9bd6da08713d5312ad5d6743b2267510b4928a303b7e560b52762d1d");
+    // ears, wakeWait "listen" and conductor replyWhenQuiet; the recogniser's own name-alone wait is in wake.ts;
+    // B7, 27 Nov, the hosted copy in Chrome: the permission is watched (granted later, the listener starts then), and the chip on Jarvis's button
+    // says why it does not listen yet, hud wakeNeeds: not allowed yet (its click asks the browser, jarvis:wake-enable) or waiting for a click)
+    expect(crypto.createHash("sha256").update(src.slice(a, b)).digest("hex")).toBe("d7e9ac7a1ff0eddce6dbdc8e6f4b0372d69c4367e20ac77124a874197a35631b");
     const block = src.slice(a, b);
     expect(block).toContain("handleRef.current(rest, 0.95, undefined, { source: \"captions\" })");
     // still: only while closed, after the first-use notice, with the microphone already allowed, never while the tab is hidden; the browser's
@@ -91,6 +93,10 @@ describe("captions only while hearing (defect 10)", () => {
     expect(block).toContain("document.hidden");
     // v6 (the independent check, 17 Nov): the device's wake word waits for a pause after the name, or leaves a sentence to the recogniser
     expect(block).toContain("wakeWait({");
+    // B7: never asks for the microphone by itself: only "granted", or the chip's own click (jarvis:wake-enable), lets it begin
+    expect(block).toContain('addEventListener("change", onPerm)');
+    expect(block).toContain('window.addEventListener("jarvis:wake-enable", enable);');
+    expect(block).toMatch(/hud\.set\(\{ wakeNeeds: null \}\)/);
   });
 });
 

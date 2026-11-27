@@ -14,9 +14,7 @@
 /* ---- a list shows every row: the ones that did not fit wrapped into hidden columns at the right (Trends: 6 of 8 rises, 13 of 18 taluks) */
 .dic .fitlist{flex-wrap:nowrap;overflow-x:hidden;overflow-y:auto;scrollbar-width:thin;overscroll-behavior:contain}
 
-/* ---- why a case needs the Collector is read whole, on its own line, with the place, department and time under it */
-.dic .att-row.need .att-txt small,.dic .att-row.task2 .att-txt small{white-space:normal;overflow:visible}
-.dic .att-row.need .att-txt small em,.dic .att-row.task2 .att-txt small em{display:flex;width:fit-content;max-width:100%;margin:1px 0 2px;white-space:normal;line-height:1.35;padding:1px 7px;border-radius:9px}
+/* ---- (27 Nov) by severity and My Tasks rows: one line of facts again (attention.css); the whole reason and facts are in the row's tooltip */
 
 /* ---- the map: its colour key at the bottom left, clear of the tools (right) and the map's credit line (bottom right), and away while the land
    tools use that corner; on a short map the tools scroll in their column; in the Rain and Traffic views the scale clears the panel at the left */

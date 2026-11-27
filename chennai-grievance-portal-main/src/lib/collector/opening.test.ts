@@ -108,3 +108,57 @@ describe("P7 review: true summaries in their own window are shown", () => {
     expect(checkOpening({ asOf: AS_OF, en, ta: null }, f(1, 30)).opening).toBeNull();
   });
 });
+
+describe("27 Nov: the hosted log's rejections of true openings", () => {
+  const PREV_ONE = "This period saw more incidents than the previous one.";
+  it("'the previous one' is no figure: the opening holds when the live change is a rise, and not when it is a fall", () => {
+    expect(statedFigures(PREV_ONE)).toEqual([]);
+    expect(shown(PREV_ONE, 4)).not.toBeNull();
+    const r = checkOpening({ asOf: AS_OF, en: PREV_ONE, ta: null }, week(-3));
+    expect(r.opening).toBeNull();
+    expect(r.why).toMatch(/beside a live change of -3%/);
+  });
+  it("27 Nov review: 'the one' before what it counts is still a figure ('the one man killed' beside 2 deaths stays off)", () => {
+    for (const en of ["The one man killed was in Adyar.", "Police said the one worker who died was from Perambur.", "The previous one recorded 2 deaths."]) {
+      expect(statedFigures(en)).toContain(1);
+    }
+    // "no one was hurt" is no injured: held to the live figure as 0
+    expect(checkOpening({ asOf: AS_OF, en: "No one was hurt.", ta: null }, week(4, { injured: 0 })).opening).not.toBeNull();
+    expect(checkOpening({ asOf: AS_OF, en: "No one was hurt.", ta: null }, week(4, { injured: 5 })).why).toMatch(/0 is not the live injured figure \(5\)/);
+    const r = checkOpening({ asOf: AS_OF, en: "This week saw more incidents than the previous one. The one man killed was in Adyar.", ta: null }, week(4, { deaths: 2 }));
+    expect(r.opening).toBeNull();
+    expect(r.why).toMatch(/1 is not the live deaths figure \(2\)/);
+    // the pronoun itself still is none, wherever the sentence goes on
+    expect(statedFigures("more incidents than the previous one in Adyar")).toEqual([]);
+    expect(statedFigures("more incidents than the last one, with 2 deaths")).toEqual([2]);
+  });
+  it("'one' as a number still counts ('one more death', 'one of the 12 zones' keeps its 12)", () => {
+    expect(statedFigures("There was one more death than yesterday.")).toEqual([1]);
+    // (27 Nov review: "no one was hurt" states 0 injured, which the checker holds to the live figure)
+    expect(statedFigures("One of the 12 zones saw no case at all; no one was hurt; a one-off closure.")).toEqual([12, 0]);
+    expect(statedFigures("One of the 12 zones saw no case at all; no one expected it; a one-off closure.")).toEqual([12]);
+    expect(statedFigures("twenty-one incidents")).toEqual([21]);
+  });
+  it("an incident's own deaths said with its place hold (1 death in Kellys beside the district's 3); a wrong one or no such place does not", () => {
+    const en = "Critical incidents include violent crimes resulting in 1 death in Kellys.";
+    const live = (incidents: { places: string[]; dead: number }[]) => checkOpening({ asOf: AS_OF, en, ta: null }, { now: AS_OF, hours: 24, facts: { ...facts(2), deaths: 3 }, incidents });
+    expect(live([{ places: ["Kellys", "Kilpauk"], dead: 1 }, { places: ["Perambur"], dead: 2 }]).opening).not.toBeNull();
+    expect(live([{ places: ["Kellys"], dead: 2 }, { places: ["Perambur"], dead: 1 }]).why).toMatch(/1 is not the live deaths figure \(3\)/);
+    expect(live([]).why).toMatch(/1 is not the live deaths figure/);
+    // a street's generic word is not the place ("Main Road" in another incident's place)
+    const road = checkOpening({ asOf: AS_OF, en: "1 death on the main road.", ta: null }, { now: AS_OF, hours: 24, facts: { ...facts(2), deaths: 3 }, incidents: [{ places: ["Kellys Main Road"], dead: 1 }] });
+    expect(road.opening).toBeNull();
+  });
+  it("the count of items awaiting verification is still held to the console's (106 beside My Tasks' 0 stays off)", () => {
+    const r = checkOpening({ asOf: AS_OF, en: "There are 106 items awaiting your verification.", ta: null }, { now: AS_OF, hours: 24, facts: { ...facts(2), awaiting: 0 } });
+    expect(r.why).toMatch(/106 is not the live awaiting figure \(0\)/);
+  });
+  it("firstTimeWhy: a reason is logged once, then again after six hours", async () => {
+    const { firstTimeWhy, LOG_AGAIN_MS } = await import("./opening");
+    const t = 1_000_000;
+    expect(firstTimeWhy("test", "counts the 24 hours", t)).toBe(true);
+    expect(firstTimeWhy("test", "counts the 24 hours", t + 60_000)).toBe(false);
+    expect(firstTimeWhy("test", "another reason", t + 60_000)).toBe(true);
+    expect(firstTimeWhy("test", "counts the 24 hours", t + LOG_AGAIN_MS + 1)).toBe(true);
+  });
+});

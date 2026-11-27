@@ -47,8 +47,8 @@ export function NextStep({ r, c }: { r: Row; c: Ctx }) {
         ? <button className="btn sm ok" disabled={busy} onClick={(e) => run(e, () => c.openSend(r))}><I n="send" />Complete &amp; send</button>
         : <button className="btn sm ok" disabled={busy} onClick={(e) => run(e, () => c.openSend(r))}><I n="check" />Complete &amp; close</button>;
     case "sent":
-      return r.sev === "Severe" ? <span className="dim" style={{ fontSize: 12.5 }}>Awaiting Collector</span>
-        : <button className="btn sm ok" disabled={busy} onClick={(e) => run(e, () => c.openSend(r))}><I n="check" />Close as done</button>;
+      // sent for the Collector's verification (severe) or approval (any other): it waits for the Collector's decision
+      return <span className="dim" style={{ fontSize: 12.5 }}>Awaiting Collector</span>;
     default:
       return <span className="chip sev-low"><I n="check" />Verified</span>;
   }
@@ -152,7 +152,8 @@ export function GrievancesCard({ c, style }: { c: Ctx; style?: CSSProperties }) 
                 L.rows.map((r) => (
                   <tr key={r.id} className={r.id === c.fresh ? "flash" : ""} onClick={() => c.openGrievance(r.id)} title={`${r.id} · ${fullTitle(r)}`}>
                     <td className="oq-g">
-                      <b>{r.type}{r.returned && <span className="chip sev-high" title={r.returnNote ?? "Returned by the Collector"}><I n="refresh" />Returned</span>}</b>
+                      <b>{r.type}{r.returned && <span className="chip sev-high" title={r.returnNote ?? "Returned by the Collector"}><I n="refresh" />Returned</span>}
+                        {r.instructed && <span className="chip chip-src" title="The Collector sent your department an instruction about this case: open it to read it"><I n="send" />Collector&apos;s instruction</span>}</b>
                       <small>{[r.loc, r.zone_name ?? "Chennai"].filter(Boolean).join(" · ")}{r.complaints ? ` · ${r.complaints} complaint${r.complaints === 1 ? "" : "s"}` : ""}{r.outlets ? " · in the news" : ""}{fromManu(r) ? " · Manu (paper petition)" : ""}<DueNote r={r} now={c.now} /></small>
                     </td>
                     <td><SevChip s={r.sev} /></td>
@@ -260,8 +261,8 @@ export function AreaCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
   );
 }
 
-const FEEDBACK_TONE: Record<FeedbackKind, string> = { verified: "t-low", resolved: "t-low", returned: "t-high", rejected: "t-sev" };
-const FEEDBACK_ICON: Record<FeedbackKind, "checkc" | "refresh" | "x"> = { verified: "checkc", resolved: "checkc", returned: "refresh", rejected: "x" };
+const FEEDBACK_TONE: Record<FeedbackKind, string> = { verified: "t-low", resolved: "t-low", returned: "t-high", rejected: "t-sev", escalated: "t-high" };
+const FEEDBACK_ICON: Record<FeedbackKind, "checkc" | "refresh" | "x" | "alert"> = { verified: "checkc", resolved: "checkc", returned: "refresh", rejected: "x", escalated: "alert" };
 
 export function FeedbackCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
   const items = c.ov.feedback;

@@ -46,11 +46,13 @@ import { candidates10, itemPick, studioLetsThrough } from "@/lib/thunai/v10/cont
 import { OWN_DATA, aboutOpenDataset } from "@/lib/thunai/studiowords";
 import Stage, { type BlockView, type PinnedScreen } from "./Stage";
 import { download, exportPng, fileName } from "./export";
-import { canContinue, continueAnswer, earconEnd, forgetBookmark, hasVoice, loadWakeReplies, nowSaying, pathFor, prewarmVoice, speakAck, speaking, speakLines, speakText, stopVoice, voicePath, wakeReply, warmVoice, warmVoices } from "./mouth";
-import { loadSilero, parkWake, WakeEars } from "./ears";
+import { canContinue, continueAnswer, earconEnd, forgetBookmark, hasVoice, loadWakeReplies, nowSaying, pathFor, prewarmVoice, resumeMouth, setAudioBlocked, speakAck, speaking, speakLines, speakText, stopVoice, unlockSpeech, voicePath, wakeReply, warmVoice, warmVoices } from "./mouth";
+import { earsAsleep, loadSilero, parkWake, resumeEars, WakeEars } from "./ears";
 import { wakeWait } from "./kws";
 import { flag } from "@/lib/thunai/flags";
 import { asksAgain, Conductor, type HeardLine, noRequest, startsNoTurn, wakeQuietMs } from "./conductor";
+// (27 Nov, the hosted copy: the start watchdog's report code, and the grace a held audio context gets before a click is asked for)
+import { GESTURE_GRACE_MS, stallCode } from "./conductor";
 import { stamp, traceAnswer, traceAnswerDone, traceAnswering, traceLane } from "./trace";
 import { Captions, canCaption } from "./captions";
 import { answersV7, budgetOf, COMMAND_MS, queuesSentences, readRound, SayQueue, settleStream } from "./turnstream";
@@ -72,6 +74,7 @@ import type { TurnState } from "@/lib/thunai/turn";
 import { jarvisLog, type JLog } from "./jarvislog";
 import { canWake, startWake } from "./wake";
 import Hud from "./Hud";
+import WakeChip from "./WakeChip";
 import type { AnswerCard as Card, ConsoleAction } from "@/lib/assistant/answer";
 import { useLang } from "@/lib/i18n/lang";
 import { otherLang } from "@/lib/i18n/line";
@@ -3203,15 +3206,27 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       onHearing: (a) => { setActivity(a); if (a !== "idle") lastHeardAt.current = Date.now(); },
       onBudget: (b) => hud.strip({ ambient: b.ambient, budgetLow: b.low }),
       onFail: (why) => {
-        hud.set({ wakeOpening: false });
-        if (why === "gesture") { hud.set({ needsResume: true }); return; }
+        hud.set({ wakeOpening: false, micWait: null });
+        // B1 (27 Nov): the browser lets no sound in until a click on the page: the bar asks for one (the click handler below resumes it)
+        if (why === "gesture") { if (modeRef.current === "on") hud.set({ needsResume: true }); return; }
         // no microphone: Jarvis stays open with it off and says why, so a question can still be typed
         if (why === "blocked") setMicBlocked(true);
         setMode("muted");
         const ta = listenLangRef.current === "ta";
+        // B3 (27 Nov): the start hung and was given up (conductor.ts watchStart): Unmute tries again, inside the Collector's own click
         hud.set({ denied: why === "blocked", typing: true, notice: why === "blocked"
           ? (ta ? "இந்தத் தளத்திற்கு மைக் தடுக்கப்பட்டுள்ளது: முகவரிப் பட்டியில் அனுமதியுங்கள். அதுவரை தட்டச்சு செய்யுங்கள்." : "The microphone is blocked for this site: allow it in the address bar. Until then, type your question.")
-          : (ta ? "மைக்கைத் திறக்க முடியவில்லை. தட்டச்சு செய்யுங்கள்." : "The microphone could not be opened. Type your question.") });
+          : why === "stalled"
+            ? (ta ? "மைக் தொடங்கவில்லை. மீண்டும் முயல \"மைக்கைத் திற\" அழுத்துங்கள், அல்லது தட்டச்சு செய்யுங்கள்." : "The microphone did not start. Press Unmute to try again, or type your question.")
+            : (ta ? "மைக்கைத் திறக்க முடியவில்லை. தட்டச்சு செய்யுங்கள்." : "The microphone could not be opened. Type your question.") });
+      },
+      // B3: a start given up, words-free, to the server's telemetry (which step, how long, the audio context, the permission)
+      onStall: (s) => noteDropped({ why: stallCode(s), lang: listenLangRef.current, conf: 0, engaged: false }),
+      // B10 (27 Nov): /hear said this tab's session is gone: said as that (not "I didn't catch that"), and the microphone stops listening
+      onSignedOut: () => {
+        const ta = listenLangRef.current === "ta";
+        if (modeRef.current === "on") setMode("muted");
+        hud.set({ notice: ta ? "நீங்கள் வெளியேறிவிட்டீர்கள். ஜார்விஸைப் பயன்படுத்த மீண்டும் உள்நுழையுங்கள்." : "You are signed out. Sign in again to use Jarvis." });
       },
       onEndSession: () => { setMode("off"); },
       onHold: () => { setNarrating(false); setReading(null); },
@@ -3316,25 +3331,51 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     void loadWakeReplies();
   };
 
+  /** B4: the opening now under way was the Collector's own (a click, a shortcut, Unmute): its window without the name runs again once the microphone is live */
+  const engageOnOpen = useRef(false);
+  /** B9: this tab's name on the console's channel, and the channel (one tab listens at a time) */
+  const tabId = useRef(`t${Math.random().toString(36).slice(2, 10)}`);
+  const tabChannel = useRef<BroadcastChannel | null>(null);
+  /** B5: the microphone openings, counted: only the latest one's end clears the bar's opening state */
+  const micOpenSeq = useRef(0);
+  /**
+   * B5 (27 Nov): the browser's own question about the microphone ("Allow" / "Block") is up while this opening waits on it (the permission is
+   * "prompt"): the bar says to answer it, until the answer changes the permission or the opening ends (openMic)
+   */
+  const askedForMic = async (my: number) => {
+    try {
+      const st = await (navigator.permissions as Permissions | undefined)?.query({ name: "microphone" as PermissionName });
+      if (!st || st.state !== "prompt" || my !== micOpenSeq.current || !hud.get().micSince) return;
+      hud.set({ micWait: "permission" });
+      const done = () => { st.removeEventListener("change", done); if (my === micOpenSeq.current) hud.set({ micWait: null }); };
+      st.addEventListener("change", done);
+    } catch { /* the browser cannot say: the bar says "Opening the microphone" */ }
+  };
+
   /** Turn Jarvis mode on, off, or mute it. Off and muted stop the microphone's tracks: nothing listens. */
   const setMode = useCallback((next: JarvisMode, why?: "hidden" | "boot" | "wake") => {
     const prev = modeRef.current;
     if (prev === next) return;
     modeRef.current = next;
     setModeState(next);
-    hud.set({ mode: next, notice: null, ...(next === "off" ? { ribbon: "", answer: "", asked: "", doing: "", faint: "", panels: [], steps: [], needsResume: false, focus: null, firstUse: false, typing: false, engagedUntil: 0,
+    hud.set({ mode: next, notice: null, micSince: 0, micWait: null, ...(next === "off" ? { ribbon: "", answer: "", asked: "", doing: "", faint: "", panels: [], steps: [], needsResume: false, focus: null, firstUse: false, typing: false, engagedUntil: 0,
       acting: false, caption: null, evidence: null, mission: null, interjection: null, queue: 0 } : {}) });
     if (next !== "off" && !onRef.current) switchOn(true); // eslint-disable-line @typescript-eslint/no-use-before-define
     if (next === "on") {
       setMicBlocked(false);
       hud.set({ denied: false, needsResume: false });
       warmUp(listenLangRef.current);
+      // B4 (27 Nov): opened by the Collector's own hand (the button, a shortcut, Unmute: no `why`) is a call to Jarvis, so the first sentence is
+      // taken without the name (the engaged lane, ENGAGED_MS); opened by the name ("wake") engages on its own, and a tab coming back
+      // ("hidden") is no call. (Before, a click-open was never engaged: a plain question after it went on the ambient lane and was let go)
+      engageOnOpen.current = !why;
       // the first time, the notice comes before the microphone: it opens when the Collector has read it
       if (!store.get("jarvis-mode-seen")) { hud.set({ firstUse: true }); return; }
       // the power-on's sound: one short synthesised tone, once a session, heard as an earcon so it cannot trigger a barge-in
       // (v6: not when the name woke it: the wake reply is that sound)
       try { if (why !== "hidden" && why !== "wake" && sessionStorage.getItem("jarvis-powered") !== "1") setTimeout(() => earcon("open"), 40); } catch { /* no storage: no tone */ }
       openMic();
+      if (!why) { engagedNow(); conductor.current?.called(); }
     } else {
       conductor.current?.close();
       captions.current?.stop();
@@ -3345,16 +3386,30 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       setInterim("");
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  /** The microphone opens: the ears. The live captions are made ready here and run only while a sentence to Jarvis is heard. */
+  /**
+   * The microphone opens: the ears. The live captions are made ready here and run only while a sentence to Jarvis is heard.
+   * B5 (27 Nov): the bar knows when the opening began (micSince: past MIC_SLOW_MS it says it is slow) and whether the browser's own question
+   * about the microphone is up (micWait), so it never says "Opening the microphone" with no end; B4: an open by the Collector's hand starts its
+   * window without the name again once the microphone is live (the browser's question may have taken a while).
+   */
   const openMic = () => {
       const c = conductorOf();
+      const my = ++micOpenSeq.current;
+      hud.set({ micSince: Date.now(), micWait: null });
+      void askedForMic(my);
       void c.open().then(() => {
         hud.strip({ detector: c.detector, echo: c.echoCancel });
         // the brief, once a session, after the power-on
         powerOnBrief();
-        // the answer can start before the first click after a reload: the browser may need a gesture for audio
-        if (c.needsGesture) hud.set({ needsResume: true });
-      }).catch(() => undefined);
+        if (my === micOpenSeq.current) hud.set({ micSince: 0, micWait: null });
+        // (review, 27 Nov: the call is made again too, or the window's new start, later than the call, made the first sentence no longer the
+        // call's own (conductor.ts calledNow); and only the latest opening's end uses or clears the flag, never an older one closed meanwhile)
+        if (my === micOpenSeq.current && engageOnOpen.current && modeRef.current === "on" && c.micLive) { engagedNow(); c.called(); }
+        if (my === micOpenSeq.current) engageOnOpen.current = false;
+        // B9: this tab listens now: the console's other tabs stop listening
+        if (c.micLive) { try { tabChannel.current?.postMessage({ type: "mic-open", tab: tabId.current }); } catch { /* the channel is closed */ } }
+        // (B1: the answer can start before the first click after a reload: the conductor says when the browser waits for one, onFail "gesture")
+      }).catch(() => { if (my === micOpenSeq.current) hud.set({ micSince: 0, micWait: null }); });
       if (!captions.current) {
         // v5 (C3): only while Jarvis is woken or engaged (the conductor's inWindow: ENGAGED_MS of the wake or of its last turn, or while
         // it speaks), a spoken yes awaited included: outside it no recogniser is made, and one running is not restarted (captions.ts)
@@ -3417,7 +3472,8 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (phase === "thinking" || phase === "acting") { wasBusy.current = true; return; }
     // a dashboard command's short line ("Opened Trends") is said and kept in the list, but it opens no card over the dashboard
     if (reply && reply !== ackText.current) hud.set(navTurn.current ? { doing: "" } : { answer: reply, doing: "" });
-    // a turn just ended: the 20 s of being engaged run from here (turning the mode on is not a turn)
+    // a turn just ended: the window of being engaged runs from here. (Turning the mode on is not a turn, but since B4, 27 Nov, the Collector's
+    // own click, shortcut or Unmute engages it: setMode; a tab coming back does not)
     if (wasBusy.current && mode === "on") { engagedNow(); wasBusy.current = false; }
   }, [phase, reply, mode]);
 
@@ -3460,25 +3516,50 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
       };
       tick();
     };
+    // B7 (27 Nov): why "Hey Jarvis" does not listen yet, on Jarvis's button (WakeChip): the microphone not allowed on this site yet ("allow": a
+    // click on the chip asks for it), or the browser holding this listener's audio until a click on the page ("click": any click resumes it)
+    let perm: string | null = null;
+    const chip = () => hud.set({ wakeNeeds: dead || document.hidden ? null : !allowed && perm === "prompt" ? "allow" : local?.needsGesture ? "click" : null });
     const begin = () => {
       if (dead || !allowed || document.hidden) return;
       void loadWakeReplies();
       // the speech detector is loaded while Jarvis is closed, so opening on the name does not wait for it
       void loadSilero();
-      if (!local) { const w = new WakeEars(() => { jvMark("wakeWord"); named(w); }); local = w; void w.start().then((ok) => { if (!ok && local === w) local = null; }); }
+      // (B7: a context the browser lets start may begin suspended for a moment: the chip waits the same grace as the open ears, GESTURE_GRACE_MS)
+      if (!local) { const w = new WakeEars(() => { jvMark("wakeWord"); named(w); }); local = w; void w.start().then(async (ok) => { if (!ok && local === w) { local = null; if (perm === "prompt") allowed = false; } else if (ok) await w.awake(GESTURE_GRACE_MS); if (!dead) chip(); }); }
+      chip();
       if (stop) return;
       stop = startWake({
         onWake: (rest) => { stop = null; woke(rest); },
         onFail: () => { stop = null; }
       });
     };
-    const vis = () => { if (document.hidden) { stop?.(); stop = null; local?.stop(); local = null; } else begin(); };
-    (navigator.permissions as Permissions | undefined)?.query({ name: "microphone" as PermissionName }).then((st) => { if (st.state === "granted") { allowed = true; begin(); } }).catch(() => undefined);
+    const vis = () => { if (document.hidden) { stop?.(); stop = null; local?.stop(); local = null; chip(); } else begin(); };
+    // B7: the permission is watched, not read once: granted later (the browser's question answered, the site's settings changed), the
+    // listener starts at once; taken back, the chip goes
+    let st: PermissionStatus | null = null;
+    const onPerm = () => { perm = st?.state ?? null; if (perm === "granted" && !allowed) { allowed = true; begin(); } chip(); };
+    (navigator.permissions as Permissions | undefined)?.query({ name: "microphone" as PermissionName }).then((ps) => { if (dead) return; st = ps; ps.addEventListener("change", onPerm); perm = ps.state; if (st.state === "granted") { allowed = true; begin(); } chip(); }).catch(() => undefined);
+    // B7: the chip's own click asks the browser for the microphone (a page never asks unprompted), and the listener starts with the answer
+    const enable = () => { if (dead || allowed) return; allowed = true; begin(); };
+    window.addEventListener("jarvis:wake-enable", enable);
     document.addEventListener("visibilitychange", vis);
-    return () => { dead = true; stop?.(); local?.stop(); local = null; document.removeEventListener("visibilitychange", vis); };
+    return () => { dead = true; stop?.(); local?.stop(); local = null; st?.removeEventListener("change", onPerm); window.removeEventListener("jarvis:wake-enable", enable); hud.set({ wakeNeeds: null }); document.removeEventListener("visibilitychange", vis); };
   }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
+    // B1 (27 Nov): any click or key on the page is the browser's leave to sound and to listen. Every Jarvis audio context it held starts now
+    // (the open ears, the closed listener's, the voice's and the earcons'), whether Jarvis is open or closed, and the browser's voice is
+    // unlocked. A context still held after that brings the notice back; the closed listener's chip goes once its audio runs
+    const wakeAudio = () => {
+      unlockSpeech();
+      void Promise.all([resumeEars(), resumeMouth()]).then(() => {
+        const asleep = earsAsleep();
+        if (hud.get().wakeNeeds === "click" && !asleep) hud.set({ wakeNeeds: null });
+        if (asleep && modeRef.current === "on" && conductor.current?.micLive) hud.set({ needsResume: true });
+      }).catch(() => undefined);
+    };
     const click = (e: Event) => {
+      wakeAudio();
       if (!hud.get().needsResume) return;
       // the button and the shortcut turn the mode on themselves: resuming first would make them toggle it off
       const k = e as KeyboardEvent;
@@ -3489,7 +3570,18 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     };
     window.addEventListener("pointerdown", click, { capture: true });
     window.addEventListener("keydown", click, { capture: true });
-    return () => { window.removeEventListener("pointerdown", click, { capture: true }); window.removeEventListener("keydown", click, { capture: true }); };
+    // B8 (27 Nov): the browser refused to sound the voice (no click on the page yet): the bar asks for one
+    setAudioBlocked(() => { if (modeRef.current !== "off") hud.set({ needsResume: true }); });
+    return () => { window.removeEventListener("pointerdown", click, { capture: true }); window.removeEventListener("keydown", click, { capture: true }); setAudioBlocked(null); };
+  }, []);
+  // B2 (27 Nov): the speech detector is loaded while the page is idle, for a Collector who has used Jarvis on this browser, so the first open does
+  // not wait for its 14 MB runtime (it waited with no limit on the hosted copy)
+  useEffect(() => {
+    if (store.get("jarvis-mode-seen") !== "1") return;
+    const W = window as unknown as { requestIdleCallback?: (f: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (n: number) => void };
+    if (W.requestIdleCallback) { const n = W.requestIdleCallback(() => void loadSilero(), { timeout: 8000 }); return () => W.cancelIdleCallback?.(n); }
+    const t = setTimeout(() => void loadSilero(), 4000);
+    return () => clearTimeout(t);
   }, []);
   // the tab goes out of sight: the microphone closes, and Jarvis says so on return
   useEffect(() => {
@@ -3506,6 +3598,22 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     };
     document.addEventListener("visibilitychange", vis);
     return () => document.removeEventListener("visibilitychange", vis);
+  }, []);
+  // B9 (27 Nov, two console tabs on the hosted copy, each with its own microphone): one tab listens at a time. A tab whose microphone opens says
+  // so on the console's channel (openMic); a tab of the same browser that was listening goes to muted and says why, and its Unmute takes the
+  // microphone back. A tab coming back into view after being hidden reopens as before, and so takes it over
+  useEffect(() => {
+    if (typeof BroadcastChannel === "undefined") return;
+    let ch: BroadcastChannel;
+    try { ch = new BroadcastChannel("jarvis"); } catch { return; }
+    tabChannel.current = ch;
+    ch.onmessage = (ev: MessageEvent<{ type?: string; tab?: string }>) => {
+      const m = ev.data;
+      if (m?.type !== "mic-open" || !m.tab || m.tab === tabId.current || modeRef.current !== "on") return;
+      setModeRef.current("muted");
+      hud.set({ notice: listenLangRef.current === "ta" ? "ஜார்விஸ் இன்னொரு தாவலில் கேட்கிறது. இங்கே பயன்படுத்த \"மைக்கைத் திற\" அழுத்துங்கள்." : "Jarvis is listening in another tab. Press Unmute to use it here." });
+    };
+    return () => { if (tabChannel.current === ch) tabChannel.current = null; try { ch.close(); } catch { /* closed */ } };
   }, []);
   useEffect(() => () => { conductor.current?.close(); captions.current?.stop(); }, []);
   // the top bar's switch
@@ -3544,7 +3652,16 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // asked each time Jarvis opens: the server also works out the district's overviews then, ahead of the first question
     fetch("/api/collector/thunai/world").then((r) => (r.ok ? r.json() : null)).then((j) => { if (j) brainOnRef.current = j.brain === true; if (j && !ref.cats.length) setRef(j); }).catch(() => undefined);
     // v10: the day's names in the news (storms, people, bodies), for names said by ear; asked each time Jarvis opens
-    if (understandV10()) fetch("/api/collector/thunai/lexicon").then((r) => (r.ok ? r.json() : null)).then((j: { entities?: Entity10[] } | null) => { if (j?.entities) lexRef.current = j.entities; }).catch(() => undefined);
+    // the server answers at once with the names it holds; while the first build of the day's names is still being made it says so
+    // (building), and the list is asked for once more a few seconds later, so a session opened early still gets the day's names
+    if (understandV10()) {
+      const getLex = (again: boolean) => fetch("/api/collector/thunai/lexicon").then((r) => (r.ok ? r.json() : null))
+        .then((j: { entities?: Entity10[]; building?: boolean } | null) => {
+          if (j?.entities?.length || !lexRef.current?.length) { if (j?.entities) lexRef.current = j.entities; }
+          if (j?.building && again) setTimeout(() => void getLex(false), 6000);
+        }).catch(() => undefined);
+      void getLex(true);
+    }
     warmVoices();
   }, [loadMemory, ref.cats.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -3831,8 +3948,11 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
         </span>
       ))}
 
+      {/* B7: closed, why "Hey Jarvis" does not listen yet, on Jarvis's own button */}
+      {mode === "off" && <WakeChip lang={listenLang} />}
+
       {mode !== "off" && (
-        <Hud lang={listenLang} coreRef={orbRef} stageOpen={!!stage && !stageInPlace} onSend={(t) => { setAskThis(null); via.current = "typed"; void handle(t, 0.95); }} onDismissFirstUse={() => { store.set("jarvis-mode-seen", "1"); hud.set({ firstUse: false }); if (modeRef.current === "on") { setTimeout(() => earcon("open"), 40); openMic(); } }}
+        <Hud lang={listenLang} coreRef={orbRef} stageOpen={!!stage && !stageInPlace} onSend={(t) => { setAskThis(null); via.current = "typed"; void handle(t, 0.95); }} onDismissFirstUse={() => { store.set("jarvis-mode-seen", "1"); hud.set({ firstUse: false }); if (modeRef.current === "on") { setTimeout(() => earcon("open"), 40); openMic(); if (engageOnOpen.current) { engagedNow(); conductor.current?.called(); } } }}
           onStop={interrupt} onMute={() => setMode(mode === "muted" ? "on" : "muted")} onClose={() => { setAskThis(null); setMode("off"); }}>{waiting}</Hud>
       )}
 

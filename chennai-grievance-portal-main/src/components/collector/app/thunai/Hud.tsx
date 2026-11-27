@@ -15,7 +15,7 @@
  */
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react";
 import { drawCore, frameDelay, glowAt, smoothLevel, visualOf, visualStateOf, type VisualState } from "./hudcore";
-import { coreOf, hud, micOpen, powerOnDue, statusOf, type HudPanel } from "./hudstore";
+import { coreOf, hud, MIC_SLOW_MS, micOpen, powerOnDue, statusOf, type HudPanel } from "./hudstore";
 import { announcement, currentSteps, SETTLE_MS, type Heard } from "./hudview";
 import { Caption, EvidenceChip, InterjectionCard, MissionCard, ProgressLine, QueueBadge } from "./HudCards";
 import { useQuestionCount } from "./JarvisQuestions";
@@ -236,14 +236,15 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
     const t = setInterval(() => { if (level.current) level.current.style.transform = `scaleX(${hud.level().toFixed(2)})`; }, 120);
     return () => clearInterval(t);
   }, []);
-  // the line changes by itself when the time without its name runs out
+  // the line changes by itself when the time without its name runs out, and (B5) when a microphone still opening becomes slow
   const [now, setNow] = useState(0);
   useEffect(() => {
     setNow(Date.now());
-    if (!s.engagedUntil) return;
-    const t = setTimeout(() => setNow(Date.now()), Math.max(0, s.engagedUntil - Date.now()) + 50);
+    const due = [s.engagedUntil, s.micSince ? s.micSince + MIC_SLOW_MS : 0].filter((x) => x > Date.now());
+    if (!due.length) return;
+    const t = setTimeout(() => setNow(Date.now()), Math.max(0, Math.min(...due) - Date.now()) + 50);
     return () => clearTimeout(t);
-  }, [s.engagedUntil, s.core]);
+  }, [s.engagedUntil, s.core, s.micSince]);
   const { word, hint } = statusOf(s, ta, now);
   // for screen readers: what settled, half a second after it settles (something noticed, an answer, else the state's word);
   // never the words being heard
@@ -301,7 +302,8 @@ export default function Hud({ lang, coreRef, stageOpen, children, onSend, onStop
             {evidence && <EvidenceChip e={evidence} lang={lang} onOpen={a.onEvidence} />}
             {s.faint && <div className="hud-faint" data-testid="faint">{s.faint}</div>}
             {s.notice && <div className="hud-notice" role="status" lang={lang} title={s.notice}>{s.notice}</div>}
-            {s.needsResume && <div className="hud-notice" lang={lang}>{ta ? "குரலைக் கேட்க எங்காவது கிளிக் செய்யுங்கள்" : "Click anywhere to hear the voice"}</div>}
+            {/* B1/B8 (27 Nov): the browser lets no sound in or out until a click on the page (Chrome on a site with no click yet) */}
+            {s.needsResume && <div className="hud-notice" role="status" lang={lang}>{ta ? "நான் கேட்கவும் பேசவும் பக்கத்தில் எங்காவது ஒருமுறை கிளிக் செய்யுங்கள்" : "Click anywhere on the page so I can hear you and speak"}</div>}
             {s.strip.budgetLow && <div className="hud-notice warn" lang={lang}>{ta ? "கொஞ்சம் பொறுங்கள்: அடுத்த கேள்விக்கு \"ஜார்விஸ்\" என்று முதலில் சொல்லுங்கள்" : "Too much talk in the room: say \"Jarvis\" first for your next question"}</div>}
           </div>
           <div className="hud-acts">

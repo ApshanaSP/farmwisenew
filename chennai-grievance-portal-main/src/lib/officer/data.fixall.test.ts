@@ -188,7 +188,7 @@ describe("officer console data", () => {
       decide("INC-12", "reject", ago(20), "Duplicate");
       closeByDept("INC-1", ago(10)); // the department's own close is not the Collector's decision
       decide("INC-2", "resolve", ago(60 * 30)); // before the period
-      expect(await feedbackCounts("GCC-SWM", { period: "daily", zone: null, taluk: null })).toEqual({ verified: 1, resolved: 9, returned: 1, rejected: 1 });
+      expect(await feedbackCounts("GCC-SWM", { period: "daily", zone: null, taluk: null })).toEqual({ verified: 1, resolved: 9, returned: 1, rejected: 1, escalated: 0 });
     });
     it("a rejected case's detail says it was rejected, when and why", async () => {
       incident("INC-REJ");

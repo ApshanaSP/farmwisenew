@@ -29,20 +29,26 @@ vi.mock("@/lib/collector/db", () => {
 
 import { arrivalDay, chennaiDistrict, chennaiRows, forgetOgdDays, isOgdKeyError, marketOf, missingDays, ogdEmptyDays, ogdMarketDay, ogdReadDays } from "./ogdprices";
 
-const rec = (o: Record<string, unknown> = {}) => ({ State: "Tamil Nadu", District: "Chennai", Market: "Anna Nagar(Uzhavar Sandhai )", Commodity: "Tomato", Variety: "Local",
+// 27 Nov: a Chennai market as data.gov.in writes it (Nanganallur is filed under Chengalpattu, now spelt "Chengalpet")
+const rec = (o: Record<string, unknown> = {}) => ({ State: "Tamil Nadu", District: "Chengalpet", Market: "Nanganallur(Uzhavar Sandhai )", Commodity: "Tomato", Variety: "Local",
   Arrival_Date: "20/11/2026", Min_Price: "2000", Max_Price: "3000", Modal_Price: "2500", ...o });
 
 describe("which data.gov.in records are a Chennai market's report for the day", () => {
   it("reads the market by the collector's anchored names, never a bare prefix", () => {
-    expect(marketOf("Anna Nagar(Uzhavar Sandhai )")).toBe("Anna Nagar");
-    expect(marketOf("K.K.Nagar(Uzhavar Sandhai )")).toBe("K.K. Nagar");
+    expect(marketOf("Nanganallur(Uzhavar Sandhai )")).toBe("Nanganallur");
     expect(marketOf("Ambattur(Uzhavar Sandhai )")).toBe("Ambattur");
+    expect(marketOf("Keelkattalai(Uzhavar Sandhai )")).toBe("Keelkattalai");
+    expect(marketOf("Padappai(Uzhavar Sandhai )")).toBe("Padappai");
     expect(marketOf("Ambattur")).toBeNull();
-    expect(marketOf("Anna Nagar West")).toBeNull();
     expect(marketOf("Koyambedu")).toBeNull();
   });
+  it("27 Nov: no longer takes Madurai's Anna Nagar or Tiruchirappalli's K.K. Nagar for Chennai markets", () => {
+    expect(marketOf("Anna Nagar(Uzhavar Sandhai )")).toBeNull();
+    expect(marketOf("Anna nagar(Uzhavar Sandhai )")).toBeNull();
+    expect(marketOf("K.K.Nagar(Uzhavar Sandhai )")).toBeNull();
+  });
   it("knows the four districts as the data set spells them, and the record's own date", () => {
-    for (const d of ["Chennai", "Chengalpattu", "Kancheepuram", "Kanchipuram", "Thiruvallur", "Tiruvallur", "Thiruvellore"]) expect(chennaiDistrict(d), d).toBe(true);
+    for (const d of ["Chennai", "Chengalpattu", "Chengalpet", "Kancheepuram", "Kanchipuram", "Thiruvallur", "Tiruvallur", "Thiruvellore"]) expect(chennaiDistrict(d), d).toBe(true);
     for (const d of ["Coimbatore", "Madurai", "", null, "Chennai Port"]) expect(chennaiDistrict(d), String(d)).toBe(false);
     expect(arrivalDay("20/11/2026")).toBe("2026-11-20");
     expect(arrivalDay("2/1/2026")).toBe("2026-01-02");
@@ -52,7 +58,8 @@ describe("which data.gov.in records are a Chennai market's report for the day", 
   it("keeps only Tamil Nadu, the four districts, the day asked, a Chennai market and a modal price", () => {
     const rows = chennaiRows([
       rec(),
-      rec({ District: "Coimbatore", Market: "Anna Nagar(Uzhavar Sandhai )" }), // another district's market of the same name
+      rec({ District: "Coimbatore", Market: "Nanganallur(Uzhavar Sandhai )" }), // another district's market of the same name
+      rec({ District: "Madurai", Market: "Anna nagar(Uzhavar Sandhai )" }), // the Anna Nagar AGMARKNET filed under Chennai
       rec({ Arrival_Date: "19/11/2026" }), // another day the filter let through
       rec({ Market: "Ambattur" }), // not the Uzhavar Sandhai
       rec({ State: "Kerala" }),
@@ -61,7 +68,7 @@ describe("which data.gov.in records are a Chennai market's report for the day", 
       { state: "Tamil Nadu", district: "Chengalpattu", market: "Guduvancheri(Uzhavar Sandhai )", commodity: "Onion", variety: "Big", arrival_date: "20/11/2026", min_price: null, max_price: "4200", modal_price: "4000" }
     ], "2026-11-20");
     expect(rows).toEqual([
-      { market: "Anna Nagar", commodity: "Tomato", variety: "Local", min: 2000, max: 3000, modal: 2500 },
+      { market: "Nanganallur", commodity: "Tomato", variety: "Local", min: 2000, max: 3000, modal: 2500 },
       { market: "Guduvancheri", commodity: "Onion", variety: "Big", min: null, max: 4200, modal: 4000 }
     ]);
   });

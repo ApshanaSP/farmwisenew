@@ -14,9 +14,11 @@
 
 import { dayWords, periodIn, type Period } from "@/lib/period/day";
 
-export type Seg = string | { nm: string };
+export type Seg = string | { nm: string; raw?: true };
 /** a name inside a sentence: a place, a department, a kind of incident, a headline */
 export const nm = (v: unknown): { nm: string } => ({ nm: String(v ?? "").trim() });
+/** a name already in Tamil as published (a Tamil headline): shown as it is, never handed to the site's translator */
+export const raw = (v: unknown): { nm: string; raw: true } => ({ nm: String(v ?? "").trim(), raw: true });
 const fmt = (v: number) => v.toLocaleString("en-IN");
 type Val = string | number | { nm: string } | Seg[];
 /** a sentence with names kept apart: say`Most from: ${nm(zone)} ${12}` */
@@ -59,8 +61,9 @@ export interface GlanceIn {
   depts: { code: string; name: string; n: number; overdue: number }[];
   /** open cases, the most serious first */ cases: GlanceCase[];
   /** the period's incident with the most deaths */ fatal: { id: string; title: string; dead: number } | null;
-  /** the strongest news story of the view: its headline, outlets, whether the news desk says it needs action */
-  news: { title: string; outlets: number; act: boolean; key: string; incident: string | null } | null;
+  /** the strongest news story of the view: its headline (English; `ta` the Tamil headline as published, when a report is in Tamil), outlets,
+   * whether the news desk says it needs action */
+  news: { title: string; ta?: string | null; outlets: number; act: boolean; key: string; incident: string | null } | null;
   /** a story that really developed */ story: { id: string; title: string; events: number } | null;
   /** stories whose outlets disagree, in this view */ differ: { n: number; title: string; field: string } | null;
   /** incidents only in the news, with no department record */ newsOnly: { n: number; /** the department most of them belong to, and how many */ deptName: string | null; deptN: number } | null;
@@ -185,9 +188,11 @@ export function composeGlance(f: GlanceIn): Glance {
     open: { k: "inc", id: f.fatal.id }, act: "Open the case" });
   const weather = whole ? weatherPoint(f) : null;
   if (weather) happening.push(weather);
+  // in Tamil, a story with a Tamil report is named by its Tamil headline as published, not by the English one translated back (Tamil
+  // letters take two or three characters each: 96 is about as long on screen as 56 English ones)
   if (f.news) happening.push({ key: "news", icon: "news", tone: f.news.act ? "high" : "info",
     en: say`In the news${f.news.act ? " (needs action)" : ""}: ${nm(short(f.news.title, 56))}${f.news.outlets > 1 ? ` (${fmt(f.news.outlets)} outlets)` : ""}.`,
-    ta: say`செய்தியில்${f.news.act ? " (நடவடிக்கை தேவை)" : ""}: ${nm(short(f.news.title, 56))}${f.news.outlets > 1 ? ` (${fmt(f.news.outlets)} ஊடகங்கள்)` : ""}.`,
+    ta: say`செய்தியில்${f.news.act ? " (நடவடிக்கை தேவை)" : ""}: ${f.news.ta?.trim() ? raw(short(f.news.ta, 96)) : nm(short(f.news.title, 56))}${f.news.outlets > 1 ? ` (${fmt(f.news.outlets)} ஊடகங்கள்)` : ""}.`,
     open: { k: "news", key: f.news.key }, act: "Read the story" });
   if (f.story) happening.push({ key: "story", icon: "pulse", tone: "info",
     en: say`Still developing: ${nm(short(f.story.title))} (${f.story.events} events).`, ta: say`தொடரும் செய்தி: ${nm(short(f.story.title))} (${f.story.events} நிகழ்வுகள்).`,

@@ -27,6 +27,15 @@ export interface HudState {
   engagedUntil: number;
   /** v11: "Hi Jarvis" opened Jarvis and its microphone is being handed over (the audio after the name is kept: ears.ts parkWake) */
   wakeOpening?: boolean;
+  /** B5 (27 Nov): when the microphone began to open (Date.now()); 0 once it is open or not opening */
+  micSince?: number;
+  /** B5: the browser's own question about the microphone is up ("Allow" / "Block"): the bar says to answer it */
+  micWait?: "permission" | null;
+  /**
+   * B7 (27 Nov): why "Hey Jarvis" does not listen while Jarvis is closed, shown on Jarvis's button: "click", the browser holds the closed
+   * listener's audio until a click on the page; "allow", the microphone has not been allowed on this site yet (a click asks for it)
+   */
+  wakeNeeds?: "click" | "allow" | null;
   /** the keyboard's box is open */
   typing: boolean;
   steps: WorkStep[];
@@ -124,11 +133,24 @@ export function coreOf(mode: JarvisMode, turn: TurnState, busy: boolean, offline
 /** the microphone is open: the conductor leaves "off" only once the tracks are live, and goes back when they stop */
 export const micOpen = (s: Pick<HudState, "mode" | "turn">) => s.mode === "on" && s.turn !== "off";
 
-/** What Jarvis is doing, and what the Collector can do now, in words: nobody should have to guess whether to say its name. */
-export function statusOf(s: Pick<HudState, "mode" | "core" | "firstUse" | "doing" | "engagedUntil"> & { denied?: boolean; wakeOpening?: boolean }, ta: boolean, now: number): { word: string; hint: string } {
+/**
+ * B5 (27 Nov): a microphone still opening this long after Jarvis was turned on says so (ms). The conductor's own watchdog gives a stuck start up
+ * a little later (conductor.ts MIC_START_LIMIT_MS) and the bar then says it did not start and how to try again.
+ */
+export const MIC_SLOW_MS = 8000;
+
+/**
+ * What Jarvis is doing, and what the Collector can do now, in words: nobody should have to guess whether to say its name.
+ * B5 (27 Nov): while the microphone opens, the bar says why it does not listen yet: the browser's question is up ("Allow the microphone"), it
+ * is slow (past MIC_SLOW_MS: never "Opening the microphone" for ever), or (needsResume) the browser waits for a click before any sound is heard.
+ * "Go ahead" while the name's microphone is handed over holds only that long too: past it the words would not be kept.
+ */
+export function statusOf(s: Pick<HudState, "mode" | "core" | "firstUse" | "doing" | "engagedUntil"> & { denied?: boolean; wakeOpening?: boolean; micSince?: number; micWait?: HudState["micWait"]; needsResume?: boolean }, ta: boolean, now: number): { word: string; hint: string } {
   const t = (en: string, tamil: string) => (ta ? tamil : en);
   if (s.mode === "muted" && s.denied) return { word: t("Microphone blocked", "மைக் தடுக்கப்பட்டுள்ளது"), hint: "" };
   if (s.mode === "muted") return { word: t("Muted", "மௌனம்"), hint: t("I can't hear you. Press Unmute to talk.", "எனக்குக் கேட்காது. பேச \"மைக்கைத் திற\" அழுத்துங்கள்.") };
+  // the microphone is open but the browser lets no sound through until a click on the page (its audio context is suspended)
+  if (s.mode === "on" && s.needsResume && s.core === "listening") return { word: t("Click to start", "தொடங்க கிளிக் செய்யுங்கள்"), hint: t("Click anywhere on the page, then talk.", "பக்கத்தில் எங்காவது கிளிக் செய்து பேசுங்கள்.") };
   switch (s.core) {
     case "listening": return now < s.engagedUntil
       ? { word: t("Listening", "கேட்கிறேன்"), hint: t("Go ahead, no need to say my name.", "சொல்லுங்கள், பெயர் சொல்ல வேண்டாம்.") }
@@ -141,8 +163,14 @@ export function statusOf(s: Pick<HudState, "mode" | "core" | "firstUse" | "doing
     case "offline": return { word: t("Offline", "இணைப்பு இல்லை"), hint: t("I can't hear right now. You can still type.", "இப்போது கேட்க முடியவில்லை. தட்டச்சு செய்யலாம்.") };
     // v11: after "Hi Jarvis" the microphone is handed over with the audio after the name kept (ears.ts parkWake): the Collector is told to talk,
     // not to wait. Opened any other way, it is not live yet (a permission prompt may be up), and says so
-    default: return s.firstUse ? { word: t("Mic closed", "மைக் மூடியது"), hint: "" }
-      : s.wakeOpening && s.mode === "on" ? { word: t("Listening", "கேட்கிறேன்"), hint: t("Go ahead.", "சொல்லுங்கள்.") } : { word: t("Opening the microphone", "மைக்கைத் திறக்கிறேன்"), hint: "" };
+    // (B5: the browser's question, and a start past MIC_SLOW_MS, are said as what they are; "Go ahead" only before then)
+    default: {
+      if (s.firstUse) return { word: t("Mic closed", "மைக் மூடியது"), hint: "" };
+      if (s.mode === "on" && s.micWait === "permission") return { word: t("Allow the microphone", "மைக்கை அனுமதியுங்கள்"), hint: t("Click Allow in the browser's box at the top of the window.", "சாளரத்தின் மேலே உலாவி கேட்கும் பெட்டியில் \"Allow\" அழுத்துங்கள்.") };
+      const slow = s.mode === "on" && !!s.micSince && now - s.micSince >= MIC_SLOW_MS;
+      if (slow) return { word: t("Still opening the microphone", "மைக் இன்னும் திறக்கிறது"), hint: t("This is taking longer than usual. You can type meanwhile.", "வழக்கத்தைவிட நேரமாகிறது. அதுவரை தட்டச்சு செய்யலாம்.") };
+      return s.wakeOpening && s.mode === "on" ? { word: t("Listening", "கேட்கிறேன்"), hint: t("Go ahead.", "சொல்லுங்கள்.") } : { word: t("Opening the microphone", "மைக்கைத் திறக்கிறேன்"), hint: "" };
+    }
   }
 }
 

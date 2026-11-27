@@ -85,7 +85,7 @@ const SOURCE: Record<string, { label: string; feed: string | null }> = {
   pwdfield: { label: "PWD field records", feed: "pwd" },
   weather: { label: "IMD and CFM-DSS", feed: "imd" },
   air: { label: "CPCB / TNPCB stations", feed: "cpcb" },
-  markets: { label: "AGMARKNET (Chennai Uzhavar Sandhais)", feed: null }
+  markets: { label: "Uzhavar Sandhai farmer markets, retail (TN Agricultural Marketing dept, agrimark.tn.gov.in)", feed: null }
 };
 
 const STALE_HOURS = 48;
@@ -624,24 +624,28 @@ async function air(_dept: string, s: InsightScope): Promise<Built> {
 
 // ---------------------------------------------------------------- markets --
 
+/**
+ * 27 Nov: read through tnprices.marketRows, the Uzhavar Sandhai prices the TN Agricultural Marketing department publishes (kept on each
+ * copy in data/aws-cache/tn-prices.json, merged with the store's rows), not the table alone: a copy that does not save to AWS holds the days
+ * after 6 Oct only in that file, and the table's "Anna Nagar" and "K.K. Nagar" rows are Madurai's and Tiruchirappalli's markets.
+ * The same figures as before: per commodity the average of the day's rows (every market and variety), against the rows of 5 to 9 days earlier.
+ */
 async function markets(_dept: string, s: InsightScope): Promise<Built> {
-  let last: Row | undefined;
-  try {
-    [last] = await q(`SELECT DATE_FORMAT(MAX(date), '%Y-%m-%d') AS d FROM ${ops("mandi_market_prices")}`);
-  } catch {
-    last = undefined; // the market tables are created by the Collector console's setup (npm run setup:ops)
-  }
-  const head = { title: "Food prices in Chennai markets", area: "district" as const, window: last?.d ? `Prices on ${day(last.d)}, against a week earlier` : "No records" };
-  if (!last?.d) return none(head, "No market prices are in the store yet.");
-  const end = last.d as string;
-  const [rows, [mk]] = await Promise.all([
-    q(`SELECT c.commodity, c.cmdt_group AS grp, c.p, c.markets, (SELECT AVG(o.modal_price) FROM ${ops("mandi_market_prices")} o
-              WHERE o.commodity = c.commodity AND o.date BETWEEN ? - INTERVAL 9 DAY AND ? - INTERVAL 5 DAY) AS prev
-       FROM (SELECT commodity, MAX(cmdt_group) AS cmdt_group, AVG(modal_price) AS p, COUNT(DISTINCT market) AS markets
-             FROM ${ops("mandi_market_prices")} WHERE date = ? GROUP BY commodity) c
-       WHERE c.markets >= 2 ORDER BY c.markets DESC, c.commodity LIMIT 60`, [end, end, end]),
-    q(`SELECT COUNT(DISTINCT market) AS n FROM ${ops("mandi_market_prices")} WHERE date = ?`, [end])
-  ]);
+  const tn = await import("@/lib/collector/tnprices");
+  const span = await tn.marketSpan().catch(() => ({ to: null as string | null }));
+  const head = { title: "Food prices in Chennai markets", area: "district" as const, window: span.to ? `Prices on ${day(span.to)}, against a week earlier` : "No records" };
+  if (!span.to) return none(head, "No market prices are held yet.");
+  const end = span.to;
+  const all = await tn.marketRows(tn.addDays(end, -9), end).catch(() => [] as Awaited<ReturnType<typeof tn.marketRows>>);
+  const mean = (v: number[]) => v.reduce((a, b) => a + b, 0) / v.length;
+  const today = all.filter((r) => r.d === end), before = all.filter((r) => r.d >= tn.addDays(end, -9) && r.d <= tn.addDays(end, -5));
+  const by = new Map<string, typeof today>();
+  for (const r of today) (by.get(r.commodity) ?? by.set(r.commodity, []).get(r.commodity)!).push(r);
+  const rows: Row[] = [...by.entries()].map(([commodity, xs]) => {
+    const was = before.filter((r) => r.commodity === commodity).map((r) => r.modal);
+    return { commodity, grp: xs.find((x) => x.grp)?.grp ?? null, p: mean(xs.map((x) => x.modal)), markets: new Set(xs.map((x) => x.market)).size, prev: was.length ? mean(was) : null };
+  }).filter((c) => c.markets >= 2).sort((x, y) => y.markets - x.markets || String(x.commodity).localeCompare(String(y.commodity))).slice(0, 60);
+  const mk = { n: new Set(today.map((r) => r.market)).size };
   const withCh = rows.filter((r) => r.prev != null && Number(r.prev) > 0).map((r): Row => ({ ...r, ch: ((Number(r.p) - Number(r.prev)) / Number(r.prev)) * 100 }));
   const up = [...withCh].sort((x, y) => y.ch - x.ch).filter((r) => r.ch > 0);
   const down = [...withCh].sort((x, y) => x.ch - y.ch).filter((r) => r.ch < 0);
@@ -659,7 +663,7 @@ async function markets(_dept: string, s: InsightScope): Promise<Built> {
     ],
     charts: [{ kind: "hbar", title: "Biggest weekly rises (%)", labels: up.slice(0, 8).map((r) => r.commodity), values: up.slice(0, 8).map((r) => Math.round(r.ch)), unit: "%" }],
     tables: [{
-      title: `Prices on ${day(end)} (modal, ₹ per quintal, average of the markets)`,
+      title: `Prices on ${day(end)} (Uzhavar Sandhai retail, ₹ per quintal = 100 × ₹ per kg, average of the markets)`,
       columns: ["Commodity", "Group", "Price", "A week earlier", "Change", "Markets"],
       rows: [...withCh].sort((x, y) => Math.abs(y.ch) - Math.abs(x.ch)).slice(0, 20)
         .map((r) => [r.commodity, r.grp ?? "-", rs(Number(r.p)), rs(Number(r.prev)), `${r.ch >= 0 ? "+" : "−"}${pct(Math.abs(r.ch))}`, n(Number(r.markets))])

@@ -36,6 +36,8 @@ import { world } from "./world";
 import { NEWS_PIN_LEVEL, type LayerId, type NewsDoc, type World } from "./types";
 import { LAYER_WORD, periodWords, zoneTa, type Lang } from "./words";
 import { syncEpoch } from "@/lib/collector/epoch";
+import { scopeOf } from "@/lib/topicguard/scope";
+import { offTopicReply } from "@/lib/topicguard/reply";
 
 export interface AskInput {
   text: string | null;
@@ -284,6 +286,29 @@ export const EXAMPLES_EN = [
 export const EXAMPLES_TA = ["பள்ளிகள் அருகே மழைநீர் தேக்கம்", "அடையாறு அருகே திறந்த புகார்கள்", "மண்டலம் 13 இல் இந்த வாரம் வெள்ளம்", "வார்டு வாரியாக குப்பை புகார்கள்"];
 
 /**
+ * 27 Nov (the topic guard, lib/topicguard): a question outside District IQ ("When was Dhoni's retirement?", "tell me a joke") is declined in
+ * the one fixed sentence every assistant says, with the map's example questions. The panel shows `en` or `ta` by its own language, so `en`
+ * holds the sentence in the language the question was asked in (Tamil, Tanglish or English) and `ta` the Tamil one. An officer hears their
+ * department named.
+ */
+export function offTopicSay(lang: Lang, dept: string | null = null): { en: string; ta: string; chips: string[] } {
+  return { en: offTopicReply(lang, { dept }), ta: offTopicReply("ta", { dept }), chips: lang === "ta" ? EXAMPLES_TA : EXAMPLES_EN.slice(0, 4) };
+}
+
+/**
+ * The code check before any model: declined only when the words name an off-topic subject, nothing ties them to the district (scope.ts), the
+ * question is not a short follow-up leaning on the conversation, and the map's own reading finds no place, layer, kind of problem or
+ * department in it ("cricket grounds near Adyar" is a map question). `mapWords`: whether the map's reading found any; asked only when needed.
+ */
+export function offMapTopic(text: string, follows: boolean, mapWords: () => boolean): boolean {
+  if (scopeOf(text, { follows }).verdict !== "out") return false;
+  // a kind of place no layer word reads ("cricket grounds", "கிரிக்கெட் மைதானம்", "movie theatres"): the model reads it (the playgrounds layer)
+  if (VENUE.test(text)) return false;
+  try { return !mapWords(); } catch { return false; }
+}
+const VENUE = /\b(grounds?|stadiums?|stadia|courts?|pitch(es)?|arenas?|theat(re|er)s?|cinema halls?|multiplex(es)?|venues?)\b|மைதான|திடல்|அரங்க|தியேட்டர்|திரையரங்/i;
+
+/**
  * v2: one question, never a failed request: an unexpected error inside the answer (a plan shape the answer words do not expect) is logged and
  * said plainly, so the officer can rephrase; an abort is passed on.
  */
@@ -478,6 +503,18 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
     return done(out);
   };
 
+  // ---- 27 Nov, the topic guard: a question outside District IQ is declined before any model is asked (offMapTopic), and a question the
+  // model calls "not a map question" that the code check also declines gets the same fixed sentence (never the model's words)
+  const deptName = lock ? w.depts.get(lock)?.name ?? lock : null;
+  const declineOut = (): AskResponse => { out.say = offTopicSay(lang, deptName); return done(out); };
+  const mapWords = (t: string) => {
+    const q = parse(t, env);
+    return q.places.length > 0 || q.facilities.length > 0 || !!q.cats?.length || !!q.family?.length || !!q.dept;
+  };
+  // (after the model's "not a map question": the same check, so a place or a kind of place in it keeps the map's own words, never the decline)
+  const offTopicWords = (t: string | null | undefined) => !!t && offMapTopic(t, false, () => mapWords(t));
+  if (asked.text && !asked.plan && offMapTopic(asked.text, !!(asked.prev && asked.history?.length), () => mapWords(input.text ?? asked.text!))) return declineOut();
+
   // ---- AI only: Claude reads the question as typed and says what kind of answer it needs; the server answers it
   if (aiOnly) {
     const typed = asked.text!;
@@ -522,6 +559,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
       a = took(await sequential());
     }
     if (a && "problems" in a && a.problems.includes("not a map question")) {
+      if (offTopicWords(typed)) { out.ai_used = true; return declineOut(); }
       out.say = { en: "That does not look like a question about the map. Ask about a place, a kind of problem, or a facility, for example:", ta: "அது வரைபடக் கேள்வியாகத் தெரியவில்லை. இவற்றைப் போலக் கேளுங்கள்:",
         chips: lang === "ta" ? EXAMPLES_TA : ["what is happening near the schools", "which area needs my attention now", "garbage complaints in zone 9", "which zone is resolving complaints fastest"] };
       out.ai_used = true;
@@ -673,6 +711,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
         aiUsed = true;
       }
       else if (a && "problems" in a && a.problems.includes("not a map question") && r?.kind !== "plan") {
+        if (offTopicWords(asked.text)) { out.ai_used = true; return declineOut(); }
         out.say = { en: "I could not turn that into a map question. Try one of these:", ta: "அதை வரைபடக் கேள்வியாக மாற்ற முடியவில்லை. இவற்றில் ஒன்றை முயலுங்கள்:", chips: lang === "ta" ? EXAMPLES_TA : EXAMPLES_EN.slice(0, 4) };
         out.ai_used = true;
         return done(out);
@@ -699,6 +738,7 @@ async function askMapInner(asked: AskInput): Promise<AskResponse> {
           .finally(() => { st.plan_ms += Date.now() - tp; st.plan_tries += timing.tries; });
         aiUsed = true;
         if ("plan" in a) plan = fitModelPlan(a.plan, input.text, w.now, input.prev, modelWords(w, lang, found));
+        else if (offTopicWords(asked.text)) { out.ai_used = true; return declineOut(); }
         else { out.say = { en: "I could not turn that into a map question. Try one of these:", ta: "அதை வரைபடக் கேள்வியாக மாற்ற முடியவில்லை. இவற்றில் ஒன்றை முயலுங்கள்:", chips: lang === "ta" ? EXAMPLES_TA : EXAMPLES_EN.slice(0, 4) }; out.ai_used = true; return done(out); }
       } catch (e) {
         if (!(e instanceof AiUnavailableError || e instanceof AiBudgetError || e instanceof AiBusyError)) console.warn("[map] AI plan failed:", (e as Error).message);

@@ -100,7 +100,8 @@ def load(settings: Settings, ref: Reference) -> dict[str, pd.DataFrame]:
 
     # ---- from history: first action, close time, rejection reason, officer, officer duplicate decisions
     first_action = h[h["Status"].isin(["Approved by Department Officer", "Rejected"])].groupby("Complaint No")["at"].min()
-    closed = h[h["Status"].isin(["Verified by Collector", "Rejected"])].groupby("Complaint No")["at"].max()
+    # a department closes a non-severe case itself ("Resolved by Department"): closed as much as a Collector's verification
+    closed = h[h["Status"].isin(["Verified by Collector", "Resolved by Department", "Rejected"])].groupby("Complaint No")["at"].max()
     rej = h[h["Status"] == "Rejected"].groupby("Complaint No")["Remarks"].last()
     appr = h[h["Status"] == "Approved by Department Officer"].groupby("Complaint No")["Remarks"].last()
     idx = g["Complaint No"]
@@ -133,7 +134,7 @@ def load(settings: Settings, ref: Reference) -> dict[str, pd.DataFrame]:
         "step": h["Status"].map({"Complaint Filed": "First report", "Pending Approval": "Routed to department",
                                  "Approved by Department Officer": "Officer verified", "In Progress": "Work in progress",
                                  "Completed - Pending Collector Verification": "Awaiting verification",
-                                 "Verified by Collector": "Resolved", "Rejected": "Rejected"}),
+                                 "Verified by Collector": "Resolved", "Resolved by Department": "Resolved", "Rejected": "Rejected"}),
         "status_std": [ref.std_status("grievance", s) for s in h["Status"]],
         "actor": h["Changed By Role"], "note": h["Remarks"], "source": "grievance"})
 

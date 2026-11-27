@@ -24,7 +24,7 @@ export const taskActions = (c: Pick<Console, "verify" | "sendBack">) => ({
   sendBack: (i: Row) => c.sendBack(taskGroup(i))
 });
 
-export const TASK_RULE ="You verify closed work on severe incidents only, from the department's remarks and site photos. " +
+export const TASK_RULE ="You verify closed work on severe incidents, and any case a department sends you for approval, from its remarks and site photos. " +
   "The department verifies and closes everything else itself. The same problem reported several times in one area is one task.";
 
 export function AttentionCard({ d, c, only }: { d: OverviewData; c: Console; only?: "sev" | "tasks" }) {
@@ -78,16 +78,21 @@ function SevList({ d, c }: { d: OverviewData; c: Console }) {
       </div>
       {needN > 0 && <div className="att-note"><I n="bell" /><b>{needN} need{needN === 1 ? "s" : ""} you</b> · shown first</div>}
       <div className="att-list">
-        {rows.length ? rows.map((i) => (
+        {rows.length ? rows.map((i) => {
+          // one line of facts, cut with "…" when it is long; the tooltips hold the whole reason and every fact (27 Nov: the reason on a
+          // line of its own made a row two or three lines, so only three rows showed)
+          const facts = [i.zone_name, i.dept_name ?? i.dept, rel(i.t, d.now)].filter(Boolean).join(" · ") + (Number(i.grouped) > 1 ? ` · ${i.grouped} merged` : "");
+          const why: string[] = i.why?.needsYou && Array.isArray(i.why.attention) ? i.why.attention.map(String) : [];
+          return (
           <div key={i.id} className={`att-row${c.focus?.id === i.id ? " on" : ""}${i.why?.needsYou ? " need" : ""}`} style={{ "--c": SEV_HEX[i.sev] } as React.CSSProperties}>
-            <button className="att-main" onClick={() => { c.highlight(i); c.openInc(i.id); }} title={fullTitle(i)}>
+            <button className="att-main" onClick={() => { c.highlight(i); c.openInc(i.id); }} title={[fullTitle(i), ...why, facts].join("\n")}>
               <span className={`att-ic ${sevTone(i.sev)}`}><I n={deptIcon(i.dept)} /></span>
               <span className="att-txt">
                 <b>{fullTitle(i)}</b>
                 {/* one line of facts; when it needs the Collector, the reason leads it */}
-                <small title={i.why?.needsYou ? i.why.attention.join("\n") : undefined}>
-                  {i.why?.needsYou && <em><I n="bell" />{i.why.attention[0]}</em>}
-                  {[i.zone_name, i.dept_name ?? i.dept, rel(i.t, d.now)].filter(Boolean).join(" · ")}{Number(i.grouped) > 1 ? ` · ${i.grouped} merged` : ""}
+                <small title={[...why, facts].join("\n")}>
+                  {why.length > 0 && <em><I n="bell" /><span>{why[0]}</span></em>}
+                  {facts}
                 </small>
               </span>
             </button>
@@ -99,7 +104,8 @@ function SevList({ d, c }: { d: OverviewData; c: Console }) {
               </button>
             )}
           </div>
-        )) : <Empty>No open {tab.toLowerCase()} incidents {labelIn(c.periodLabel)}.</Empty>}
+          );
+        }) : <Empty>No open {tab.toLowerCase()} incidents {labelIn(c.periodLabel)}.</Empty>}
       </div>
     </>
   );
@@ -117,22 +123,25 @@ function TaskList({ d, c }: { d: OverviewData; c: Console }) {
   };
   return (
     <>
-      <div className="att-note dim" title={TASK_RULE}><I n="info" />Severe work only{d.tasks.leftToDepts > 0 ? <> · <b>{d.tasks.leftToDepts}</b> other closures verified by departments</> : ""}</div>
+      <div className="att-note dim" title={TASK_RULE}><I n="info" />Severe work and cases sent to you{d.tasks.leftToDepts > 0 ? <> · <b>{d.tasks.leftToDepts}</b> other closures verified by departments</> : ""}</div>
       <div className="att-list">
         {d.tasks.rows.length ? d.tasks.rows.map((i) => {
           const a = i.action as Row | null;
           const photos: string[] = a?.photos ?? [];
           const proof = !!a?.evidence;
           const isOpen = open === i.id;
+          // one line of facts (the report's state, the department, when); the tooltips hold all of it
+          const state = proof ? (photos.length ? `${photos.length} photo${photos.length === 1 ? "" : "s"}` : "Report sent") : "No report yet";
+          const facts = [i.dept_name ?? i.dept, proof && a?.t ? rel(a.t, d.now) : null].filter(Boolean).join(" · ") + (Number(i.grouped) > 1 ? ` · ${i.grouped} merged` : "");
           return (
             <div key={i.id} className={`att-row task2${done.has(i.id) ? " leaving" : ""}${isOpen ? " open" : ""}`} style={{ "--c": SEV_HEX[i.sev] } as React.CSSProperties}>
-              <button className="att-main" onClick={() => setOpen(isOpen ? null : i.id)} aria-expanded={isOpen} title="Show the department's remarks and photos">
+              <button className="att-main" onClick={() => setOpen(isOpen ? null : i.id)} aria-expanded={isOpen} title={[fullTitle(i), state, facts, "Click to show the department's remarks and photos"].filter(Boolean).join("\n")}>
                 <span className={`att-ic ${proof ? "t-low" : "t-high"}`}><I n={proof ? "photo" : "alert"} /></span>
                 <span className="att-txt">
                   <b>{fullTitle(i)}</b>
-                  <small>
-                    <em className={proof ? "ok" : "miss"}>{proof ? <><I n="photo" />{photos.length ? `${photos.length} photo${photos.length === 1 ? "" : "s"}` : "Report sent"}</> : <><I n="alert" />No report yet</>}</em>
-                    {[i.dept_name ?? i.dept, proof && a?.t ? rel(a.t, d.now) : null].filter(Boolean).join(" · ")}{Number(i.grouped) > 1 ? ` · ${i.grouped} merged` : ""}
+                  <small title={[state, facts].filter(Boolean).join("\n")}>
+                    <em className={proof ? "ok" : "miss"}><I n={proof ? "photo" : "alert"} /><span>{state}</span></em>
+                    {facts}
                   </small>
                 </span>
                 <I n={isOpen ? "up" : "chevd"} className="att-chev" />

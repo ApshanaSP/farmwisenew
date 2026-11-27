@@ -9,7 +9,7 @@ Citizen complaints, police, PWD and hospital records, newspapers, IMD, CPCB, CFM
 S3 holds the hourly build (32 tables and 6 views); DynamoDB holds the website's own tables (48); Lambda and API Gateway hand them over. No MySQL server is used any more. Times are India time (IST).
 
 ### What is real and what is generated
-Real and live: newspapers, IMD warnings and weather, CPCB air quality, CMWSSB lakes, CFM-DSS gauges and rain, TomTom traffic, NDMA SACHET alerts, AGMARKNET prices, GCC Who's who contacts, GCC wards and streets, OpenStreetMap places and roads, complaints and petitions filed on this portal. Generated for the project (marked Test data): the history of citizen grievances, police reports, PWD field records and works, hospital MIS figures, PWD office officers and their phone numbers, power-cut hours and train delays in heavy rain.
+Real and live: newspapers, IMD warnings and weather, CPCB air quality, CMWSSB lakes, CFM-DSS gauges and rain, TomTom traffic, NDMA SACHET alerts, Uzhavar Sandhai market prices (TN Agricultural Marketing department), GCC Who's who contacts, GCC wards and streets, OpenStreetMap places and roads, complaints and petitions filed on this portal. Generated for the project (marked Test data): the history of citizen grievances, police reports, PWD field records and works, hospital MIS figures, PWD office officers and their phone numbers, power-cut hours and train delays in heavy rain.
 
 ## Each source
 
@@ -50,7 +50,7 @@ NDMA's SACHET feed, every 15 minutes: alerts that name Chennai.
 TomTom: incidents (jams, closures, accidents, works) every 5 minutes and road colours every 2. The website has kept it every 10 minutes since 24 Nov 2026, so past traffic before that is not held.
 
 ### Market prices
-AGMARKNET daily prices at 8 Uzhavar Sandhai markets. Not updating now: the site asks for a CAPTCHA, which is never bypassed, and no data.gov.in key is set. The newest market day is 6 Oct 2026.
+Daily vegetable and fruit prices at 8 Uzhavar Sandhai (farmer-to-consumer) markets in and around Chennai: Nanganallur and Ambattur inside the Corporation; Pallavaram, Medavakkam, Keelkattalai, Guduvancheri, Kundrathur and Padappai in the suburbs. They are retail prices in rupees a kilo, entered each morning by the markets with the TN Department of Agricultural Marketing & Agri Business (agrimark.tn.gov.in), read once a day; the price shown is the middle of the market's low and high. Not wholesale mandi prices. Held from 15 Sep 2026 (AGMARKNET's copy of the same figures until 6 Oct, then the department's own feed). AGMARKNET's API asks for a CAPTCHA since October and is not used. There is no Uzhavar Sandhai in Anna Nagar or K.K. Nagar in Chennai (the markets of those names are in Madurai and Tiruchirappalli). Koyambedu, the wholesale market, publishes no daily price feed. The weekly "Around Chennai" view averages these 8 markets; AGMARKNET's statewide weekly series stopped on the week of 24 Oct. Answer price questions with the prices tool, not the mandi_market_prices table: the newer days are kept in a price file the tool reads, so the table can stop at AGMARKNET's 6 Oct, and it still holds the wrong "Anna Nagar" and "K.K. Nagar" rows.
 
 ### Next door
 Google News about Tiruvallur, Kancheepuram and Chengalpattu, read hourly; an AI says what may reach Chennai.

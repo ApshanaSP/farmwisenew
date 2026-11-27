@@ -6,8 +6,13 @@ import { studioLines } from "./studiosql";
 import { asOf, overview } from "@/lib/collector/intel";
 import { asksForbiddenOrder } from "@/lib/thunai/privacy";
 import type { World } from "@/lib/thunai/types";
+import { scopeOf } from "@/lib/topicguard/scope";
+import { inOurNewsSoon } from "@/lib/topicguard/news";
+import { detectLanguage } from "@/lib/assistant/lang";
+import { telemetry } from "@/lib/thunai/telemetry";
 import { historyOf, keep, lastLangOf, pastOf, recall, type Turn } from "./memory";
-import { brainOn, think, type BrainOut } from "./loop";
+import { brainOn, declined, deptName, owedLang, think, type BrainOut } from "./loop";
+import { sentences } from "./ground";
 import type { BrainUser, ConsoleNow, Lang } from "./types";
 
 export { brainOn, warmBrain } from "./loop";
@@ -65,11 +70,36 @@ export async function askBrain(i: AskIn): Promise<BrainOut | null> {
   const now = await asOf();
   const turns: Turn[] = recall(i.key);
   const history = turns.length ? historyOf(turns) : (i.seed ?? []).slice(-6);
+  // the topic guard, before any model (27 Nov: "When was Dhoni's retirement?" was answered from memory): a plainly off-topic question that
+  // nothing ties to the district, and that names no story of the week's news, is declined in the fixed sentence with no Claude call
+  const off = await precheck(i, history.length > 0, lastLangOf(turns), now);
+  if (off) { keep(i.key, { at: Date.now(), user: i.text, answer: off.answer, evidence: [] }); return off; }
   const [kpi, files] = await Promise.all([tilesLine(i.console, i.user), Promise.resolve().then(() => (i.user.role === "collector" ? studioLines({ role: "collector", lockDept: null }) : null)).catch(() => null)]);
   const studio = i.console.page === "studio" || i.console.dataset || studioAsked(files ? (files.match(/"[^"]+"/g) ?? []).join(" ") : null, [i.text, ...history.slice(-2).map((h) => h.user)].join(" ")) ? files : null;
   const out = await think({ text: i.text, channel: i.channel, user: i.user, world: i.world, now, console: i.console, history, past: pastOf(turns), kpi, studio, memory: i.memory, lastLang: lastLangOf(turns), signal: i.signal, until: i.until, progress: i.progress, sentence: i.sentence, deep: i.deep, lang: i.lang ?? null });
   if (out) keep(i.key, { at: Date.now(), user: i.text, answer: out.answer, evidence: out.evidence });
   return out;
+}
+
+/**
+ * The topic guard's code check (topicguard/scope.ts), in front of the model: the decline as a whole BrainOut, said sentence by sentence by
+ * voice, or null (the model decides, under the scope rule). A news search (at most 600 ms) keeps a question about a story we hold.
+ */
+export async function precheck(i: Pick<AskIn, "text" | "channel" | "user" | "world" | "sentence" | "lang">, follows: boolean, last: Lang | null, now: string): Promise<BrainOut | null> {
+  const t0 = Date.now();
+  let sc: ReturnType<typeof scopeOf>;
+  try { sc = scopeOf(i.text, { world: i.world, follows }); } catch { return null; }
+  if (sc.verdict !== "out") return null;
+  if (await inOurNewsSoon(i.text, now, 600).catch(() => false)) return null;
+  // (Tanglish is declined in Tamil script, as the brain answers it; "tell me a joke in Tamil" in Tamil, as asked)
+  const askedIn: Lang | null = /\b(?:in|to)\s+english\b|ஆங்கிலத்தில்|english-?ல|\benglish(?:la|il)\b/i.test(i.text) ? "en"
+    : /\b(?:in|to)\s+(?:tamil|thamizh|tamizh)\b|தமிழில்|தமிழ்ல|\b(?:tamil|thamizh|tamizh)(?:la|il)\b/i.test(i.text) ? "ta" : null;
+  const answer = declined(i.lang ?? owedLang(i.text, last) ?? askedIn ?? (detectLanguage(i.text).lang === "en" ? "en" : "ta"), { dept: deptName(i.world, i.user.lockDept), voice: i.channel === "voice" });
+  const spoken: string[] = [];
+  for (const line of sentences(answer.say)) { spoken.push(line); try { i.sentence?.(line, answer.lang); } catch { /* the listener is gone */ } }
+  const ms = Date.now() - t0;
+  telemetry("brain", { ok: true, kind: "offtopic", model: "rules", round: 0, ms, tokens: 0, calls: 0, why: `precheck:${sc.topic ?? "-"}` });
+  return { question: i.text, answer, evidence: [], model: "rules", rounds: 0, ms, firstMs: i.sentence ? ms : null, tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, steps: [], screen: null, stageOp: null, repaired: [], spoken: i.sentence ? spoken : [], escalated: null, trace: [] };
 }
 
 /** the console's own words for things it never does (asked in front of the brain, in code) */

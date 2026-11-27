@@ -1,5 +1,6 @@
 /**
- * Connected sources: the pipeline's feeds, AGMARKNET, and sources the Collector adds
+ * Connected sources: the pipeline's feeds, the market prices (the TN Agricultural Marketing department's Uzhavar Sandhai
+ * feed, tnprices.ts; the row's kind is still 'agmarknet'), and sources the Collector adds
  * by link (RSS, web page or JSON API, optionally behind a login). Every run is logged
  * with its outcome; logins are reused until the site rejects them, then renewed once.
  *
@@ -23,6 +24,8 @@ import { ParseLimitError, pageLimitMessage, readCollector } from "@/lib/studio/p
 import { istNow, staleFeeds } from "@/lib/collector/freshness";
 import { assertPublicUrl, safeFetch } from "@/lib/netsafe";
 import { orEmpty } from "@/lib/fallback";
+import { TN_MARKETS, TN_NAME, TN_SITE, collectTnPrices, fileDays, marketRows, marketSpan, type PriceRow } from "@/lib/collector/tnprices";
+import { pushTnPrices } from "@/lib/collector/tnpush";
 
 type Row = Record<string, any>;
 const UA = "DistrictIQ/1.0 (Chennai District Collectorate dashboard prototype)";
@@ -97,6 +100,8 @@ export async function listSources() {
   const h = new Map(health.map((x) => [x.source, x]));
   return rows.map((s) => {
     const pipe = s.pipeline_key ? h.get(s.pipeline_key) : null;
+    // 27 Nov: the market prices row says where its prices come from now, on a copy whose store still holds the AGMARKNET name too
+    if (s.kind === "agmarknet") Object.assign(s, { name: TN_NAME, url: TN_SITE, description: SOURCE_DESCRIPTION });
     return {
       ...s,
       enabled: Number(s.enabled) === 1,
@@ -581,7 +586,7 @@ async function agm(date: string, district: number[]) {
   if (r.status >= 400) {
     const body = await r.text().catch(() => "");
     // v18 round 2: say what is wrong, so the Sources page does not show "timeout" for a CAPTCHA wall
-    if (/captcha/i.test(body)) throw new Error("AGMARKNET now asks for a CAPTCHA on its API: set DATA_GOV_API_KEY (free, data.gov.in) to read market prices from the Open Government Data API instead.");
+    if (/captcha/i.test(body)) throw new Error("AGMARKNET asks for a CAPTCHA on its API (never got around here); prices come from agrimark.tn.gov.in instead.");
     throw new Error(`AGMARKNET HTTP ${r.status}`);
   }
   const j = await r.json();
@@ -591,50 +596,103 @@ async function agm(date: string, district: number[]) {
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const num = (v: unknown) => (v == null || v === "" ? null : Number(v));
 
-/** Last 30 days of prices: each call returns three days, so step back three days at a time. */
+/** a run's failures in one line for the Sources page: how many, then the first few */
+export function failureLine(errors: string[], calls: number, what: string): string | null {
+  if (!errors.length) return null;
+  const more = errors.length > 3 ? ` (and ${errors.length - 3} more)` : "";
+  return `${errors.length} of ${calls} ${what} calls failed: ${errors.slice(0, 3).join("; ")}${more}`.slice(0, 470);
+}
+
+/**
+ * The market prices source (sources row kind 'agmarknet'). 27 Nov: first the TN Agricultural Marketing department's Uzhavar Sandhai
+ * price feed (tnprices.ts, agrimark.tn.gov.in, no key, no CAPTCHA): the days of the last two weeks not settled yet, kept in
+ * data/aws-cache/tn-prices.json (and in the store where it keeps its writes). Then data.gov.in when DATA_GOV_API_KEY is set. AGMARKNET's
+ * own API asks for a CAPTCHA, so it is read only when AGMARKNET_API=1 is set (if it ever opens again), and its failures never fail the
+ * run. Every failed call is recorded in the run's error, never skipped silently.
+ */
 async function collectMandi() {
-  // v18 round 2 (24 Nov): AGMARKNET's API now asks for a CAPTCHA on every report, so nothing has been read since early October. With a
-  // data.gov.in key the Chennai markets' daily prices come from the Open Government Data API instead (ogdprices.ts): the last 14 days, the
-  // last three again (markets report late)
+  // the source's own row says where its prices come from (a copy that does not save puts it back at every start: said again here)
+  await exec(`UPDATE ${ops("sources")} SET name = ?, url = ?, description = ? WHERE kind = 'agmarknet' AND (name <> ? OR url <> ?)`,
+    [TN_NAME, TN_SITE, SOURCE_DESCRIPTION, TN_NAME, TN_SITE]).catch(() => undefined);
+  const r = await collectTnPrices();
+  let seen = r.seen, added = r.added, calls = r.calls, answered = r.answered;
+  const notes: string[] = [];
+  const tnLine = failureLine(r.errors, r.calls, "agrimark.tn.gov.in");
+  if (tnLine) notes.push(tnLine);
+  // 27 Nov review: the hosted copy cannot reach agrimark.tn.gov.in, so the copy that reads it (TN_PRICES_PUSH_URL set: the PC) sends it what
+  // it holds after each run (tnpush.ts; nothing is sent without that URL). A failed send is said here and goes again with the next run.
+  const sent = await pushTnPrices().catch((e) => ({ error: String((e as Error)?.message ?? e) }));
+  if (sent.error) notes.push(`sending the prices to the hosted copy: ${sent.error}`.slice(0, 200));
+
+  // v18 round 2 (24 Nov): with a data.gov.in key the Chennai markets' daily prices come from the Open Government Data API too
+  // (ogdprices.ts): the last 14 days, the last three again; 27 Nov: not a day the TN feed already holds
   const ogd = await import("@/lib/collector/ogdprices");
   if (ogd.ogdKey()) {
-    let seen = 0, added = 0, calls = 0;
-    // v18 round 3: a day that cannot be read (a timeout, an HTTP error) is skipped and the run goes on to the next; only a refused key ends it
-    let firstError: string | null = null;
+    // v18 round 3: a day that cannot be read (a timeout, an HTTP error) is skipped and the run goes on to the next; a refused key ends it
+    const errors: string[] = [];
+    let tried = 0;
     const today = new Date(Date.now() + 330 * 60_000);
-    const want = new Set(await ogd.missingDays(iso(new Date(today.getTime() - 14 * 864e5)), iso(today), 14));
+    const from = iso(new Date(today.getTime() - 14 * 864e5));
+    const held = fileDays(from, iso(today));
+    const want = new Set(await ogd.missingDays(from, iso(today), 14).catch(() => [] as string[]));
     for (let back = 0; back <= 14; back++) {
       const day = iso(new Date(today.getTime() - back * 864e5));
-      if (back > 3 && !want.has(day)) continue;
-      calls++;
+      if (held.has(day) || (back > 3 && !want.has(day))) continue;
+      tried++;
       try {
-        const r = await ogd.ogdMarketDay(day);
-        seen += r.seen; added += r.added;
+        const x = await ogd.ogdMarketDay(day);
+        seen += x.seen; added += x.added; answered++;
       } catch (e) {
         const msg = (e as Error)?.message ?? String(e);
-        if (ogd.isOgdKeyError(e)) throw new Error(`data.gov.in: ${msg}`);
-        firstError ??= `data.gov.in, ${day}: ${msg}`;
+        errors.push(`${day}: ${msg}`);
+        if (ogd.isOgdKeyError(e)) break;
       }
     }
-    return { ok: seen > 0, seen, items_new: added, attempts: calls,
-      error: seen ? null : firstError ?? "data.gov.in returned no Chennai market prices for the last 14 days." };
+    calls += tried;
+    const line = failureLine(errors, tried, "data.gov.in");
+    if (line) notes.push(line);
   }
+
+  if (process.env.AGMARKNET_API === "1") {
+    const agm = await collectAgmarknet().catch((e) => ({ seen: 0, added: 0, calls: 1, errors: [String((e as Error)?.message ?? e)] }));
+    seen += agm.seen; added += agm.added; calls += agm.calls;
+    const line = failureLine(agm.errors, agm.calls, "AGMARKNET");
+    if (line) notes.push(line);
+  }
+  // healthy when the site answered (prices, or a day not entered yet) or nothing needed reading; the failures are said either way
+  const ok = answered > 0 || calls === 0;
+  return {
+    ok, seen, items_new: added, attempts: Math.max(1, calls),
+    error: notes.length ? notes.join(" | ").slice(0, 480) : ok ? null : "The market price sites did not answer."
+  };
+}
+const SOURCE_DESCRIPTION = "Daily prices at each Uzhavar Sandhai farmer market in and around Chennai (retail, Rs per kg), from the TN Department of Agricultural Marketing & Agri Business";
+
+/** AGMARKNET's own API (AGMARKNET_API=1 only: it asks for a CAPTCHA since late October). Errors are returned, never thrown per call. */
+async function collectAgmarknet(): Promise<{ seen: number; added: number; calls: number; errors: string[] }> {
+  const errors: string[] = [];
   let seen = 0, added = 0, calls = 0;
   const today = new Date();
+  // a CAPTCHA or an HTTP error answers every call alike: said once, and the scope is left
+  const agmOr = async (d: string, district: number[]) => {
+    calls++;
+    try { return { recs: await agm(d, district), failed: false }; } catch (e) { errors.push(`${d}: ${String((e as Error)?.message ?? e).slice(0, 160)}`); return { recs: undefined, failed: true }; }
+  };
   for (const sc of SCOPES) {
     // newest day with data (AGMARKNET freezes the last two or three days)
-    let anchor: Date | null = null;
-    for (let back = 0; back < 8 && !anchor; back++) {
+    let anchor: Date | null = null, failed = false;
+    for (let back = 0; back < 8 && !anchor && !failed; back++) {
       const d = new Date(today.getTime() - back * 864e5);
-      calls++;
-      const recs = await agm(iso(d), sc.district);
-      if (recs?.length) anchor = d;
+      const got = await agmOr(iso(d), sc.district);
+      failed = got.failed;
+      if (got.recs?.length) anchor = d;
     }
     if (!anchor) continue;
     for (let step = 0; step < 10; step++) {
       const d = new Date(anchor.getTime() - step * 3 * 864e5);
-      calls++;
-      const recs = (await agm(iso(d), sc.district)) ?? [];
+      const got = await agmOr(iso(d), sc.district);
+      if (got.failed) break;
+      const recs = got.recs ?? [];
       for (const r of recs) {
         const [dd, mm, yy] = String(r.reported_date ?? "").split("-");
         const asOn = dd ? new Date(`${yy}-${mm}-${dd}T00:00:00Z`) : d;
@@ -656,13 +714,11 @@ async function collectMandi() {
       }
     }
   }
-  const weekly = await collectMandiWeekly().catch((e) => ({ seen: 0, added: 0, calls: 0, error: String(e.message) }));
-  const markets = await collectMandiMarkets().catch((e) => ({ seen: 0, added: 0, calls: 0, error: String(e.message) }));
-  const all = seen + weekly.seen + markets.seen;
-  return {
-    ok: all > 0, seen: all, items_new: added + weekly.added + markets.added, attempts: calls + weekly.calls + markets.calls,
-    error: all ? null : "AGMARKNET returned no prices for Tamil Nadu."
-  };
+  const fail = (e: unknown) => ({ seen: 0, added: 0, calls: 1, errors: [String((e as Error)?.message ?? e).slice(0, 160)] });
+  const weekly = await collectMandiWeekly().catch(fail);
+  const markets = await collectMandiMarkets().catch(fail);
+  return { seen: seen + weekly.seen + markets.seen, added: added + weekly.added + markets.added, calls: calls + weekly.calls + markets.calls,
+    errors: [...errors, ...weekly.errors.map((x) => `weekly ${x}`), ...markets.errors.map((x) => `market-wise ${x}`)] };
 }
 
 // Commodities a Collector watches for household prices; AGMARKNET commodity ids.
@@ -676,6 +732,7 @@ const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "
  */
 async function collectMandiWeekly() {
   let seen = 0, added = 0, calls = 0;
+  const errors: string[] = [];
   const today = new Date(Date.now() + 330 * 60_000); // Chennai's calendar day, read as UTC fields (RC-16 getters)
   const slots: { year: number; month: number; week: number }[] = [];
   let y = today.getUTCFullYear(), m = today.getUTCMonth() + 1, wk = Math.min(4, Math.ceil(today.getUTCDate() / 7));
@@ -689,7 +746,12 @@ async function collectMandiWeekly() {
       calls++;
       const r = await fetch(`https://api.agmarknet.gov.in/v1/price-trend/wholesale-prices-weekly?report_mode=Districtwise&commodity=${id}` +
         `&year=${sl.year}&month=${sl.month}&week=${sl.week}&state=31`, { headers: { "User-Agent": UA, Accept: "application/json" }, signal: AbortSignal.timeout(30000) });
-      if (r.status >= 400) continue;
+      // 27 Nov: an error is recorded, never skipped silently; one is enough to know the report is closed (a CAPTCHA answers every call)
+      if (r.status >= 400) {
+        const body = await r.text().catch(() => "");
+        errors.push(`${name} ${sl.year}-${sl.month} week ${sl.week}: HTTP ${r.status}${/captcha/i.test(body) ? " (CAPTCHA required)" : ""}`);
+        return { seen, added, calls, errors };
+      }
       const j = await r.json().catch(() => null);
       const rows: Row[] = j?.rows ?? [];
       const key = (j?.data?.find((d: Row) => d.key === "prices")?.columns?.[0]?.key as string | undefined) ?? "";
@@ -715,30 +777,26 @@ async function collectMandiWeekly() {
       }
     }
   }
-  return { seen, added, calls };
+  return { seen, added, calls, errors };
 }
 
-// Chennai's own markets on AGMARKNET: the Uzhavar Sandhai (farmer-to-consumer) markets inside the
-// corporation, then the nearest suburban ones. Koyambedu, the wholesale market, does not report.
-export const CHENNAI_MARKETS: { key: string; re: RegExp; zone: number | null; area: "Chennai city" | "Suburbs" }[] = [
-  { key: "Anna Nagar", re: /^anna\s*nagar\s*\(/i, zone: 8, area: "Chennai city" },
-  { key: "K.K. Nagar", re: /^k\.?\s*k\.?\s*nagar\s*\(/i, zone: 10, area: "Chennai city" },
-  { key: "Nanganallur", re: /^nanganallur\s*\(/i, zone: 12, area: "Chennai city" },
-  { key: "Ambattur", re: /^ambattur\s*\(/i, zone: 7, area: "Chennai city" },
-  { key: "Medavakkam", re: /^medavakkam\s*\(/i, zone: null, area: "Suburbs" },
-  { key: "Pallavaram", re: /^pallavaram\s*\(/i, zone: null, area: "Suburbs" },
-  { key: "Kundrathur", re: /^kundrathur\s*\(/i, zone: null, area: "Suburbs" },
-  { key: "Guduvancheri", re: /^guduvancheri\s*\(/i, zone: null, area: "Suburbs" }
-];
+/**
+ * Chennai's Uzhavar Sandhai (farmer-to-consumer) markets: the two inside the Corporation, then the nearest suburban ones
+ * (tnprices.ts TN_MARKETS, where their agrimark ids are). Koyambedu, the wholesale market, publishes no daily price feed.
+ * 27 Nov: "Anna Nagar" (zone 8) and "K.K. Nagar" (zone 10) are gone: AGMARKNET's markets of those names are Madurai's and
+ * Tiruchirappalli's, matched by name across the state; their old rows stay in the store and are left out of every read (marketRows).
+ */
+export const CHENNAI_MARKETS: { key: string; re: RegExp; zone: number | null; area: "Chennai city" | "Suburbs" }[] =
+  TN_MARKETS.map(({ key, re, zone, area }) => ({ key, re, zone, area }));
 const MARKET_CATEGORIES = [3]; // Farmer Consumer Market (Uzhavar Sandhai); no Chennai market reports under the others
 
 /**
- * Daily prices at each Chennai market from AGMARKNET's state market-wise daily report
- * (open endpoint, no CAPTCHA). The last 14 days are kept; the last three are fetched again
- * because markets report late.
+ * Daily prices at each Chennai market from AGMARKNET's state market-wise daily report (AGMARKNET_API=1 only: it asks for a CAPTCHA
+ * since late October). The last 14 days are kept; the last three are fetched again because markets report late.
  */
 async function collectMandiMarkets() {
   let seen = 0, added = 0, calls = 0;
+  const errors: string[] = [];
   const have = new Set((await q(`SELECT DISTINCT DATE_FORMAT(date, '%Y-%m-%d') AS d FROM ${ops("mandi_market_prices")}
     WHERE date > CURDATE() - INTERVAL 15 DAY`).catch(orEmpty("sources:699"))).map((r) => r.d));
   for (let back = 1; back <= 14; back++) {
@@ -748,7 +806,12 @@ async function collectMandiMarkets() {
       calls++;
       const r = await fetch(`https://api.agmarknet.gov.in/v1/prices-and-arrivals/commodity-market/daily-report-state-marketwise?date=${day}` +
         `&state=31&includeExcel=false&marketCategoryid=${cat}`, { headers: { "User-Agent": UA, Accept: "application/json" }, signal: AbortSignal.timeout(60000) });
-      if (r.status >= 400) continue;
+      // 27 Nov: an HTTP error is recorded, no longer skipped silently (this hid the CAPTCHA from 7 Oct to 28 Oct while the run said ok)
+      if (r.status >= 400) {
+        const body = await r.text().catch(() => "");
+        errors.push(`${day}: HTTP ${r.status}${/captcha/i.test(body) ? " (CAPTCHA required)" : ""}`);
+        return { seen, added, calls, errors };
+      }
       const j = await r.json().catch(() => null);
       for (const g of (j?.commodityGroups ?? []) as Row[]) {
         for (const cm of (g.commodities ?? []) as Row[]) {
@@ -773,24 +836,36 @@ async function collectMandiMarkets() {
       }
     }
   }
-  return { seen, added, calls };
+  return { seen, added, calls, errors };
 }
 
 // Household staples first in the market comparison.
 const STAPLES = ["Tomato", "Onion", "Potato", "Brinjal", "Green Chilli", "Beans", "Carrot", "Cabbage", "Drumstick", "Bhindi(Ladies Finger)",
   "Banana - Green", "Coconut", "Lemon", "Coriander(Leaves)", "Garlic", "Ginger(Green)"];
 
+const dayAdd = (d: string, n: number) => new Date(Date.parse(`${d}T00:00:00Z`) + n * 864e5).toISOString().slice(0, 10);
+/** price rows by day, market and item, as the SQL GROUP BY gave them: modal averaged over varieties, the lowest low, the highest high */
+export function perMarketDay(rows: PriceRow[]): { d: string; market: string; commodity: string; grp: string | null; price: number; lo: number | null; hi: number | null; arrival: number | null }[] {
+  const by = new Map<string, PriceRow[]>();
+  for (const r of rows) { const k = `${r.d}\u0000${r.market}\u0000${r.commodity}`; (by.get(k) ?? by.set(k, []).get(k)!).push(r); }
+  return [...by.values()].map((xs) => {
+    const los = xs.map((x) => x.min).filter((v): v is number => v != null), his = xs.map((x) => x.max).filter((v): v is number => v != null);
+    const arr = xs.map((x) => x.arrival).filter((v): v is number => v != null);
+    return { d: xs[0].d, market: xs[0].market, commodity: xs[0].commodity, grp: xs.find((x) => x.grp)?.grp ?? null,
+      price: xs.reduce((a, x) => a + x.modal, 0) / xs.length, lo: los.length ? Math.min(...los) : null, hi: his.length ? Math.max(...his) : null,
+      arrival: arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) * 1000) / 1000 : null };
+  }).sort((a, b) => a.commodity.localeCompare(b.commodity) || a.market.localeCompare(b.market) || (a.d < b.d ? -1 : a.d > b.d ? 1 : 0));
+}
+
 /**
  * Prices at each Chennai market: per commodity, each market's latest modal price (Rs/quintal,
  * averaged over varieties) with its previous report and a 14-day series, and the average across markets.
+ * 27 Nov: read through tnprices.marketRows (the kept file of the TN Agricultural Marketing department's Uzhavar Sandhai prices, with the
+ * store's rows), so every copy shows them whether or not it saves to AWS; the wrong "Anna Nagar" and "K.K. Nagar" rows are left out.
  */
 export async function mandiMarkets() {
-  const rows = await q(
-    `SELECT DATE_FORMAT(date, '%Y-%m-%d') AS d, market, commodity, MAX(cmdt_group) AS grp, AVG(modal_price) AS price,
-            MIN(min_price) AS lo, MAX(max_price) AS hi, SUM(arrival) AS arrival
-     FROM ${ops("mandi_market_prices")} WHERE date > (SELECT MAX(date) FROM ${ops("mandi_market_prices")}) - INTERVAL 14 DAY
-     GROUP BY date, market, commodity ORDER BY commodity, market, date`
-  ).catch(orEmpty("sources:749"));
+  const span = await marketSpan();
+  const rows = span.to ? perMarketDay(await marketRows(dayAdd(span.to, -13), span.to)) : [];
   const dates = [...new Set(rows.map((r) => r.d as string))].sort();
   const latest = dates[dates.length - 1] ?? null;
   const cell = new Map<string, Row[]>();
@@ -827,13 +902,64 @@ export async function mandiMarkets() {
   }).filter((c) => c.markets > 0);
   const rank = (c: string) => { const k = STAPLES.indexOf(c); return k < 0 ? 99 : k; };
   commodities.sort((a, b) => rank(a.commodity) - rank(b.commodity) || b.markets - a.markets || a.commodity.localeCompare(b.commodity));
-  const [meta] = await q(`SELECT DATE_FORMAT(MAX(fetched_at), '%Y-%m-%d %H:%i:%s') AS fetched FROM ${ops("mandi_market_prices")}`).catch(() => [{} as Row]);
-  return { latest, dates, fetched: (meta?.fetched as string | null) ?? null, markets, commodities };
+  return { latest, dates, fetched: span.fetched, markets, commodities };
 }
 export type MandiMarkets = Awaited<ReturnType<typeof mandiMarkets>>;
 
-/** Eight-week price series per watched commodity, for the region around Chennai or the state. */
-export async function mandiWeekly(scope: "chennai_region" | "tamil_nadu") {
+/** the items the weekly view around Chennai follows (the Uzhavar Sandhai markets sell no rice) */
+const WATCH_CHENNAI = ["Tomato", "Onion", "Small Onion", "Potato", "Brinjal", "Green Chilli", "Beans", "Carrot", "Drumstick", "Coconut"];
+const SHORT_MONTH = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** "24–30 Nov", "29 Sep–5 Oct" */
+const spanLabel = (a: string, b: string) => {
+  const [ma, mb] = [Number(a.slice(5, 7)) - 1, Number(b.slice(5, 7)) - 1];
+  return ma === mb ? `${Number(a.slice(8))}–${Number(b.slice(8))} ${SHORT_MONTH[mb]}` : `${Number(a.slice(8))} ${SHORT_MONTH[ma]}–${Number(b.slice(8))} ${SHORT_MONTH[mb]}`;
+};
+/** the Monday a day's week starts on */
+const mondayOf = (d: string) => dayAdd(d, -((new Date(`${d}T00:00:00Z`).getUTCDay() + 6) % 7));
+const pctOf = (a: number, b: number | null | undefined) => (b ? Math.round(((a - b) / b) * 1000) / 10 : null);
+
+/**
+ * 27 Nov: eight weeks (Monday to Sunday; the last one up to the newest report) of the Uzhavar Sandhai markets around Chennai, per watched
+ * item: each day's average across the markets, averaged over the week. Rebuilt from the market rows: AGMARKNET's weekly district report
+ * (mandi_weekly) asks for a CAPTCHA since late October. `districts` is the number of markets that reported in the week.
+ */
+async function chennaiWeekly(): Promise<MandiWeek[]> {
+  const span = await marketSpan();
+  if (!span.to) return [];
+  const lastMonday = mondayOf(span.to), from = dayAdd(lastMonday, -7 * 7);
+  const cells = perMarketDay(await marketRows(from, span.to)).filter((r) => WATCH_CHENNAI.includes(r.commodity));
+  return WATCH_CHENNAI.flatMap((commodity) => {
+    const mine = cells.filter((r) => r.commodity === commodity);
+    if (!mine.length) return [];
+    const weeks = new Map<string, { days: Map<string, number[]>; markets: Set<string> }>();
+    for (const r of mine) {
+      const w = mondayOf(r.d);
+      const wk = weeks.get(w) ?? weeks.set(w, { days: new Map(), markets: new Set() }).get(w)!;
+      (wk.days.get(r.d) ?? wk.days.set(r.d, []).get(r.d)!).push(r.price);
+      wk.markets.add(r.market);
+    }
+    const s = [...weeks.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([w, x]) => {
+      const daily = [...x.days.values()].map((v) => v.reduce((a, b) => a + b, 0) / v.length);
+      const end = dayAdd(w, 6) < span.to! ? dayAdd(w, 6) : span.to!;
+      return { w, label: spanLabel(w, end), price: Math.round((daily.reduce((a, b) => a + b, 0) / daily.length) * 100) / 100, markets: x.markets.size };
+    });
+    const last = s[s.length - 1];
+    const prevWeek = s.find((x) => x.w === dayAdd(last.w, -7)), monthAgo = s.find((x) => x.w === dayAdd(last.w, -28));
+    return [{
+      commodity, week: last.label, weekStart: last.w, price: last.price, districts: last.markets,
+      chgWeek: pctOf(last.price, prevWeek?.price), chgMonth: pctOf(last.price, monthAgo?.price), chgYear: null as number | null,
+      series: s.map((x) => x.price), labels: s.map((x) => x.label)
+    }];
+  });
+}
+
+/**
+ * Eight-week price series per watched commodity, for the region around Chennai or the state. 27 Nov: around Chennai is rebuilt from the
+ * Uzhavar Sandhai market rows (chennaiWeekly); the state's series is AGMARKNET's last (mandi_weekly, to the week of 24 Oct), with
+ * `weekStart` so a page can tell how old it is.
+ */
+export async function mandiWeekly(scope: "chennai_region" | "tamil_nadu"): Promise<MandiWeek[]> {
+  if (scope === "chennai_region") return chennaiWeekly();
   const rows = await q(
     `SELECT DATE_FORMAT(week_start, '%Y-%m-%d') AS w, week_label, commodity, price, districts, chg_week, chg_month, chg_year
      FROM ${ops("mandi_weekly")} WHERE scope = ? ORDER BY commodity, week_start`, [scope]
@@ -844,15 +970,57 @@ export async function mandiWeekly(scope: "chennai_region" | "tamil_nadu") {
     const s = by.get(commodity)!.slice(-8);
     const last = s[s.length - 1];
     return {
-      commodity, week: last.week_label, price: Number(last.price), districts: Number(last.districts),
+      commodity, week: String(last.week_label), weekStart: String(last.w), price: Number(last.price), districts: Number(last.districts),
       chgWeek: last.chg_week == null ? null : Number(last.chg_week), chgMonth: last.chg_month == null ? null : Number(last.chg_month),
-      chgYear: last.chg_year == null ? null : Number(last.chg_year), series: s.map((x) => Number(x.price)), labels: s.map((x) => x.week_label)
+      chgYear: last.chg_year == null ? null : Number(last.chg_year) as number | null, series: s.map((x) => Number(x.price)), labels: s.map((x) => String(x.week_label))
     };
   });
 }
+export interface MandiWeek {
+  commodity: string; week: string; weekStart: string; price: number; districts: number;
+  chgWeek: number | null; chgMonth: number | null; chgYear: number | null; series: number[]; labels: string[];
+}
+export interface MandiDay {
+  commodity: string; group: string | null; date: string; price: number; arrival: number | null; msp: number | null;
+  prev: number | null; week: number | null; avg30: number; series: number[]; dates: string[];
+}
+export interface MandiScope { scope: "chennai_markets" | "tamil_nadu"; commodities: MandiDay[]; fetched: string | null; latest: string | null }
 
-/** Latest price per commodity with its change and a 30-day series, for one scope. */
-export async function mandi(scope: "chennai_markets" | "tamil_nadu") {
+/**
+ * 27 Nov: the markets around Chennai day by day, from the Uzhavar Sandhai rows: per item, each day's average across the markets that
+ * reported it, over the newest report's last 31 days (what AGMARKNET's "chennai_markets" dashboard scope gave before its CAPTCHA).
+ */
+async function chennaiDaily(): Promise<MandiScope> {
+  const span = await marketSpan();
+  if (!span.to) return { scope: "chennai_markets", commodities: [], fetched: span.fetched, latest: null };
+  const cells = perMarketDay(await marketRows(dayAdd(span.to, -30), span.to));
+  const by = new Map<string, Map<string, { p: number[]; arrival: number; grp: string | null }>>();
+  for (const r of cells) {
+    const days = by.get(r.commodity) ?? by.set(r.commodity, new Map()).get(r.commodity)!;
+    const x = days.get(r.d) ?? days.set(r.d, { p: [], arrival: 0, grp: r.grp }).get(r.d)!;
+    x.p.push(r.price); x.arrival += r.arrival ?? 0; x.grp ??= r.grp;
+  }
+  const out = [...by.entries()].map(([commodity, days]) => {
+    const s = [...days.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([d, x]) => ({ d, price: Math.round((x.p.reduce((a, b) => a + b, 0) / x.p.length) * 100) / 100, arrival: x.arrival, grp: x.grp }));
+    const last = s[s.length - 1], prev = s[s.length - 2] ?? null;
+    const week = s.filter((x) => x.d <= dayAdd(last.d, -6)).pop() ?? null;
+    return {
+      commodity, group: last.grp, date: last.d, price: last.price, arrival: last.arrival ? Math.round(last.arrival * 1000) / 1000 : null, msp: null as number | null,
+      prev: prev ? prev.price : null, week: week ? week.price : null, avg30: Math.round((s.reduce((a, x) => a + x.price, 0) / s.length) * 100) / 100,
+      series: s.map((x) => x.price), dates: s.map((x) => x.d)
+    };
+  });
+  const order = ["Tomato", "Onion", "Potato"];
+  out.sort((a, b) => (order.indexOf(a.commodity) + 1 || 99) - (order.indexOf(b.commodity) + 1 || 99) || b.price - a.price);
+  return { scope: "chennai_markets", commodities: out, fetched: span.fetched, latest: span.to };
+}
+
+/**
+ * Latest price per commodity with its change and a 30-day series, for one scope. 27 Nov: the Chennai markets' scope is rebuilt from the
+ * Uzhavar Sandhai rows (chennaiDaily); the state's is AGMARKNET's last (mandi_prices, to 26 Oct).
+ */
+export async function mandi(scope: "chennai_markets" | "tamil_nadu"): Promise<MandiScope> {
+  if (scope === "chennai_markets") return chennaiDaily();
   const rows = await q(
     `SELECT DATE_FORMAT(date, '%Y-%m-%d') AS d, commodity, cmdt_group, price, arrival, msp FROM ${ops("mandi_prices")}
      WHERE scope = ? AND date > (SELECT MAX(date) FROM ${ops("mandi_prices")} WHERE scope = ?) - INTERVAL 31 DAY ORDER BY commodity, date`,
@@ -874,5 +1042,5 @@ export async function mandi(scope: "chennai_markets" | "tamil_nadu") {
   out.sort((a, b) => (order.indexOf(a.commodity) + 1 || 99) - (order.indexOf(b.commodity) + 1 || 99) || b.price - a.price);
   const [meta] = await q(`SELECT DATE_FORMAT(MAX(fetched_at), '%Y-%m-%d %H:%i:%s') AS fetched, DATE_FORMAT(MAX(date), '%Y-%m-%d') AS latest
                           FROM ${ops("mandi_prices")} WHERE scope = ?`, [scope]).catch(() => [{} as Row]);
-  return { scope, commodities: out, fetched: meta?.fetched ?? null, latest: meta?.latest ?? null };
+  return { scope, commodities: out, fetched: (meta?.fetched as string | null) ?? null, latest: (meta?.latest as string | null) ?? null };
 }

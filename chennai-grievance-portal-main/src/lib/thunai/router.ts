@@ -1,7 +1,8 @@
 /**
  * Which lane a sentence goes down, and which small part of the prompt it needs. Rules decide when they can (most sentences);
- * a tiny model call decides the rest. Three lanes: district (tools, the console, the district's numbers), general (labelled
- * general knowledge, no tools, no district numbers), refuse (privacy.ts and the never-send rule, in code first).
+ * a tiny model call decides the rest. Three lanes: district (tools, the console, the district's numbers), general (a civic term,
+ * labelled, no tools, no district numbers; anything else outside District IQ is declined there, lib/topicguard), refuse (privacy.ts
+ * and the never-send rule, in code first).
  * Replaces the keyword wall that refused everyday requests like "give me a summary".
  */
 import { z } from "zod";
@@ -11,6 +12,7 @@ import { asksForbiddenOrder, asksPrivate } from "./privacy";
 export { asksForbiddenOrder };
 import { districtNounIn, namesZone, quickScreen } from "./quick";
 import { cityAsk } from "@/lib/city/intent";
+import { SCOPE_LINE } from "@/lib/topicguard/rule";
 import type { World } from "./types";
 
 export type Lane = "district" | "general" | "refuse";
@@ -59,10 +61,19 @@ export function bundleByRules(text: string, stageOpen: boolean): Bundle {
 }
 
 export const RouterSchema = z.object({ lane: z.enum(["district", "general", "refuse"]) });
-export const ROUTER_SYSTEM = `Classify one sentence said to the Chennai District Collector's console assistant. district: anything about Chennai's incidents, complaints, news, rain, air, reservoirs, prices, departments, zones, or this console. general: general knowledge unrelated to the district. refuse: asks to send, approve or delete something, or for a citizen's private details. Reply as JSON.`;
+export const ROUTER_SYSTEM = `Classify one sentence said to the Chennai District Collector's console assistant. district: anything about Chennai's incidents, complaints, news, rain, air, reservoirs, traffic, prices, departments, zones, or this console; a match, film or event named inside such a question (traffic around Chepauk for an IPL match) is district. general: anything else (a civic term, general knowledge, sports, films, jokes, coding). refuse: asks to send, approve or delete something, or for a citizen's private details. Reply as JSON.`;
 
-export const GeneralSchema = z.object({ reply: z.string().describe("one or two short sentences, in the language asked; no figures") });
-export const GENERAL_SYSTEM = `You are Jarvis, an assistant to the Chennai District Collector. Answer this general question in one or two short sentences, in the language it was asked (Tamil script for Tamil or Tanglish). Use no numbers, dates or figures at all. Reply as JSON.`;
+/**
+ * 27 Nov (the topic guard, lib/topicguard): the general lane answers only a civic or administrative term the Collector needs ("what is a
+ * cusec"). Anything else outside District IQ is scope "offtopic", and code says the one fixed decline (round.ts), never the model's words.
+ * scope comes first, so the model decides before it writes.
+ */
+export const GeneralSchema = z.object({
+  scope: z.enum(["civic", "offtopic"]).describe("civic: a civic or administrative term or idea the Collector needs; offtopic: anything else"),
+  reply: z.string().describe("civic: one or two short sentences, in the language asked, no figures; offtopic: empty")
+});
+export const GENERAL_SYSTEM = `You are Jarvis, an assistant to the Chennai District Collector. ${SCOPE_LINE}
+scope civic: a civic or administrative term or idea the Collector needs to read the district's records (what AQI, a cusec, POCSO, an SLA or the northeast monsoon is): reply explains it in one or two short sentences, in the language it was asked (Tamil script for Tamil or Tanglish), with no numbers, dates or figures at all. scope offtopic: anything else (sports, films, celebrities, trivia, science or technology lessons, coding, homework, jokes, stories): reply "". Reply as JSON.`;
 /** said before a general answer, so it is never taken for the district's data */
 export const GENERAL_LABEL = { en: "General knowledge, not district data: ", ta: "பொது அறிவு, மாவட்டத் தரவு அல்ல: " };
 export const GENERAL_FALLBACK = { en: "I can't reason about that right now. Ask me about the district: incidents, news, rain, air, reservoirs, prices or departments.", ta: "இதைப் பற்றி இப்போது யோசிக்க முடியவில்லை. மாவட்டத்தைப் பற்றிக் கேளுங்கள்: சம்பவங்கள், செய்திகள், மழை, காற்று, ஏரிகள், விலைகள், துறைகள்." };

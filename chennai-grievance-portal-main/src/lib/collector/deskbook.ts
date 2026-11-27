@@ -4,6 +4,7 @@
  */
 import fs from "fs";
 import path from "path";
+import type { ReportKind } from "./reporttype";
 
 // ---------------------------------------------------------------- verdicts --
 
@@ -33,14 +34,20 @@ export interface Verdict {
   cat: string;
   /** something really happened in the district that a department records (not a game, a film, a match or an article about one) */
   real: boolean;
+  /**
+   * What the report is (27 Nov 2026): an incident (something happened to people or property), or news that is not one: a forecast
+   * (alert), government work or an order, the end of an earlier event, a roundup, an opinion, other. It decides whether a news-only
+   * incident stays in the build (derive.ts), in place of the word rules (reporttype.ts). Absent on a verdict from before it was asked.
+   */
+  kind?: ReportKind;
   /** the deskKey of the report the headline was written from: it is that report's translation, and the story's headline, never another report's */
   of?: string;
   at: number;
   by: string;
 }
 
-/** Bump when the instructions change in a way that should judge the recent news again. */
-const DESK_V = 1;
+/** Bump when the instructions change in a way that should judge the recent news again. 2 (27 Nov 2026): every verdict carries the report's kind. */
+const DESK_V = 2;
 // unit tests start empty and write nothing; a live probe names its own file
 const FILE = process.env.NEWS_DESK_FILE || (process.env.VITEST ? null : path.join(process.cwd(), "data", "aws-cache", "newsdesk.json"));
 const KEEP = 9000;
@@ -52,9 +59,19 @@ declare global {
 }
 const g: Book = (global.__deskBook ??= { cache: null, saving: null, want: 0 });
 
+/** deskKey of the headlines seen lately: each build step and each sweep asks again for the same twenty thousand (27 Nov 2026: 0.6 s a time) */
+const keyMemo = new Map<string, string>();
 /** One headline however it is spaced or cased: what a verdict is kept under. */
-export const deskKey = (title: unknown): string =>
-  String(title ?? "").toLowerCase().replace(/[\s\u200b]+/g, " ").trim().replace(/^(.{25,}?)\s+[|–-]\s+([^|–-]{2,32})$/u, (m, a, b) => (/\d/.test(b) ? m : a)).replace(/["'‘’“”.,!?…]+/g, "").trim().slice(0, 180);
+export const deskKey = (title: unknown): string => {
+  const s = String(title ?? "");
+  let k = keyMemo.get(s);
+  if (k === undefined) {
+    k = s.toLowerCase().replace(/[\s\u200b]+/g, " ").trim().replace(/^(.{25,}?)\s+[|–-]\s+([^|–-]{2,32})$/u, (m, a, b) => (/\d/.test(b) ? m : a)).replace(/["'‘’“”.,!?…]+/g, "").trim().slice(0, 180);
+    if (keyMemo.size >= 60_000) keyMemo.clear();
+    keyMemo.set(s, k);
+  }
+  return k;
+};
 
 /** Every verdict kept, by deskKey. */
 export function deskBook(): Map<string, Verdict> {

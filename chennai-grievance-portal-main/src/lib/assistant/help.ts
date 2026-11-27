@@ -7,7 +7,7 @@ export const HELP_TOPICS: { id: string; match: RegExp; text: string }[] = [
   {
     id: "test_data",
     match: /test data|synthetic|fake|dummy|real data|சோதனை/i,
-    text: "Data sources: in this prototype the departmental feeds (police reports, PWD records, hospital figures and most citizen complaints) are mock departmental data, which the FarmwiseAI challenge allows; they are used like any other department record. News, IMD weather, CPCB air quality, CFM-DSS flood data and AGMARKNET prices are collected from their public sources."
+    text: "Data sources: in this prototype the departmental feeds (police reports, PWD records, hospital figures and most citizen complaints) are mock departmental data, which the FarmwiseAI challenge allows; they are used like any other department record. News, IMD weather, CPCB air quality, CFM-DSS flood data and the Uzhavar Sandhai market prices (TN Department of Agricultural Marketing & Agri Business) are collected from their public sources."
   },
   {
     id: "attention_score",

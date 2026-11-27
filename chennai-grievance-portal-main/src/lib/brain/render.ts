@@ -228,7 +228,7 @@ export function cardOf(o: BrainOut, base: AnswerCard, w: World): AnswerCard {
   const answerMarkdown = [a.say, a.points.length ? a.points.map((t) => `- ${t}`).join("\n") : "", ...md].filter(Boolean).join("\n\n");
   const ev = o.evidence;
   return {
-    ...base, kind: a.kind === "clarify" ? "clarify" : a.kind === "refuse" ? "refusal" : "answer", language: lang, display: chart ? (chart.type.startsWith("map") ? "map" : "chart") : kpis.length ? "kpi" : "text", headline: clip(a.kind === "answer" ? a.title || firstOf(a.say) : firstOf(a.say), 160), answerMarkdown: a.kind === "answer" ? answerMarkdown : a.say, voiceSummary: clip(a.say, 900), voiceLang: lang === "ta" ? "ta-IN" : "en-IN",
+    ...base, kind: a.kind === "clarify" ? "clarify" : a.kind === "refuse" || a.kind === "offtopic" ? "refusal" : "answer", language: lang, display: chart ? (chart.type.startsWith("map") ? "map" : "chart") : kpis.length ? "kpi" : "text", headline: clip(a.kind === "answer" ? a.title || firstOf(a.say) : firstOf(a.say), 160), answerMarkdown: a.kind === "answer" ? answerMarkdown : a.say, voiceSummary: clip(a.say, 900), voiceLang: lang === "ta" ? "ta-IN" : "en-IN",
     chart, visualAsked: !!chart || kpis.length > 0, datasets, kpis: kpis.slice(0, 8), table: null, chips: a.kind === "clarify" ? a.options.map((x) => x.request) : [], scopeLine: ev.map((e) => e.out.when).filter(Boolean)[0] ?? "", asOf: ev.map((e) => e.out.asOf).filter(Boolean).sort().at(-1) ?? base.asOf,
     caveats: [...new Set(ev.flatMap((e) => e.out.limits ?? []))].filter((x) => !/^No time was given/.test(x)).slice(0, 4),
     consoleActions: [...new Set(incidents)].slice(0, 3).map((x) => ({ action: "open_incident" as const, label: "", id: x })),

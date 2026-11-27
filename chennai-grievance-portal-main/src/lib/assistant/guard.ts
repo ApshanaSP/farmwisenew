@@ -14,38 +14,25 @@ import intelPool, { ops } from "@/lib/collector/db";
 import { looksBulk } from "@/lib/assistant/limits";
 import type { RefNames } from "@/lib/assistant/scope";
 import { zoneNoIn } from "@/lib/zone-no";
+import { scopeOf } from "@/lib/topicguard/scope";
 
 export type GuardVerdict = { kind: "unsafe"; reason: string } | { kind: "off_topic"; topic: string } | { kind: "bulk" } | null;
 
 /**
- * Questions plainly outside the district data, answered at once without a model: the topic is named in the
- * refusal, so the Collector sees it was understood. Anything that also mentions the district's data goes on to
- * the router, which decides.
+ * Questions plainly outside District IQ, answered at once without a model: the topic is named in the refusal, so the Collector sees it was
+ * understood. (27 Nov) The topics and what ties a question to the district are the topic guard's, shared with Jarvis and the brain
+ * (topicguard/scope.ts): "traffic near Chepauk stadium for the IPL match" is a district question, "When was Dhoni's retirement?" is not.
+ * Anything it is unsure of goes on to the router, which decides.
  */
-const TOPICS: [RegExp, string][] = [
-  [/\b(ipl|cricket|football|soccer|world cup|olympics?|kabaddi|tennis|csk|dhoni|kohli|match score|who won the (match|game|cup|series))\b/i, "sports"],
-  [/\b(movies?|films?|cinema|songs?|lyrics|actor|actress|celebrit(y|ies)|netflix|web ?series|box office|tv shows?|serial)\b/i, "entertainment"],
-  [/\b(python|javascript|typescript|java|c\+\+|html|css|regex|coding|programming|debug|write (a |some |the )?(code|program|script|function))\b/i, "coding"],
-  [/\b(write|compose|tell|make|give)\b.{0,20}\b(poem|poetry|story|joke|riddle|essay|song|haiku|rap|shayari)\b|\b(joke|poem|riddle|haiku)s?\b/i, "writing"],
-  [/\b(capital of|president of|prime minister of|who invented|who discovered|history of|meaning of life|how far is|tallest|largest (country|planet|ocean))\b/i, "general"],
-  [/\b(stocks?|share price|sensex|nifty|bitcoin|crypto(currency)?|mutual funds?|trading|forex|gold rate)\b/i, "finance"],
-  [/\b(horoscope|astrology|zodiac|rasi palan|palmistry|numerology|jathagam)\b/i, "astrology"],
-  [/\b(recipe|how to cook|cooking)\b/i, "cooking"],
-  [/\b(homework|assignment|exam paper|syllabus|solve (this|the|my) (equation|problem|sum))\b/i, "homework"],
-  [/\b(which party|vote for|election result|opinion on (the )?(government|minister|cm|pm))\b/i, "politics"],
-  [/\b(bangalore|bengaluru|mumbai|delhi|hyderabad|kolkata|pune|coimbatore|madurai|trichy|tiruchirappalli|salem|tirunelveli|vellore|thanjavur|erode|tiruppur|puducherry|pondicherry|kochi|mysuru|mysore|vizag|visakhapatnam|kerala|karnataka|andhra|telangana|another district|other districts?|london|new york|singapore|dubai|paris|tokyo|sydney|colombo|sri lanka|usa|america|abroad|other countr(y|ies))\b/i, "elsewhere"]
-];
-/** Words that tie a message to the console's data: with one of these, the router decides, never this list. */
-const DATA_WORDS = /\b(incidents?|complaints?|grievances?|zones?|wards?|taluks?|departments?|dept|lakes?|reservoirs?|hospitals?|beds?|aqi|air quality|rain(fall)?|flood(s|ing|ed)?|waterlogg\w*|warnings?|imd|mandi|vegetables?|tomato(es)?|onions?|potato(es)?|brinjal|uzhavar|koyambedu|chennai|gcc|police|severe|briefing|verif\w*|officers?|officials?|news|developing|hotspots?|dashboard|console|trend|accidents?|crimes?|theft|fires?|drains?|garbage|water|power|roads?|dengue|cases|reports?|district)\b|சம்பவ|புகார்|மண்டல|வார்டு|ஏரி|மழை|மருத்துவமனை|விலை|சென்னை/i;
+const ELSEWHERE = /\b(bangalore|bengaluru|mumbai|delhi|hyderabad|kolkata|pune|coimbatore|madurai|trichy|tiruchirappalli|salem|tirunelveli|vellore|thanjavur|erode|tiruppur|puducherry|pondicherry|kochi|mysuru|mysore|vizag|visakhapatnam|kerala|karnataka|andhra|telangana|another district|other districts?|london|new york|singapore|dubai|paris|tokyo|sydney|colombo|sri lanka|usa|america|abroad|other countr(y|ies))\b/i;
 
-/** The topic of a question plainly outside the district data, or null. */
+/** The topic of a question plainly outside the district data (a topic guard topic, or "elsewhere" for another city), or null. */
 export function offTopic(message: string): string | null {
-  const hit = TOPICS.find(([re]) => re.test(message));
-  if (!hit) return null;
-  // another city is out of scope whatever it asks about; the rest only when nothing ties it to the data
-  if (hit[1] !== "elsewhere" && DATA_WORDS.test(message)) return null;
-  if (hit[1] === "elsewhere" && /chennai|சென்னை/i.test(message)) return null;
-  return hit[1];
+  const s = scopeOf(message);
+  if (s.verdict === "out") return s.topic;
+  // another city is out of scope whatever it asks about, unless Chennai is named beside it (the chat's own rule)
+  if (ELSEWHERE.test(message) && !/chennai|சென்னை/i.test(message)) return "elsewhere";
+  return null;
 }
 
 /** Where an instruction can begin: the message or a sentence, or after a request word ("please delete", "can you drop"). */
@@ -117,15 +104,14 @@ export interface OfflineRoute {
   actions: { action: string; zone?: number; taluk?: string; dept?: string }[];
 }
 
-const OUT = /\b(ipl|cricket|football|movie|film|song|actor|actress|capital of|president of|prime minister of|python|javascript|code|program|poem|story|joke|recipe|homework|essay|stock|bitcoin|crypto|horoscope)\b/i;
-
 /** Rules that stand in for the router when no model is available. */
 export function offlineRoute(message: string, names: RefNames): OfflineRoute {
   const t = message.toLowerCase();
   const period = /\b(today|24 ?hours?|inniki|innaikku)\b|இன்று/.test(t) ? "daily" : /\b(week|weekly|vaaram)\b|வாரம்|வார/.test(t) ? "weekly"
     : /\b(month|monthly|30 days|maasam)\b|மாதம்|மாத/.test(t) ? "monthly" : /\b(quarter|90 days)\b/.test(t) ? "quarterly" : null;
   const r = (name: string, args: Record<string, unknown> = {}): OfflineRoute => ({ intent: "tool_question", tools: [{ name, args }], period, actions: [] });
-  if (OUT.test(t)) return { intent: "out_of_scope", tools: [], period, actions: [] };
+  // (27 Nov) the topic guard's verdict, not a word list: "code" and "story" once sent "pin code of Adyar" and "news story about Adyar" out
+  if (scopeOf(message).verdict === "out") return { intent: "out_of_scope", tools: [], period, actions: [] };
   if (/^(hi|hello|hey|thanks|thank you|vanakkam|nandri)\b|வணக்கம்|நன்றி/.test(t)) return { intent: "smalltalk", tools: [], period, actions: [] };
   // one specific incident, as a story (before "what is ..." is read as a help question)
   if (/\b(what (is|was) (this|that|the)|tell me (more )?about|explain|details? (of|about)|what happened)\b|enna aachu|\b(case|incident|murder|accident|fire|kolai)\s+(enna|yenna|pathi)\b|என்ன நடந்தது|(வழக்கு|சம்பவம்|கொலை|விபத்து)\s*(என்ன|பற்றி)/.test(t)

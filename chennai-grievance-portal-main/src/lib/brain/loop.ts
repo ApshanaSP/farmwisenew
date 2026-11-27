@@ -15,7 +15,9 @@ import type { WhenIn } from "./when";
 import { SLIP, checkAnswer, keepSound, knownOf, sentences, strayFigures, strayNames } from "./ground";
 import { contextText, systemText } from "./prompt";
 import { TOOLS } from "./tools";
-import { ToolProblem, type BrainTool, type BrainUser, type ConsoleNow, type Evidence, type FinalAnswer, type Lang, type Show, type ToolCtx, type ToolOut } from "./types";
+import { ToolProblem, type AnswerScope, type BrainTool, type BrainUser, type ConsoleNow, type Evidence, type FinalAnswer, type Lang, type Show, type ToolCtx, type ToolOut } from "./types";
+import { scopeOf } from "@/lib/topicguard/scope";
+import { offTopicReply } from "@/lib/topicguard/reply";
 
 export const FAST = (): string => (process.env.JARVIS_BRAIN_MODEL ?? "").trim() || "claude-haiku-5-5";
 export const DEEP = (): string => (process.env.JARVIS_BRAIN_DEEP ?? "").trim() || "claude-sonnet-5-5";
@@ -28,12 +30,13 @@ const DEEP_A_DAY = () => Number(process.env.JARVIS_BRAIN_DEEP_DAY ?? 80) || 80;
 
 const ANSWER_TOOL = {
   name: "answer",
-  description: "End the turn: the answer (or the question back) to the Collector. Call it exactly once, alone, after the tools. Write kind, lang and say first.",
+  description: "End the turn: the answer (or the question back) to the Collector. Call it exactly once, alone, after the tools. Write kind, scope, lang and say first.",
   eager_input_streaming: true,
   input_schema: {
-    type: "object", additionalProperties: false, required: ["kind", "lang", "say", "title"],
+    type: "object", additionalProperties: false, required: ["kind", "scope", "lang", "say", "title"],
     properties: {
-      kind: { type: "string", enum: ["answer", "clarify", "chat", "refuse"], description: "answer: from the results; clarify: a question back with options; chat: small talk or general knowledge; refuse: private, harmful or forbidden" },
+      kind: { type: "string", enum: ["answer", "clarify", "chat", "refuse", "offtopic"], description: "answer: from the results; clarify: a question back with options; chat: greetings, thanks, the time or date, what District IQ or this console is, and civic or administrative terms (AQI, cusec, POCSO, SLA); refuse: private, harmful or forbidden; offtopic: outside the district, this console and District IQ (sports, films, celebrities, trivia, coding, jokes...): say \"\", no tools" },
+      scope: { type: "string", enum: ["records", "console", "product", "civic", "smalltalk", "offtopic"], description: "what the question is about: the district's records and feeds, this console and its pages, District IQ itself, a civic or administrative term, small talk, or none of these (offtopic)" },
       lang: { type: "string", enum: ["en", "ta"], description: "the language of say" },
       say: { type: "string", description: "the answer itself, flowing sentences, the direct answer first" },
       title: { type: "string", description: "what the screen shows, at most 9 words" },
@@ -102,16 +105,19 @@ export function owedLang(text: string, last: Lang | null | undefined): Lang | nu
   return tg ? null : "en";
 }
 
-function parseAnswer(raw: unknown): FinalAnswer | null {
+const SCOPES: readonly AnswerScope[] = ["records", "console", "product", "civic", "smalltalk", "offtopic"];
+/** the answer tool's input, made safe; null when it holds no words (an off-topic verdict needs none: code writes the decline) */
+export function parseAnswer(raw: unknown): FinalAnswer | null {
   if (!raw || typeof raw !== "object") return null;
   const x = raw as Record<string, unknown>;
   const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
-  const kind = ["answer", "clarify", "chat", "refuse"].includes(str(x.kind)) ? (str(x.kind) as FinalAnswer["kind"]) : "answer";
+  const kind = ["answer", "clarify", "chat", "refuse", "offtopic"].includes(str(x.kind)) ? (str(x.kind) as FinalAnswer["kind"]) : "answer";
+  const scope = (SCOPES as readonly string[]).includes(str(x.scope)) ? (str(x.scope) as AnswerScope) : null;
   const list = (v: unknown): unknown[] => { if (Array.isArray(v)) return v; if (typeof v === "string" && v.trim().startsWith("[")) { try { const p = JSON.parse(v); return Array.isArray(p) ? p : []; } catch { return []; } } return []; };
   const say = str(x.say).replace(/\*\*/g, "").replace(/\s+/g, " ");
-  if (!say) return null;
+  if (!say && kind !== "offtopic" && scope !== "offtopic") return null;
   return {
-    kind, lang: str(x.lang) === "ta" || TAMIL.test(say) ? "ta" : "en", say, title: str(x.title).slice(0, 140), points: list(x.points).map(str).filter(Boolean).map((p) => p.replace(/^\s*[-•*]\s*/, "").replace(/\*\*/g, "")).slice(0, 18),
+    kind, scope, lang: str(x.lang) === "ta" || TAMIL.test(say) ? "ta" : "en", say, title: str(x.title).slice(0, 140), points: list(x.points).map(str).filter(Boolean).map((p) => p.replace(/^\s*[-•*]\s*/, "").replace(/\*\*/g, "")).slice(0, 18),
     show: list(x.show).filter((y): y is Record<string, unknown> => !!y && typeof y === "object").map((y) => ({ as: str(y.as) as Show["as"], from: str(y.from).replace(/^\[|\]$/g, ""), title: str(y.title) || null, label: str(y.label) || null, value: str(y.value) || null, series: str(y.series) || null, columns: Array.isArray(y.columns) ? y.columns.map(str).filter(Boolean) : null, limit: Number(y.limit) || null })).filter((y) => y.from).slice(0, 6),
     options: list(x.options).filter((y): y is Record<string, unknown> => !!y && typeof y === "object").map((y) => ({ label: str(y.label).slice(0, 60), request: str(y.request).slice(0, 220) })).filter((y) => y.label && y.request).slice(0, 4), used: []
   };
@@ -124,6 +130,39 @@ export function partialSay(json: string): string | null {
   try { return JSON.parse(`"${m[1].replace(/\\[^"\\/bfnrtu]?$/, "").replace(/\\u[0-9a-fA-F]{0,3}$/, "")}"`); } catch { return null; }
 }
 const sayClosed = (json: string) => /"say"\s*:\s*"(?:[^"\\]|\\.)*"/.test(json);
+
+/**
+ * Whether the words of an answer still being written may be spoken now (voice). "stop": an off-topic verdict, never spoken (code says the
+ * decline). "hold": wait for the whole answer to be checked: a question back, a refusal, an answer that has read nothing, small talk whose
+ * scope is not written yet (27 Nov: "When was Dhoni's retirement?" was answered from memory as chat and spoken while it was written), or
+ * small talk on a question code already judged off-topic. "go": the checked sentences go out as they come.
+ */
+export function mayStream(json: string, evidenceCount: number, codeOut = false): "go" | "hold" | "stop" {
+  if (/"(?:kind|scope)"\s*:\s*"offtopic"/.test(json)) return "stop";
+  const kind = json.match(/"kind"\s*:\s*"(\w+)"/)?.[1];
+  if (kind === "answer") return evidenceCount ? "go" : "hold";
+  if (kind === "chat") return !codeOut && /"scope"\s*:\s*"(?:smalltalk|civic|console|product)"/.test(json) ? "go" : "hold";
+  return "hold";
+}
+
+/** the brain's verdict, enforced: what the model called off-topic, and small talk from memory on a question code calls off-topic */
+export function isOffTopic(a: FinalAnswer, evidenceCount: number, codeOut: boolean): boolean {
+  if (a.kind === "offtopic") return true;
+  // (an answer written from what the tools read stands: the records hold it, whatever the verdict says)
+  if (a.scope === "offtopic") return !(a.kind === "answer" && evidenceCount > 0);
+  return a.kind === "chat" && evidenceCount === 0 && codeOut;
+}
+
+/** a department's name for an officer's decline ("Greater Chennai Police's records"), its code when the world does not know it */
+export function deptName(w: World | null | undefined, code: string | null | undefined): string | null {
+  if (!code) return null;
+  return [...(w?.depts ?? []), ...(w?.bodies ?? [])].find((d) => d.code === code)?.name ?? code;
+}
+
+/** the fixed decline (topicguard/reply.ts): the short line by voice, the department's own for an officer */
+export function declined(lang: Lang, o: { dept?: string | null; voice?: boolean } = {}): FinalAnswer {
+  return { kind: "offtopic", scope: "offtopic", lang, say: offTopicReply(lang, { dept: o.dept ?? null, voice: !!o.voice }), title: "", points: [], show: [], options: [], used: [] };
+}
 
 /** a call that has not begun to answer by now is asked a second time, and the first to begin is used */
 const HEDGE_MS = 6000;
@@ -168,7 +207,9 @@ export async function think(i: BrainIn): Promise<BrainOut | null> {
   const evidence: Evidence[] = [];
   const ctx: ToolCtx = { user: i.user, world: i.world, now: i.now, signal: i.signal, turn: evidence, past: i.past, console: i.console, channel: i.channel };
   const want = i.lang ?? owedLang(i.text, i.lastLang);
-  const said = [i.text, ...i.history.flatMap((h) => [h.user, h.assistant, h.digest ?? ""]), i.kpi ?? "", i.console.screen ?? "", i.console.screenTitle ?? "", i.studio ?? "", i.now, contextText({ now: i.now, channel: i.channel, user: i.user, con: i.console })];
+  // the topic guard's code verdict (topicguard/scope.ts): small talk from memory on a question it calls off-topic is never said
+  const codeOut = (() => { try { return scopeOf(i.text, { world: i.world, follows: i.history.length > 0 }).verdict === "out"; } catch { return false; } })();
+  const said =[i.text, ...i.history.flatMap((h) => [h.user, h.assistant, h.digest ?? ""]), i.kpi ?? "", i.console.screen ?? "", i.console.screenTitle ?? "", i.studio ?? "", i.now, contextText({ now: i.now, channel: i.channel, user: i.user, con: i.console })];
   const tokens = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
   const repaired: string[] = [], spoken: string[] = [];
   const trace: BrainOut["trace"] = [];
@@ -197,8 +238,11 @@ export async function think(i: BrainIn): Promise<BrainOut | null> {
         onToolJson: i.sentence ? (_ix, tool, json) => {
           // an answer written beside other calls is not the answer yet, and one that has read nothing waits to be checked whole
           if (tool !== "answer") broke = true;
-          if (broke || (!evidence.length && /"kind"\s*:\s*"answer"/.test(json))) return;
-          if (/"kind"\s*:\s*"(?:clarify|refuse)"/.test(json)) return;
+          if (broke) return;
+          // an off-topic verdict is never spoken; small talk waits for its scope (mayStream)
+          const may = mayStream(json, evidence.length, codeOut);
+          if (may === "stop") { broke = true; return; }
+          if (may === "hold") return;
           const p = partialSay(json);
           if (!p) return;
           const done = sayClosed(json);
@@ -241,6 +285,8 @@ export async function think(i: BrainIn): Promise<BrainOut | null> {
     if (ans && uses.length === 1) {
       const a = parseAnswer(ans.input);
       if (!a) { messages.push({ role: "user", content: [{ type: "tool_result", tool_use_id: ans.id, is_error: true, content: "say is missing. Call answer again." }] }); continue; }
+      // the scope verdict, enforced in code: outside District IQ is declined in the fixed sentence, whatever the model wrote in say
+      if (isOffTopic(a, evidence.length, codeOut)) { telemetry("brain_offtopic", { why: a.kind === "offtopic" ? "kind" : a.scope === "offtopic" ? "scope" : "code", model }); return finish(declined(want ?? a.lang, { dept: deptName(i.world, i.user.lockDept), voice: i.channel === "voice" })); }
       const k = knownOf([...i.past, ...evidence], said);
       const v = checkAnswer(a, k, i.world, { toolsRun: evidence.length, wantLang: want });
       if (v.ok || bad >= 2 || Date.now() > i.until - 3500) {

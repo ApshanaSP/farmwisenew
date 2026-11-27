@@ -21,6 +21,7 @@
 import fs from "fs";
 import path from "path";
 import zlib from "zlib";
+import { createHash } from "crypto";
 import type { DatabaseSync as DB } from "node:sqlite";
 import { expand, registerFunctions, setDatabaseNames, translate } from "@/lib/aws/dialect";
 import { bumpDataEpoch } from "@/lib/collector/epoch";
@@ -55,7 +56,8 @@ export interface Snapshot { table: string; columns: [string, Kind][]; rows: unkn
 
 interface State { db: DB; buildId: string; builtAt: string; loadedAt: number; checkedAt: number; durableFile: string;
   /** build hooks already applied to this build, and the run in progress */ hooksDone?: Set<string>; hooking?: Promise<void> | null }
-interface Durable { conn: DB; keys: Record<string, string[]>; file: string; loadedAt: number; /** WEBSITE_TABLES checked on this file */ siteTables?: boolean }
+interface Durable { conn: DB; keys: Record<string, string[]>; file: string; loadedAt: number; /** WEBSITE_TABLES checked on this file */ siteTables?: boolean;
+  /** the rows AWS handed over at this load, as one fingerprint (durableSignature): a reload that brings the same rows changes nothing */ sig?: string }
 
 /** One holder at a time; acquire() resolves to the release function. */
 class Lock {
@@ -599,10 +601,34 @@ async function reference(url: string): Promise<Doc> {
 
 type Loaded = Durable & { tables: number; rows: number; refTables: number };
 
+/**
+ * One fingerprint of the durable rows AWS handed over: per table, the sum of each row's own hash (and the count), so the same rows give the
+ * same fingerprint however the load orders them, with no sort and no copy of the rows held. A copy that does not save reloads every few
+ * minutes; only a reload whose fingerprint differs brought anything from the other copies (hosted-jarvis C3: every reload bumped the data
+ * epoch and emptied every cache). Breathes like a load does, so the server keeps answering meanwhile.
+ */
+export async function durableSignature(rows: Doc["rows"]): Promise<string> {
+  const out = createHash("sha1");
+  for (const t of Object.keys(rows).sort()) {
+    const sum = new Uint32Array(5); // a sha1 digest is five 32-bit words; each word is summed (mod 2^32) over the rows
+    let n = 0;
+    for (const r of rows[t] ?? []) {
+      const d = createHash("sha1").update(JSON.stringify(r)).digest();
+      for (let k = 0; k < 5; k++) sum[k] += d.readUInt32BE(k * 4);
+      n++;
+      await breathe();
+    }
+    out.update(`${t}\u0000${n}\u0000`).update(Buffer.from(sum.buffer));
+  }
+  return out.digest("hex");
+}
+
 /** A new durable file from AWS: every durable row (POST /store/load) and the read-only reference tables. */
 async function fetchDurable(file: string): Promise<Loaded> {
   const m = await api("/store/load", {});
   const [rows, ref] = await Promise.all([gzJson<Doc>(m.rows), m.reference ? reference(m.reference) : null]);
+  // before the website's own tables are added below: what AWS holds, and nothing else
+  const sig = await durableSignature(rows.rows ?? {});
   for (const [t, s] of Object.entries(WEBSITE_TABLES)) rows.schema[t] ??= s;
   for (const f of ["", "-wal", "-shm", "-journal"]) fs.rmSync(file + f, { force: true });
   const conn = new (sqlite().DatabaseSync)(file);
@@ -626,18 +652,18 @@ async function fetchDurable(file: string): Promise<Loaded> {
                INSERT INTO sqlite_sequence (name, seq) SELECT name, ${LOCAL_IDS} FROM sqlite_master
                WHERE type = 'table' AND sql LIKE '%AUTOINCREMENT%' AND name <> '_changes' AND name NOT IN (SELECT name FROM sqlite_sequence);`);
   conn.exec("COMMIT");
-  return { conn, keys, file, loadedAt: Date.now(), tables: m.tables, rows: m.row_count, refTables: ref ? Object.keys(ref.schema).length : 0 };
+  return { conn, keys, file, loadedAt: Date.now(), sig, tables: m.tables, rows: m.row_count, refTables: ref ? Object.keys(ref.schema).length : 0 };
 }
 
-/** Copies this copy's own changes (noted in _changes) into a newly loaded store. Returns how many it kept. */
-function overlay(from: Durable, to: Durable): number {
+/** Copies this copy's own changes (noted in _changes) into a newly loaded store. Returns how many it kept, and how many it could not. */
+function overlay(from: Durable, to: Durable): { kept: number; lost: number } {
   const changed = from.conn.prepare("SELECT DISTINCT t, k FROM _changes").all() as { t: string; k: string }[];
-  let kept = 0;
+  let kept = 0, lost = 0;
   to.conn.exec("BEGIN");
   try {
     for (const { t, k } of changed) {
       const key = from.keys[t];
-      if (!key || !to.keys[t]) continue;
+      if (!key || !to.keys[t]) { lost++; continue; }
       const vals = JSON.parse(k) as any[];
       const where = key.map((c) => (c === "rowid" ? "rowid IS ?" : `${q(c)} IS ?`)).join(" AND ");
       const row = from.conn.prepare(`SELECT ${key.includes("rowid") ? "rowid AS rowid, " : ""}* FROM ${q(t)} WHERE ${where}`)
@@ -654,6 +680,7 @@ function overlay(from: Durable, to: Durable): number {
         kept++;
       } catch {
         to.conn.exec("ROLLBACK TO kept; RELEASE kept"); // clashes with a row saved meanwhile (a unique value): that row wins
+        lost++;
       }
     }
     to.conn.exec("COMMIT");
@@ -661,7 +688,36 @@ function overlay(from: Durable, to: Durable): number {
     to.conn.exec("ROLLBACK");
     throw e;
   }
-  return kept;
+  return { kept, lost };
+}
+
+/**
+ * Whether a reload of the durable store changed what this copy reads: AWS handed over other rows than at the last load (another copy
+ * saved something), or one of this copy's own changes could not be kept over it. Neither: the same data in a new file, and no cache
+ * needs emptying (hosted-jarvis C3).
+ */
+export const reloadChanged = (before: string | undefined, after: string | undefined, lost: number): boolean => lost > 0 || !before || !after || before !== after;
+
+/**
+ * The website's filings on the build being served, again (lib/manu/cases.ts websiteCases): after a build swap, a filing made while the
+ * new build's steps ran went only to the build it replaced (addCaseLive), and the work on a filing's INC-W case moves to the id the new
+ * build gives it (adoptPipelineIds); after a reload of the durable store, the filings and work other copies saved come in. Under the write
+ * lock, so it never lands inside an open transaction. A failure is logged; the next swap or reload tries again.
+ */
+async function websiteCasesOnServed(why: string): Promise<void> {
+  if (!g.state) return;
+  try {
+    const { websiteCases } = await import("@/lib/manu/cases");
+    const release = await g.lock.acquire();
+    try {
+      if (g.state) await websiteCases(g.state.db);
+    } finally {
+      release();
+    }
+    void flush(); // ids handed over are durable rows: the saving copy sends them now, not at the next minute's retry
+  } catch (e) {
+    console.warn(`[aws-store] website filings not laid over build ${g.state?.buildId} after ${why}: ${(e as Error).message}`);
+  }
 }
 
 /** Deletes durable files nothing uses any more; one still open (by a build about to close) goes at the next sweep. */
@@ -683,13 +739,17 @@ async function reloadDurable(): Promise<void> {
   await yieldThread();
   const release = await g.lock.acquire(); // no transaction is open while the files are swapped
   const old = g.durable;
-  let kept = 0;
+  let kept = 0, changed = true;
   try {
-    if (old) kept = overlay(old, fresh);
+    let lost = 0;
+    if (old) ({ kept, lost } = overlay(old, fresh));
     if (g.state) attach(g.state, fresh.file);
     g.durable = fresh;
-    // v13 (review finding 0-11): other PCs' complaints and decisions just came in, so every read kept by the data epoch starts again
-    bumpDataEpoch();
+    // v13 (review finding 0-11): other PCs' complaints and decisions just came in, so every read kept by the data epoch starts again.
+    // 27 Nov (hosted-jarvis C3): only when they did. The same rows in a new file changed no answer, and the bump every 5 minutes on the copy
+    // that does not save emptied every cache and rebuilt them on its one core
+    changed = reloadChanged(old?.sig, fresh.sig, lost);
+    if (changed) bumpDataEpoch();
   } catch (e) {
     fresh.conn.close();
     throw e;
@@ -699,7 +759,9 @@ async function reloadDurable(): Promise<void> {
   await yieldThread();
   try { old?.conn.close(); } catch { /* already closed */ }
   sweep(fresh.file);
-  console.log(`[aws-store] complaints and accounts reloaded from AWS: ${fresh.rows} rows${kept ? `, ${kept} local changes kept` : ""}`);
+  console.log(`[aws-store] complaints and accounts reloaded from AWS: ${fresh.rows} rows${kept ? `, ${kept} local changes kept` : ""}${changed ? "" : " (nothing new)"}`);
+  // filings and work other copies saved, on the build being served (it bumps the epoch itself when it adds or moves anything)
+  if (changed) await websiteCasesOnServed("the reload");
 }
 
 /**
@@ -793,6 +855,8 @@ async function current(): Promise<State> {
         // now kept by the data's version and this epoch, no longer by a 30 s clock: the critic's review of the cache-key fix)
         bumpDataEpoch();
         console.log(`[aws-store] build ${fresh.buildId} loaded (was ${old?.buildId})`);
+        // a filing made while the new build's steps ran reached only the old build: laid over the served one now (and its INC-W work handed over)
+        await websiteCasesOnServed("the build swap");
         for (const fn of g.swapListeners ?? []) try { fn(fresh.buildId); } catch (e) { console.warn(`[aws-store] a build-swap listener failed: ${(e as Error).message}`); }
         setTimeout(() => { try { old?.db.close(); } catch { /* already closed */ } }, 60_000);
       })

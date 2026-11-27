@@ -11,6 +11,9 @@
  * are tried, because the platform's resources differ; a record that names none of Chennai's markets is left out. Prices are rupees a quintal,
  * as AGMARKNET's. NOT YET RUN against the live API from this machine (data.gov.in refused automated reads of its pages): the first run with a key
  * should be checked against the console's Environment page.
+ *
+ * 27 Nov: the Chennai markets' prices now come first from the TN Agricultural Marketing department's own feed (tnprices.ts, no key); this
+ * data set is read as well only when DATA_GOV_API_KEY is set.
  */
 import intelPool, { ops } from "@/lib/collector/db";
 import type { ResultSetHeader } from "mysql2";
@@ -29,8 +32,9 @@ function field(r: Row, name: string): unknown {
 const num = (v: unknown) => (v == null || v === "" || !Number.isFinite(Number(v)) ? null : Number(v));
 
 /**
- * The Chennai market a record names ("Anna Nagar(Uzhavar Sandhai)", "K.K.Nagar(Uzhavar Sandhai )"), by the same anchored names the
- * AGMARKNET collector keeps (sources.ts CHENNAI_MARKETS): a market that only starts like one ("Ambattur" alone, "Anna Nagar West") is not it.
+ * The Chennai market a record names ("Nanganallur(Uzhavar Sandhai )", "Ambattur(Uzhavar Sandhai )"), by the same anchored names the
+ * collector keeps (tnprices.ts TN_MARKETS, as sources.ts CHENNAI_MARKETS): a market that only starts like one ("Ambattur" alone) is not it.
+ * 27 Nov: "Anna Nagar" and "K.K. Nagar" are no longer Chennai markets here: data.gov.in's are in Madurai and Tiruchirappalli.
  */
 export function marketOf(name: unknown): string | null {
   const t = String(name ?? "").trim();
@@ -48,7 +52,8 @@ export function arrivalDay(v: unknown): string | null {
   const ymd = /^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$/.exec(s);
   return ymd ? `${ymd[1]}-${ymd[2]}-${ymd[3]}` : null;
 }
-export interface OgdRow { market: string; commodity: string; variety: string; min: number | null; max: number | null; modal: number }
+/** (27 Nov: `group` and `arrival` (tonnes) are given by the agrimark collector, tnprices.ts; data.gov.in rows leave them empty) */
+export interface OgdRow { market: string; commodity: string; variety: string; min: number | null; max: number | null; modal: number; group?: string | null; arrival?: number | null }
 /**
  * v18 round 3: the records that are a Chennai market's own report for the day asked: Tamil Nadu, one of the four districts, its own arrival
  * date that day (never another day's record the filter let through), a market named as the collector names it, and a modal price.
@@ -164,14 +169,16 @@ export async function ogdMarketDay(day: string, signal?: AbortSignal): Promise<{
 
 const INSERT = () => `INSERT INTO ${ops("mandi_market_prices")} (date, market, commodity, variety, cmdt_group, min_price, max_price, modal_price, arrival)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE min_price = VALUES(min_price), max_price = VALUES(max_price), modal_price = VALUES(modal_price), fetched_at = NOW()`;
+       ON DUPLICATE KEY UPDATE min_price = VALUES(min_price), max_price = VALUES(max_price), modal_price = VALUES(modal_price),
+         cmdt_group = COALESCE(VALUES(cmdt_group), cmdt_group), arrival = COALESCE(VALUES(arrival), arrival), fetched_at = NOW()`;
 /**
  * A day's rows in one transaction on one connection (the AWS store sends its changes once, at COMMIT, not once a row; a failed row keeps
  * none of the day). Where the store gives no connection, row by row on the pool as before. Returns how many rows were new.
+ * 27 Nov: exported for the agrimark collector (tnprices.ts), which keeps its rows the same way.
  */
-async function keepDay(day: string, rows: OgdRow[]): Promise<number> {
+export async function keepDay(day: string, rows: OgdRow[]): Promise<number> {
   const sql = INSERT();
-  const args = (x: OgdRow) => [day, x.market, x.commodity, x.variety, null, x.min, x.max, x.modal, null];
+  const args = (x: OgdRow) => [day, x.market, x.commodity, x.variety, x.group ?? null, x.min, x.max, x.modal, x.arrival ?? null];
   let added = 0;
   if (typeof (intelPool as { getConnection?: unknown }).getConnection !== "function") {
     for (const x of rows) { const [r] = await intelPool.query<ResultSetHeader>(sql, args(x)); if (r?.affectedRows === 1) added++; }

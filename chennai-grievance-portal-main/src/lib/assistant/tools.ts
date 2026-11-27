@@ -17,6 +17,7 @@ import type { Story } from "@/lib/collector/storyai";
 import { mapGeo } from "@/lib/collector/geo";
 import { resolvePlace } from "@/lib/collector/nlp";
 import { CHENNAI_MARKETS, mandiMarkets, mandiWeekly } from "@/lib/collector/sources";
+import { TN_SOURCE } from "@/lib/collector/tnprices";
 import { ScopeSchema, refNames, scopeProblems, type AssistantScope } from "@/lib/assistant/scope";
 import { closest, matchCommodities } from "@/lib/assistant/fuzzy";
 import { semanticSearch, warmUp, type Meta } from "@/lib/assistant/embed";
@@ -1212,13 +1213,15 @@ export const TOOLS = [
 
   tool({
     name: "mandi_prices",
-    description: "Vegetable and grocery prices at Chennai's markets reporting to AGMARKNET (Uzhavar Sandhai farmer markets: Anna Nagar, K.K. Nagar, Nanganallur, Ambattur and suburban ones): each market's latest modal price with its previous report, and the average across markets, plus the weekly regional trend. Koyambedu does not report to AGMARKNET.",
+    // 27 Nov: the prices come from the TN Agricultural Marketing department's Uzhavar Sandhai feed (agrimark.tn.gov.in); AGMARKNET asks
+    // for a CAPTCHA since October. "Anna Nagar" and "K.K. Nagar" were Madurai's and Tiruchirappalli's markets and are no longer listed.
+    description: "Vegetable and fruit prices at the Uzhavar Sandhai farmer markets in and around Chennai (retail prices, rupees a kilo, entered daily by each market with the TN Department of Agricultural Marketing & Agri Business: Nanganallur, Ambattur, Pallavaram, Medavakkam, Keelkattalai, Guduvancheri, Kundrathur, Padappai): each market's latest price with its previous report, and the average across markets, plus the weekly trend of those markets. Koyambedu, the wholesale market, publishes no daily price feed.",
     args: z.object({ commodity: z.string().trim().min(2).max(40).nullable().default(null), market: z.string().trim().min(2).max(60).nullable().default(null) }),
     async run({ commodity, market }) {
       const [m, now] = await Promise.all([mandiMarkets(), asOf()]);
       const key = (s: string) => s.toLowerCase().replace(/uzhavar|sandhai|santhai|market|farmers?|\(.*?\)|[^a-z]/g, "");
       let marketKey: string | null = null;
-      const caveats = ["Prices are AGMARKNET modal prices in rupees per quintal; per kg is the quintal price divided by 100."];
+      const caveats = [`Uzhavar Sandhai farmer-market retail prices (the middle of each market's low and high price) from the ${TN_SOURCE}, kept in rupees per quintal; per kg is the quintal price divided by 100. Not wholesale mandi prices.`];
       // "Chennai", "all markets", "the city": every reporting market, not a market of that name
       const bare = (market ?? "").toLowerCase().replace(/\b(uzhavar|sandhai|santhai|markets?|in|at|the)\b/g, " ").trim();
       const citywide = !bare || /^(chennai|madras|city|all|any|every|district|gcc|local|nearby|today|tamil ?nadu|tn|சென்னை)$/.test(bare);
@@ -1227,8 +1230,9 @@ export const TOOLS = [
         marketKey = CHENNAI_MARKETS.find((x) => key(x.key) === want || (want.length >= 4 && key(x.key).startsWith(want)))?.key
           ?? CHENNAI_MARKETS.find((x) => key(x.key) === closest(want, CHENNAI_MARKETS.map((y) => key(y.key))))?.key ?? null;
         // a market that does not report: say so, and show the ones that do rather than nothing
-        if (!marketKey) caveats.unshift(/koyamb/.test(want) ? "Koyambedu, the wholesale market, does not report prices to AGMARKNET; these are the Chennai markets that do."
-          : `${market} does not report prices to AGMARKNET; these are the Chennai markets that do.`);
+        if (!marketKey) caveats.unshift(/koyamb/.test(want) ? "Koyambedu, the wholesale market, publishes no daily price feed; these are the Uzhavar Sandhai farmer markets around Chennai that do."
+          : /annanagar|kknagar/.test(want) ? `There is no Uzhavar Sandhai at ${market} in Chennai (the markets of that name are in Madurai and Tiruchirappalli); these are the Chennai markets that report.`
+            : `${market} has no Uzhavar Sandhai price report; these are the Chennai markets that report.`);
       }
       // typos and local names: "tomatoe", "thakkali", "தக்காளி" -> Tomato; "tomato and onion" -> both
       const names = m.commodities.map((c) => c.commodity);
@@ -1257,10 +1261,11 @@ export const TOOLS = [
         ...c.prices.flatMap((p) => [fact(`mandi.${slug(c.commodity)}.${slug(p.market)}.kg`, `${c.commodity} at ${p.market} on ${p.date}`, p.per_kg, "Rs/kg"),
           ...(p.prev_per_kg != null ? [fact(`mandi.${slug(c.commodity)}.${slug(p.market)}.prev_kg`, `${c.commodity} at ${p.market} on ${p.prev_date}`, p.prev_per_kg, "Rs/kg")] : [])])
       ]);
-      if (m.latest) caveats.unshift(`Latest market report: ${m.latest} (markets report to AGMARKNET a few days late), not today.`);
+      if (m.latest && m.latest < now.slice(0, 10)) caveats.unshift(`Latest market report: ${m.latest}, not today (the markets enter each morning's prices that day; they are read once a day).`);
       return {
-        scope: null, asOf: now, data: { found: rows.length > 0, market: marketKey, latest: m.latest, fetched: m.fetched, rows, weekly, unknown: match.unknown }, facts,
-        sources: [fn("sources.mandiMarkets"), tbl("district_intel_ops.mandi_market_prices"), ...(weekly.length ? [tbl("district_intel_ops.mandi_weekly")] : [])],
+        scope: null, asOf: now, data: { found: rows.length > 0, market: marketKey, latest: m.latest, fetched: m.fetched, rows, weekly, unknown: match.unknown, source: TN_SOURCE }, facts,
+        sources: [fn("sources.mandiMarkets", `Uzhavar Sandhai retail prices, ${TN_SOURCE}`), tbl("district_intel_ops.mandi_market_prices", "with data/aws-cache/tn-prices.json (tnprices.ts)"),
+          ...(weekly.length ? [fn("sources.mandiWeekly", "weekly averages of those markets")] : [])],
         incidentIds: [], testData: false, caveats
       };
     }
@@ -1268,7 +1273,7 @@ export const TOOLS = [
 
   tool({
     name: "source_health",
-    description: "Freshness of every data source: the pipeline's feeds (complaints, police, PWD, hospitals, news, IMD, CPCB, CFM) with status and minutes since the last success, the time the store was last exported, and the sources the Collector added (AGMARKNET, RSS...).",
+    description: "Freshness of every data source: the pipeline's feeds (complaints, police, PWD, hospitals, news, IMD, CPCB, CFM) with status and minutes since the last success, the time the store was last exported, and the sources the Collector added (the Uzhavar Sandhai market prices, RSS...).",
     args: z.object({}),
     async run() {
       const [f, sources, now] = await Promise.all([feeds(), addedSources(), asOf()]);

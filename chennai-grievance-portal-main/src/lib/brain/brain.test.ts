@@ -15,6 +15,15 @@ import { defaultShow, trendFirst } from "./render";
 import { outText, partText } from "./format";
 import type { World } from "@/lib/thunai/types";
 import type { Evidence, FinalAnswer, Part } from "./types";
+import { vi } from "vitest";
+import { declined, isOffTopic, mayStream, parseAnswer } from "./loop";
+import { precheck } from "./index";
+import type { BrainOut } from "./loop";
+import { resultOf } from "@/lib/thunai/brainturn";
+import { WORLD } from "@/lib/thunai/fixture";
+
+// the news search behind the topic guard is the store's: here nothing is in the news, except a story about a stampede at a screening
+vi.mock("@/lib/topicguard/news", () => ({ inOurNews: async (m: string) => /coolie/i.test(m), inOurNewsSoon: async (m: string) => /coolie/i.test(m) }));
 
 const NOW = "2026-11-26 10:15:00";
 const W = { zones: [{ n: 13, name: "Adyar" }, { n: 9, name: "Teynampet" }], taluks: [{ code: "T1", name: "Velachery" }], depts: [{ code: "POLICE", name: "Greater Chennai Police" }] } as unknown as World;
@@ -238,5 +247,84 @@ describe("what is drawn", () => {
     expect(t).toContain("Adyar");
     expect(t).toContain("today");
     expect(t).toContain("police records");
+  });
+});
+
+describe("the topic guard in the brain (27 Nov)", () => {
+  const world = WORLD as World;
+  const collector = { email: "c", role: "collector" as const, lockDept: null };
+  it("an off-topic verdict needs no words: code writes the decline", () => {
+    expect(parseAnswer({ kind: "offtopic", scope: "offtopic", lang: "en", say: "", title: "" })).toMatchObject({ kind: "offtopic", scope: "offtopic", say: "" });
+    expect(parseAnswer({ kind: "chat", scope: "offtopic", lang: "en", say: "" })?.scope).toBe("offtopic");
+    // any other answer without words is sent back
+    expect(parseAnswer({ kind: "chat", scope: "smalltalk", lang: "en", say: "" })).toBeNull();
+    // a model that leaves scope out does not break the turn
+    expect(parseAnswer({ kind: "chat", lang: "en", say: "Hello." })).toMatchObject({ kind: "chat", scope: null, say: "Hello." });
+  });
+  it("words still being written: an off-topic verdict is never spoken, small talk waits for its scope", () => {
+    expect(mayStream('{"kind":"offtopic","scope":"offtopic","say":"Dhoni ret', 0)).toBe("stop");
+    expect(mayStream('{"kind":"chat","scope":"offtopic","say":"Dhoni ret', 0)).toBe("stop");
+    expect(mayStream('{"kind":"chat","say":"Dhoni retired in', 0)).toBe("hold");
+    expect(mayStream('{"kind":"chat","scope":"smalltalk","say":"Good morning. ', 0)).toBe("go");
+    expect(mayStream('{"kind":"chat","scope":"civic","say":"A cusec is one cubic foot of water a second. ', 0)).toBe("go");
+    // small talk on a question code calls off-topic is never spoken while written
+    expect(mayStream('{"kind":"chat","scope":"smalltalk","say":"Dhoni retired in', 0, true)).toBe("hold");
+    expect(mayStream('{"say":"Dhoni retired in', 0)).toBe("hold");
+    expect(mayStream('{"kind":"answer","scope":"records","say":"Adyar leads with 46. ', 0)).toBe("hold");
+    expect(mayStream('{"kind":"answer","scope":"records","say":"Adyar leads with 46. ', 2)).toBe("go");
+    expect(mayStream('{"kind":"clarify","scope":"records","say":"By what? ', 2)).toBe("hold");
+  });
+  it("the verdict is enforced in code", () => {
+    expect(isOffTopic(ans("", { kind: "offtopic" }), 0, false)).toBe(true);
+    expect(isOffTopic(ans("Dhoni retired in 2020.", { kind: "chat", scope: "offtopic" }), 0, false)).toBe(true);
+    expect(isOffTopic(ans("Dhoni retired in 2020.", { kind: "chat", scope: "smalltalk" }), 0, true)).toBe(true);
+    expect(isOffTopic(ans("Good morning.", { kind: "chat", scope: "smalltalk" }), 0, false)).toBe(false);
+    // an answer written from what the tools read stands, whatever the verdict says
+    expect(isOffTopic(ans("Traffic near Chepauk is heavy.", { scope: "offtopic" }), 2, false)).toBe(false);
+    expect(isOffTopic(ans("Traffic near Chepauk is heavy.", { scope: "records" }), 2, true)).toBe(false);
+  });
+  it("a civic term's own figures are no district figure; a district figure from memory still is", () => {
+    const none = knownOf([], ["what is a cusec"]);
+    expect(checkAnswer(ans("A cusec is one cubic foot of water a second, about 28.3 litres. Lake releases are given in cusecs.", { kind: "chat", scope: "civic" }), none, W, { toolsRun: 0 }).ok).toBe(true);
+    expect(checkAnswer(ans("Chembarambakkam lake is releasing 4000 cusecs now.", { kind: "chat", scope: "civic" }), none, W, { toolsRun: 0 }).ok).toBe(false);
+  });
+  it("a decline passes the check, and is said in the fixed words", () => {
+    expect(checkAnswer(declined("en"), knownOf([], []), W, { toolsRun: 0, wantLang: "en" }).ok).toBe(true);
+    expect(declined("en", { voice: true }).say).toMatch(/^Sorry, that is outside what I cover\. Ask me about Chennai district/);
+    expect(declined("ta", { voice: true }).say).toMatch(/[஀-௿]/);
+    expect(declined("en", { dept: "Greater Chennai Police" }).say).toMatch(/Greater Chennai Police's records/);
+  });
+  it("the code check declines a plain off-topic question with no model, by voice sentence by sentence", async () => {
+    const said: string[] = [];
+    const o = await precheck({ text: "When was Dhoni's retirement?", channel: "voice", user: collector, world, sentence: (t) => said.push(t) }, false, null, NOW);
+    expect(o).toMatchObject({ model: "rules", rounds: 0, evidence: [], tokens: { input: 0, output: 0 }, answer: { kind: "offtopic", lang: "en" } });
+    expect(said.join(" ")).toBe(o!.answer.say);
+    expect(o!.spoken).toEqual(said);
+    expect((await precheck({ text: "தோனி எப்போது ஓய்வு பெற்றார்?", channel: "voice", user: collector, world }, false, null, NOW))?.answer.lang).toBe("ta");
+    // Tamil in Latin letters is declined in Tamil script, as the brain answers it
+    expect((await precheck({ text: "dhoni eppo retire aanaru", channel: "voice", user: collector, world }, false, null, NOW))?.answer.lang).toBe("ta");
+    // the language asked for is the one declined in (review 27 Nov: "in Tamil" was declined in English)
+    expect((await precheck({ text: "Tell me a joke in Tamil", channel: "voice", user: collector, world }, false, null, NOW))?.answer.lang).toBe("ta");
+    expect((await precheck({ text: "ஒரு ஜோக் சொல்லு in English", channel: "voice", user: collector, world }, false, null, NOW))?.answer.lang).toBe("en");
+    expect((await precheck({ text: "Virat Kohli innings", channel: "chat", user: collector, world }, false, null, NOW))?.answer.kind).toBe("offtopic");
+    expect((await precheck({ text: "tell me a joke", channel: "chat", user: collector, world }, false, null, NOW))?.answer.kind).toBe("offtopic");
+  });
+  it("an officer's decline names their department", async () => {
+    const o = await precheck({ text: "Who won the IPL?", channel: "chat", user: { email: "o", role: "department_officer", lockDept: "POL-GCP" }, world }, false, null, NOW);
+    expect(o?.answer.say).toMatch(/Greater Chennai Police's records/);
+  });
+  it("leaves district questions, civic terms, follow-ups and stories we hold to the model", async () => {
+    for (const q of ["traffic near Chepauk for the IPL match", "what is a cusec", "hello", "how many severe incidents this week", "Is there any traffic diversion for the CSK match today?"])
+      expect(await precheck({ text: q, channel: "voice", user: collector, world }, false, null, NOW), q).toBeNull();
+    expect(await precheck({ text: "and who won the match?", channel: "voice", user: collector, world }, true, "en", NOW)).toBeNull();
+    // the week's news holds the story: the brain reads it
+    expect(await precheck({ text: "Rajinikanth's Coolie release", channel: "chat", user: collector, world }, false, null, NOW)).toBeNull();
+    expect(await precheck({ text: "Rajinikanth's next movie", channel: "chat", user: collector, world }, false, null, NOW)).not.toBeNull();
+  });
+  it("Jarvis says a decline as a plain reply, never with the blocked sound of a refusal", () => {
+    const o = { question: "q", answer: declined("en", { voice: true }), evidence: [], model: "rules", rounds: 0, ms: 1, firstMs: 1, tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, steps: [], screen: null, stageOp: null, repaired: [], spoken: [], escalated: null, trace: [] } as BrainOut;
+    const r = resultOf(o, { text: "q", state: { page: "overview", period: "daily" } } as never, world);
+    expect(r).toMatchObject({ kind: "chat", note: "offtopic", stage: null });
+    expect(r.reply).toMatch(/^Sorry, that is outside what I cover/);
   });
 });

@@ -11,6 +11,8 @@ grievance:
   In Progress: In progress
   Completed - Pending Collector Verification: Awaiting verification
   Verified by Collector: Resolved
+  # the department closed a non-severe case itself (the officer console's close step; portal constants.ts RESOLVED_STATUSES)
+  Resolved by Department: Resolved
   Rejected: Rejected
 
 police:

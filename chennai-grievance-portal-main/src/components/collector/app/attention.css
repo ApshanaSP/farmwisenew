@@ -1,5 +1,5 @@
 /* The Overview's "what needs you" card (Attention.tsx): by severity and My Tasks in one full-height card with a switch,
-   compact rows (title, facts, actions on the right) so eight or more show at a time. */
+   compact rows (a line of title, one line of facts, actions on the right) so eight or more show at a time. */
 
 .dic .att{display:flex;flex-direction:column;min-height:0}
 
@@ -53,6 +53,8 @@
 .dic .att-txt em{display:inline-flex;align-items:center;gap:3px;max-width:62%;margin-right:6px;padding:0 6px;border-radius:999px;vertical-align:-2px;font-style:normal;font-size:10.5px;font-weight:700;
   color:var(--critical);background:var(--critical-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dic .att-txt em svg{width:10px;height:10px;flex:none}
+/* the reason's words end in "…" when cut (a bare text node in the inline-flex chip was clipped mid-word); the row's tooltip has them whole */
+.dic .att-txt em>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dic .att-txt em.ok{background:var(--ok-soft)}
 .dic .att-txt em.miss{background:var(--high-soft)}
 .dic .att-txt em.ok{color:var(--ok)}

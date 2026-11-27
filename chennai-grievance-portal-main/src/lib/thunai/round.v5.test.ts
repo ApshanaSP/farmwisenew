@@ -26,9 +26,12 @@ const h = (s: string) => crypto.createHash("sha256").update(s).digest("hex").sli
 // and again on 24 Nov 2026 (v18): the recipe list gained "summary" (everything about one area, department or kind, over any window), so the
 // schemas with the recipe enum changed (screens 1d924780b5a181bd, stage 6066c2489e0cbd1e, data ef4b718c9f76fbf2, wide 737edddcc8afb2cf); every
 // system prompt is unchanged
+// and again on 27 Nov 2026 (the topic guard, lib/topicguard): CORE's general kind is a civic term with its reply, anything off-topic with reply
+// null (3 characters shorter, so no prompt grew), so every bundle's system prompt changed (screens 7e0e03294f56a2a2, console 3a3ccf5e6053428a,
+// stage aa88ea1e48e54905, data 17f1a2f05c59df7c, memory f24163327f5f6aa9, wide 3254755c082a9d6c); every schema is unchanged
 const V4: Record<string, [string, string]> = {
-  screens: ["7e0e03294f56a2a2", "507304ac53f04558"], console: ["3a3ccf5e6053428a", "df56939f1f40b93a"], stage: ["aa88ea1e48e54905", "7aeba751d9260fde"],
-  data: ["17f1a2f05c59df7c", "faa404e9d80c378a"], memory: ["f24163327f5f6aa9", "aa8ab14786548c61"], wide: ["3254755c082a9d6c", "3d9d60a1fc20f018"]
+  screens: ["97595ab8332aad87", "507304ac53f04558"], console: ["f2c64e9ee37aedc2", "df56939f1f40b93a"], stage: ["44c6b2551d465d4f", "7aeba751d9260fde"],
+  data: ["aac551ea9384f444", "faa404e9d80c378a"], memory: ["c814ba12f2691e54", "aa8ab14786548c61"], wide: ["e52a4e4562888cac", "3d9d60a1fc20f018"]
 };
 const BUNDLES = ["screens", "console", "stage", "data", "memory", "wide"] as const;
 const LOOKUP_TEXT = "A fact no screen or step shows";

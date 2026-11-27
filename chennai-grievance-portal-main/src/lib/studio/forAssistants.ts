@@ -18,6 +18,8 @@ import { said } from "@/lib/studio/untrusted";
 import { fmtDay } from "@/lib/studio/values";
 import { fmtNum, type DatasetCard, type DatasetMeta, type Filter, type PanelData, type Plan } from "@/lib/studio/types";
 import { OWN_DATA, districtWord, districtWordsIn, followUp, keyWords } from "@/lib/thunai/studiowords";
+import { scopeOf } from "@/lib/topicguard/scope";
+import { offTopicReply } from "@/lib/topicguard/reply";
 
 /** Who is asking, as the session says (never the request). */
 export interface Asker { role: string | null | undefined; lockDept?: string | null }
@@ -341,12 +343,27 @@ export async function studioAsk(question: string, o: { who: Asker; datasetId: st
     };
   }
 
-  let reply = await analystReply(meta, q, o.user, o.context, Math.max(1000, o.deadlineMs ?? 6000));
+  // 27 Nov (the topic guard, lib/topicguard): a question about nothing in the district or this file is declined in the one fixed sentence,
+  // with no model and no rules reading it as a count over the rows; an unsupported question the code check calls off-topic, the same
+  const { offTopicAsk } = await import("@/lib/studio/ai");
+  const off = offTopicAsk(q, meta.spec, meta.profile);
+  let reply: StudioReplyOut = off
+    ? { kind: "unsupported", plan: null, panel: null, answer: null, note: null, by: "rules", model: null }
+    : await analystReply(meta, q, o.user, o.context, Math.max(1000, o.deadlineMs ?? 6000));
   if (o.keep && o.context?.filters?.length) reply = await keepFilters(meta, reply, o.context.filters, q);
   const p = reply.panel;
   const ta = TAMIL.test(q);
-  let en: string, taS: string;
-  if (reply.kind === "unsupported" || !p) {
+  let en: string, taS: string, declinedNote: string | null = null;
+  if (reply.kind === "unsupported" && off) {
+    en = offTopicReply("en");
+    taS = offTopicReply("ta");
+    declinedNote = ta ? taS : en;
+  } else if (reply.kind === "unsupported" && scopeOf(q).verdict === "out") {
+    // (an off-topic subject the file itself holds: the Studio's own words, never the model's note about the subject)
+    en = `${label} cannot answer that with its columns.`;
+    taS = "இந்தத் தரவின் நெடுவரிசைகளால் அதற்குப் பதில் சொல்ல முடியாது.";
+    declinedNote = ta ? taS : en;
+  } else if (reply.kind === "unsupported" || !p) {
     // (a "why" with no chart to draw still has its account of the change: its note only says what kind of account it is)
     const account = reply.kind !== "unsupported" && reply.answer ? said(reply.answer, 300) : null;
     en = account || said(reply.note || `${label} cannot answer that with its columns.`, 300);
@@ -358,6 +375,7 @@ export async function studioAsk(question: string, o: { who: Asker; datasetId: st
     en = said(ta ? answerText(p, meta.spec) : reply.answer || answerText(p, meta.spec), 400);
     taS = ta && reply.answer ? said(reply.answer, 400) : sentenceTa(p, meta.spec.entityPlural);
   }
-  return { dataset, reply: { ...reply, panel: slimPanel(p), answer: reply.answer ? said(reply.answer, 400) : null, note: reply.note ? said(reply.note, 200) : null },
+  // (the decline is the guard's own sentence, said whole: never cut to a file note's length)
+  return { dataset, reply: { ...reply, panel: slimPanel(p), answer: reply.answer ? said(reply.answer, 400) : null, note: declinedNote ?? (reply.note ? said(reply.note, 200) : null) },
     sentence: { en, ta: taS }, facts: factsOf(p), source: reply.by === "ai" ? "ai" : "rules" };
 }

@@ -12,7 +12,7 @@ import intelPool, { CLUSTER, OPS_DB, TITLE, ops } from "@/lib/collector/db";
 import "@/lib/collector/derive";
 import { redactText } from "@/lib/thunai/privacy";
 import { clusterNews, isNewsMedia, mediaKind, relevantNews, topicOf, type NewsGroup } from "@/lib/collector/newsrel";
-import { SKIP_LABEL, deskOf, deskOfDocs, headOf, isListing, wantDays, type SkipReason, type Verdict } from "@/lib/collector/deskbook";
+import { SKIP_LABEL, deskKey, deskOf, deskOfDocs, headOf, isListing, wantDays, type SkipReason, type Verdict } from "@/lib/collector/deskbook";
 import { addedItems, audit, collectionStatus } from "@/lib/collector/sources";
 import { photoUrl } from "@/lib/officer/photos";
 import { threads } from "@/lib/collector/threads";
@@ -263,8 +263,9 @@ const EFF = effectiveSql(ops("collector_decisions"));
  * or rejected and then reopened is open and unchecked again (console-sync-06).
  */
 async function notYetChecked(): Promise<string> {
-  // open as every open figure counts it (OPEN_NOW: a news complaint handed to a department is not on the console, reviewerE-02)
-  return `((${OPEN_NOW} AND i.severity_level = 'Severe' AND (${EFF.verified} = 0 OR i.awaiting_collector = 1)) OR ${await sentByOfficer()})`;
+  // open as every open figure counts it (OPEN_NOW: a news complaint handed to a department is not on the console, reviewerE-02).
+  // A sent case counts here only when severe: since 27 Nov an officer may send any case for approval (My Tasks takes them all)
+  return `((${OPEN_NOW} AND i.severity_level = 'Severe' AND (${EFF.verified} = 0 OR i.awaiting_collector = 1)) OR (i.severity_level = 'Severe' AND ${await sentByOfficer()}))`;
 }
 
 // ---- Shared with the Department Officer console (src/lib/officer): completion reports officers send.
@@ -283,9 +284,12 @@ const SENT_BY_OFFICER = `EXISTS (SELECT 1 FROM ${ops("officer_steps")} s WHERE s
     AND NOT EXISTS (SELECT 1 FROM ${ops("officer_steps")} s2 WHERE s2.incident_id = s.incident_id AND (s2.at > s.at OR (s2.at = s.at AND s2.step_id > s.step_id)))
     AND NOT EXISTS (SELECT 1 FROM ${ops("collector_decisions")} d WHERE d.incident_id = s.incident_id
                     AND d.decision IN ('verify', 'reject', 'resolve', 'reopen') AND d.decided_at >= s.at))`;
-/** Open, severe and sent to the Collector from the officer console, not yet decided; FALSE without the officer tables. */
+/**
+ * Open and sent to the Collector from the officer console, not yet decided; FALSE without the officer tables. Any severity: an
+ * officer may send any case for approval (27 Nov), and a sent case stays in My Tasks even if a later build lowers its severity.
+ */
 async function sentByOfficer(): Promise<string> {
-  return (await officerOpsReady()) ? `(${EFF.open} = 1 AND i.severity_level = 'Severe' AND ${SENT_BY_OFFICER})` : "(1 = 0)";
+  return (await officerOpsReady()) ? `(${EFF.open} = 1 AND ${SENT_BY_OFFICER})` : "(1 = 0)";
 }
 
 /** The officer's latest completion report per incident, for the task card: remarks, who sent it, and the photos. */
@@ -385,13 +389,15 @@ export async function newsLeftOut(period: Period, now: string) {
   const why = new Map<string, Verdict>();
   for (const r of left) { const v = deskOf(r.title, r.title_en); if (v?.v === "skip" && !why.has(String(r.story_id ?? r.doc_id))) why.set(String(r.story_id ?? r.doc_id), v); }
   const seen = new Set<string>();
+  // `title` English (the desk's own headline of this report, or its translation); `original` the Tamil headline as published, shown
+  // first on the screen with the English line under it (27 Nov: since 6 Oct the Tamil was only a tooltip)
   const out: { id: string; title: string; original: string | null; publisher: string | null; url: string | null; t: string; reason: string }[] = [];
   for (const r of left) {
     const k = String(r.story_id ?? r.doc_id);
     if (seen.has(k)) continue;
     seen.add(k);
     const v = deskOf(r.title, r.title_en) ?? why.get(k);
-    out.push({ id: String(r.doc_id), title: cleanHeadline((r.lang !== "en" && headOf(r.title)) || english(r)), original: r.lang !== "en" ? redactText(String(r.title)) : null,
+    out.push({ id: String(r.doc_id), title: cleanHeadline((r.lang !== "en" && headOf(r.title)) || english(r)), original: isTamil(r) ? tamilHeadline(String(r.title)) : null,
       publisher: r.publisher ?? null, url: r.url ?? null, t: String(r.t), reason: SKIP_LABEL[(v?.skip || "other") as SkipReason] });
   }
   return { total: out.length, items: out.slice(0, 200) };
@@ -445,19 +451,31 @@ export async function newsStories(period: Period, now: string) {
     const place = g.map((r) => r.ai_place || r.place_text).find((p) => p && !/^\s*chennai( district)?\s*$/i.test(p)) ?? null;
     const v = deskOf(lead.title, lead.title_en) ?? deskOfDocs(g as { title: unknown; title_en: unknown }[]);
     const top = deskOfDocs(g as { title: unknown; title_en: unknown }[]);
+    // The desk's words are copied to a story's later reports (newsdesk.ts), so a verdict's headline may have been written from another
+    // report. It is this story's only when that report is one of the story's, and never for routine notices: a Saturday power cut was
+    // shown under the head written for a Tuesday one ("coming Tuesday"). Otherwise the lead's own translation.
+    const own = !!v && (!v.of || v.of === deskKey(lead.title));
+    const ownHead = !!v?.head && !routine && !!v.of && g.some((x) => deskKey(x.title) === v.of);
+    // the Tamil headline as published: the lead's, else (a story with English and Tamil reports) the newest Tamil report's; for routine
+    // notices only the lead's own (they are one story for the whole period: another Tamil report is another day's notice)
+    const taRep = (routine ? [lead] : [lead, ...g]).find(isTamil) ?? null;
     // every outlet once, with its earliest report of the story
     const outlets = new Map<string, { name: string; kind: string | null; t: string; url: string | null; id: string }>();
     for (const r of [...g].reverse()) if (r.publisher && !outlets.has(String(r.publisher))) outlets.set(String(r.publisher), { name: String(r.publisher),
       kind: mediaKind(r.publisher, r.publisher_domain, r.publisher_tier), t: String(r.t), url: r.url ? String(r.url) : null, id: String(r.doc_id) });
     return {
       id: String(lead.doc_id),
-      // the desk's headline of this very report, else (no English report) of the story
-      title: cleanHeadline(headOf(lead.title) ? deskHeadline(lead, deskOf(lead.title)) : lead.lang !== "en" && v?.head ? v.head : english(lead)),
-      /** the news desk's reading: act or know, its area, what happened and why it matters; null until it is read */
-      desk: v && v.v !== "skip" ? { v: (top?.v === "act" ? "act" : v.v) as "act" | "know", area: v.area, gist: v.gist ? redactText(v.gist) : "", why: v.why ? redactText(v.why) : "", cat: v.cat } : null,
+      // English, always (Jarvis, the assistant, Differ and the AI briefing read it): the desk's headline of this very report, else (no
+      // English report) the one it wrote from another report of this story, else the lead's translation
+      title: cleanHeadline(headOf(lead.title) ? deskHeadline(lead, deskOf(lead.title)) : lead.lang !== "en" && ownHead ? v!.head : english(lead)),
+      /** the news desk's reading: act or know, its area, what happened and why it matters; null until it is read (a routine notice's
+       * "what happened" only when it was written from this very report: another day's notice has another date) */
+      desk: v && v.v !== "skip" ? { v: (top?.v === "act" ? "act" : v.v) as "act" | "know", area: v.area, gist: v.gist && (own || !routine) ? redactText(v.gist) : "", why: v.why ? redactText(v.why) : "", cat: v.cat } : null,
       sources: [...outlets.values()].slice(0, 12),
-      /** the headline as published, when it is not in English */
-      original: lead.lang !== "en" ? redactText(String(lead.title)) : null,
+      /** the Tamil headline as published (outlet tags and hashtags off), for every story with a Tamil report */
+      original: taRep ? tamilHeadline(String(taRep.title)) : null,
+      /** the story is in Tamil only, or led by a Tamil report: the screen shows `original` first and the English `title` under it */
+      taLead: lead.lang !== "en" && !!taRep && taRep === lead,
       url: lead.url ?? null,
       loc: i?.zone_name ?? place,
       t: g[0].t, // newest article of the story
@@ -480,6 +498,20 @@ export async function newsStories(period: Period, now: string) {
 const english = (r: Row) => String((r.lang !== "en" && r.title_en) || r.title || "");
 /** Hashtags and a trailing "| Outlet - news" trimmed. */
 const cleanHeadline = (t: string) => redactText(t).replace(/^\s*(?:video|watch|breaking)\s*[|:]\s*/i, "").replace(/\s*#\S+/g, "").replace(/\s*[|–-]\s*(Dinakaran Chennai\s*-\s*)?news\s*$/i, "").replace(/\s+/g, " ").trim();
+/** Tamil script. */
+const TAMIL = /[஀-௿]/;
+/** A report whose headline is in Tamil (its language is not English and the words are in Tamil script). */
+const isTamil = (r: Row) => r.lang !== "en" && TAMIL.test(String(r.title ?? ""));
+/**
+ * A Tamil headline as published, for the screen: only its "|" pieces in Tamil ("Chennai | Lorry Accident | …" and "… | Chennai rain
+ * forecast" carry an outlet's English tags), hashtags, a "ZEE Tamil News." prefix and a trailing "| Outlet - news" off, ".." as "…";
+ * citizens' identifiers masked (cleanHeadline).
+ */
+export const tamilHeadline = (t: string): string => {
+  const s = String(t ?? "");
+  const ta = s.split(/\s*\|\s*/).filter((x) => TAMIL.test(x)).join(" – ");
+  return cleanHeadline(ta || s).replace(/^zee tamil news\s*[.:|–-]?\s*\.?\s*/i, "").replace(/\s*\.{2,}\s*/g, "… ").replace(/…\s+(?=[!?])/g, "…").replace(/\s+/g, " ").trim();
+};
 const wallMs = (t: string) => Date.parse(String(t).replace(" ", "T") + "+05:30");
 
 /** The reports of a news story, for the news preview: headline, translation, outlet, full text (or summary), what the AI read. */
@@ -1039,9 +1071,13 @@ export async function overview(period: Period, zone: number | null, dept: string
        FROM incidents i WHERE ${w.sql}`,
       w.params
     ),
-    // news linked to incidents in scope, headed by the article's own headline (an English one first), not the incident's
+    // news linked to incidents in scope, headed by the article's own headline (an English one first), not the incident's; with the
+    // newest Tamil headline as published (`news_ta`), and whether any report is in English (none: the Tamil one leads on the screen)
     q(`SELECT ${ROW()}, (SELECT COALESCE(NULLIF(d.title_en, ''), d.title) FROM documents d WHERE d.linked_incident_id = i.incident_id
-         ORDER BY (d.lang = 'en') DESC, d.published_at DESC LIMIT 1) AS news_title
+         ORDER BY (d.lang = 'en') DESC, d.published_at DESC LIMIT 1) AS news_title,
+         (SELECT d.title FROM documents d WHERE d.linked_incident_id = i.incident_id AND d.lang = 'ta' AND d.title IS NOT NULL
+         ORDER BY d.published_at DESC LIMIT 1) AS news_ta,
+         EXISTS (SELECT 1 FROM documents d WHERE d.linked_incident_id = i.incident_id AND d.lang = 'en') AS news_en
        ${FROM} WHERE ${w.sql} AND i.outlet_count > 0 ORDER BY i.first_reported_at DESC LIMIT 24`, w.params),
     // one task per group of incidents that are the same problem in the same area (CLUSTER): a report sent by the
     // department first, then the group's member waiting longest
@@ -1139,7 +1175,10 @@ export async function overview(period: Period, zone: number | null, dept: string
 
   const [taskRows, newsRows, sevList, bellRows] = await Promise.all([
     withDecisions(tasks).then(withSources),
-    withDecisions(news.map((r) => (r.news_title == null ? r : { ...r, news_title: redactText(String(r.news_title)) }))).then(withSources),
+    withDecisions(news.map((r): Row => {
+      const ta = r.news_ta != null && TAMIL.test(String(r.news_ta)) ? tamilHeadline(String(r.news_ta)) : null;
+      return { ...r, news_title: r.news_title == null ? r.news_title : redactText(String(r.news_title)), news_ta: ta || null, news_ta_lead: !!ta && !Number(r.news_en) };
+    })).then(withSources),
     withDecisions(sevRows).then(withSources),
     withDecisions(bell).then(withSources)
   ]);

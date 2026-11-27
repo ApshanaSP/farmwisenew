@@ -2,7 +2,7 @@
 The same cases as the website's src/lib/collector/reporttype.test.ts (real headlines, 22-26 Oct 2026)."""
 import pytest
 
-from dintel.reporttype import report_kind
+from dintel.reporttype import overriding_kind, report_kind
 
 CASES = [
     ("'Yellow' alert for Chennai today", "alert"),
@@ -54,3 +54,22 @@ CASES = [
 @pytest.mark.parametrize("title,want", CASES)
 def test_report_kind(title, want):
     assert report_kind(title) == want
+
+
+# 27 Nov 2026: over the language model's own label the rules set only a forecast or a roundup; the website's news desk decides
+# the rest ("Silver worth Rs 1 crore looted" was read as government work, "girl kidnapped ... police rescued her" as a resolution)
+@pytest.mark.parametrize("kind,from_ai,want", [
+    ("alert", True, "alert"), ("roundup", True, "roundup"),
+    ("government_action", True, None), ("resolution", True, None), ("opinion", True, None), ("other", True, None),
+    ("government_action", False, "government_action"), ("resolution", False, "resolution"), ("alert", False, "alert"),
+    ("incident", True, None), ("incident", False, None), (None, True, None), (None, False, None),
+])
+def test_overriding_kind(kind, from_ai, want):
+    assert overriding_kind(kind, from_ai) == want
+
+
+def test_rules_still_read_the_headline_the_same_way():
+    # the rules themselves are unchanged: a local model's label still takes their kind
+    assert overriding_kind(report_kind("Silver worth Rs 1 crore looted from jewellery shop"), False) == "government_action"
+    assert overriding_kind(report_kind("Silver worth Rs 1 crore looted from jewellery shop"), True) is None
+    assert overriding_kind(report_kind("'Yellow' alert for Chennai today"), True) == "alert"

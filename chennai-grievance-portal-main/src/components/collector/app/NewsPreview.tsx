@@ -101,7 +101,7 @@ export function NewsView({ s, c }: { s: Story; c: Console }) {
       <div className="iv-h s-news">
         {close}
         <h2>{s.title}</h2>
-        {lead.lang !== "en" && lead.title_en && <p className="nv-orig" lang="ta">{lead.title}</p>}
+        {lead.lang !== "en" && lead.title_en && <p className="nv-orig" lang="ta" translate="no">{lead.title}</p>}
         <div className="iv-where">
           {s.desk && <span className="nw-tags"><DeskTags i={s} /></span>}
           <span><I n="pin" />{place}</span>
@@ -147,7 +147,7 @@ export function NewsView({ s, c }: { s: Story; c: Console }) {
         <section className="iv-col nv-read">
           <div className="iv-t"><I n="news" />The report<span>{a.publisher}{MEDIA_KIND[a.kind] ? ` · ${MEDIA_KIND[a.kind]}` : ""} · {fmtShort(a.t)}</span></div>
           <h3 className="nv-h">{en}</h3>
-          {a.lang !== "en" && a.title_en && <p className="np-orig" lang="ta">{a.title}</p>}
+          {a.lang !== "en" && a.title_en && <p className="np-orig" lang="ta" translate="no">{a.title}</p>}
           {a.ai && <NewsDetails ai={a.ai} />}
           <div className="np-text" lang={a.lang === "ta" ? "ta" : undefined}>
             {paras.length ? paras.map((p, k) => <p key={k}>{p}</p>)

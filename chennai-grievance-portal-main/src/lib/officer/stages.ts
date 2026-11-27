@@ -1,15 +1,18 @@
 /**
  * The officer workflow: Received -> In action -> Sent to Collector -> Verified for a severe grievance; any other is
- * closed by the department itself: Received -> In action -> Verified (the `close` step).
- * "In action" covers a grievance the officer approved and one where work has started (the
- * pipeline's Assigned and In progress, and the `action` step recorded before the two were merged).
+ * closed by the department itself: Received -> In action -> Verified (the `close` step), or, when the officer wants the
+ * Collector's approval, sent like a severe one (the owner's decision of 27 Nov: any open case may go to the Collector).
+ * "In action" covers a grievance the officer approved and one where work has started (the pipeline's Assigned and In
+ * progress, and the `action` step: "Work started", a progress update the citizen's tracker shows as In Progress).
  * Shared by the API (which enforces the transitions) and the console (labels, chips, buttons).
  */
 
 export type Stage = "new" | "approved" | "action" | "sent" | "verified" | "closed";
 export type Tab = "new" | "action" | "sent" | "verified";
-/** `action` is no longer offered but stays readable in officer_steps written before */
+/** `action`: work has started on an approved case (offered again from 27 Nov; written before the two were merged too) */
 export type OfficerStep = "approve" | "action" | "send" | "close";
+/** the steps an officer records: approve, work started (action), send to the Collector, close as done */
+export type RecordedStep = OfficerStep;
 
 export const TABS: Tab[] = ["new", "action", "sent", "verified"];
 export const TAB_STAGES: Record<Tab, Stage[]> = { new: ["new"], action: ["approved", "action"], sent: ["sent"], verified: ["verified"] };
@@ -65,20 +68,24 @@ export function historyOf(timeline: readonly { label: string }[]): StepHistory {
   return { sent: seen.has(DEPT_STEP_LABELS.send), acted: Object.values(DEPT_STEP_LABELS).some((l) => seen.has(l)) };
 }
 
-/** The stages each recorded step starts from (the same table as recordStep's in lib/officer/data.ts, which checks again under its lock). */
-export const STEP_FROM: Record<"approve" | "send" | "close", Stage[]> = { approve: ["new"], send: ["approved", "action"], close: ["approved", "action", "sent"] };
+/**
+ * The stages each recorded step starts from (the same table as recordStep's in lib/officer/data.ts, which checks again under its lock).
+ * `action` (work started) is the progress update on an approved case. A case sent to the Collector waits for the Collector's decision:
+ * the department no longer closes it from there (27 Nov: a non-severe case may now be sent for the Collector's approval, and closing it
+ * while it waits would skip that approval; a send-back returns it to In action, where it can be closed or sent again).
+ */
+export const STEP_FROM: Record<RecordedStep, Stage[]> = { approve: ["new"], action: ["approved"], send: ["approved", "action"], close: ["approved", "action"] };
 
 /**
  * Why this step cannot be taken on a grievance at this stage and severity, or null if it can. The report route asks this before it asks
  * for the password, so nobody types a password for a step that would be refused anyway (officer-day-16). Same words as recordStep's.
+ * Any open case may be sent to the Collector; only a severe one must be (it is never closed by the department itself).
  */
-export function stepRefusal(step: "approve" | "send" | "close", stage: string, severity: string | null | undefined): string | null {
+export function stepRefusal(step: RecordedStep, stage: string, severity: string | null | undefined): string | null {
   if (!(STEP_FROM[step] as string[]).includes(stage)) {
     return `This grievance is already at “${STAGE_LABEL[stage as Stage] ?? stage}”. Refresh to see its latest stage.`;
   }
-  const severe = severity === "Severe";
-  if (step === "send" && !severe) return "Only severe grievances go to the Collector. Close this one as done yourself.";
-  if (step === "close" && severe) return "A severe grievance is verified by the Collector: send it with your completion report.";
+  if (step === "close" && severity === "Severe") return "A severe grievance is verified by the Collector: send it with your completion report.";
   return null;
 }
 
@@ -86,15 +93,14 @@ export function stepRefusal(step: "approve" | "send" | "close", stage: string, s
 export const NEXT_STEP: Partial<Record<Stage, "approve" | "send">> = { new: "approve", approved: "send", action: "send" };
 
 /**
- * The one step an officer can take on this grievance: approve a new one; then send a severe one to the Collector, and close any
- * other (officer-day-26: the API said "send" for every case in action). A non-severe grievance at "sent" (sent before the rule)
- * is closed by the department too, as the drawer offers. Null when there is nothing left for the officer to do.
+ * The main step an officer takes on this grievance next: approve a new one; then send a severe one to the Collector, and close any
+ * other (officer-day-26: the API said "send" for every case in action; a non-severe case may also be sent for approval, a choice the
+ * report form offers). A case at "sent" waits for the Collector, whatever its severity. Null when there is nothing left for the officer.
  */
 export function nextStep(stage: string, severity: string | null | undefined): "approve" | "send" | "close" | null {
   if (stage === "new") return "approve";
   const severe = severity === "Severe";
   if (stage === "approved" || stage === "action") return severe ? "send" : "close";
-  if (stage === "sent" && !severe) return "close";
   return null;
 }
 
@@ -103,12 +109,16 @@ export function nextStep(stage: string, severity: string | null | undefined): "a
  * officer-day-05). A verify checked a report; a resolve closed the case without one; a reopen returned it for rework; a reject closed it
  * for good, so the department can do nothing more: it is never "returned" nor "verified".
  */
-export type FeedbackKind = "verified" | "resolved" | "returned" | "rejected";
-export const FEEDBACK_KIND: Record<"verify" | "resolve" | "reopen" | "reject", FeedbackKind> = {
-  verify: "verified", resolve: "resolved", reopen: "returned", reject: "rejected"
+export type FeedbackKind = "verified" | "resolved" | "returned" | "rejected" | "escalated";
+/**
+ * An escalation does not change the case's stage, but the department is told: it was raised up the department's own chain, and the
+ * officer only learned it from a line in the drawer (the integration review, 27 Nov).
+ */
+export const FEEDBACK_KIND: Record<"verify" | "resolve" | "reopen" | "reject" | "escalate", FeedbackKind> = {
+  verify: "verified", resolve: "resolved", reopen: "returned", reject: "rejected", escalate: "escalated"
 };
 export const FEEDBACK_LABEL: Record<FeedbackKind, string> = {
-  verified: "Verified", resolved: "Closed by the Collector", returned: "Returned for rework", rejected: "Rejected by the Collector"
+  verified: "Verified", resolved: "Closed by the Collector", returned: "Returned for rework", rejected: "Rejected by the Collector", escalated: "Escalated by the Collector"
 };
 export function feedbackKind(decision: unknown): FeedbackKind | null {
   return typeof decision === "string" && Object.prototype.hasOwnProperty.call(FEEDBACK_KIND, decision) ? FEEDBACK_KIND[decision as keyof typeof FEEDBACK_KIND] : null;

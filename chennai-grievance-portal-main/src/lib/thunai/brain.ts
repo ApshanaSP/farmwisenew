@@ -14,6 +14,9 @@ import { stepsAskedFor } from "./injection";
 import { asksPrivate, NEVER_REPLY, PRIVACY_REPLY } from "./privacy";
 import { asksForbiddenOrder } from "./router";
 import { RECIPES } from "./stage";
+import { detectLang } from "./normalise";
+import { scopeOf, type ScopeTopic } from "@/lib/topicguard/scope";
+import { offTopicReply } from "@/lib/topicguard/reply";
 
 const provider = () => ((process.env.THUNAI_PROVIDER ?? "").trim() === "bedrock" ? "bedrock" : "groq");
 
@@ -40,18 +43,35 @@ function vet(plan: Checked, text: string, ctx: Context): Checked {
   }
 }
 
+/** The plan model's off-topic verdict (plan.ts rule 7b): a chat whose reply is the word OFFTOPIC (also without a reply). */
+export function offTopicVerdict(p: { kind?: unknown; reply?: unknown } | null | undefined): boolean {
+  return !!p && p.kind === "chat" && /^\W*off[\s_-]?topic\W*$/i.test(String(p.reply ?? ""));
+}
+/** The one fixed decline as a plan: a chat (a refusal plays the "blocked" sound), Tamil for Tamil script or Tanglish words. */
+export function declinedPlan(text: string, topic: ScopeTopic | null = null): Checked {
+  const lang = detectLang(text);
+  return { kind: "chat", reply: offTopicReply(lang, { topic, voice: true }), lang };
+}
+
 export async function think(text: string, state: ScreenState, world: World, ctx: Context, user: string, timeoutMs = 4000): Promise<BrainResult> {
   const t0 = Date.now();
   const lang = /[஀-௿]/.test(text) ? "ta" : "en";
   // refused in code before any model, as on /round and /agent
   if (asksPrivate(text)) return { plan: { kind: "refuse", reply: PRIVACY_REPLY[lang], lang }, ms: 0, model: null };
   if (asksForbiddenOrder(text)) return { plan: { kind: "refuse", reply: NEVER_REPLY[lang], lang }, ms: 0, model: null };
+  // 27 Nov (the topic guard, lib/topicguard): a question about nothing in the district, this console or District IQ ("When was Dhoni's
+  // retirement?") is declined in the one fixed sentence, with no model call, in the language asked (Tamil script for Tamil or Tanglish)
+  const sc = scopeOf(text, { world, follows: (ctx.turns?.length ?? 0) > 0 });
+  if (sc.verdict === "out") return { plan: declinedPlan(text, sc.topic), ms: 0, model: null };
   try {
     const r = await generateJson({
       // on Groq the "reasoning" list starts with gpt-oss-120b; Nova Lite is the "fast" model on Bedrock
       role: provider() === "groq" ? "reasoning" : "fast", name: "thunai_plan", schema: AiPlanSchema, lenient: AiPlanLenient, system: systemPrompt(world),
       prompt: userPrompt(text, state, world, ctx), temperature: 0, maxOutputTokens: 900, user, prefer: provider(), timeoutMs
     });
+    // the model's verdict that it is off-topic (plan.ts rule 7b: chat, reply OFFTOPIC): the fixed decline, never its words. A chat on words the
+    // code check declines, let past it only because they lean on the thread ("and tell me a joke"), is declined the same way (as round.ts does)
+    if (offTopicVerdict(r.object) || ((r.object as { kind?: unknown }).kind === "chat" && scopeOf(text, { world }).verdict === "out")) return { plan: declinedPlan(text, sc.topic), ms: Date.now() - t0, model: r.info.model };
     return { plan: vet(checkPlan(r.object, world, text, ctx.now ?? Date.now()), text, ctx), ms: Date.now() - t0, model: r.info.model };
   } catch (e) {
     return { plan: { kind: "none", lang: /[஀-௿]/.test(text) ? "ta" : "en" }, ms: Date.now() - t0, model: null, error: (e as Error).message.slice(0, 200) };

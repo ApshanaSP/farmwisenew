@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useGrowFrom } from "./Shell";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
 import { I } from "./icons";
-import { DeskTags, LinkedNote, OfficerCard, StoryLink } from "./Overview";
+import { DeskTags, LinkedNote, NewsHead, OfficerCard, StoryLink } from "./Overview";
 import { FilterChip } from "@/components/ui";
 import { Empty, SEVS, SevChip, Sources, StChip, fmtShort, fullTitle, listScopeWords, rel, reportOpt, type Row } from "./lib";
 import type { Console, ListPreset } from "./CollectorApp";
@@ -378,7 +378,13 @@ export function NewsAllBody({ d, c }: { d: OverviewData; c: Console }) {
                 return (
                   <li key={x.id}>
                     <span className="nw-t skip">{x.reason}</span>
-                    <span className="nw-left-t" title={x.original ?? undefined}>{url ? <a href={url} target="_blank" rel="noopener noreferrer">{x.title}</a> : x.title}</span>
+                    {/* a Tamil report: its Tamil headline, as published, is the link; the English line under it */}
+                    <span className="nw-left-t">
+                      {url ? <a href={url} target="_blank" rel="noopener noreferrer" lang={x.original ? "ta" : undefined} translate={x.original ? "no" : undefined}>{x.original ?? x.title}</a>
+                        : <span lang={x.original ? "ta" : undefined} translate={x.original ? "no" : undefined}>{x.original ?? x.title}</span>}
+                      {/* hidden with the site in Tamil (news.css), so the translator need not turn it back into Tamil */}
+                      {x.original && x.title && x.title !== x.original && <small className="nw-en" data-no-i18n="">{x.title}</small>}
+                    </span>
                     <small>{x.publisher ?? "News"} · {rel(x.t, d.now)}</small>
                   </li>
                 );
@@ -390,7 +396,7 @@ export function NewsAllBody({ d, c }: { d: OverviewData; c: Console }) {
             {list.map((i) => (
               <button key={i.id} className={`ncard nw${i.desk?.v === "act" ? " act" : ""}`} onClick={() => c.openStory(i)}>
                 <div className="nw-tags"><DeskTags i={i} />{i.sev && <SevChip s={i.sev} />}</div>
-                <h4 title={i.original ?? undefined}>{i.title}</h4>
+                <NewsHead en={i.title} ta={i.original} taLead={i.taLead} h="h4" line="p" />
                 {i.desk?.gist && <p title={i.desk.gist}>{i.desk.gist}</p>}
                 {i.desk?.why && <p className="nw-why"><b>Why it matters</b>{i.desk.why}</p>}
                 <div className="nout" aria-label="Sources">{(i.sources?.length ? i.sources.map((s) => s.name) : i.outletNames.length ? i.outletNames : ["News"]).slice(0, 5).map((nm) => <span key={nm}>{nm}</span>)}
@@ -412,7 +418,7 @@ export function NewsAllBody({ d, c }: { d: OverviewData; c: Console }) {
       {d.news.map((i) => (
         <button key={i.id} className="ncard" onClick={() => c.openInc(i.id)}>
           <div className="nout">{(i.outletNames?.length ? i.outletNames : ["News"]).map((n: string) => <span key={n}>{n}</span>)}</div>
-          <h4 title={i.news_title ? `Incident: ${fullTitle(i)}` : undefined}>{i.news_title ?? fullTitle(i)}</h4>
+          <NewsHead en={String(i.news_title ?? fullTitle(i))} ta={i.news_ta} taLead={i.news_ta_lead} h="h4" line="p" title={i.news_title ? `Incident: ${fullTitle(i)}` : undefined} />
           <div className="nmeta">
             <span>{i.zone_name ?? "Chennai"}</span><span>{i.dept_name ?? i.dept}</span><span>{rel(i.t, d.now)}</span><SevChip s={i.sev} />
           </div>

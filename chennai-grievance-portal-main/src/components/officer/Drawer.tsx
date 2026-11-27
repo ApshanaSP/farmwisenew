@@ -48,6 +48,31 @@ export function Outcome({ stage, closedByDept, rejected }: { stage: Stage; close
   return <span className="chip sev-low" style={{ padding: "8px 12px" }}><I n="check" />{closedByDept ? "Closed by your department" : "Verified by Collector"}</span>;
 }
 
+/** The progress update on an approved case: work has started on site (the citizen's tracker shows In Progress). */
+function StartWork({ g, c, busy }: { g: GrievanceDetail["grievance"]; c: Ctx; busy: boolean }) {
+  return (
+    <button className="btn plain" disabled={busy} onClick={() => c.startWork(g)} title="Tell the citizen and the Collector that work has started on site">
+      <I n="clock" />Mark work started
+    </button>
+  );
+}
+
+/**
+ * When the report an instruction asked for is due, and whether it is still owed. `closedByCollector`: nothing is owed because the
+ * Collector closed the case, not because the department sent a report (lib/officer/followups.ts 'closed').
+ */
+function ReportAsked({ due, owed, closedByCollector, now }: { due: string | null; owed: boolean | null; closedByCollector?: boolean; now: string }) {
+  if (!due && owed == null) return null;
+  if (owed === false && closedByCollector) return <small className="o-ref"><I n="checkc" />No report needed · the Collector closed the case</small>;
+  if (owed === false) return <small className="o-ref"><I n="checkc" />Report sent{due ? ` · it was due ${fmtShort(due)}` : ""}</small>;
+  const late = !!due && due.slice(0, 10) < now.slice(0, 10);
+  return (
+    <small className="o-ref" style={late ? { color: "var(--sev)" } : undefined}>
+      <I n={late ? "alert" : "clock"} />{late ? "Report overdue" : "Report due"}{due ? ` · ${late ? "was due" : "by"} ${fmtShort(due)}` : ""}
+    </small>
+  );
+}
+
 function ReportBlock({ r, title }: { r: Report; title: string }) {
   return (
     <div>
@@ -163,6 +188,7 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
             <div className="sec-t"><I n="send" />From the Collector · {fmtShort(d.instructions[0].t)}</div>
             <b>{d.instructions[0].subject}</b>
             <p>{String(d.instructions[0].body)}</p>
+            <ReportAsked due={d.instructions[0].reportDue} owed={d.instructions[0].owed} closedByCollector={d.instructions[0].closedByCollector} now={d.now} />
             {d.instructions[0].ref && (
               <small className="o-ref" title="The same reference is at the foot of the email. A message without it, or with another, did not come from District IQ.">
                 <I n="checkc" />Genuine · approved by {d.instructions[0].from} · Ref <b translate="no">{d.instructions[0].ref}</b>
@@ -213,12 +239,15 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
             <span className="hint">Approving moves it to In action and assigns it to {g.officer ?? "the field officer"}.</span></>
         ) : (g.stage === "approved" || g.stage === "action") && g.sev === "Severe" ? (
           <><button className="btn ok" disabled={busy} onClick={() => c.openSend(g)}><I n="send" />Complete &amp; send to Collector</button>
+            {g.stage === "approved" && <StartWork g={g} c={c} busy={busy} />}
             <span className="hint">Severe: the Collector verifies it. Remarks and photos go to the Collector.</span></>
-        ) : g.stage === "approved" || g.stage === "action" || (g.stage === "sent" && g.sev !== "Severe") ? (
+        ) : g.stage === "approved" || g.stage === "action" ? (
           <><button className="btn ok" disabled={busy} onClick={() => c.openSend(g)}><I n="check" />Complete &amp; close</button>
+            {g.stage === "approved" && <StartWork g={g} c={c} busy={busy} />}
             <span className="hint">You verify this one: your remarks and photos are kept as the record.</span></>
         ) : g.stage === "sent" ? (
-          <span className="st st-await" style={{ padding: "8px 12px", display: "inline-flex", gap: 6, alignItems: "center" }}><I n="clock" />Waiting for the Collector&apos;s verification</span>
+          <span className="st st-await" style={{ padding: "8px 12px", display: "inline-flex", gap: 6, alignItems: "center" }}><I n="clock" />
+            {g.sev === "Severe" ? "Waiting for the Collector's verification" : "Waiting for the Collector's approval"}</span>
         ) : <Outcome stage={g.stage as Stage} closedByDept={!!d.closedByDept} rejected={d.rejected} />}
       </div>
     </div>

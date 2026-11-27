@@ -164,7 +164,7 @@ export async function summaryRecipe(c: RecipeCtx): Promise<SummaryPart> {
     !listView && wantsWater && (subj.district || fam === "FLOOD" || /WRD/.test(subj.dept ?? "") || zone1) ? safe(win.readings("lake_pct_full", w, zone1), "lake storage") : Promise.resolve(null),
     !listView && wantsWater ? safe(win.warning(w), "IMD warning") : Promise.resolve(null),
     // (v18 round 2's review: the summary reads the prices held; only the prices screen asks data.gov.in for a missing day, so a summary never waits on it)
-    !listView && wantsPrices ? safe(win.prices(w, zone1, null, { fetch: false }), "AGMARKNET prices") : Promise.resolve(null),
+    !listView && wantsPrices ? safe(win.prices(w, zone1, null, { fetch: false }), "Uzhavar Sandhai prices") : Promise.resolve(null),
     !listView && wantsTraffic ? safe(win.traffic(zone1), "live traffic") : Promise.resolve(null)
   ]);
 
@@ -270,7 +270,7 @@ export async function summaryRecipe(c: RecipeCtx): Promise<SummaryPart> {
   if (warn && warn.level >= 1) addPoint(bi(`IMD ${["green", "yellow", "orange", "red"][Math.min(3, warn.level)]} warning in force (${boundWords(warn.t + ":00")}).`, `வானிலை மையத்தின் ${["பச்சை", "மஞ்சள்", "ஆரஞ்சு", "சிவப்பு"][Math.min(3, warn.level)]} எச்சரிக்கை (${boundWords(warn.t + ":00")}).`), { recipe: "readings", slots: { metric: "rain", ...(zone1 ? { zones: [zone1] } : {}), ...(w.custom && spec ? { span: spec } : {}), period: w.key }, label: L("Rainfall", "மழை") });
   // (a market report weeks older than the window is not this window: said in a note, never as its price)
   const fresh = !!prices?.latest && Date.parse(`${w.to.slice(0, 10)}T00:00:00Z`) - Date.parse(`${prices.latest}T00:00:00Z`) <= 21 * 864e5;
-  if (prices?.rows?.length && !fresh) c.notes.push(L(`Vegetable prices are left out: the markets last reported to AGMARKNET on ${boundWords(`${prices.latest} 00:00`)}.`, `காய்கறி விலை இல்லை: சந்தைகளின் கடைசி அறிக்கை ${boundWords(`${prices.latest} 00:00`)}.`));
+  if (prices?.rows?.length && !fresh) c.notes.push(L(`Vegetable prices are left out: the Uzhavar Sandhai markets last reported prices on ${boundWords(`${prices.latest} 00:00`)}.`, `காய்கறி விலை இல்லை: சந்தைகளின் கடைசி அறிக்கை ${boundWords(`${prices.latest} 00:00`)}.`));
   const staple = fresh ? prices?.rows?.[0] : undefined;
   if (staple) {
     const mk = prices!.market ? `the ${prices!.market} market` : "the Chennai markets";
@@ -335,7 +335,7 @@ export async function summaryRecipe(c: RecipeCtx): Promise<SummaryPart> {
   if (prices?.rows?.length && fresh) {
     const mk = prices.market ? bi(`${prices.market} Uzhavar Sandhai`, `${prices.market} உழவர் சந்தை`) : bi("Chennai markets (average)", "சென்னைச் சந்தைகள் (சராசரி)");
     blocks.push({ kind: "Answer", id: "prices", title: clip(L(`Vegetable prices · ${mk.en}`, `காய்கறி விலை · ${mk.ta}`), 160),
-      text: clip(L(`Modal price a kilo on ${boundWords((prices.latest ?? "") + " 00:00")}${prices.inWindow ? "" : " (the latest report: markets report to AGMARKNET a few days late)"}.`,
+      text: clip(L(`Modal price a kilo on ${boundWords((prices.latest ?? "") + " 00:00")}${prices.inWindow ? "" : " (the latest report held: the markets' prices are read once a day)"}.`,
         `${boundWords((prices.latest ?? "") + " 00:00")} அன்று கிலோ விலை${prices.inWindow ? "" : " (சமீபத்திய அறிக்கை)"}.`), 900),
       facts: prices.rows.slice(0, 12).map((p) => ({ label: clip(`${p.commodity}${p.firstDate !== p.date && p.firstPerKg !== p.perKg ? ` (was ₹${rupees(p.firstPerKg)})` : ""}`, 160), value: p.perKg, unit: "₹/kg" })) });
   }
@@ -370,7 +370,7 @@ export async function summaryRecipe(c: RecipeCtx): Promise<SummaryPart> {
     aqi: bi("The air-quality index at the nearest monitoring stations (CPCB and TNPCB): the window's average, its highest reading, and the band.", "அருகிலுள்ள நிலையங்களின் காற்றுத் தரக் குறியீடு."),
     rain: bi("Rain at the IMD gauges: the most recorded in one day within this window.", "இந்தக் காலத்தில் ஒரு நாளின் அதிகபட்ச மழை."),
     lakes: bi("Storage of the lakes and reservoirs, as a share of full, at their latest reading.", "ஏரிகளின் இருப்பு, நிரம்பிய அளவின் சதவீதம்."),
-    prices: bi("AGMARKNET's modal (most common) price a kilo at the area's Uzhavar Sandhai, latest report.", "உழவர் சந்தையின் கிலோ விலை."),
+    prices: bi("The retail price a kilo at the area's Uzhavar Sandhai (the middle of its low and high), latest report, from the TN Agricultural Marketing department.", "உழவர் சந்தையின் கிலோ விலை."),
     traffic: bi("TomTom's live traffic now in this area.", "இப்போதைய போக்குவரத்து."),
     trafficPast: bi("Live traffic as this website reads and keeps it every 10 minutes: how often each stretch was seen jammed. Click a stretch for traffic in this window.", "ஒவ்வொரு 10 நிமிட அளவீட்டிலும் நெரிசல் கண்ட முறை.")
   };

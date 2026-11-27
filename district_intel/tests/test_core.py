@@ -71,6 +71,9 @@ def test_all_200_wards_and_15_zones(wards):
 
 def test_status_crosswalk(ref):
     assert ref.std_status("grievance", "Completed - Pending Collector Verification") == "Awaiting verification"
+    # the department's own close (the officer console) is closed, not an unknown status the incident stays open under
+    assert ref.std_status("grievance", "Resolved by Department") == "Resolved"
+    assert "Resolved" in ref.status["closed_stages"]
     assert ref.std_status("police", "UNDER_INVESTIGATION") == "In progress"
     assert ref.std_status("pwd_task", "reopened") == "In progress"
     assert "Lapsed" in ref.status["closed_stages"]

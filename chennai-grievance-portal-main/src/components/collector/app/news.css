@@ -71,6 +71,21 @@
 .dic .nw-t.skip{color:var(--text-3)}
 :root[data-theme="light"] .dic .nw-t.act,.dic[data-theme="light"] .nw-t.act{color:#A3480A}
 .dic .brief.nw .nw-g{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:2px;font-size:12.5px;line-height:1.42;color:var(--text-2)}
+
+/* Tamil headlines (27 Nov, NewsHead in Overview.tsx): a story's headline as published in Tamil, first when the story is in Tamil with its
+   English line under it, or under the English headline. The second line is one line and the desk's line under them one too, so a row is
+   no taller than a two-line headline with a two-line gist and the list keeps its rows on the 680 px canvas. Tamil letters stand taller. */
+.dic .brief b[lang="ta"]{font-size:13.5px;line-height:1.45}
+.dic .brief .nw-en,.dic .brief .nw-ta{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;margin-top:1px;font-size:12.3px;line-height:1.45;color:var(--text-2)}
+.dic .brief .nw-ta{font-weight:500}
+.dic .brief.nw .nw-en~.nw-g,.dic .brief.nw .nw-ta~.nw-g{-webkit-line-clamp:1}
+.dic .ncard h4[lang="ta"]{font-size:15px;line-height:1.5}
+.dic .ncard p.nw-en,.dic .ncard p.nw-ta{-webkit-line-clamp:2;font-size:13px;line-height:1.45;color:var(--text-3)}
+.dic .ncard p.nw-ta{font-weight:500;color:var(--text-2)}
+.dic .nw-left-t [lang="ta"]{line-height:1.5}
+.dic .nw-left .nw-left-t .nw-en{display:block;margin-top:2px;white-space:normal;font-size:12.3px;line-height:1.4;color:var(--text-3)}
+/* the site in Tamil: the Tamil headline alone (the English line would only be translated back) */
+html[data-lang="ta"] .dic .nw-en,html[data-lang="ta"] .dic .nw-left .nw-left-t .nw-en{display:none}
 .dic .nwall{display:flex;flex-direction:column;gap:14px;min-height:0}
 .dic .nwall-h{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
 .dic .nwall-n{font-size:12.5px;color:var(--text-3)}

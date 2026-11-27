@@ -148,28 +148,58 @@ async function cityRun(input: Record<string, unknown>, c: ToolCtx): Promise<Tool
   return out;
 }
 
+/** the earliest day a price question with no window looks back to for each item's latest report (the markets report daily) */
+const PRICE_LOOKBACK_DAYS = 30;
+const round1 = (v: number | null) => (v == null ? null : Math.round((v / 100) * 10) / 10);
+/**
+ * 27 Nov: read through tnprices.marketRows, the Uzhavar Sandhai prices the TN Agricultural Marketing department publishes (kept on this
+ * copy in data/aws-cache/tn-prices.json, merged with the store's rows), never the table alone: a copy that does not save to AWS holds
+ * the newer days only in that file, and the table's "Anna Nagar" and "K.K. Nagar" rows are Madurai's and Tiruchirappalli's markets.
+ */
 async function pricesRun(input: Record<string, unknown>, c: ToolCtx): Promise<ToolOut> {
   const item = s(input.item).trim() || null, market = s(input.market).trim() || null, when = (input.when ?? null) as WhenIn | null;
-  const last = (await caseRows("SELECT MAX(date) AS d, MAX(fetched_at) AS f FROM mandi_market_prices"))[0] ?? {};
+  const tn = await import("@/lib/collector/tnprices");
+  const span = await tn.marketSpan();
+  const last = { d: span.to, f: span.fetched };
   const w = when ? winOf(when, c.now) : null;
-  const where = ["1 = 1"], params: unknown[] = [];
-  if (item) { where.push("LOWER(commodity) LIKE ?"); params.push(`%${item.toLowerCase().replace(/(?:oes|ies|es|s)$/, (m) => (m === "ies" ? "" : m === "oes" ? "o" : ""))}%`); }
-  if (market) { where.push("LOWER(market) LIKE ?"); params.push(`%${market.toLowerCase().replace(/[.\s]+/g, "%")}%`); }
-  if (w) { where.push("date >= ?", "date <= ?"); params.push(w.from.slice(0, 10), w.to.slice(0, 10)); }
-  else { where.push("date = (SELECT MAX(x.date) FROM mandi_market_prices x WHERE x.market = mandi_market_prices.market AND x.commodity = mandi_market_prices.commodity)"); }
-  const rows = await caseRows(`SELECT commodity, market, date, ROUND(modal_price / 100.0, 1) AS price_per_kg, ROUND(min_price / 100.0, 1) AS low, ROUND(max_price / 100.0, 1) AS high, cmdt_group FROM mandi_market_prices WHERE ${where.join(" AND ")} ORDER BY commodity, price_per_kg LIMIT ${item ? 200 : 400}`, params);
+  const itemWord = item ? item.toLowerCase().replace(/(?:oes|ies|es|s)$/, (m) => (m === "ies" ? "" : m === "oes" ? "o" : "")) : null;
+  const marketRe = market ? new RegExp(market.toLowerCase().replace(/[.\s]+/g, " ").trim().split(" ").map((x) => x.replace(/[^a-z0-9]/g, "")).filter(Boolean).join(".*")) : null;
+  const toDay = (d: string) => d.slice(0, 10);
+  // a window ends at its "to" (midnight after its last day): its last day is the day before
+  const from = w ? toDay(w.from) : span.to ? tn.addDays(span.to, -PRICE_LOOKBACK_DAYS) : null;
+  const to = w ? toDay(new Date(Date.parse(`${w.to.replace(" ", "T")}+05:30`) - 1000 + 330 * 60_000).toISOString()) : span.to;
+  const all = from && to ? await tn.marketRows(from, to) : [];
+  const picked = all.filter((r) => (!itemWord || r.commodity.toLowerCase().includes(itemWord)) && (!marketRe || marketRe.test(r.market.toLowerCase())));
+  // per market and item a day's varieties averaged; with no window, each market's latest report of each item
+  const cells = new Map<string, { commodity: string; market: string; date: string; p: number[]; lo: number | null; hi: number | null; grp: string | null }>();
+  for (const r of picked) {
+    const k = `${r.commodity}\u0000${r.market}\u0000${w ? r.d : ""}`;
+    const cur = cells.get(k);
+    if (cur && !w && cur.date > r.d) continue;
+    if (!cur || (!w && r.d > cur.date)) { cells.set(k, { commodity: r.commodity, market: r.market, date: r.d, p: [r.modal], lo: r.min, hi: r.max, grp: r.grp }); continue; }
+    cur.p.push(r.modal);
+    if (r.min != null) cur.lo = cur.lo == null ? r.min : Math.min(cur.lo, r.min);
+    if (r.max != null) cur.hi = cur.hi == null ? r.max : Math.max(cur.hi, r.max);
+  }
+  const rows: Row[] = [...cells.values()].map((x) => ({ commodity: x.commodity, market: x.market, date: x.date, price_per_kg: round1(x.p.reduce((a, b) => a + b, 0) / x.p.length),
+    low: round1(x.lo), high: round1(x.hi), cmdt_group: x.grp }))
+    .sort((a, b) => s(a.commodity).localeCompare(s(b.commodity)) || Number(a.price_per_kg) - Number(b.price_per_kg)).slice(0, item ? 200 : 400);
   if (!rows.length) {
-    const items = (await caseRows("SELECT DISTINCT commodity FROM mandi_market_prices ORDER BY 1")).map((r) => r.commodity).join(", ");
-    throw new ToolProblem(`No price is held for ${item ?? "that"}${market ? ` at ${market}` : ""}${w ? ` in ${w.label}` : ""}. The newest market day held is ${istWords(last.d)}. Items: ${items.slice(0, 900)}.`);
+    const items = [...new Set(all.map((r) => r.commodity))].sort().join(", ");
+    const markets = tn.TN_MARKET_KEYS.join(", ");
+    throw new ToolProblem(`No price is held for ${item ?? "that"}${market ? ` at ${market}` : ""}${w ? ` in ${w.label}` : ""}. The newest market day held is ${istWords(last.d)}. Markets: ${markets} (no Uzhavar Sandhai in Anna Nagar or K.K. Nagar is held; Koyambedu wholesale publishes no daily feed). Items: ${items.slice(0, 900)}.`);
   }
   const by = new Map<string, Row[]>();
   for (const r of rows) by.set(s(r.commodity), [...(by.get(s(r.commodity)) ?? []), r]);
   const avg = [...by.entries()].map(([k, rs]) => ({ item: k, average_rs_per_kg: Math.round((rs.reduce((x, r) => x + Number(r.price_per_kg), 0) / rs.length) * 10) / 10, cheapest: `${rs[0].market} ${rs[0].price_per_kg}`, dearest: `${rs.at(-1)!.market} ${rs.at(-1)!.price_per_kg}`, markets: new Set(rs.map((r) => r.market)).size, date: istWords(rs.map((r) => s(r.date)).sort().at(-1)) }));
   if (market && !item) rows.sort((a, b) => Number(a.price_per_kg) - Number(b.price_per_kg));
   const daysOld = Math.round((Date.parse(`${c.now.slice(0, 10)}T00:00:00Z`) - Date.parse(`${s(last.d)}T00:00:00Z`)) / 864e5);
-  return { about: `Market prices${item ? ` of ${item}` : ""}${market ? ` at ${market}` : ""}`, when: w ? w.label : `the newest market day of each (${istWords(last.d)})`, asOf: s(last.f) || null, sources: ["AGMARKNET (data.gov.in), Uzhavar Sandhai farmer markets in and around Chennai"], parts: [...(market && !item ? [] : [toPart("items", "By item (Rs per kg)", avg.slice(0, 60), ["item", "average_rs_per_kg", "cheapest", "dearest", "markets", "date"], { of: "rank", total: avg.length })]),
+  return { about: `Market prices${item ? ` of ${item}` : ""}${market ? ` at ${market}` : ""}`, when: w ? w.label : `the newest market day of each (${istWords(last.d)})`, asOf: s(last.f) || null,
+    sources: ["Uzhavar Sandhai farmer markets in and around Chennai (retail prices), TN Department of Agricultural Marketing & Agri Business (agrimark.tn.gov.in)"], parts: [...(market && !item ? [] : [toPart("items", "By item (Rs per kg)", avg.slice(0, 60), ["item", "average_rs_per_kg", "cheapest", "dearest", "markets", "date"], { of: "rank", total: avg.length })]),
     ...(item || market ? [toPart("markets", "By market (Rs per kg)", rows.slice(0, 60).map((r, k) => ({ rank: k + 1, ...r, date: istWords(r.date) })), ["rank", "commodity", "market", "price_per_kg", "low", "high", "date"], { of: "rank", total: rows.length })] : [])],
-    limits: daysOld > 3 ? [`The newest market day held is ${istWords(last.d)}, ${daysOld} days ago: AGMARKNET has not been read since. Say the date; never call it today's price.`] : [], method: "Modal (most common) price, turned from Rs per quintal into Rs per kg." };
+    limits: [...(daysOld > 3 ? [`The newest market day held is ${istWords(last.d)}, ${daysOld} days ago: the markets have not been read since. Say the date; never call it today's price.`] : daysOld >= 1 ? [`These are the prices of ${istWords(last.d)}, not today's: say the date.`] : []),
+      "Retail prices at the Uzhavar Sandhai farmer markets, not wholesale mandi prices."],
+    method: "The middle of each market's low and high price a kilo, as the market entered it (kept as Rs per quintal, divided by 100)." };
 }
 
 // ---------------------------------------------------------------- contacts --
@@ -281,7 +311,7 @@ export const cityTool: BrainTool = {
 };
 export const pricesTool: BrainTool = {
   name: "prices",
-  description: "Vegetable, fruit and grocery prices at Chennai's farmer markets (Rs per kg), by item and market, the newest day or over a time.",
+  description: "Vegetable and fruit retail prices at the Uzhavar Sandhai farmer markets in and around Chennai (Rs per kg; Nanganallur, Ambattur, Pallavaram, Medavakkam, Keelkattalai, Guduvancheri, Kundrathur, Padappai), by item and market, the newest day or over a time. From the TN Department of Agricultural Marketing & Agri Business.",
   doing: { en: "Reading the market prices", ta: "சந்தை விலைகளைப் பார்க்கிறேன்" },
   input: { type: "object", additionalProperties: false, properties: { item: { type: "string" }, market: { type: "string" }, when: WHEN_SCHEMA } },
   run: pricesRun

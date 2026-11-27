@@ -1,8 +1,8 @@
 /**
  * Background jobs of this server, started once when it starts (instrumentation-node.ts): added sources whose refresh
  * interval has passed are fetched (runDueSources, which includes the live lane's news feeds every 10 minutes), the
- * IMD warning for Chennai is read every 10 minutes (lib/live/imd.ts), and Data Studio links that refresh on their own are re-read
- * (runDueRefreshes). Pages used to start these sweeps from GET requests, so reading the console changed data; now a
+ * IMD warning for Chennai is read every 10 minutes (lib/live/imd.ts), Data Studio links that refresh on their own are re-read
+ * (runDueRefreshes), and the Collector's follow-ups the department has answered are closed (lib/officer/followups.ts). Pages used to start these sweeps from GET requests, so reading the console changed data; now a
  * read is only a read. Each sweep checks every minute and skips itself when one ran less than a minute ago.
  */
 declare global {
@@ -30,6 +30,9 @@ export function startJobs(): void {
       runDueRefreshes();
       // Data Studio's Live Connectors: each at its own time (IST), missed runs caught up once
       runDueConnectors();
+      // the Collector's follow-ups the department has answered (a report, a send, its own close) are closed, every 5 minutes; what stays
+      // pending past its due date is what the Collector's department pop-up lists as late (lib/officer/followups.ts)
+      void import("@/lib/officer/followups").then((m) => m.followupsTick()).catch((e) => console.warn(`[jobs] follow-ups skipped: ${(e as Error).message}`));
       // an SMS to a petitioner that failed gets another try
       void (await import("@/lib/manu/sms")).retryFailedSms();
     } catch (e) {

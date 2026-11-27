@@ -956,7 +956,7 @@ async function runPrices(q0: Query, c: AskCtx, now: string): Promise<Result> {
   const q: Query = { ...q0, by: q0.by === "market" ? "market" : "item", measure: q0.measure === "change" ? "change" : "price" };
   const tm = timeOf(q.time, "weekly", now);
   const win = winOf(tm, tm.key, now);
-  const res = { ...blank(q, win, w, notes, null), sources: ["AGMARKNET market prices"] };
+  const res = { ...blank(q, win, w, notes, null), sources: ["Uzhavar Sandhai market prices (TN Agricultural Marketing department)"] };
   if (win.outside === "future") return { ...res, cannot: beforeRecords(win) };
   const named = q.place ? CHENNAI_MARKETS.find((m) => m.key.toLowerCase().replace(/[^a-z]/g, "") === q.place!.toLowerCase().replace(/[^a-z]/g, "").replace(/market$/, ""))?.key ?? null : null;
   const zone = q.zones.length === 1 ? q.zones[0] : null;

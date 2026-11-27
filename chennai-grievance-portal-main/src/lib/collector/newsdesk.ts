@@ -7,6 +7,9 @@
  * (not the administration's business, with the reason), its area, the department's category, a plain English headline (a Tamil
  * report's own machine translation is often wrong), one or two sentences on what happened, and why it matters to the
  * administration. Numbers are checked against the report; a line that fails the check is left out, the verdict stays.
+ * Since 27 Nov 2026 also the report's kind (an incident, or a forecast, government work, an ending, a roundup, an opinion,
+ * other): a news-only incident whose every report the desk reads as not an incident leaves the build (derive.applyDesk),
+ * in place of the word rules (reporttype.ts), which now decide only for what the desk has not read.
  *
  *   - Judged once per headline and kept on disk (data/aws-cache/newsdesk.json), so the same news never changes its answer and
  *     costs nothing the second time. A new report of a story already judged takes the story's verdict.
@@ -23,6 +26,7 @@ import { categories } from "@/lib/collector/nlp";
 import { isNewsMedia } from "@/lib/collector/newsmedia";
 import { bumpDataEpoch } from "@/lib/collector/epoch";
 import { numbersHold } from "@/lib/collector/numbers";
+import { REPORT_KINDS } from "@/lib/collector/reporttype";
 import { AREAS, SKIPS, deskBook, deskKey, deskOf, deskOfDocs, isListing, saveDesk, wantedDays, type Verdict } from "@/lib/collector/deskbook";
 
 export * from "@/lib/collector/deskbook";
@@ -59,6 +63,8 @@ const Out = z.object({
     area: z.string().describe(`for act and know, one of: ${AREAS.join(", ")}; empty for skip`),
     category: z.string().describe("for act and know, the category code that fits best, or empty"),
     real_event: z.boolean().describe("true when something happened in Chennai that the police, a hospital or a civic department would record: a theft, fraud or private case too, even when the verdict is skip"),
+    // 27 Nov 2026: decides whether a news-only incident stays in the counts (derive.ts), in place of the word rules (every field required: Groq)
+    kind: z.enum(REPORT_KINDS).describe("what the report is, by what happened: incident, alert, government_action, resolution, roundup, opinion or other (see kind)"),
     head: z.string().describe("the news as one plain English headline, at most 16 words"),
     gist: z.string().describe("what happened, 1 or 2 sentences, at most 40 words; empty for skip, or when only a headline is given"),
     why: z.string().describe("for act and know: why it matters to the administration, at most 20 words; empty for skip")
@@ -98,6 +104,22 @@ Always skip, with its reason:
  religion       temple programmes, festivals and worship (unless crowds, safety or government arrangements in Chennai are the news)
  promotion      private events, exhibitions, book fairs, health talks, camps by private bodies, awards, webinars, admissions
  personal       family disputes, personal lives, one person's private legal case
+
+kind: what the report is, whatever the verdict (a petty theft is skip and still an incident; a court order is act and not an incident)
+ incident           something happened to people or property: a death, an injury, a crime (a petty theft, a loot or a fraud too), an accident, a fire or
+                    explosion, a collapse, flooding or sea water entering homes, an outage or a disrupted service, a civic problem people complain of
+                    (garbage, sewage, potholes, an exposed wire), a protest, strike or road block that took place (one only planned or
+                    threatened is not one yet), an escape from custody.
+                    A report that someone was harmed, abducted or went missing, or that a crime was committed, is an incident even when it ends in a
+                    rescue, an arrest or a recovery: "girl kidnapped on her way to school, police rescue her" is an incident, not a resolution.
+ alert              only a forecast or a warning: nothing has happened yet (a rain, cyclone or heat alert, an IMD outlook)
+ government_action  what a department, the Government or a court decided or did: works (waste cleared, drains desilted), schemes, inspections, drives,
+                    tenders, openings, deployments, a court order or notice to a department
+ resolution         only the end of an earlier event, with no new harm in this report: a service restored, a road reopened, a sentence passed
+ roundup            several separate stories in one report (a "Crime Corner" column, a news bulletin), even when each is an incident, or a status
+                    table (lake levels, rainfall figures)
+ opinion            statements, speeches, criticism, interviews, features, explainers, studies
+ other              promotions, private events, sport, films, business, anything else
 Judge by what happened, never by a word in the headline. "Grand Theft Auto" is a video game, not a theft; "cardiac arrest" is a death, not a police arrest; "Alva box" is a
 box of halwa, a sweet, left by a phone thief: petty crime; "big deal" is not business; a film's title is not a riot. When a festival is named beside rain, the news is
 the rain. The monitor's own labels are often wrong: ignore them when the text says otherwise. When in doubt between know and skip for something the administration,
@@ -141,7 +163,9 @@ export async function judge(batch: DeskStory[]): Promise<Map<number, Verdict>> {
     const skip = SKIPS.find((a) => a === x.skip_reason.trim().toLowerCase()) ?? "";
     out.set(k, { v: x.verdict, area: x.verdict === "skip" ? "" : area, skip: x.verdict === "skip" ? skip || "other" : "", head: ok(x.head, 200),
       gist: x.verdict === "skip" || !batch[k].text ? "" : ok(x.gist, 420), why: x.verdict === "skip" ? "" : ok(x.why, 240),
-      cat: cats.has(x.category.trim()) && x.category.trim() !== "OTHER" ? x.category.trim() : "", real: x.real_event, of: deskKey(batch[k].title), at: Date.now(), by: r.info.model });
+      cat: cats.has(x.category.trim()) && x.category.trim() !== "OTHER" ? x.category.trim() : "", real: x.real_event,
+      // an answer outside the list leaves the kind unset: the rules decide for that story, as for one not read
+      ...(REPORT_KINDS.includes(x.kind) ? { kind: x.kind } : {}), of: deskKey(batch[k].title), at: Date.now(), by: r.info.model });
   }
   return out;
 }

@@ -689,29 +689,48 @@ function PatChart({ d }: { d: PatternDetail }) {
 /** "21 days old" on prices that are not current (R-05). */
 function PriceAge({ day, now }: { day: string | null | undefined; now: string }) {
   const a = dataAge(day, now);
-  return a.stale ? <b className="mk-stale" title={`AGMARKNET has no newer prices; these are ${a.label}`}> · {a.label}</b> : null;
+  return a.stale ? <b className="mk-stale" title={`The markets have entered no newer prices; these are ${a.label}`}> · {a.label}</b> : null;
 }
+
+/** 27 Nov: what these prices are and whose they are, under every view of the card */
+const PRICE_SOURCE = "TN Department of Agricultural Marketing & Agri Business (agrimark.tn.gov.in)";
+function PriceCredit({ ins }: { ins: Insights }) {
+  const src = ins.markets.source;
+  return (
+    <p className="mk-foot mk-credit" title="Retail prices at the state's Uzhavar Sandhai (farmer-to-consumer) markets, in rupees a kilo: the middle of each market's low and high price, as the markets enter them each morning. Not wholesale mandi prices; Koyambedu, the wholesale market, publishes no daily price feed.">
+      Uzhavar Sandhai farmer-market retail prices, ₹ per kg · Source:{" "}
+      <a href={src?.url ?? "https://agrimark.tn.gov.in"} target="_blank" rel="noopener noreferrer">{src?.name ?? PRICE_SOURCE}</a>
+    </p>
+  );
+}
+/** a weekly series whose newest week is three weeks old or more has stopped (AGMARKNET's state series, since its CAPTCHA): its tab is left out */
+const weekStopped = (week: string | null | undefined, now: string) => { const a = dataAge(week, now); return a.days == null || a.days > 20; };
 
 /** Rs per quintal to ₹ per kg: whole rupees from ₹10 up, one decimal below. */
 const kg = (v: number | null | undefined, dec?: number) => (v == null ? "—" : `₹${(v / 100).toFixed(dec ?? (v >= 1000 ? 0 : 1))}`);
 
 /**
- * Mandi prices. "Chennai markets" compares each Chennai market (AGMARKNET's Uzhavar Sandhai
- * reports) commodity by commodity; a market's column opens its own price list. The weekly
- * views average the districts around Chennai or the whole state.
+ * Vegetable and fruit prices: the Uzhavar Sandhai farmer markets in and around Chennai (retail, ₹ per kg), as their own department
+ * enters them on agrimark.tn.gov.in. "Compare markets" sets each market side by side commodity by commodity; a market's column opens its
+ * own price list. "Around Chennai" is the weekly average of those markets. 27 Nov: "Tamil Nadu" (AGMARKNET's state series, which stopped
+ * at its CAPTCHA in late October) is shown only while its newest week is recent.
  */
 export function MarketsCard({ ins, c, full }: { ins: Insights | null; c: Console; full?: boolean }) {
   const [scope, setScope] = useState<"list" | "markets" | "chennai" | "tamilNadu">(full ? "markets" : "list");
   const [market, setMarket] = useState<string | null>(null);
   // prices older than a few days are the latest there are, never "today" (R-05)
   const age = ins ? dataAge(ins.markets.byMarket.latest, ins.now) : null;
+  const showChennai = !ins || !weekStopped(ins.markets.newestWeek?.chennai, ins.now);
+  const showState = !!ins && !weekStopped(ins.markets.newestWeek?.tamilNadu, ins.now);
+  const view = (scope === "chennai" && !showChennai) || (scope === "tamilNadu" && !showState) ? "list" : scope;
   const head = (
     <div className="ch"><I n="chart" /><h2>Vegetable and fruit prices</h2>
       <div className="seg sm" style={{ marginLeft: "auto" }} data-voice="markets.scope">
-        <button className={scope === "list" ? "on" : ""} onClick={() => setScope("list")} title="One line per vegetable or fruit: average price, change, cheapest and dearest market">{age?.stale ? "Latest prices" : "Prices today"}</button>
-        <button className={scope === "markets" ? "on" : ""} onClick={() => setScope("markets")} title="Every Chennai market side by side (Uzhavar Sandhai farmer markets)">Compare markets</button>
-        <button className={scope === "chennai" ? "on" : ""} onClick={() => setScope("chennai")} title="Weekly average over Thiruvallur, Kancheepuram and Chengalpattu">Around Chennai</button>
-        <button className={scope === "tamilNadu" ? "on" : ""} onClick={() => setScope("tamilNadu")}>Tamil Nadu</button>
+        <button className={view === "list" ? "on" : ""} onClick={() => setScope("list")} title="One line per vegetable or fruit: average price, change, cheapest and dearest market">{age?.stale ? "Latest prices" : "Prices today"}</button>
+        <button className={view === "markets" ? "on" : ""} onClick={() => setScope("markets")} title="Every Uzhavar Sandhai farmer market in and around Chennai, side by side">Compare markets</button>
+        {/* a stopped series' tab is hidden, not removed: Jarvis's voice controls find these tabs by their place (controls10.data.ts) */}
+        <button className={view === "chennai" ? "on" : ""} onClick={() => setScope("chennai")} hidden={!showChennai} style={showChennai ? undefined : { display: "none" }} title="Weekly average of the Uzhavar Sandhai markets in and around Chennai">Around Chennai</button>
+        <button className={view === "tamilNadu" ? "on" : ""} onClick={() => setScope("tamilNadu")} hidden={!showState} style={showState ? undefined : { display: "none" }} title="AGMARKNET's weekly average over the Tamil Nadu districts">Tamil Nadu</button>
       </div>
       {!full && <button className="more" style={{ marginLeft: 0 }} onClick={() => c.openMarkets()} title="Every commodity at every market, full screen">Full screen<I n="expand" /></button>}
     </div>
@@ -721,9 +740,10 @@ export function MarketsCard({ ins, c, full }: { ins: Insights | null; c: Console
     <>
       {head}
       <div className={`cb mk-cb${full ? " mk-full" : ""}`}>
-        {scope === "list" ? <PriceList m={ins.markets.byMarket} now={ins.now} />
-          : scope === "markets" ? <ByMarket m={ins.markets.byMarket} now={ins.now} c={c} full={full} market={market} setMarket={setMarket} />
-            : <Weekly ins={ins} scope={scope} />}
+        {view === "list" ? <PriceList m={ins.markets.byMarket} now={ins.now} />
+          : view === "markets" ? <ByMarket m={ins.markets.byMarket} now={ins.now} c={c} full={full} market={market} setMarket={setMarket} />
+            : <Weekly ins={ins} scope={view} />}
+        {view !== "tamilNadu" && <PriceCredit ins={ins} />}
       </div>
     </>
   );
@@ -736,7 +756,7 @@ export function MarketsCard({ ins, c, full }: { ins: Insights | null; c: Console
 function PriceList({ m, now }: { m: ByM; now: string }) {
   const [find, setFind] = useState("");
   const [sort, setSort] = useState<"name" | "up" | "down">("name");
-  if (!m.markets.length) return <Empty>No Chennai market prices yet. Open Data sources and run AGMARKNET.</Empty>;
+  if (!m.markets.length) return <Empty>No Chennai market prices yet. Open Data sources and run &ldquo;Tamil Nadu market prices&rdquo;.</Empty>;
   const short = (k: string) => k.replace(/\s*Uzhavar Sandhai$/i, "");
   const rows = m.commodities.filter((x) => x.markets >= 2 && x.avg != null && (!find.trim() || x.commodity.toLowerCase().includes(find.trim().toLowerCase())))
     .map((x) => {
@@ -760,7 +780,7 @@ function PriceList({ m, now }: { m: ByM; now: string }) {
           <button className={sort === "up" ? "on" : ""} onClick={() => setSort("up")} title="Biggest price rises first">Rising first{up ? ` (${up})` : ""}</button>
           <button className={sort === "down" ? "on" : ""} onClick={() => setSort("down")} title="Biggest price falls first">Falling first{down ? ` (${down})` : ""}</button>
         </div>
-        <span className="mk-date" title="AGMARKNET, Uzhavar Sandhai farmer markets">₹ per kg{m.latest ? ` · ${fmtDate(m.latest + " 00:00:00")}` : ""}<PriceAge day={m.latest} now={now} /> · {m.markets.length} farmer markets · AGMARKNET</span>
+        <span className="mk-date" title="Uzhavar Sandhai farmer-market retail prices, from the TN Department of Agricultural Marketing & Agri Business">₹ per kg{m.latest ? ` · ${fmtDate(m.latest + " 00:00:00")}` : ""}<PriceAge day={m.latest} now={now} /> · {m.markets.length} Uzhavar Sandhai markets · retail</span>
       </div>
       <div className="mk-scroll">
         <table className="mk pl">
@@ -780,7 +800,7 @@ function PriceList({ m, now }: { m: ByM; now: string }) {
         </table>
         {!rows.length && <Empty>{find ? <>No item matches &quot;{find}&quot;.</> : "No item is sold in two or more Chennai markets."}</Empty>}
       </div>
-      <p className="mk-foot">Red ▲ = price went up since the market&apos;s last report (hurts households), green ▼ = went down. &ldquo;Compare markets&rdquo; shows every market side by side. Koyambedu does not report to AGMARKNET.</p>
+      <p className="mk-foot">Red ▲ = price went up since the market&apos;s last report (hurts households), green ▼ = went down. &ldquo;Compare markets&rdquo; shows every market side by side.</p>
     </>
   );
 }
@@ -793,7 +813,7 @@ type ByM = Insights["markets"]["byMarket"];
 
 function ByMarket({ m, now, c, full, market, setMarket }: { m: ByM; now: string; c: Console; full?: boolean; market: string | null; setMarket: (k: string | null) => void }) {
   const [find, setFind] = useState("");
-  if (!m.markets.length) return <Empty>No Chennai market prices yet. Open Data sources and run AGMARKNET.</Empty>;
+  if (!m.markets.length) return <Empty>No Chennai market prices yet. Open Data sources and run &ldquo;Tamil Nadu market prices&rdquo;.</Empty>;
   const one = market ? m.markets.find((x) => x.key === market) : null;
   const match = (x: { commodity: string }) => !find.trim() || x.commodity.toLowerCase().includes(find.trim().toLowerCase());
   const bar = (
@@ -902,7 +922,7 @@ function ByMarket({ m, now, c, full, market, setMarket }: { m: ByM; now: string;
         </table>
         {!rows.length && <Empty>No item matches &quot;{find}&quot;.</Empty>}
       </div>
-      <p className="mk-foot">Click a market name for its full price list. Red = price went up (hurts households), green = went down. Koyambedu does not report to AGMARKNET.</p>
+      <p className="mk-foot">Click a market name for its full price list. Red = price went up (hurts households), green = went down.</p>
     </>
   );
 }
@@ -916,7 +936,7 @@ function Weekly({ ins, scope }: { ins: Insights; scope: "chennai" | "tamilNadu" 
       {wk.length ? (
         <div className="mk-scroll">
         <table className="mk">
-          <thead><tr><th>Commodity</th><th>Latest day</th><th>This week</th><th>vs. last week</th><th>vs. last month</th><th>8 weeks</th></tr></thead>
+          <thead><tr><th>Commodity</th><th>Latest day</th><th>{scope === "chennai" && wk[0]?.week ? `This week (${wk[0].week})` : "This week"}</th><th>vs. last week</th><th>vs. last month</th><th>8 weeks</th></tr></thead>
           <tbody>
             {wk.map((m) => {
               const d = daily.get(m.commodity);
@@ -936,9 +956,11 @@ function Weekly({ ins, scope }: { ins: Insights; scope: "chennai" | "tamilNadu" 
           </tbody>
         </table>
         </div>
-      ) : <Empty>No AGMARKNET prices yet. Open Data sources and run AGMARKNET.</Empty>}
+      ) : <Empty>No weekly prices yet. Open Data sources and run &ldquo;Tamil Nadu market prices&rdquo;.</Empty>}
       <p className="bf-note" style={{ marginTop: 6 }}>
-        Weekly averages over {scope === "chennai" ? "the districts around Chennai (Thiruvallur, Kancheepuram, Chengalpattu)" : "all reporting Tamil Nadu districts"}.
+        {scope === "chennai"
+          ? `Weekly averages (Monday to Sunday) of the ${wk[0]?.districts ? `${wk[0].districts} ` : ""}Uzhavar Sandhai markets in and around Chennai, from their daily prices.`
+          : "AGMARKNET's weekly wholesale averages over the reporting Tamil Nadu districts."}
         {latest ? ` Daily prices up to ${fmtDate(latest + " 00:00:00")}.` : ""} A rise is marked red: it hurts households.
       </p>
     </>

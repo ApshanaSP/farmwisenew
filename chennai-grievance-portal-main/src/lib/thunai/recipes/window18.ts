@@ -128,9 +128,13 @@ export async function spanReadings(c: RecipeCtx): Promise<SummaryPart> {
 
 // ------------------------------------------------------------------ prices --
 
-/** the Chennai markets that report to AGMARKNET (lib/collector/sources.ts CHENNAI_MARKETS), by the words that name them */
-const MARKETS: [string, RegExp][] = [["Anna Nagar", /anna\s*nagar|அண்ணா\s*நகர்/i], ["K.K. Nagar", /k\.?\s*k\.?\s*nagar|கே\.?\s*கே\.?\s*நகர்/i], ["Nanganallur", /nanganallur|நங்கநல்லூர்/i],
-  ["Ambattur", /ambattur|அம்பத்தூர்/i], ["Medavakkam", /medavakkam|மேடவாக்கம்/i], ["Pallavaram", /pallavaram|பல்லாவரம்/i], ["Kundrathur", /kundrathur|குன்றத்தூர்/i], ["Guduvancheri", /guduvancheri|கூடுவாஞ்சேரி/i]];
+/**
+ * the Chennai Uzhavar Sandhai markets whose prices are kept (lib/collector/tnprices.ts TN_MARKETS), by the words that name them. 27 Nov:
+ * no "Anna Nagar" or "K.K. Nagar": AGMARKNET's markets of those names are in Madurai and Tiruchirappalli (a place named so is read as its zone)
+ */
+const MARKETS: [string, RegExp][] = [["Nanganallur", /nanganallur|நங்கநல்லூர்/i], ["Ambattur", /ambattur|அம்பத்தூர்/i], ["Medavakkam", /medavakkam|மேடவாக்கம்/i],
+  ["Pallavaram", /pallavaram|பல்லாவரம்/i], ["Keelkattalai", /keel\s*kat+alai|கீழ்க்கட்டளை/i], ["Guduvancheri", /guduvancheri|கூடுவாஞ்சேரி/i], ["Kundrathur", /kundrathur|குன்றத்தூர்/i],
+  ["Padappai", /padappai|படப்பை/i]];
 
 /** v18 round 3: produce a price question may name (English, as said): one the report does not hold is said to be missing, never swapped */
 const PRODUCE = new Set(("tomato onion potato brinjal eggplant bean carrot cabbage cauliflower garlic ginger lemon coconut drumstick pumpkin cucumber radish " +
@@ -159,7 +163,7 @@ export async function spanPrices(c: RecipeCtx): Promise<SummaryPart> {
   const zone = c.slots.zones.length === 1 ? c.slots.zones[0] : c.s.zone ?? null;
   const text = `${c.slots.place ?? ""} ${c.slots.q ?? ""} ${c.heard}`;
   const named = MARKETS.find(([, re]) => re.test(text))?.[0] ?? null;
-  c.runs.push("window_prices"); c.sources.add("AGMARKNET market prices");
+  c.runs.push("window_prices"); c.sources.add("Uzhavar Sandhai market prices (TN Agricultural Marketing department)");
   const p = await c.h.win!.prices(w, named ? null : zone, named);
   // an item named in the words ("tomato", "onions"): matched by a whole word against the item's own first word, never inside another word
   // ("Anna Nagar" named Banana once: "banana" holds "anna"). v18 round 3: against every item reported (not only the first twelve), and a
@@ -194,7 +198,7 @@ export async function spanPrices(c: RecipeCtx): Promise<SummaryPart> {
     o.failed.length ? `data.gov.in படிக்க முடியவில்லை (${days(o.failed)}).` : "",
     o.late.length ? "data.gov.in இன்னும் படிக்கப்படுகிறது; சிறிது நேரத்தில் மீண்டும் கேளுங்கள்." : ""
   ].filter(Boolean).join(" ")) : "";
-  const why = missing ? L(`No price report is held for ${w.label.en} at ${mk.en}${p.held ? `: the reports held run from ${heldWords}` : ""}.${p.keyed ? "" : " AGMARKNET's API now asks for a CAPTCHA, so newer days need a free data.gov.in key (DATA_GOV_API_KEY) on this website."}`,
+  const why = missing ? L(`No price report is held for ${w.label.en} at ${mk.en}${p.held ? `: the reports held run from ${heldWords}` : ""}.${p.keyed ? "" : " Newer days are not being collected on this website: AGMARKNET's API asks for a CAPTCHA, and the TN Agricultural Marketing department's price feed is not read here."}`,
     `${w.label.ta} அன்று ${mk.ta} விலை அறிக்கை இல்லை${p.held ? `; உள்ள அறிக்கைகள் ${heldWords}` : ""}.`) : null;
   if (why) blocks.push({ kind: "Note", id: "missing", text: clip(why, 400) });
   // (a window with reports, some of its days unread: said beside the answer; a window with none: shown under the reason)
@@ -212,7 +216,7 @@ export async function spanPrices(c: RecipeCtx): Promise<SummaryPart> {
     const oneDay = shownDays.length === 1 ? shownDays[0] : null;
     blocks.push({ kind: "Ranking", id: "prices", title: clip(missing ? L(`Latest prices held · ${mk.en} · ${day(p.latest ?? "")}`, `கடைசியாக உள்ள விலை · ${mk.ta} · ${day(p.latest ?? "")}`)
       : L(`Vegetable prices · ${mk.en} · ${when.en}`, `காய்கறி விலை · ${mk.ta} · ${when.ta}`), 160), unit: "₹/kg", order: "top",
-      method: clip(L(`Modal price a kilo${oneDay ? ` on ${day(oneDay)}` : ": each item's latest report in this window; its date is beside it"}${!missing && use.some((r) => r.firstDate !== r.date) ? "; with it, the change against the window's first report" : ""}. AGMARKNET's market reports, rupees a quintal divided by 100.`,
+      method: clip(L(`Modal price a kilo${oneDay ? ` on ${day(oneDay)}` : ": each item's latest report in this window; its date is beside it"}${!missing && use.some((r) => r.firstDate !== r.date) ? "; with it, the change against the window's first report" : ""}. Uzhavar Sandhai retail prices as the markets enter them with the TN Agricultural Marketing department: the middle of each market's low and high.`,
         oneDay ? `கிலோ விலை, ${day(oneDay)}.` : "கிலோ விலை: ஒவ்வொரு பொருளின் கடைசி அறிக்கை; அதன் தேதி அருகில்."), 240),
       about: clip(L(`Each bar: one item's modal (most common) price a kilo at ${mk.en}${p.market ? "" : ", averaged over the markets that reported it"}.`, `ஒவ்வொரு பட்டையும்: ஒரு பொருளின் கிலோ விலை.`), 300),
       items: use.slice(0, 12).map((r, i) => ({ key: clip(r.commodity, 60), label: clip(r.commodity, 120), value: r.perKg, rank: i + 1,
@@ -220,7 +224,7 @@ export async function spanPrices(c: RecipeCtx): Promise<SummaryPart> {
           r.markets > 1 ? `${r.markets} markets` : ""].filter(Boolean).join(" · "), 160) || null,
         zone: null, lat: null, lon: null, action: "none" as const })) });
   } else if (!why) blocks.push({ kind: "Note", id: "none", text: L("No market reported prices for this window.", "இந்தக் காலத்துக்கு விலை அறிக்கை இல்லை.") });
-  if (p.fetched) c.notes.push(L("Days missing from the store were read from data.gov.in (AGMARKNET's published prices) for this answer.", "இல்லாத நாட்கள் data.gov.in-இலிருந்து படிக்கப்பட்டன."));
+  if (p.fetched) c.notes.push(L("Days missing from the store were read from data.gov.in (the Open Government Data copy of the market prices) for this answer.", "இல்லாத நாட்கள் data.gov.in-இலிருந்து படிக்கப்பட்டன."));
   // (an item asked about and not reported: no other item's price is said in its place)
   const f = rows.length || !absent.length ? use[0] : undefined;
   const withAbsent = (en: string, ta: string) => bi(`${en} ${absentEn}`.trim(), `${ta} ${absentTa}`.trim());

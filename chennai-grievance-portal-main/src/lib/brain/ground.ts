@@ -78,13 +78,16 @@ const DISTRICT_NOUN = /\b(?:incidents?|cases?|complaints?|reports?|beds?|lakes?|
 export interface Verdict { ok: boolean; stray: string[]; why: string[] }
 
 export function checkAnswer(a: FinalAnswer, k: Known, w: World, o: { toolsRun: number; wantLang?: "en" | "ta" | null }): Verdict {
+  // a decline's words are code's own (topicguard/reply.ts): nothing in them to check
+  if (a.kind === "offtopic") return { ok: true, stray: [], why: [] };
   const why: string[] = [], stray: string[] = [];
   const lines = [a.say, ...a.points, a.title];
   if (a.kind === "answer") {
     for (const l of lines) { stray.push(...strayFigures(l, k)); const n = strayNames(l, k, w); if (n.length) why.push(`${n.join(", ")} is in no result (call the tool that reads it, or leave it out)`); }
     if (stray.length) why.push(`these figures are in no result: ${[...new Set(stray)].slice(0, 10).join(", ")} (copy a figure from a result, use calc for one you work out, or leave it out)`);
   }
-  if (a.kind === "chat" && DISTRICT_NOUN.test(a.say) && strayFigures(a.say, k).length) why.push("a figure about the district needs a tool result");
+  // (sentence by sentence: "A cusec is one cubic foot a second, about 28.3 litres. Lake releases are given in cusecs." states no district figure)
+  if (a.kind === "chat" && sentences(a.say).some((l) => DISTRICT_NOUN.test(l) && strayFigures(l, k).length)) why.push("a figure about the district needs a tool result");
   if ((a.kind === "answer" || a.kind === "chat") && NONE_SAID.test(a.say) && o.toolsRun === 0) why.push("you said it is not held without looking: call a tool first (the fitting one, else search, else schema and sql)");
   if (a.kind === "clarify" && a.options.length < 2) why.push("give two to four choices with the question, each a whole request");
   if (!a.say.trim()) why.push("say is empty");

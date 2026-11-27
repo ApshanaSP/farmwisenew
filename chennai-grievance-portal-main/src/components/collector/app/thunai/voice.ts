@@ -133,7 +133,40 @@ export function prewarm(langs: string | string[], now: number = Date.now()): boo
   return true;
 }
 /** test hook: forget the last warm-up time */
-export function resetPrewarm() { warmedAt = 0; warming = false; warmN = 0; }
+export function resetPrewarm() { warmedAt = 0; warming = false; warmN = 0; unlocked = false; }
+
+/**
+ * B8 (27 Nov, the hosted copy in Chrome): the browser refused to sound Jarvis's voice: speechSynthesis said "not-allowed" (Chrome speaks only on
+ * a page that has had a click), or (mouth.ts) the server voice's AudioContext stayed suspended. The page is told (setAudioBlocked) and asks for a
+ * click; before, the chunk was skipped in silence and nothing said why.
+ */
+export type BlockedWhy = "speech" | "audio";
+let onBlocked: ((why: BlockedWhy) => void) | null = null;
+export function setAudioBlocked(f: ((why: BlockedWhy) => void) | null) { onBlocked = f; }
+export function audioBlocked(why: BlockedWhy) { try { onBlocked?.(why); } catch { /* a notice never stops the voice's queue */ } }
+
+let unlocked = false;
+/**
+ * B1 (27 Nov): a click or a key on the page, the browser's leave to speak. A synthesiser left paused with nothing in it goes on, and once a
+ * page one silent utterance (volume 0, counted as a warm-up: never "speaking") is spoken inside the gesture, which some browsers want
+ * before they speak at all. Any real speech cancels it.
+ */
+export function unlockSpeech(): void {
+  if (!canSpeak()) return;
+  try {
+    const s = window.speechSynthesis;
+    if (s.paused && !s.speaking) s.resume();
+    if (unlocked || s.speaking || s.pending) return;
+    unlocked = true;
+    const u = new SpeechSynthesisUtterance(" ");
+    u.volume = 0;
+    const done = () => { warmN = Math.max(0, warmN - 1); warming = warmN > 0; };
+    u.onend = done; u.onerror = done;
+    warmN++;
+    warming = true;
+    s.speak(u);
+  } catch { /* no voice here */ }
+}
 
 /**
  * Speak lines one after another, one utterance each: the caller (mouth.ts) has already cut the answer into chunks short
@@ -164,7 +197,13 @@ export function speakLines(lines: string[], lang: string, o: SpeakOpts = {}): bo
     u.onstart = () => { if (my === token) o.onStart?.(); };
     u.onboundary = (e) => { if (my === token && e.name === "word") o.onWord?.(q.line, e.charIndex); };
     u.onend = () => setTimeout(next, q.first && queue[at]?.first ? 260 : 40);
-    u.onerror = (e) => { if ((e as SpeechSynthesisErrorEvent).error === "interrupted" || (e as SpeechSynthesisErrorEvent).error === "canceled") return; next(); };
+    u.onerror = (e) => {
+      const err = (e as SpeechSynthesisErrorEvent).error;
+      if (err === "interrupted" || err === "canceled") return;
+      // B8: refused for want of a click: the chunk is skipped as before (its words are on screen), and the page asks for a click
+      if (err === "not-allowed" && my === token) audioBlocked("speech");
+      next();
+    };
     s.speak(u);
   };
   next();

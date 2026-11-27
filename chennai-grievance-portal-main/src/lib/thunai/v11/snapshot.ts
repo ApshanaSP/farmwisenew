@@ -59,8 +59,9 @@ export const SNAP_CALLS: SnapCall[] = [
   // v15 (22 Nov): the past, zone by zone: where to concentrate first (its score of 100 and reasons), the zones getting worse and improving
   // beyond ordinary ups and downs (their change in %), over the last 4 weeks against the 4 before (focus_trends, recipes/focus.ts)
   { label: "The last 4 weeks against the 4 before: where to concentrate (rank, score of 100), getting worse and improving (change in %)", name: "focus_trends", args: { days: 28 }, facts: 11, rows: 0, keep: /^focus\.(?:attention\.\d|worse\.|better\.)/ },
-  // each commodity's average across the markets (where it is cheapest, or its last report: the mandi_prices tool)
-  { label: "Market prices, average across Chennai's markets (Uzhavar Sandhai, AGMARKNET)", name: "mandi_prices", args: {}, facts: 20, rows: 0, keep: /\.avg_kg$/ }
+  // each commodity's average across the markets (where it is cheapest, or its last report: the mandi_prices tool). 27 Nov: the Uzhavar
+  // Sandhai retail prices from the TN Agricultural Marketing department (agrimark.tn.gov.in), no longer AGMARKNET (CAPTCHA since October)
+  { label: "Market prices, Rs per kg, average across Chennai's Uzhavar Sandhai farmer markets (retail; TN Agricultural Marketing department)", name: "mandi_prices", args: {}, facts: 20, rows: 0, keep: /\.avg_kg$/ }
 ];
 
 /** A part's figures as the model reads them: the kept ones, at most the part's count. */

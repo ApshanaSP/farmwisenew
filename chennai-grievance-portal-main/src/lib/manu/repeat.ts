@@ -333,6 +333,21 @@ function deptCodeFor(portalName: unknown, prefer: string | null | undefined): st
   return Object.entries(DEPT_CONFIG).find(([, d]) => d.portalName === n)?.[0] ?? null;
 }
 
+/**
+ * The case each filing (complaint number) is in, in the build the consoles read. Only the AWS store has one: there the build's events are in
+ * the same store as the portal's tables. Elsewhere, or when the read fails, none is known and the website's own id stands.
+ */
+async function liveCases(codes: string[]): Promise<Map<string, string>> {
+  if (!codes.length || process.env.DATA_BACKEND !== "aws") return new Map();
+  try {
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT source_record_id AS code, incident_id AS inc FROM events WHERE source = 'grievance' AND source_record_id IN (?) AND incident_id IS NOT NULL`, [[...new Set(codes)]]);
+    return new Map(rows.map((r) => [String(r.code), String(r.inc)]));
+  } catch {
+    return new Map();
+  }
+}
+
 export async function findRepeats(c: Candidate): Promise<Repeats> {
   const mobile = tenDigits(c.mobile) || "__none__";
   const name = c.name?.trim() || "__none__";
@@ -384,11 +399,17 @@ export async function findRepeats(c: Candidate): Promise<Repeats> {
          LEFT JOIN complaint_categories cc ON cc.id = cs.category_id WHERE c.complaint_code IN (?)`, [online.map((r) => String(r.code))]).catch(() => [[] as RowDataPacket[]]);
     for (const r of k) kind.set(String(r.code), grievanceCategory(r.type, r.subtype));
   }
+  // the case each earlier filing is in now: the website's INC-W id only until the pipeline's build gives the filing its own (the id handover,
+  // cases.ts adoptPipelineIds). An attach offered on the old id found no case and opened a new one (the integration review, 27 Nov)
+  const W = "INC-W-";
+  const live = await liveCases([...online.map((r) => String(r.code)),
+    ...pet.map((r) => String(r.incident_id ?? "")).filter((id) => id.startsWith(W)).map((id) => id.slice(W.length))]);
+  const caseOf = (id: string | null) => (id?.startsWith(W) ? live.get(id.slice(W.length)) ?? id : id);
   const earlier: Earlier[] = [
-    ...pet.map((r): Earlier => ({ code: String(r.code), incidentId: r.incident_id ?? null, filedAt: String(r.filed_at), status: String(r.status), problem: String(r.problem ?? ""), dept: r.dept_code ?? null,
+    ...pet.map((r): Earlier => ({ code: String(r.code), incidentId: caseOf(r.incident_id ?? null), filedAt: String(r.filed_at), status: String(r.status), problem: String(r.problem ?? ""), dept: r.dept_code ?? null,
       mobile: r.mobile ?? null, name: r.name ?? null, address: r.address ?? null, ward: r.ward_number == null ? null : Number(r.ward_number), reporterKind: "petition", category: r.category_code ?? null })),
     // an online complaint names its department by the portal's name: the desk's code for it, so "the same problem" can match (P5-019)
-    ...online.map((r): Earlier => ({ code: String(r.code), incidentId: `INC-W-${r.code}`, filedAt: String(r.filed_at), status: String(r.status), problem: String(r.problem ?? ""), dept: deptCodeFor(r.dept_name, c.dept),
+    ...online.map((r): Earlier => ({ code: String(r.code), incidentId: caseOf(`${W}${r.code}`), filedAt: String(r.filed_at), status: String(r.status), problem: String(r.problem ?? ""), dept: deptCodeFor(r.dept_name, c.dept),
       mobile: r.mobile_number ?? null, name: r.first_name ?? null, address: r.street_address ?? null, ward: r.ward_number == null ? null : Number(r.ward_number), reporterKind: "online",
       category: kind.get(String(r.code)) ?? null }))
   ];

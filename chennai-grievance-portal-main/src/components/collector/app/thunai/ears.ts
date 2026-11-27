@@ -16,11 +16,45 @@
  * v5 (E2, early speech-to-text): onPause when the deciding detector has heard TUNING.earlySttMs (150 ms) of quiet inside a sentence
  * whose end is not decided yet, onResume if the voice comes back first, and peek() gives the sentence so far without ending the
  * capture. The conductor decides what to do with them; the end of utterance is decided here exactly as before.
+ *
+ * 27 Nov (the hosted copy in Chrome: "Opening the microphone" for ever, no error on screen):
+ *  - B1: the start no longer waits on AudioContext.resume(). A browser that has had no click on the page keeps a new context suspended and
+ *    its resume() pending until one comes; the ears give it RESUME_WAIT_MS and go on (a context the browser lets start is running by then).
+ *    needsGesture then says so, the page asks for a click, and its click handler resumes every context here (resumeEars).
+ *  - B2: Silero gets SILERO_WAIT_MS at a start; past it the energy gate decides, and the model is taken in once it arrives (between
+ *    sentences). A failed load is tried again at the next start (it was kept as "none" for the page's life).
+ *  - B3: `stage` says which step the start is on (the conductor's start watchdog reports it).
  */
 import { EnergyVad, frameDb, ProbVad, TUNING, type VadEvent } from "@/lib/thunai/vad";
 import { Kws, kwsMode, QuietMeter, To16k } from "./kws";
 
-export type EarsError = "blocked" | "nomic" | "unsupported" | "failed";
+export type EarsError = "blocked" | "nomic" | "unsupported" | "failed" | "stalled";
+/** B3: the step Ears.start is on: the microphone (the browser's question may be up), the speech model, the audio context, the worklet, the wake word */
+export type EarsStage = "idle" | "gum" | "silero" | "ctx" | "worklet" | "kws" | "live";
+
+/** B1: how long a start gives a suspended AudioContext to resume before it goes on with it suspended (ms) */
+export const RESUME_WAIT_MS = 300;
+/** B2: how long a start waits for Silero (its runtime is 14 MB on a cold cache) before the energy gate decides alone for now (ms) */
+export const SILERO_WAIT_MS = 6000;
+const LATE = Symbol("late");
+/** `p`, or LATE once `ms` have passed (the timer is cleared when `p` wins) */
+function within<T>(p: Promise<T>, ms: number): Promise<T | typeof LATE> {
+  let t: ReturnType<typeof setTimeout> | undefined;
+  return Promise.race([p, new Promise<typeof LATE>((r) => { t = setTimeout(() => r(LATE), ms); })]).finally(() => clearTimeout(t));
+}
+/** B1: every AudioContext the ears and the closed listener hold now, so one click wakes them all */
+const ctxs = new Set<AudioContext>();
+/** B1: give a suspended context its moment to resume, never more (resume() stays pending until a click where the browser wants one) */
+async function wake(ctx: AudioContext): Promise<void> {
+  if (ctx.state !== "suspended") return;
+  await within(ctx.resume().catch(() => undefined), RESUME_WAIT_MS);
+}
+/** B1: a click or a key came (the browser allows audio now): every suspended context of the ears resumes */
+export function resumeEars(): Promise<void> {
+  return Promise.all([...ctxs].filter((c) => c.state === "suspended").map((c) => c.resume().catch(() => undefined))).then(() => undefined);
+}
+/** B1: some context of the ears (open or closed) still waits for a click: no frame comes from it until then */
+export const earsAsleep = (): boolean => [...ctxs].some((c) => c.state === "suspended");
 
 export interface EarsHooks {
   /**
@@ -120,10 +154,21 @@ export function sileroRunner(ort: OrtLike, sess: SessLike, context: boolean = pr
 }
 
 let sileroLoad: Promise<Silero | null> | null = null;
-/** Load Silero VAD once per page (the runtime's files come from /thunai-ort, the model from /thunai). */
+let sileroFails = 0;
+/** the loads begun, counted: only the latest one's failure forgets the memo */
+let sileroLoads = 0;
+let testLoader: (() => Promise<Silero | null>) | null = null;
+/** tests only: what loadSilero gives (null: the real load again); the page's memo is forgotten */
+export function setSileroLoaderForTest(f: (() => Promise<Silero | null>) | null) { testLoader = f; sileroLoad = null; sileroFails = 0; sileroLoads++; }
+/**
+ * Load Silero VAD once per page (the runtime's files come from /thunai-ort, the model from /thunai). B2: a failed load is not kept: the next
+ * call tries again, three times at most (a network blip at the first open left the energy gate deciding for the page's life).
+ */
 export function loadSilero(): Promise<Silero | null> {
   if (sileroLoad) return sileroLoad;
-  sileroLoad = (async () => {
+  if (testLoader) { sileroLoad = testLoader(); return sileroLoad; }
+  const mine = ++sileroLoads;
+  const p: Promise<Silero | null> = (async () => {
     try {
       const url = "/thunai-ort/ort.wasm.min.mjs";
       const ort = await import(/* webpackIgnore: true */ url);
@@ -133,10 +178,12 @@ export function loadSilero(): Promise<Silero | null> {
       return sileroRunner(ort as OrtLike, sess as SessLike);
     } catch (e) {
       console.warn("Jarvis: Silero VAD unavailable, using the energy gate", e);
+      if (++sileroFails < 3 && mine === sileroLoads) sileroLoad = null;
       return null;
     }
   })();
-  return sileroLoad;
+  sileroLoad = p;
+  return p;
 }
 
 export class Ears {
@@ -168,6 +215,11 @@ export class Ears {
   /** v6: the on-device wake word (kws.ts), fed its own 16 kHz copy of the audio; null when NEXT_PUBLIC_JARVIS_KWS is off or it failed */
   private kws: Kws | null = null;
   private k16: To16k | null = null;
+  /** B2: Silero arrived after the start went on without it: taken in at the next frame outside a sentence (takeSilero) */
+  private lateSilero: Silero | null = null;
+  /** B3: the step the start is on, and when each step began (ms from the start's own beginning) */
+  stage: EarsStage = "idle";
+  stageAt: Partial<Record<EarsStage, number>> = {};
   /** which detector is deciding */
   kind: "silero" | "energy" = "energy";
   /** the model's last speech probability (dev metrics) */
@@ -184,8 +236,22 @@ export class Ears {
   /** the browser wants a click before it plays or captures audio */
   get needsGesture() { return this.ctx?.state === "suspended"; }
   resume() { return this.ctx?.resume().catch(() => undefined); }
+  /**
+   * B1: the context runs, or starts within `ms` (one the browser lets start can take a moment as the audio device wakes); false when it is
+   * still suspended then: it waits for a click
+   */
+  async awake(ms: number): Promise<boolean> {
+    const c = this.ctx;
+    if (!c) return false;
+    if (c.state !== "suspended") return true;
+    await within(c.resume().catch(() => undefined), ms);
+    return c.state !== "suspended";
+  }
+  /** B3: the audio context's state for the start watchdog's report ("none" before it is made) */
+  get ctxState(): string { return this.ctx?.state ?? "none"; }
   /** the tracks are live (the test for "off and muted mean nothing listens") */
   get live() { return !!this.stream?.getTracks().some((t) => t.readyState === "live"); }
+  private mark(s: EarsStage, t0: number) { this.stage = s; this.stageAt = { ...this.stageAt, [s]: Math.round(performance.now() - t0) }; }
 
   async start(): Promise<void> {
     if (typeof window === "undefined") throw new Error("unsupported");
@@ -193,6 +259,9 @@ export class Ears {
     const AC = W.AudioContext ?? W.webkitAudioContext;
     if (!AC) throw new Error("unsupported");
     const my = ++this.gen;
+    const t0 = performance.now();
+    this.stageAt = {};
+    this.mark("gum", t0);
     const test = process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_JARVIS_SPEC === "1" ? window.__jarvisTestStream : undefined;
     // the closed wake listener heard the name and kept its microphone open (parkWake): it is taken over, so nothing the Collector says
     // after the name is lost while a new microphone, the detector and the worklet start (the old gap was 2 to 5 seconds)
@@ -224,19 +293,30 @@ export class Ears {
     }
     // stopped while the browser's prompt was open: the microphone goes straight back
     if (my !== this.gen) { this.stream?.getTracks().forEach((t) => t.stop()); this.stream = null; return; }
-    const silero = await loadSilero();
+    this.mark("silero", t0);
+    // B2: Silero for SILERO_WAIT_MS at most (preloaded while the page is idle, it is ready at once); past it the energy gate decides and
+    // the model comes in when it arrives (takeSilero)
+    const load = loadSilero();
+    const got = await within(load, SILERO_WAIT_MS);
     if (my !== this.gen) { this.stream?.getTracks().forEach((t) => t.stop()); this.stream = null; return; }
+    const silero = got === LATE ? null : got;
+    if (got === LATE) void load.then((s) => { if (s && my === this.gen && !this.silero) this.lateSilero = s; });
     this.stream?.getTracks().forEach((t) => { t.onended = () => { if (my === this.gen) this.hooks.onDead?.(); }; });
     // a new session of Jarvis mode: the model's memory of the last session's audio is gone
     silero?.reset();
     this.silero = silero;
     this.kind = this.silero ? "silero" : "energy";
+    this.mark("ctx", t0);
     const ctx = new AC();
     this.ctx = ctx;
-    if (ctx.state === "suspended") await ctx.resume().catch(() => undefined);
+    ctxs.add(ctx);
+    // B1: never waits for a click here (resume() stays pending until one where the browser wants it): needsGesture says so after the start
+    await wake(ctx);
+    if (my !== this.gen) { ctxs.delete(ctx); void ctx.close().catch(() => undefined); this.stream?.getTracks().forEach((t) => t.stop()); this.stream = null; return; }
     this.rate = ctx.sampleRate;
+    this.mark("worklet", t0);
     await ctx.audioWorklet.addModule("/thunai/ears.worklet.js");
-    if (my !== this.gen) { void ctx.close().catch(() => undefined); this.stream?.getTracks().forEach((t) => t.stop()); this.stream = null; return; }
+    if (my !== this.gen) { ctxs.delete(ctx); void ctx.close().catch(() => undefined); this.stream?.getTracks().forEach((t) => t.stop()); this.stream = null; return; }
     const src = ctx.createMediaStreamSource(this.stream);
     this.src = src;
     const node = new AudioWorkletNode(ctx, "jarvis-ears", { numberOfInputs: 1, numberOfOutputs: 0 });
@@ -247,6 +327,7 @@ export class Ears {
     if (pre && pre.rate === this.rate) for (const f of pre.frames) { base += f.length; this.frame(f, base); }
     src.connect(node);
     node.port.onmessage = (ev: MessageEvent<{ frame: Float32Array; total: number }>) => this.frame(ev.data.frame, ev.data.total + base);
+    this.mark("kws", t0);
     if (this.hooks.onWakeWord && kwsMode() !== "off") {
       this.k16 = new To16k(this.rate);
       const k = new Kws({
@@ -257,6 +338,7 @@ export class Ears {
       this.kws = k;
       k.start();
     }
+    this.mark("live", t0);
   }
   /** v6: the wake word is listening (its worker is up) */
   get wakeWordLive(): boolean { return !!this.kws?.live; }
@@ -265,7 +347,24 @@ export class Ears {
   /** v6: the deciding detector is inside a sentence */
   get inSpeech(): boolean { return (this.silero ? this.prob : this.vad).speaking; }
 
+  /**
+   * B2: Silero arrived after the start went on with the energy gate: it decides from here. Taken between sentences only (frame()), with its
+   * clock set to the samples heard so far, so a start it gives maps onto the ring as the energy gate's did (capture() counts from the first sample)
+   */
+  private takeSilero() {
+    const s = this.lateSilero;
+    this.lateSilero = null;
+    if (!s) return;
+    s.reset();
+    this.silero = s;
+    this.kind = "silero";
+    this.s16 = []; this.acc = { sum: 0, n: 0, pos: 0 }; this.busy = false;
+    this.t16 = Math.floor((this.total / this.rate) * 16000);
+    this.prob.reset();
+  }
+
   private frame(x: Float32Array, total: number) {
+    if (this.lateSilero && !this.silero && !this.vad.speaking && this.capFrom == null) this.takeSilero();
     this.ring.push(x);
     this.total = total;
     // keep the last KEEP_S seconds, but never drop what a capture still needs (and never more than KEEP_S + 16 s)
@@ -384,10 +483,11 @@ export class Ears {
     try { this.node?.disconnect(); this.src?.disconnect(); } catch { /* already */ }
     if (this.node) this.node.port.onmessage = null;
     this.stream?.getTracks().forEach((t) => t.stop());
+    if (this.ctx) ctxs.delete(this.ctx);
     this.ctx?.close().catch(() => undefined);
     this.ctx = null; this.stream = null; this.node = null; this.src = null; this.ring = []; this.ringStart = 0; this.total = 0; this.capFrom = null;
     this.vad.reset(); this.prob.reset(); this.s16 = []; this.t16 = 0; this.acc = { sum: 0, n: 0, pos: 0 }; this.busy = false; this.level = 0; this.echo = false;
-    this.off = null; this.vStart = 0; this.inPause = false;
+    this.off = null; this.vStart = 0; this.inPause = false; this.lateSilero = null; this.stage = "idle";
     this.kws?.stop(); this.kws = null; this.k16 = null;
   }
 }
@@ -407,6 +507,16 @@ export class WakeEars {
   private meter = new QuietMeter();
   constructor(private onWake: (at: number) => void) {}
   get live(): boolean { return !!this.kws?.live; }
+  /** B7 (27 Nov): the browser holds this listener's audio until a click on the page (no frame reaches the wake word until then) */
+  get needsGesture(): boolean { return this.ctx?.state === "suspended"; }
+  /** B7: the context runs, or starts within `ms` (one the browser lets start may begin suspended for a moment); false: it waits for a click */
+  async awake(ms: number): Promise<boolean> {
+    const c = this.ctx;
+    if (!c) return false;
+    if (c.state !== "suspended") return true;
+    await within(c.resume().catch(() => undefined), ms);
+    return c.state !== "suspended";
+  }
   /** v6: ms since the last voiced frame on this listener's own audio (whether the Collector paused after the name) */
   get quietMs(): number { return this.meter.quietMs(performance.now()); }
   async start(): Promise<boolean> {
@@ -420,7 +530,11 @@ export class WakeEars {
       if (my !== this.gen) { this.release(); return false; }
       const ctx = new W.AudioContext();
       this.ctx = ctx;
-      if (ctx.state === "suspended") await ctx.resume().catch(() => undefined);
+      ctxs.add(ctx);
+      // B1: a page nobody has clicked yet keeps this context suspended, and resume() would wait for that click for ever (the closed listener
+      // then never started after a fresh load): it goes on, and the page's click handler resumes it (resumeEars); needsGesture says so meanwhile
+      await wake(ctx);
+      if (my !== this.gen) { this.release(); return false; }
       await ctx.audioWorklet.addModule("/thunai/ears.worklet.js");
       if (my !== this.gen) { this.release(); return false; }
       const k16 = new To16k(ctx.sampleRate), rate = ctx.sampleRate;
@@ -451,6 +565,7 @@ export class WakeEars {
     this.kws?.stop();
     // the page's test stream is shared with the ears: only a real microphone's tracks are stopped here
     if (this.stream && !(typeof window !== "undefined" && window.__jarvisTestStream)) this.stream.getTracks().forEach((t) => t.stop());
+    if (this.ctx) ctxs.delete(this.ctx);
     void this.ctx?.close().catch(() => undefined);
     this.ctx = null; this.stream = null; this.node = null; this.kws = null; this.off = null;
   }

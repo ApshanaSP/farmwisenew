@@ -44,10 +44,15 @@ describe("requested count", () => {
 });
 
 describe("off-topic questions", () => {
-  it.each([["Who won the IPL?", "sports"], ["tell me a joke", "writing"], ["write a python function to sort", "coding"], ["bitcoin price today", "finance"],
-    ["Show incidents in Madurai", "elsewhere"], ["what is my horoscope", "astrology"]])("%s -> %s", (q, topic) => expect(offTopic(q)).toBe(topic));
+  it.each([["Who won the IPL?", "sports"], ["tell me a joke", "writing"], ["write a python function to sort", "tech"], ["bitcoin price today", "finance"],
+    ["Show incidents in Madurai", "elsewhere"], ["what is my horoscope", "astrology"], ["When was Dhoni's retirement?", "sports"], ["Virat Kohli innings", "sports"],
+    ["தோனி எப்போது ஓய்வு பெற்றார்?", "sports"], ["Explain machine learning in one line.", "tech"]])("%s -> %s", (q, topic) => expect(offTopic(q)).toBe(topic));
   it.each(["Which zone needs attention now?", "cricket ground flooding complaints in Chepauk", "history of complaints in Zone 9", "Show developing stories about Adyar",
-    "onion price at K.K. Nagar market", "Chennai vs Madurai incidents"])("lets %s through", (q) => expect(offTopic(q)).toBeNull());
+    "onion price at K.K. Nagar market", "Chennai vs Madurai incidents", "traffic near Chepauk stadium for the IPL match", "crowd at Marina for a cricket screening",
+    "Is there any traffic diversion for the CSK match today?", "metro crowd for the film festival at Nungambakkam", "what is a cusec", "how do I export this table",
+    // the police records' own titles (review 27 Nov: "stock" and "trailer" declined them)
+    "Stock-trading app fraud: Rs 11,43,000 lost in Triplicane", "Broken-down trailer truck blocks Santhome Cathedral", "Theft at actor Vijay's house in Neelankarai"])(
+    "lets %s through", (q) => expect(offTopic(q)).toBeNull());
 });
 
 describe("top N", () => {

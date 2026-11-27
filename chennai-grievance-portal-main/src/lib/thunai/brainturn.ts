@@ -39,6 +39,8 @@ export const brainTurn: BrainFn = async (i) => {
 export function resultOf(o: BrainOut, b: Pick<RoundBodyT, "text" | "state">, w: World): AgentResult {
   const a = o.answer, lang = a.lang, r = base(lang, o);
   const say = (o.spoken.length ? o.spoken.join(" ") : a.say).replace(/\s+/g, " ").trim();
+  // (27 Nov) outside District IQ: the fixed decline, said as a plain reply. Never "refuse", which plays the blocked sound (Thunai.tsx)
+  if (a.kind === "offtopic") return { ...r, kind: "chat", reply: a.say, note: "offtopic" };
   if (a.kind === "clarify") return { ...r, kind: "clarify", reply: a.say, options: a.options.slice(0, 3).map((x) => ({ label: x.label, request: x.request })) };
   if (a.kind === "refuse") return { ...r, kind: "refuse", reply: a.say };
   const steps = o.steps as unknown as Step[];

@@ -6,7 +6,7 @@ import type { JsonCall, JsonResult } from "@/lib/ai/gateway";
 import type { ToolResult } from "@/lib/assistant/types";
 import { WORLD } from "./fixture";
 import { Ledger, MemoryStore } from "./ledger";
-import { clearCaches, observation, planRound, RoundBody, safeHands, type RoundBodyT } from "./round";
+import { clearCaches, decisionOf, observation, planRound, RoundBody, safeHands, type RoundBodyT } from "./round";
 import { fakeHands } from "./stagefake";
 import type { StageContext } from "./stage";
 
@@ -66,15 +66,76 @@ describe("one round of thinking", () => {
     expect(m.asked).toEqual([]);
     expect(r.trace.some((x) => /Read|cases/i.test(x.label))).toBe(true);
   });
-  it("general knowledge is labelled, has no figures, and asks no tool", async () => {
-    const m = model(() => ({ reply: "Deep learning trains layered neural networks on examples." }));
+  // 27 Nov, the topic guard (lib/topicguard): Jarvis answers only about the district, this console and District IQ. A plainly off-topic
+  // question is declined in code, before any model or tool; the general lane answers only a civic term, and declines on the model's verdict
+  it("a question outside District IQ is declined in code: the fixed sentence, no model, no tool", async () => {
+    const m = model(() => ({ scope: "civic", reply: "Deep learning trains layered neural networks on examples." }));
     const h = fakeHands();
-    const r = await planRound(body("what is deep learning"), WORLD, h, "u", undefined, undefined, deps(m));
-    expect(r.result?.reply).toMatch(/^General knowledge, not district data: Deep learning/);
+    for (const said of ["what is deep learning", "When was Dhoni's retirement?", "Virat Kohli innings", "tell me a joke", "write a python function to sort a list"]) {
+      const r = await planRound(body(said, { turnId: `t-out-${said.length}` }), WORLD, h, "u", undefined, undefined, deps(m));
+      expect(r.result, said).toMatchObject({ kind: "chat", note: "offtopic" });
+      expect(r.lane, said).toBe("offtopic");
+      expect(r.result?.reply, said).toMatch(/^Sorry, that is outside what I cover\. Ask me about Chennai district/);
+    }
+    expect(m.asked).toEqual([]);
     expect(h.calls).toEqual([]);
-    const f = model(() => ({ reply: "Founded in 1956 by ten people." }));
-    const g = await planRound(body("what is artificial intelligence"), WORLD, fakeHands(), "u", undefined, undefined, deps(f));
+    // in the language asked: Tamil script, and Tanglish (spoken back in Tamil script, as every Jarvis reply)
+    for (const said of ["தோனி எப்போது ஓய்வு பெற்றார்?", "dhoni eppo retire aanaru"]) {
+      const r = await planRound(body(said, { turnId: `t-ta-${said.length}` }), WORLD, fakeHands(), "u", undefined, undefined, deps(m));
+      expect(r.result, said).toMatchObject({ kind: "chat", note: "offtopic", lang: "ta" });
+      expect(r.result?.reply, said).toMatch(/^மன்னிக்கவும், அது என் பணிக்கு வெளியே உள்ளது\./);
+    }
+    expect(m.asked).toEqual([]);
+  });
+  it("the event inside a district question stays in; a short follow-up in a thread is left to the lanes", async () => {
+    const m = model((c) => (c.name === "jarvis_general" ? { scope: "offtopic", reply: "" } : c.name === "jarvis_router" ? { lane: "district" }
+      : { kind: "chat", lang: "en", reply: "Why did the drain cross the road?", options: [], screen: null }));
+    const r = await planRound(body("traffic near Chepauk stadium for the IPL match", { turnId: "t-ipl" }), WORLD, fakeHands(), "u", undefined, undefined, deps(m));
+    expect(r.lane).not.toBe("offtopic");
+    expect(r.result?.note).not.toBe("offtopic");
+    // "and tell me a joke" after a district answer leans on the thread: not declined by the code check, but by the planner's lane, which reads
+    // the turns (the planner's joke is never said)
+    const turns = [{ heard: "severe cases in Adyar", did: "showed them" }];
+    m.asked.length = 0;
+    const f = await planRound(body("and tell me a joke", { turnId: "t-follow", turns }), WORLD, fakeHands(), "u", undefined, undefined, deps(m));
+    expect(m.asked.length).toBeGreaterThan(0);
+    expect(f.result).toMatchObject({ kind: "chat", note: "offtopic" });
+    expect(f.lane).toBe("offtopic");
+    expect(f.result?.reply).not.toMatch(/drain cross/);
+  });
+  it("a follow-up the thread keeps in is the planner's, which reads the turns, never the general lane's, which reads the sentence alone", async () => {
+    const turns = [{ heard: "traffic near Chepauk stadium", did: "showed live traffic" }];
+    const m = model((c) => (c.name === "jarvis_general" ? { scope: "offtopic", reply: "" }
+      : { kind: "do", lang: "en", reply: "Showing the traffic.", options: [], screen: { ...SCREEN_NULLS, recipe: "city", q: "traffic" } }));
+    const r = await planRound(body("and the cricket match there?", { turnId: "t-lean", turns }), WORLD, fakeHands(), "u", undefined, undefined, deps(m));
+    expect(m.asked.map((x) => x.name)).not.toContain("jarvis_general");
+    expect(r.lane).not.toBe("offtopic");
+    expect(r.result?.stage?.recipe).toBe("city");
+    // the planner's own general on words the code check declines is still the decline, never its words
+    const g = model(() => ({ kind: "general", lang: "en", reply: "Dhoni retired from international cricket.", options: [], screen: null }));
+    const d = await planRound(body("and tell me about Dhoni's cricket", { turnId: "t-lean2", turns }), WORLD, fakeHands(), "u", undefined, undefined, deps(g));
+    expect(d.result).toMatchObject({ kind: "chat", note: "offtopic" });
+    expect(d.result?.reply).not.toMatch(/retired/);
+  });
+  it("the general lane answers only a civic term, labelled; any other verdict, or none, is the decline", async () => {
+    const off = model(() => ({ scope: "offtopic", reply: "" }));
+    const a = await planRound(body("what is artificial intelligence", { turnId: "t-ai" }), WORLD, fakeHands(), "u", undefined, undefined, deps(off));
+    expect(off.asked.map((x) => x.name)).toEqual(["jarvis_general"]);
+    expect(off.asked[0].system).toMatch(/Answer only about Chennai district's records/);
+    expect(a.result).toMatchObject({ kind: "chat", note: "offtopic" });
+    expect(a.lane).toBe("offtopic");
+    // a model that writes no verdict (an older reply shape) answers nothing: declined, and its figure is never said
+    const none = model(() => ({ reply: "Founded in 1956 by ten people." }));
+    const g = await planRound(body("what is artificial intelligence", { turnId: "t-ai2" }), WORLD, fakeHands(), "u", undefined, undefined, deps(none));
+    expect(g.result?.note).toBe("offtopic");
     expect(g.result?.reply).not.toMatch(/1956/);
+    // a civic term: answered, labelled as general knowledge, no tool
+    const civic = model(() => ({ scope: "civic", reply: "Artificial intelligence is software that learns patterns from examples." }));
+    const h = fakeHands();
+    const c = await planRound(body("what is artificial intelligence", { turnId: "t-ai3" }), WORLD, h, "u", undefined, undefined, deps(civic));
+    expect(c.result).toMatchObject({ kind: "chat", note: "general" });
+    expect(c.result?.reply).toMatch(/^General knowledge, not district data: Artificial intelligence/);
+    expect(h.calls).toEqual([]);
   });
   it("the planner gets one small bundle; a screen comes back from code", async () => {
     const m = model(() => ({ kind: "do", lang: "en", reply: "Bringing that up.", options: [], screen: { ...SCREEN_NULLS, recipe: "dashboard", cat: "FLOOD_WATERLOGGING", period: "weekly" } }));
@@ -113,15 +174,52 @@ describe("one round of thinking", () => {
     const r = await planRound(body("how is dengue doing in Kodambakkam", { turnId: "t-ref" }), WORLD, fakeHands(), "u", undefined, undefined, deps(m));
     expect(r.result?.kind).toBe("refuse");
   });
-  it("a general question that reaches the planner is labelled, and a figure in it stops it being said", async () => {
-    const m = model(() => ({ kind: "general", lang: "en", reply: "A tall mountain in the Himalaya.", options: [], screen: null }));
+  it("a general question that reaches the planner: reply null is the decline, a civic reply is labelled, a figure stops it being said", async () => {
+    // (27 Nov, the topic guard: CORE's general is a civic term with its reply, anything else outside District IQ with reply null)
+    const m = model(() => ({ kind: "general", lang: "en", reply: null, options: [], screen: null }));
     const r = await planRound(body("tell me something about the Everest mountain", { turnId: "t-g1" }), WORLD, fakeHands(), "u", undefined, undefined, deps(m));
-    expect(r.result).toMatchObject({ kind: "chat", note: "general" });
-    expect(r.result?.reply).toMatch(/^General knowledge, not district data: A tall mountain/);
+    expect(m.asked.length).toBe(1);
+    expect(m.asked[0].system).toMatch(/general \(a civic term, e\.g\. AQI: reply explains it, no figure; off-topic, e\.g\. sports, films, jokes: reply null\)/);
+    expect(r.result).toMatchObject({ kind: "chat", note: "offtopic" });
+    expect(r.lane).toBe("offtopic");
+    expect(r.result?.reply).toMatch(/^Sorry, that is outside what I cover\./);
+    const c = model(() => ({ kind: "general", lang: "en", reply: "A civic term the console uses.", options: [], screen: null }));
+    const k = await planRound(body("tell me something about the Everest mountain", { turnId: "t-g3" }), WORLD, fakeHands(), "u", undefined, undefined, deps(c));
+    expect(k.result).toMatchObject({ kind: "chat", note: "general" });
+    expect(k.result?.reply).toMatch(/^General knowledge, not district data: A civic term/);
     const f = model(() => ({ kind: "general", lang: "en", reply: "It is 8849 metres tall.", options: [], screen: null }));
     const g = await planRound(body("how tall is the Everest mountain", { turnId: "t-g2" }), WORLD, fakeHands(), "u", undefined, undefined, deps(f));
     expect(g.result?.note).toBe("general-fallback");
     expect(g.result?.reply).not.toMatch(/8849/);
+  });
+  it("a later round's planner chat about words the guard declines is the decline, never the model's joke", async () => {
+    const m = model(() => ({ kind: "chat", lang: "en", reply: "Why did the drain cross the road?", options: [], calls: [], done: true, say: null, screen: null }));
+    const r = await planRound(body("tell me a joke", { turnId: "t-later", round: 1 }), WORLD, fakeHands(), "u", undefined, undefined, deps(m));
+    expect(r.result).toMatchObject({ kind: "chat", note: "offtopic" });
+    expect(r.result?.reply).not.toMatch(/drain cross/);
+  });
+  it("the brain's decline goes on the record as declined, and is said once", async () => {
+    const said = "Sorry, that is outside what I cover. Ask me about Chennai district: complaints and incidents, news, rain and lakes, air quality, traffic, prices or departments.";
+    const brain = (spoken: string[]) => (async () => ({
+      result: { kind: "chat", lang: "en", reply: said, steps: [], stage: null, stageOp: null, say: null, options: [], rounds: 0, calls: [], model: null, ms: 2, note: "offtopic" },
+      out: { tokens: { input: 0, output: 0 }, rounds: 0, model: "rules", screen: null, spoken }
+    })) as never;
+    const brainFor = { user: { email: "c@x", role: "collector", lockDept: null }, key: "voice:u" } as never;
+    for (const spoken of [[said], []]) {
+      const events: { type: string; delta?: string }[] = [];
+      const m = model(() => ({ kind: "do" }));
+      const o = await planRound(body("When was Dhoni's retirement?", { turnId: `t-brain-${spoken.length}` }), WORLD, fakeHands(), "u", undefined, undefined,
+        { ...deps(m), brain: brain(spoken), brainFor, emit: (e) => events.push(e as never) });
+      expect(o.lane).toBe("offtopic");
+      expect(o.result).toMatchObject({ kind: "chat", note: "offtopic" });
+      // said through the brain's own stream when it spoke; by the round when it did not
+      expect(events.filter((e) => e.type === "TEXT_MESSAGE_CONTENT").map((e) => e.delta).join(" ")).toBe(spoken.length ? "" : said);
+      expect(decisionOf({ text: "When was Dhoni's retirement?" }, o)).toMatchObject({ lane: "declined", model: "rules" });
+      expect(m.asked).toEqual([]);
+    }
+    // a code decline has no model: the record's model is "rules"
+    const code = await planRound(body("Virat Kohli innings", { turnId: "t-code" }), WORLD, fakeHands(), "u", undefined, undefined, deps(model(() => ({ kind: "do" }))));
+    expect(decisionOf({ text: "Virat Kohli innings" }, code)).toMatchObject({ lane: "declined", model: "rules", tools: [] });
   });
   it("token diet: every bundle's call is at most 2.5K tokens, and a later round is smaller", async () => {
     const big = { ...STATE };

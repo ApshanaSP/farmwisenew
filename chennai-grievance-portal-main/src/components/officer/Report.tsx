@@ -33,10 +33,11 @@ async function shrink(file: File): Promise<Blob> {
 
 /**
  * Completion report: what was done, with photos of the finished work. A severe grievance goes to the Collector for
- * verification; any other is closed by the department, and the report is kept as its record.
+ * verification; any other is closed by the department, and the report is kept as its record, or, when the officer
+ * wants the Collector's approval, sent to the Collector like a severe one (the owner's decision of 27 Nov).
  */
-export function SendReport({ row, c, onSent }: { row: Row; c: Ctx; onSent: () => void }) {
-  const toCollector = row.sev === "Severe";
+export function SendReport({ row, c, onSent }: { row: Row; c: Ctx; onSent: (step: "send" | "close") => void }) {
+  const severe = row.sev === "Severe";
   const [remarks, setRemarks] = useState("");
   const [photos, setPhotos] = useState<{ blob: Blob; url: string }[]>([]);
   const [err, setErr] = useState("");
@@ -60,21 +61,24 @@ export function SendReport({ row, c, onSent }: { row: Row; c: Ctx; onSent: () =>
     setErr(imgs.length > room ? `At most ${OFFICER.maxPhotos} photos can be attached.` : "");
   };
 
-  const send = async () => {
+  // which way the report went (the button pressed), for the busy label
+  const [going, setGoing] = useState<"send" | "close">(severe ? "send" : "close");
+  const send = async (step: "send" | "close") => {
     const text = remarks.trim();
     if (text.length < OFFICER.minRemarks) { setErr("Write remarks describing the work done."); return; }
     if (!photos.length) { setErr("Attach at least one photo of the completed work."); return; }
     setBusy(true);
+    setGoing(step);
     setErr("");
     const fd = new FormData();
     fd.append("remarks", text);
-    fd.append("step", toCollector ? "send" : "close");
+    fd.append("step", step);
     photos.forEach((p, k) => fd.append("photos", p.blob, `photo-${k + 1}.jpg`));
     try {
       const r = await fetch(`/api/officer/grievances/${encodeURIComponent(row.id)}/report`, { method: "POST", body: fd });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "Could not send the report.");
-      onSent();
+      onSent(step);
     } catch (e: any) {
       setErr(e.message);
       setBusy(false);
@@ -118,9 +122,14 @@ export function SendReport({ row, c, onSent }: { row: Row; c: Ctx; onSent: () =>
       {err && <div className="oerr" role="alert">{err}</div>}
       <div className="osend-f">
         <button className="btn plain" onClick={c.closeAll} disabled={busy}>Cancel</button>
-        {!toCollector && <span className="hint" style={{ marginRight: "auto" }}>{sevLabel(row.sev)}: your department verifies and closes it; only Severe cases go to the Collector.</span>}
-        <button className="btn" onClick={send} disabled={busy}>{busy ? <><I n="refresh" className="spin" />{toCollector ? "Sending…" : "Closing…"}</>
-          : toCollector ? <><I n="send" />Send to Collector</> : <><I n="check" />Close as done</>}</button>
+        {!severe && <span className="hint" style={{ marginRight: "auto" }}>{sevLabel(row.sev)}: your department verifies and closes it, or sends it to the Collector for approval.</span>}
+        {!severe && (
+          <button className="btn plain" onClick={() => send("send")} disabled={busy} title="The Collector checks your report and closes the case, or sends it back">
+            {busy && going === "send" ? <><I n="refresh" className="spin" />Sending…</> : <><I n="send" />Send to Collector for approval</>}
+          </button>
+        )}
+        <button className="btn" onClick={() => send(severe ? "send" : "close")} disabled={busy}>{busy && (severe || going === "close") ? <><I n="refresh" className="spin" />{severe ? "Sending…" : "Closing…"}</>
+          : severe ? <><I n="send" />Send to Collector</> : <><I n="check" />Close as done</>}</button>
       </div>
     </div>
   );

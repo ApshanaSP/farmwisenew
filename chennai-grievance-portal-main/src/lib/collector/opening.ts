@@ -34,6 +34,11 @@ export interface LiveBrief {
   facts: LiveFacts;
   /** other figures on the page a summary may state without a noun the checker knows */
   extra?: number[];
+  /**
+   * 27 Nov: the window's incidents with deaths or injuries, with their places: "violent crimes resulting in 1 death in Kellys" states one
+   * incident's figure, not the district's (3 deaths), and holds when an incident of the window at a place the clause names has that many
+   */
+  incidents?: { places: (string | null | undefined)[]; dead?: number | null; injured?: number | null }[];
 }
 export interface CheckedOpening { opening: { en: string; ta: string | null } | null; why: string | null }
 
@@ -56,9 +61,25 @@ function wordsToDigits(t: string): string {
     .replace(/\ba (hundred|thousand)\b/gi, (_m, w: string) => (w.toLowerCase() === "hundred" ? "100" : "1000"));
 }
 
+/**
+ * "one" that is no number: "the previous one", "this one", "each one", "one of the ...", "one another", "one-off". 27 Nov: "This period saw
+ * more incidents than the previous one." was kept off the Overview as "1 is not a live figure" (the hosted log, every refresh from 22:35).
+ */
+const PRONOUN_ONE = /\b(the|this|that|previous|prior|last|earlier|preceding|next|each|every|no|any|another|same|latest|other)\s+one\b(?!\s*(?:%|per ?cent)|\s+(?:more\s+)?(?:incidents?|cases?|deaths?|dead|injur\w*|reports?|persons?|people|severe|complaints?|items?|matters?|events?)\b)/gi;
+const notANumber = (t: string): string => t
+  // (27 Nov review) unless what follows it in its clause is what the checker counts: "the one man killed" is a death figure, and it went
+  // unchecked beside the live 2; "no one was hurt" is 0 injured
+  .replace(PRONOUN_ONE, (m: string, det: string, at: number, all: string) => (countsNext(all.slice(at + m.length)) ? (/^no$/i.test(det) ? `${det} 0` : m) : det))
+  .replace(/\bone\s+(?=of\b|another\b)/gi, "").replace(/\bone-(?=off\b|time\b|way\b|stop\b|sided\b)/gi, "single-");
+/** Does the rest of a clause begin with a noun a figure there would count (the checker's own NOUNS)? */
+const countsNext = (rest: string): boolean => {
+  const r = rest.split(/[.,;:!?]|\s+(?:while|whereas|though|although|but|with|and|yet)\s+/i)[0].trim();
+  return !!r && NOUNS.some(([re]) => re.test(r));
+};
+
 /** The text with what is not a figure taken out: dates, times, warning levels, durations ("24 hours", "the past 7 days"). */
 function figureText(text: string): string {
-  return wordsToDigits(text)
+  return wordsToDigits(notANumber(text))
     .replace(/\b\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::\d{2})?)?\b/g, " ")
     .replace(/\b\d{1,2}:\d{2}\s*(?:am|pm)?\b/gi, " ")
     .replace(new RegExp(`\\b\\d{1,2}(?:st|nd|rd|th)?\\s+${MONTH}\\b`, "gi"), " ")
@@ -137,8 +158,18 @@ export function claimedChanges(text: string): { subject: "total" | "severe"; way
     .map(({ subject, ways }) => ({ subject, ways }));
 }
 
+/** a place's own words (four letters or more, the generic ones of a street or an area aside), lower case */
+const GENERIC_PLACE = new Set(["road", "street", "nagar", "main", "salai", "colony", "area", "near", "opposite", "junction", "lane", "cross", "east", "west", "north",
+  "south", "chennai", "zone", "ward", "taluk", "district", "city", "high", "first", "second", "third", "extension", "layout", "avenue", "bridge", "station", "police"]);
+const placeWords = (p: string): string[] => p.toLowerCase().split(/[^\p{L}]+/u).filter((w) => w.length >= 4 && !GENERIC_PLACE.has(w));
+/** Does the clause name a place of one of these incidents with exactly `v` deaths (or injured)? */
+function incidentFigure(c: string, v: number, key: "deaths" | "injured", incidents: NonNullable<LiveBrief["incidents"]>): boolean {
+  const words = new Set(c.toLowerCase().split(/[^\p{L}]+/u));
+  return incidents.some((i) => Number(key === "deaths" ? i.dead : i.injured) === v && i.places.some((p) => !!p && placeWords(p).some((w) => words.has(w))));
+}
+
 /** Why the English text does not say what the live figures say, or null when every claim and figure holds. */
-function contradiction(en: string, f: LiveFacts, extra: number[]): string | null {
+function contradiction(en: string, f: LiveFacts, extra: number[], incidents: NonNullable<LiveBrief["incidents"]> = []): string | null {
   const change = { total: pct(f.reported, f.prev), severe: pct(f.severe, f.prevSevere) };
   const all = new Set([...Object.values(f), ...extra].filter((v): v is number => typeof v === "number"));
   for (const c of clauses(en)) {
@@ -163,6 +194,7 @@ function contradiction(en: string, f: LiveFacts, extra: number[]): string | null
       if (hit) {
         const key = prev && hit[2] ? hit[2] : hit[1];
         const live = f[key];
+        if ((key === "deaths" || key === "injured") && live !== v && !prev && incidentFigure(c, v, key, incidents)) continue;
         if (live == null || live !== v) return `"${c}": ${v} is not the live ${String(key)} figure${live == null ? "" : ` (${live})`}`;
       } else if (!all.has(v)) return `"${c}": ${v} is not a live figure`;
     }
@@ -181,6 +213,25 @@ function tamilWay(ta: string): Way | null {
   return null;
 }
 
+declare global {
+  // eslint-disable-next-line no-var
+  var __openingLogged: Map<string, number> | undefined;
+}
+/** how long a reason already logged stays quiet */
+export const LOG_AGAIN_MS = 6 * 3_600_000;
+/**
+ * 27 Nov: true the first time a reason is given for `tag` (then again after LOG_AGAIN_MS): the hosted log repeated the same "AI opening not
+ * shown" line on every refresh of the Overview (more than 60 times in an evening). The check runs every time; only the log is quieter.
+ */
+export function firstTimeWhy(tag: string, why: string, now: number = Date.now()): boolean {
+  const m = (globalThis.__openingLogged ??= new Map());
+  const k = `${tag}|${why}`, at = m.get(k);
+  if (at != null && now - at < LOG_AGAIN_MS) return false;
+  m.set(k, now);
+  if (m.size > 200) for (const key of [...m.keys()].slice(0, m.size - 200)) m.delete(key);
+  return true;
+}
+
 export function checkOpening(s: StoredOpening, live: LiveBrief): CheckedOpening {
   const en = (s.en ?? "").trim();
   if (!en) return { opening: null, why: null };
@@ -194,7 +245,7 @@ export function checkOpening(s: StoredOpening, live: LiveBrief): CheckedOpening 
   if (Number.isFinite(start) && Math.abs(began - start) / 3_600_000 > slackH) {
     return { opening: null, why: `counts the ${live.hours} hours to ${String(s.asOf).slice(0, 16)}, not the console's window from ${String(live.from).slice(0, 16)}` };
   }
-  const wrong = contradiction(en, live.facts, live.extra ?? []);
+  const wrong = contradiction(en, live.facts, live.extra ?? [], live.incidents ?? []);
   if (wrong) return { opening: null, why: wrong };
   // the Tamil: the same digits as the English, and the same way for all incidents
   const digits = (t: string) => (t.match(/\d[\d,]*(?:\.\d+)?/g) ?? []).map((x) => Number(x.replace(/,/g, "")));

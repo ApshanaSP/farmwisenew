@@ -9,9 +9,10 @@ import { effectiveSql } from "@/lib/collector/effective";
 import { OPEN_NOW, PERIODS, PLACE_FILTERS, asOf, attentionRows, awaitingByDept, explain, periodSince, periodWindow, scopeWhere, type Focus, type Period } from "@/lib/collector/intel";
 import { periodBefore, periodHours, periodInfo, periodLower } from "@/lib/period/day";
 import { categories, placeResolver } from "@/lib/collector/nlp";
-import { addedItems, mandi, mandiMarkets, mandiWeekly, type MandiMarkets } from "@/lib/collector/sources";
+import { addedItems, mandi, mandiMarkets, mandiWeekly, type MandiMarkets, type MandiScope, type MandiWeek } from "@/lib/collector/sources";
+import { TN_SITE, TN_SOURCE, TN_WHAT } from "@/lib/collector/tnprices";
 import { briefingBook } from "@/lib/collector/briefbook";
-import { checkOpening } from "@/lib/collector/opening";
+import { checkOpening, firstTimeWhy } from "@/lib/collector/opening";
 import { reviewLocations, type Ward } from "@/lib/collector/locreview";
 import { elsewhere } from "@/lib/collector/newsrel";
 import { offDeskIncidents } from "@/lib/collector/newsdesk";
@@ -32,7 +33,9 @@ const OPEN = OPEN_NOW;
 const HOT_OPEN = `h.open + COALESCE((SELECT SUM(${OPEN}) - SUM(${EFF.pipelineOpen}) FROM incidents i WHERE i.hotspot_id = h.hotspot_id), 0)`;
 
 /** An empty price table, for the parts that do not show prices. */
-const noMandi = (scope: "chennai_markets" | "tamil_nadu"): Awaited<ReturnType<typeof mandi>> => ({ scope, commodities: [], fetched: null, latest: null });
+const noMandi = (scope: "chennai_markets" | "tamil_nadu"): MandiScope => ({ scope, commodities: [], fetched: null, latest: null });
+/** the newest week a weekly series reaches ("2026-11-24"), so the page can leave out one that stopped (the state's AGMARKNET series) */
+const newestWeek = (w: MandiWeek[]): string | null => w.reduce<string | null>((a, x) => (x.weekStart && (!a || x.weekStart > a) ? x.weekStart : a), null);
 
 type Row = Record<string, any>;
 async function q<T = Row>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -284,7 +287,8 @@ async function insightsFresh(period: Period, zone: number | null, dept: string |
           newsOnly: gaps.length, complaints: Number(K.complaints ?? 0) },
         extra: ch == null ? [] : [Math.abs(ch)] })
     : { opening: null, why: null };
-  if (checked.why) console.info(`[insights] AI opening not shown (${period}): ${checked.why}`);
+  // each reason once every few hours, not on every page load (it was the noisiest line in the hosted log)
+  if (checked.why && firstTimeWhy(`insights:${period}`, checked.why)) console.info(`[insights] AI opening not shown (${period}): ${checked.why}`);
   const opening = checked.opening;
   // how "most urgent first" is ordered: hand-set priority weights, or weights learned from the Collector's decisions
   const [pl] = B ? await q(`SELECT value FROM metrics WHERE metric = 'priority_learning'`).catch(orEmpty("insights:207")) : [];
@@ -350,14 +354,15 @@ async function insightsFresh(period: Period, zone: number | null, dept: string |
   // prices: page 4, and one line of the written briefing
   const [mTN, mCH, wCH, wTN, byMarket] = E || B
     ? await Promise.all([mandi("tamil_nadu"), mandi("chennai_markets"), mandiWeekly("chennai_region"), mandiWeekly("tamil_nadu"), mandiMarkets()])
-    : [noMandi("tamil_nadu"), noMandi("chennai_markets"), [], [], { latest: "", dates: [], fetched: null, markets: [], commodities: [] } satisfies MandiMarkets];
+    : [noMandi("tamil_nadu"), noMandi("chennai_markets"), [] as MandiWeek[], [] as MandiWeek[], { latest: "", dates: [], fetched: null, markets: [], commodities: [] } satisfies MandiMarkets];
   const kg = (v: number) => `₹${(v / 100).toFixed(0)}`;
   // Chennai's own markets when they have reported; else the districts around Chennai, else the state
+  // (27 Nov: the Uzhavar Sandhai farmer markets' retail prices, TN Agricultural Marketing department)
   const market = byMarket.commodities.length
     ? byMarket.commodities.slice(0, 3).map((c) => {
         const at = Object.entries(c.prices).sort((a, b) => a[1].price - b[1].price);
         const d = c.avg != null && c.avgPrev ? Math.round(((c.avg - c.avgPrev) / c.avgPrev) * 100) : null;
-        return `${c.commodity} ${kg(c.avg ?? 0)}/kg across ${plural(c.markets, "Chennai market")}` +
+        return `${c.commodity} ${kg(c.avg ?? 0)}/kg across ${plural(c.markets, "Uzhavar Sandhai market")}` +
           (at.length > 1 ? ` (${kg(at[0][1].price)} at ${at[0][0]} to ${kg(at[at.length - 1][1].price)} at ${at[at.length - 1][0]})` : "") +
           (d ? `, ${d > 0 ? "up" : "down"} ${Math.abs(d)}% on the previous report` : "");
       })
@@ -475,7 +480,9 @@ async function insightsFresh(period: Period, zone: number | null, dept: string |
     // Locations needing review: only incidents whose place is unknown (locreview.ts); the counts say what was left out
     review: { unplaced: places?.missing ?? [], unplacedTotal: places?.counts.missing ?? 0, counts: places?.counts ?? null, located: places?.located ?? [], placed: placedRows,
       links: reviewCounts.link ?? 0, gaps: reviewCounts.gap ?? 0 },
-    markets: { chennai: mCH, tamilNadu: mTN, weekly: { chennai: wCH, tamilNadu: wTN }, byMarket }
+    // 27 Nov: where the prices come from and what they are, said on the page; each weekly series' newest week, so a stopped one is left out
+    markets: { chennai: mCH, tamilNadu: mTN, weekly: { chennai: wCH, tamilNadu: wTN }, byMarket,
+      source: { name: TN_SOURCE, url: TN_SITE, what: TN_WHAT }, newestWeek: { chennai: newestWeek(wCH), tamilNadu: newestWeek(wTN) } }
   };
 }
 export type Insights = Awaited<ReturnType<typeof insights>>;

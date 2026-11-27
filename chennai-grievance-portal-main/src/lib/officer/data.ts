@@ -23,7 +23,7 @@ import { asOf, contactsFor, exportMeta, overview, periodSince, periodWindow, typ
 import { periodInfo } from "@/lib/period/day";
 import { collectionStatus } from "@/lib/collector/sources";
 import { OFFICER, deptConfig } from "./departments";
-import { STAGE_LABEL, TAB_STAGES, feedbackKind, nextStep, type FeedbackKind, type Stage, type Tab } from "./stages";
+import { STAGE_LABEL, STEP_FROM, TAB_STAGES, feedbackKind, nextStep, stepRefusal, type FeedbackKind, type RecordedStep, type Stage, type Tab } from "./stages";
 import { photoUrl } from "./photos";
 import { awaitingQueue, syncComplaints } from "@/lib/complaint-progress";
 import { queueNoteFor } from "./queue-note";
@@ -402,18 +402,21 @@ export async function officerPulse(dept: DeptProfile) {
 /** Current IST wall-clock time, "YYYY-MM-DD HH:MM:SS" (decisions carry real times, not the pipeline's as-of). */
 const istNow = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 19).replace("T", " ");
 
-/** The Collector's decisions on this department's grievances made in the period (the department's own close is not one). */
+/**
+ * The Collector's decisions on this department's grievances made in the period (the department's own close is not one). An escalation
+ * is one too: it changes no stage, but the department must hear of it (the card, the bell and the console's poll read this; 27 Nov).
+ */
 function feedbackWhere(dept: string, s: Scope) {
   // the department's own close is stored as a 'resolve' by its officer (decided_role): it is not the Collector's work
   return {
     sql: `FROM ${ops("collector_decisions")} d JOIN incidents i ON i.incident_id = d.incident_id
-     WHERE i.lead_dept = ? AND d.decision IN ('verify', 'resolve', 'reopen', 'reject') AND COALESCE(d.decided_role, '') <> 'department_officer' AND d.decided_at >= ?
+     WHERE i.lead_dept = ? AND d.decision IN ('verify', 'resolve', 'reopen', 'reject', 'escalate') AND COALESCE(d.decided_role, '') <> 'department_officer' AND d.decided_at >= ?
        ${s.zone ? "AND i.zone_no = ?" : ""} ${s.taluk ? "AND i.taluk_code = ?" : ""}`,
     params: [dept, periodSince(s.period, istNow()), ...(s.zone ? [s.zone] : []), ...(s.taluk ? [s.taluk] : [])] as unknown[]
   };
 }
 
-/** The Collector's verify / resolve / return (reopen) / reject decisions on this department's grievances, made in the period, newest first. */
+/** The Collector's verify / resolve / return (reopen) / reject / escalate decisions on this department's grievances, made in the period, newest first. */
 async function collectorFeedback(dept: string, s: Scope, limit: number) {
   const w = feedbackWhere(dept, s);
   const r = await q(
@@ -434,7 +437,7 @@ async function collectorFeedback(dept: string, s: Scope, limit: number) {
 export async function feedbackCounts(dept: string, s: Scope): Promise<Record<FeedbackKind, number>> {
   const w = feedbackWhere(dept, s);
   const r = await q(`SELECT d.decision, COUNT(*) AS n ${w.sql} GROUP BY d.decision`, w.params);
-  const out: Record<FeedbackKind, number> = { verified: 0, resolved: 0, returned: 0, rejected: 0 };
+  const out: Record<FeedbackKind, number> = { verified: 0, resolved: 0, returned: 0, rejected: 0, escalated: 0 };
   for (const x of r) { const k = feedbackKind(x.decision); if (k) out[k] += Number(x.n); }
   return out;
 }
@@ -497,8 +500,29 @@ export async function grievanceList(dept: DeptProfile, f: ListFilter) {
     q(`${b.sql} SELECT COUNT(*) AS n FROM w WHERE ${W}`, params)
   ]);
   // RC-47: complaints filed with this department that the next update will add to the queue
-  const waiting = f.page === 0 && !f.q ? await awaitingQueue(deptConfig(dept.code).portalName).catch(() => 0) : 0;
-  return { now, rows: rows.map(tidy), total: Number(tot?.n ?? 0), page: f.page, per, awaiting: waiting, awaitingNote: queueNoteFor(waiting) };
+  const [waiting, told] = await Promise.all([
+    f.page === 0 && !f.q ? awaitingQueue(deptConfig(dept.code).portalName).catch(() => 0) : Promise.resolve(0),
+    instructedOf(dept.code, rows.map((r) => String(r.id)))
+  ]);
+  return { now, rows: rows.map((r): Row => ({ ...tidy(r), instructed: told.has(String(r.id)) })), total: Number(tot?.n ?? 0), page: f.page, per, awaiting: waiting, awaitingNote: queueNoteFor(waiting) };
+}
+
+/**
+ * Which of these cases carry an instruction the Collector sent this department (Take action, a send from Ask the Map or the traffic view,
+ * a rain rehearsal's job): the lists flag them, as the drawer shows the instruction itself. The instructions were only inside the drawer,
+ * so nothing in a list or a tab said which cases the Collector had asked about (the integration review, 27 Nov). An email addressed to
+ * another department (its follow-up names it, followupdept.ts) does not count, as the drawer leaves it out. A store without the tables
+ * flags none.
+ */
+async function instructedOf(dept: string, ids: string[]): Promise<Set<string>> {
+  if (!ids.length) return new Set();
+  const rows = await q(
+    `SELECT e.incident_id AS id, (SELECT f.summary FROM ${ops("followups")} f WHERE f.email_id = e.email_id AND f.incident_id = e.incident_id ORDER BY f.followup_id LIMIT 1) AS fsum
+       FROM ${ops("outbound_emails")} e WHERE e.incident_id IN (?)
+     UNION ALL
+     SELECT f.incident_id AS id, f.summary AS fsum FROM ${ops("followups")} f WHERE f.incident_id IN (?) AND f.email_id IS NOT NULL`, [ids, ids]
+  ).catch(orEmpty("data:instructed"));
+  return new Set(rows.filter((r) => { const to = followupDept(r.fsum); return to == null || to === dept; }).map((r) => String(r.id)));
 }
 
 /** Search every grievance of the last 90 days, whatever the filters. */
@@ -553,11 +577,15 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
     // that is how the other cases find it: QA pass 6, P6-015)
     // reviewer4-03: an email addressed to another department (its follow-up for this case names it) is left out, so a case that moved
     // department does not show the old department's instruction and the other cases it lists (followupdept.ts)
+    // with the follow-up it set on this case: when the report is due, and whether it is still owed (lib/officer/followups.ts closes it once
+    // the department sends or closes with a report)
     q(`SELECT e.email_id AS id, e.subject, e.body, e.owner, e.body_hash, e.approved_at, ${fmt("e.created_at")} AS t,
-              (SELECT f.summary FROM ${ops("followups")} f WHERE f.email_id = e.email_id AND f.incident_id = ? ORDER BY f.followup_id LIMIT 1) AS fsum
+              (SELECT f.summary FROM ${ops("followups")} f WHERE f.email_id = e.email_id AND f.incident_id = ? ORDER BY f.followup_id LIMIT 1) AS fsum,
+              (SELECT ${fmt("f.due_date")} FROM ${ops("followups")} f WHERE f.email_id = e.email_id AND f.incident_id = ? ORDER BY f.followup_id LIMIT 1) AS fdue,
+              (SELECT f.status FROM ${ops("followups")} f WHERE f.email_id = e.email_id AND f.incident_id = ? ORDER BY f.followup_id LIMIT 1) AS fstatus
        FROM ${ops("outbound_emails")} e
        WHERE e.incident_id = ? OR e.email_id IN (SELECT f.email_id FROM ${ops("followups")} f WHERE f.incident_id = ? AND f.email_id IS NOT NULL)
-       ORDER BY e.created_at DESC, e.email_id DESC LIMIT 20`, [id, id, id])
+       ORDER BY e.created_at DESC, e.email_id DESC LIMIT 20`, [id, id, id, id, id])
       .then((rows) => rows.filter((e) => { const to = followupDept(e.fsum); return to == null || to === dept.code; }).slice(0, 5))
       .catch(orEmpty("data:462"))
   ]);
@@ -590,11 +618,12 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
       kind: st.step === "close" ? "fin" : "",
       at: place.get(st)!
     })),
-    ...decisions.filter((d) => d.decision !== "note").map((d) => ({
+    // a note the Collector added is shown too: it was saved and audited, and the department never saw it (the integration review, 27 Nov)
+    ...decisions.map((d) => ({
       t: d.t,
-      label: ({ verify: "Verified by Collector", reopen: "Returned by Collector", resolve: "Resolved by Collector", reject: "Rejected by Collector", escalate: "Escalated by Collector" } as Record<string, string>)[d.decision] ?? d.decision,
+      label: ({ verify: "Verified by Collector", reopen: "Returned by Collector", resolve: "Resolved by Collector", reject: "Rejected by Collector", escalate: "Escalated by Collector", note: "Note from the Collector" } as Record<string, string>)[d.decision] ?? d.decision,
       note: d.note ?? (d.decision === "verify" ? "Work verified; grievance closed" : ""),
-      kind: d.decision === "reopen" || d.decision === "reject" || d.decision === "escalate" ? "esc" : "fin",
+      kind: d.decision === "reopen" || d.decision === "reject" || d.decision === "escalate" ? "esc" : d.decision === "note" ? "" : "fin",
       at: place.get(d)!
     }))
   ].map((e, k) => ({ e, k })).sort((a, b2) => String(a.e.t).localeCompare(String(b2.e.t)) || ((a.e as { at?: number }).at ?? -1) - ((b2.e as { at?: number }).at ?? -1) || a.k - b2.k)
@@ -635,7 +664,11 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
     }),
     /** the Collector's instructions on this grievance, newest first, each with its signed reference (lib/security/stamp.ts) */
     instructions: instructions.map((e) => ({ id: e.id, subject: e.subject, body: e.body, t: e.t, from: e.owner ?? null,
-      ref: e.owner && e.body_hash && e.approved_at ? emailRef({ owner: String(e.owner), subject: String(e.subject), bodyHash: String(e.body_hash), at: String(e.approved_at) }) : null })),
+      ref: e.owner && e.body_hash && e.approved_at ? emailRef({ owner: String(e.owner), subject: String(e.subject), bodyHash: String(e.body_hash), at: String(e.approved_at) }) : null,
+      /** the report the instruction asked for: due when, and whether it is still owed (pending) or answered */
+      reportDue: e.fdue ? String(e.fdue) : null, owed: e.fstatus == null ? null : String(e.fstatus) === "pending",
+      /** no longer owed because the Collector closed the case without a report from the department (followups.ts 'closed'), not because one was sent */
+      closedByCollector: String(e.fstatus ?? "") === "closed" })),
     /** closed by the Collector's reject (stage closed): when and why; the department can do nothing more on it (officer-day-05) */
     rejected: g.stage === "closed" && lastReject ? { t: String(lastReject.t), note: lastReject.note == null ? null : String(lastReject.note) } : null,
     /**
@@ -655,11 +688,12 @@ export class WorkflowError extends Error {
 }
 
 /**
- * Stages each step starts from: approve a new grievance; send one that is in action (approved or started) to the
- * Collector; close one in action as done. Only severe grievances go to the Collector for verification: the
- * department closes every other one itself (also one it sent to the Collector before that rule).
+ * Stages each step starts from (stages.ts STEP_FROM, the console's copy): approve a new grievance; mark work started on an approved one
+ * (`action`, the progress update); send one that is in action (approved or started) to the Collector; close one in action as done.
+ * A severe grievance must go to the Collector for verification; any other the department closes itself, or sends to the Collector when it
+ * wants the Collector's approval (the owner's decision, 27 Nov). A case at "sent" waits for the Collector's decision.
  */
-const ALLOWED: Record<"approve" | "send" | "close", Stage[]> = { approve: ["new"], send: ["approved", "action"], close: ["approved", "action", "sent"] };
+const ALLOWED = STEP_FROM;
 
 /**
  * Records one workflow step after checking, under a per-grievance lock, that the
@@ -668,7 +702,7 @@ const ALLOWED: Record<"approve" | "send" | "close", Stage[]> = { approve: ["new"
  * department's own verification, recorded as a resolve decision by the officer so every console shows it closed.
  */
 export async function recordStep(
-  dept: DeptProfile, id: string, step: "approve" | "send" | "close", actor: { email: string; userId: number },
+  dept: DeptProfile, id: string, step: RecordedStep, actor: { email: string; userId: number },
   report?: { remarks: string; photoDir: string; photos: string[] }
 ): Promise<{ stage: Stage; reportId: number | null }> {
   const now = await asOf();
@@ -684,9 +718,9 @@ export async function recordStep(
     if (!ALLOWED[step].includes(g.stage as Stage)) {
       throw new WorkflowError(409, `This grievance is already at “${STAGE_LABEL[g.stage as Stage] ?? g.stage}”. Refresh to see its latest stage.`);
     }
-    const severe = g.sev === "Severe";
-    if (step === "send" && !severe) throw new WorkflowError(409, "Only severe grievances go to the Collector. Close this one as done yourself.");
-    if (step === "close" && severe) throw new WorkflowError(409, "A severe grievance is verified by the Collector: send it with your completion report.");
+    // the same words as the report route's check before the password (stages.ts stepRefusal)
+    const refused = stepRefusal(step, String(g.stage), g.sev as string | null);
+    if (refused) throw new WorkflowError(409, refused);
     await conn.beginTransaction();
     let reportId: number | null = null;
     if ((step === "send" || step === "close") && report) {
@@ -716,7 +750,7 @@ export async function recordStep(
     bumpDataEpoch(); // a closing step is a decision too: the caches that hold the store's status are emptied (RC-35)
     // the residents whose complaints are in this grievance see the step on their tracker
     await syncComplaints([id], actor.userId);
-    return { stage: step === "approve" ? "approved" : step === "close" ? "verified" : "sent", reportId };
+    return { stage: step === "approve" ? "approved" : step === "action" ? "action" : step === "close" ? "verified" : "sent", reportId };
   } catch (err) {
     await conn.rollback().catch(() => undefined);
     throw err;

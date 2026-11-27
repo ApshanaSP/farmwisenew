@@ -13,7 +13,7 @@ import { OPEN_NOW, PERIODS, awaitingCheck, explain, kpiBlock, list, periodSinceW
 import { orEmpty } from "@/lib/fallback";
 import { alertLane } from "@/lib/collector/alerts";
 import { pastDueSql, pctChange } from "@/lib/reference/metrics";
-import { checkOpening } from "@/lib/collector/opening";
+import { checkOpening, firstTimeWhy } from "@/lib/collector/opening";
 import { dayByDay, scopeFilters } from "@/lib/collector/daily";
 import { dayStart } from "@/lib/period/day";
 
@@ -224,8 +224,10 @@ export async function briefingBook(s: BookScope, now: string, opening: { en: str
   const written = daily && whole ? ai("situation") : null;
   const checked = written ? checkOpening({ asOf: written.asOf, en: written.en, ta: written.ta }, { ...sameWindow,
     facts: { reported, prev: before, severe, prevSevere: n(tilesPrev[0]?.severe), deaths, injured: n(T.injured), awaiting: n(awaiting[0]?.n),
-      newsOnly: n(T.news_only) }, extra: [Math.abs(change ?? 0), criticalRows.length] }) : null;
-  if (checked?.why) console.info(`[briefbook] AI opening not shown: ${checked.why}`);
+      newsOnly: n(T.news_only) }, extra: [Math.abs(change ?? 0), criticalRows.length],
+    // (27 Nov) an incident's own deaths or injured, said with its place ("1 death in Kellys"), are that incident's figure, not the district's
+    incidents: [...deathRows, ...critical].map((x) => ({ places: [x.loc, x.zone_name], dead: n(x.dead), injured: n(x.injured) })) }) : null;
+  if (checked?.why && firstTimeWhy("briefbook", checked.why)) console.info(`[briefbook] AI opening not shown: ${checked.why}`);
   const situation = written && checked?.opening ? { ...written, en: checked.opening.en, ta: checked.opening.ta } : null;
   return {
     status: { level, reasons, warning },

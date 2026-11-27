@@ -5,7 +5,8 @@
  * protests, water, drains, roads, power cuts, health, rain, works, court orders on the city, government
  * action in Chennai). Left out: company launches and deals, real estate, courses and admissions, films and
  * sport, prices, leaders' statements about other leaders, and events in other districts or states. A report
- * linked to an incident in our records is always kept.
+ * linked to an incident in our records is always kept. These rules are the fallback, frozen: the AI news desk
+ * (newsdesk.ts) decides for every story it has read; a new mistake is fixed in its instructions, not with a word here.
  *
  * Grouping: the monitor already groups one article's copies (story_id), and often files one event as several
  * incidents. Reports about the same event under different headlines, in Tamil and English, are grouped here:

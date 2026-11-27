@@ -4,7 +4,8 @@
  * needs a model falls back to the rules when none answers, so a file is never refused because the AI is busy.
  */
 import { classify } from "@/lib/collector/nlp";
-import { askAI, briefAI, checkPlan, noteAI, understandAI } from "@/lib/studio/ai";
+import { askAI, briefAI, checkPlan, noteAI, offTopicAsk, offTopicNote, understandAI } from "@/lib/studio/ai";
+import { scopeOf } from "@/lib/topicguard/scope";
 import { rulesAsk } from "@/lib/studio/ask";
 import { rulesBrief } from "@/lib/studio/brief";
 import { clean, type DRow } from "@/lib/studio/clean";
@@ -768,6 +769,8 @@ export async function ask(id: string, question: string, user: string, context?: 
   const zones = [...refs.zones.values()].map((z) => z.name);
   const ta = TAMIL.test(question);
   const window = meta.window.from ? `${fmtDay(meta.window.from)} – ${fmtDay(meta.window.to)}` : null;
+  // 27 Nov (the topic guard): a question about nothing in the district or this file is declined in the fixed sentence, with no model call
+  if (offTopicAsk(question, meta.spec, meta.profile)) return { kind: "unsupported" as const, note: offTopicNote(question), by: "rules" as const, model: null, offtopic: true };
   // why did it change: the drivers, computed, with the chart of the categories that moved
   if (WHY.test(question)) {
     const { computeInsights2 } = await import("@/lib/studio/insights2");
@@ -788,7 +791,14 @@ export async function ask(id: string, question: string, user: string, context?: 
     out = rulesAsk(question, meta.spec, meta.profile, zones);
     by = "rules";
   }
-  if (out.kind === "unsupported") return { kind: "unsupported" as const, note: out.note || "These columns cannot answer that.", by, model };
+  // (an unsupported question about an off-topic subject is never answered in the model's own words: the fixed decline, or, when the file
+  // itself holds the subject, the Studio's own "cannot answer")
+  if (out.kind === "unsupported") {
+    if (scopeOf(question).verdict === "out") return offTopicAsk(question, meta.spec, meta.profile)
+      ? { kind: "unsupported" as const, note: offTopicNote(question), by, model, offtopic: true }
+      : { kind: "unsupported" as const, note: "These columns cannot answer that.", by, model };
+    return { kind: "unsupported" as const, note: out.note || "These columns cannot answer that.", by, model };
+  }
   let plan: Plan = checkPlan(out, meta.spec, `q_${Date.now().toString(36)}`);
   // a follow-up keeps what the last answer was narrowed to (unless it names the same column again)
   if (context?.filters?.length && FOLLOW.test(question.trim())) plan = { ...plan, filters: [...context.filters.filter((f) => !plan.filters.some((g) => g.col === f.col)), ...plan.filters] };

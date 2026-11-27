@@ -1270,7 +1270,10 @@ async function news(c: Ctx): Promise<Part> {
 interface MandiRow { commodity: string; markets: number; avg_per_kg: number | null; avg_prev_per_kg: number | null;
   prices: { market: string; date: string; per_kg: number; prev_per_kg: number | null }[] }
 
-/** Vegetable prices at Chennai's markets (AGMARKNET): one item's price at every market, or the day's price list. */
+/**
+ * Vegetable prices at Chennai's Uzhavar Sandhai markets (retail, from the TN Agricultural Marketing department; 27 Nov: no longer
+ * AGMARKNET, whose API asks for a CAPTCHA): one item's price at every market, or the day's price list.
+ */
 async function prices(c: Ctx): Promise<Part> {
   const r = await call(c, "mandi_prices", { commodity: c.slots.q, market: null });
   const d = r.data as { rows: MandiRow[]; latest: string | null; unknown: string[] };
@@ -1301,7 +1304,7 @@ async function prices(c: Ctx): Promise<Part> {
           { key: "hi", label: L(c, `Dearest: ${hi.market}`, `அதிக விலை: ${hi.market}`), value: Math.round(hi.per_kg), unit: "₹/kg", prev: null, delta: null, tone: "neutral", spark: [] }
         ] },
         { kind: "Ranking", id: "markets", title: L(c, `${it.commodity} at each market${latest ? ` · reports to ${latest}` : ""}`, `ஒவ்வொரு சந்தையிலும் ${it.commodity}${latest ? ` · ${labelTa(latest)} வரையிலான அறிக்கைகள்` : ""}`), unit: "₹/kg",
-          method: L(c, "AGMARKNET modal price, rupees per kilo (the latest report of each market)", "AGMARKNET மைய விலை, கிலோவுக்கு ரூபாய் (ஒவ்வொரு சந்தையின் கடைசி அறிக்கை)"), order: "bottom",
+          method: L(c, "Uzhavar Sandhai retail price, rupees per kilo (the latest report of each market; TN Agricultural Marketing department)", "உழவர் சந்தை சில்லறை விலை, கிலோவுக்கு ரூபாய் (ஒவ்வொரு சந்தையின் கடைசி அறிக்கை)"), order: "bottom",
           items: ps.map((p, i) => ({ key: p.market, label: p.market, value: Math.round(p.per_kg), rank: i + 1, sub: `${p.date}${p.prev_per_kg != null ? L(c, ` · was ₹${Math.round(p.prev_per_kg)}`, ` · முன்பு ₹${Math.round(p.prev_per_kg)}`) : ""}`, zone: null, lat: null, lon: null, action: "none" as const })) }
       ]
     };
@@ -1313,7 +1316,7 @@ async function prices(c: Ctx): Promise<Part> {
     say: bi(`Prices of ${list.length} items at Chennai markets${latest ? `, reports to ${latest}` : ""}. ${ups.length ? `${ups.map((y) => y.x.commodity).join(", ")} went up.` : "No big rises."}`,
       `சென்னை சந்தைகளில் ${list.length} பொருட்களின் விலை. ${ups.length ? `${ups.map((y) => y.x.commodity).join(", ")} விலை உயர்ந்துள்ளது.` : "பெரிய உயர்வு இல்லை."}`),
     blocks: [{ kind: "Ranking", id: "prices", title: L(c, "Average price per kilo", "கிலோவுக்குச் சராசரி விலை"), unit: "₹/kg",
-      method: L(c, "AGMARKNET modal prices averaged across the Chennai markets that reported", "அறிக்கை தந்த சென்னைச் சந்தைகளின் AGMARKNET மைய விலைகளின் சராசரி"), order: "top",
+      method: L(c, "Uzhavar Sandhai retail prices averaged across the Chennai markets that reported (TN Agricultural Marketing department)", "அறிக்கை தந்த சென்னை உழவர் சந்தைகளின் சில்லறை விலைகளின் சராசரி"), order: "top",
       items: list.map((x, i) => ({ key: x.commodity, label: x.commodity, value: Math.round(x.avg_per_kg!), rank: i + 1,
         sub: x.avg_prev_per_kg != null ? L(c, `was ₹${Math.round(x.avg_prev_per_kg)} · ${x.markets} markets`, `முன்பு ₹${Math.round(x.avg_prev_per_kg)} · ${x.markets} சந்தைகள்`) : L(c, `${x.markets} markets`, `${x.markets} சந்தைகள்`), zone: null, lat: null, lon: null, action: "none" as const })) }]
   };

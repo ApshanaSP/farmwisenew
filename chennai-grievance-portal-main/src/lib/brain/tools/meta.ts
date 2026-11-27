@@ -64,6 +64,7 @@ async function guideRun(input: Record<string, unknown>): Promise<ToolOut> {
 
 /** what each table is, in words (the model chooses by these) */
 export const TABLE_NOTES: Record<string, string> = {
+  mandi_market_prices: "old AGMARKNET rows (to 6 Oct on most copies, some markets misfiled); for market prices use the prices tool, which reads the current Uzhavar Sandhai feed",
   cases: "ONE ROW PER INCIDENT with the effective status the dashboard counts. Use this for anything about incidents.",
   incidents: "the pipeline's incident table (raw; use cases instead, join on incident_id = cases.id for summary, ai_summary, ai_next_step, persons_affected, sla_hours, hours_to_first_action, growth_24h, recurrence_90d, rain_coupled)",
   incident_members: "each application record joined to an incident: source (grievance, police, pwd, hospital, news), source_record_id, reported_at, link_prob", incident_timeline: "status steps per incident: at, step, status_std, actor, note", actions: "action list per incident: text, owner, due_at, status",
@@ -75,7 +76,7 @@ export const TABLE_NOTES: Record<string, string> = {
   collector_decisions: "the Collector's decisions", officer_steps: "what officers did", officer_reports: "completion reports officers sent", dept_assignments: "incidents handed to an officer", action_updates: "actions added or changed by hand", outbound_emails: "e-mails to departments (subject, status, sent_at)", followups: "follow-ups due on e-mails",
   workspaces: "saved views and their versions", briefing_archive: "frozen briefings: briefing_id, period, as_of, markdown", briefings: "the pipeline's briefings by period", briefing_notes: "AI notes of the briefing book", petitions: "paper petitions (Manu): status, area, ward, dept, category, dates", petition_sms: "SMS to petitioners (kind, status)",
   complaints: "citizen portal complaints (code, zone, ward, department, type, title, status, created_at); the dashboard counts them through cases", complaint_status_history: "status steps of portal complaints", police_incident_reports: "police reports: station, category, dates, injured, fatalities, weapon, response_minutes, status", police_stations: "60 stations",
-  traffic_days: "roads seen congested per day", traffic_snaps: "the whole city every 10 minutes: how many jams, very congested, closed; delay = the SUM over every jam in the city, never one road's", mandi_market_prices: "market prices by day, market, commodity (Rs per quintal)", mandi_prices: "average prices by scope", mandi_weekly: "weekly price changes",
+  traffic_days: "roads seen congested per day", traffic_snaps: "the whole city every 10 minutes: how many jams, very congested, closed; delay = the SUM over every jam in the city, never one road's", mandi_prices: "average prices by scope", mandi_weekly: "weekly price changes",
   link_pairs: "pairs of records compared for joining", world_calendar: "days: rain, festivals, protests", data_quality: "checks on the data", agent_runs: "the pipeline's AI agents' runs", audit_log: "who did what on the console (at, actor, action, table_name, record_id)", metrics: "pipeline measures", zones: "zones with their ward range", departments: "portal departments", gcc_streets: "streets", gcc_localities: "localities", gcc_areas: "areas"
 };
 async function schemaRun(input: Record<string, unknown>): Promise<ToolOut> {

@@ -57,10 +57,15 @@ export function earKeySim(a: string, b: string): number {
  * keys: the same word by ear. A key of two consonants is too little to tell names apart ("Adyar", "Atur"): only equal loose keys then.
  */
 export function earSim(a: string, b: string): number {
-  const la = looseKey(fold(a).replace(/\s+/g, "")), lb = looseKey(fold(b).replace(/\s+/g, ""));
+  const la = earLoose(a), lb = earLoose(b);
   if (!la || !lb) return 0;
   if (la === lb) return 1;
-  const ea = earKey(a), eb = earKey(b);
+  return earSimKeyed(la, lb, earKey(a), earKey(b));
+}
+/** the loose key earSim compares first (v8's, of the word folded and joined) */
+const earLoose = (w: string): string => looseKey(fold(w).replace(/\s+/g, ""));
+/** earSim after its first checks, from the two words' loose keys (unequal, not empty) and ear keys: for a caller that keeps a word's keys */
+function earSimKeyed(la: string, lb: string, ea: string, eb: string): number {
   const jw = jaroWinkler(la, lb);
   // (the consonants, the first vowel's mark aside: two consonants are too few to tell names apart by ear, "Adyar" and "Atur" are both "tr")
   const ca = ea.replace(/^a/, ""), cb = eb.replace(/^a/, "");
@@ -132,15 +137,32 @@ export function classOf(word: string): EntityClass | null {
   if (!raw) return null;
   if (/[஀-௿]/u.test(raw)) { for (const [c, re] of CLASS_TA) if (re.test(raw)) return c; return null; }
   const w = raw.toLowerCase();
+  // (27 Nov) the word's forms and keys once, the class words' once per server: each was worked out again for every class word, which made
+  // the day's lexicon (lexicon10.ts, a class for every headline) the longest hold of the server's thread when Jarvis opened
+  const forms = formsOf(w);
+  const ear = w.length >= 5 && !NOT_CLASS.has(w) ? { l: earLoose(w), e: earKey(w) } : null;
   for (const [c, words] of CLASS_WORDS) {
     for (const x of words) {
       if (x.includes(" ")) continue;
-      if (w === x || formsOf(w).includes(x)) return c;
+      if (w === x || forms.includes(x)) return c;
       // by ear only for a long class word and a heard word that is no other English word of its shape ("cycle", "cyclist" are not cyclone)
-      if (x.length >= 6 && w.length >= 5 && !NOT_CLASS.has(w) && earSim(w, x) >= 0.86) return c;
+      if (x.length >= 6 && ear && classEar(ear, x) >= 0.86) return c;
     }
   }
   return null;
+}
+/** earSim(w, x) for a heard word's keys and a class word, the class word's keys kept */
+const CLASS_KEYS = new Map<string, { l: string; e: string }>();
+function classEar(w: { l: string; e: string }, x: string): number {
+  let k = CLASS_KEYS.get(x);
+  if (!k) { k = { l: earLoose(x), e: earKey(x) }; CLASS_KEYS.set(x, k); }
+  if (!w.l || !k.l) return 0;
+  if (w.l === k.l) return 1;
+  // what can never reach classOf's 0.86, without the edit distances: a short consonant key needs loose keys at most a letter apart; else the
+  // ear keys must be within a fifth of each other's length (one consonant apart in five, earSimKeyed's ek >= 0.8)
+  const ca = w.e.replace(/^a/, "").length, cb = k.e.replace(/^a/, "").length;
+  if (ca < 3 || cb < 3 ? Math.abs(w.l.length - k.l.length) > 1 : Math.abs(w.e.length - k.e.length) > 0.2 * Math.max(w.e.length, k.e.length)) return 0;
+  return earSimKeyed(w.l, k.l, w.e, k.e);
 }
 /** heard words that sound near a class word but are words of their own */
 const NOT_CLASS = new Set(["cycle", "cycles", "cyclist", "cyclists", "cycling", "silicon", "salon", "saloon", "stormy", "story", "stories", "protect", "protected", "protection", "fired", "fires", "accidental", "courts", "courtyard", "order", "orders"]);

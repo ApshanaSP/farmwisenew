@@ -20,9 +20,13 @@ export async function GET(req: NextRequest, routeCtx: { params: Promise<{ id: st
   }
 }
 
-const StepSchema = z.object({ step: z.literal("approve") });
+// approve a new grievance; mark work started on an approved one (the progress update the citizen's tracker shows as In Progress)
+const StepSchema = z.object({ step: z.enum(["approve", "action"]) });
 
-/** Approve a new grievance (it moves to In action). Sending to the Collector is POST .../report. */
+/**
+ * Approve a new grievance (it moves to In action), or say work has started on an approved one (`action`). Sending to the Collector and
+ * closing as done carry a completion report: POST .../report.
+ */
 export async function POST(req: NextRequest, routeCtx: { params: Promise<{ id: string }> }) {
   const params = await routeCtx.params;
   const ctx = await officerSession(req.nextUrl.searchParams, { write: true });

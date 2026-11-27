@@ -42,7 +42,7 @@ export const EXAMPLES: Example[] = [
   { q: "open complaints by department this month", a: `answer other, tools departments, scope.period monthly` },
   { q: "theft cases trend over the last month", a: `answer other, tools incident_series, scope.cat CRIME_PROPERTY, scope.period monthly` },
   { q: "where are complaints clustering", a: `answer other, tools hotspots` },
-  { q: "onion price at K.K. Nagar market", a: `answer other, tools mandi_prices commodity Onion market "K.K. Nagar"` },
+  { q: "onion price at Nanganallur market", a: `answer other, tools mandi_prices commodity Onion market "Nanganallur"` },
   { q: "any hospital beds above 85%", a: `answer other, tools environment metric bed_occupancy_pct above 85` },
   { q: "which parts of Velachery have the most incidents", a: `answer other, tools place_breakdown place "Velachery", scope.zone 13` },
   { q: "what does test data mean", a: `intent help` }

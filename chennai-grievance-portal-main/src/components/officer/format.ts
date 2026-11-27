@@ -53,7 +53,8 @@ export function grievanceBriefing(ov: OfficerOverview, area: string | null): str
     fb.verified ? `verified ${plural(fb.verified, "report")}` : "",
     fb.returned ? `returned ${n(fb.returned)} for rework` : "",
     fb.resolved ? `closed ${n(fb.resolved)} without a report` : "",
-    fb.rejected ? `rejected ${n(fb.rejected)}` : ""
+    fb.rejected ? `rejected ${n(fb.rejected)}` : "",
+    fb.escalated ? `escalated ${n(fb.escalated)}` : ""
   ].filter(Boolean);
   const sv = sev.Severe ?? 0, hi = sev.High ?? 0;
   return [

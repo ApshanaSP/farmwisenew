@@ -4,12 +4,27 @@ government work, a rescue, a roundup, an opinion or a promotion stays news.
 The same rules as the website's src/lib/collector/reporttype.ts (which also applies them to builds made before this
 file existed): keep the two in step. `report_kind` returns None when the headline is not decisive, and the LLM's or
 the local model's label stands.
+
+27 Nov 2026: over a label the language model gave, only a forecast or a roundup is set by these rules (`overriding_kind`):
+the words are reliable there, and wrong too often for government work, endings and opinion ("Rs 1 crore silver looted" read
+as government work). The website's AI news desk decides those, with the website's copy of the rules standing in for what it
+has not read.
 """
 from __future__ import annotations
 
 import re
 
 NON_INCIDENT_KINDS = ["alert", "government_action", "resolution", "roundup", "opinion", "other"]
+#: the kinds the rules still set over a label the language model gave
+OVER_AI_KINDS = ["alert", "roundup"]
+
+
+def overriding_kind(kind: str | None, from_ai: bool) -> str | None:
+    """The kind that replaces an article's report_type, or None to keep its label: any kind that is not an incident over a
+    local model's or the old rules' label, only a forecast or a roundup over the language model's."""
+    if kind not in NON_INCIDENT_KINDS:
+        return None
+    return kind if not from_ai or kind in OVER_AI_KINDS else None
 
 
 def _rx(parts: list[str]) -> re.Pattern:

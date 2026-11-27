@@ -1,67 +1,68 @@
 /**
  * Sites whose data sits behind their own open API rather than in the page: a link to the site is read through that API,
- * the way the site's own pages read it (robots.txt allows it; no sign-in, no CAPTCHA).
+ * the way the site's own pages read it (no sign-in, no CAPTCHA).
  *
- *   agmarknet.gov.in   market prices and arrivals: the open dashboard API the console's market collector already uses,
- *                      for the markets around Chennai (Chengalpattu, Kancheepuram, Thiruvallur), else all of Tamil Nadu
+ *   agmarknet.gov.in      27 Nov: AGMARKNET's API asks for a CAPTCHA since late October (never got around here). A link to it is
+ *   agrimark.tn.gov.in    read instead from the TN Department of Agricultural Marketing & Agri Business's own Uzhavar Sandhai price
+ *                         feed (lib/collector/tnprices.ts), the same numbers AGMARKNET showed for Tamil Nadu: the newest day the console
+ *                         holds for the markets in and around Chennai, or that day read now from agrimark when nothing recent is held.
  */
-import { checkHost, LinkError, UA } from "@/lib/studio/fetchurl";
+import { checkHost, LinkError } from "@/lib/studio/fetchurl";
 import type { Cell, Table } from "@/lib/studio/parse";
+import { TN_MARKETS, TN_SITE, TN_SOURCE, fetchMarketDay, fileDay, type TnCell } from "@/lib/collector/tnprices";
 
 export interface Adapted { table: Table; label: string; url: string; raw: Buffer }
 
-const AGM = "https://api.agmarknet.gov.in/v1/dashboard-data/";
-const AGM_SCOPES = [
-  { label: "markets around Chennai", district: [528, 536, 560] },
-  { label: "Tamil Nadu", district: [100007] }
-];
-type Row = Record<string, unknown>;
+const HEADERS = ["Date", "Market", "District", "Commodity", "Variety", "Group", "Low (Rs/kg)", "High (Rs/kg)", "Price (Rs/kg)", "Arrival (kg)"];
+const istDay = (ms = Date.now()) => new Date(ms + 330 * 60_000).toISOString().slice(0, 10);
+const perKg = (v: number | null) => (v == null ? null : Math.round(v) / 100);
 
-async function agm(date: string, district: number[]): Promise<{ rows: Row[]; titles: Record<string, string> }> {
-  const r = await fetch(AGM, {
-    method: "POST",
-    headers: { "User-Agent": UA, "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ dashboard: "marketwise_price_arrival", date, group: [100000], commodity: [100001], variety: 100021, state: 31, district,
-      grades: [4, 100011], limit: 200, format: "json" }),
-    signal: AbortSignal.timeout(30_000)
-  });
-  if (r.status >= 400) throw new LinkError(`AGMARKNET answered HTTP ${r.status}.`, "http", r.status);
-  const j = await r.json() as { data?: { records?: Row[]; columns?: { key: string; title?: string; columns?: { key: string; title: string }[] }[] } };
-  const titles: Record<string, string> = {};
-  for (const g of j.data?.columns ?? []) for (const c of g.columns ?? []) titles[c.key] = `${g.title && g.key !== "commodity_info" ? `${g.title.replace(/\s*\(.*\)$/, "")}, ` : ""}${c.title}`;
-  return { rows: j.data?.records ?? [], titles };
-}
-
-async function agmarknet(log: (t: string) => void): Promise<Adapted> {
-  await checkHost(new URL(AGM));
-  const iso = (d: Date) => d.toISOString().slice(0, 10);
-  for (const sc of AGM_SCOPES) {
-    // the newest day with prices (AGMARKNET's latest days fill in late)
-    for (let back = 0; back < 8; back++) {
-      const day = iso(new Date(Date.now() - back * 864e5));
-      const { rows, titles } = await agm(day, sc.district);
-      if (!rows.length) continue;
-      if (rows.length < 10 && sc !== AGM_SCOPES[AGM_SCOPES.length - 1]) { log(`Only ${rows.length} commodities reported for the ${sc.label}: reading Tamil Nadu instead.`); break; }
-      const keys = ["cmdt_grp_name", "cmdt_name", "as_on_price", "one_day_ago_price", "two_day_ago_price", "as_on_arrival", "msp_price"];
-      const name: Record<string, string> = { cmdt_grp_name: "Commodity group", cmdt_name: "Commodity", as_on_price: `Price ${titles.as_on_price ?? "latest"} (Rs/quintal)`,
-        one_day_ago_price: `Price ${titles.one_day_ago_price ?? "1 day before"} (Rs/quintal)`, two_day_ago_price: `Price ${titles.two_day_ago_price ?? "2 days before"} (Rs/quintal)`,
-        as_on_arrival: "Arrival (tonnes)", msp_price: "MSP (Rs/quintal)" };
-      const headers = keys.map((k) => name[k].replace(/Price Price, /, "Price ").replace(/, /g, " "));
-      const grid: Cell[][] = rows.map((r) => keys.map((k) => { const v = r[k]; return v == null || v === "" ? null : typeof v === "number" ? v : Number.isFinite(Number(v)) && k !== "cmdt_name" && k !== "cmdt_grp_name" ? Number(v) : String(v); }));
-      log(`AGMARKNET open API: ${rows.length} commodities for the ${sc.label}, reported on ${day}.`);
-      return {
-        table: { headers, rows: grid, sheet: null, sheets: [], caption: `AGMARKNET market prices and arrivals, ${sc.label}, latest prices for ${(titles.as_on_price ?? day).replace(/^Price,\s*/, "")}`, format: "json", truncated: 0 },
-        label: `AGMARKNET prices, ${sc.label}`, url: AGM, raw: Buffer.from(JSON.stringify(rows))
-      };
+/** The newest day's Uzhavar Sandhai prices around Chennai as a table: the console's own copy when it is at most 3 days old, else read now. */
+async function tnPrices(log: (t: string) => void, asked: "agmarknet" | "agrimark"): Promise<Adapted> {
+  if (asked === "agmarknet") log("AGMARKNET's API asks for a CAPTCHA, which is never got around: reading the same Tamil Nadu prices from agrimark.tn.gov.in, the TN Agricultural Marketing department's own feed.");
+  const district = new Map(TN_MARKETS.map((m) => [m.key, m.district]));
+  const today = istDay();
+  let held = fileDay(today);
+  const stale = !held || Date.parse(`${today}T00:00:00Z`) - Date.parse(`${held.day}T00:00:00Z`) > 3 * 864e5;
+  // (27 Nov review: a site that answers none of the first three calls, down or refusing this server, is not asked the other 13 at 20 s each)
+  let calls = 0, fails = 0;
+  const noAnswer = () => fails >= 3 && fails === calls;
+  if (stale) {
+    await checkHost(new URL(TN_SITE));
+    // today's prices are entered during the morning: yesterday first when today has none yet
+    for (const day of [istDay(Date.now() - 864e5), today]) {
+      const got: { market: string; cells: TnCell[] }[] = [];
+      for (const m of TN_MARKETS) {
+        if (noAnswer()) break;
+        calls++;
+        const cells = await fetchMarketDay(day, m).catch((e) => { fails++; log(`${m.key}: ${(e as Error).message}`); return null; });
+        if (cells?.length) got.push({ market: m.key, cells });
+        await new Promise((r) => setTimeout(r, 400));
+      }
+      if (got.length) {
+        held = { day, rows: got.flatMap(({ market, cells }) => cells.map((c) => ({ d: day, market, commodity: c[0], variety: c[1], grp: c[6], min: c[2], max: c[3], modal: c[4], arrival: c[5],
+          qtyKg: c[5] == null ? null : Math.round(c[5] * 1000) }))) };
+        break;
+      }
     }
   }
-  throw new LinkError("AGMARKNET reported no prices for Tamil Nadu in the last 8 days.", "empty");
+  if (!held?.rows.length && noAnswer()) throw new LinkError("agrimark.tn.gov.in did not answer this server, and no recent prices are kept here. Try again later.", "network");
+  if (!held?.rows.length) throw new LinkError("The Uzhavar Sandhai markets around Chennai have entered no prices on agrimark.tn.gov.in in the last few days.", "empty");
+  const grid: Cell[][] = held.rows.map((r) => [r.d, r.market, district.get(r.market) ?? null, r.commodity, r.variety || null, r.grp, perKg(r.min), perKg(r.max), perKg(r.modal), r.qtyKg]);
+  const markets = new Set(held.rows.map((r) => r.market)).size;
+  log(`${TN_SOURCE}: ${held.rows.length} prices at ${markets} Uzhavar Sandhai markets around Chennai, for ${held.day}.`);
+  return {
+    table: { headers: HEADERS, rows: grid, sheet: null, sheets: [], format: "json", truncated: 0,
+      caption: `Uzhavar Sandhai farmer-market retail prices (Rs per kg) in and around Chennai, ${held.day}. Source: ${TN_SOURCE}.` },
+    label: `Uzhavar Sandhai prices around Chennai, ${held.day}`, url: TN_SITE, raw: Buffer.from(JSON.stringify(held.rows))
+  };
 }
 
 /** The adapter for a link, when its site has one. */
 export function adapterFor(url: string): ((log: (t: string) => void) => Promise<Adapted>) | null {
   let host = "";
   try { host = new URL(url).hostname.toLowerCase(); } catch { return null; }
-  if (/(^|\.)agmarknet\.gov\.in$/.test(host)) return agmarknet;
+  if (/(^|\.)agmarknet\.gov\.in$/.test(host)) return (log) => tnPrices(log, "agmarknet");
+  if (/(^|\.)agrimark\.tn\.gov\.in$/.test(host)) return (log) => tnPrices(log, "agrimark");
   return null;
 }

@@ -54,6 +54,24 @@ describe("judging a batch", () => {
     expect(r.get(1)).toMatchObject({ v: "skip", skip: "entertainment", gist: "", why: "", real: false });
     expect(r.size).toBe(2);
   });
+  it("asks for the report's kind, required (Groq), and keeps it with the verdict", async () => {
+    generateJson.mockResolvedValue({ object: { items: [item(1, { verdict: "act", area: "Law & order", kind: "incident" }), item(2, { verdict: "know", kind: "government_action" })] }, info: { model: "m" } });
+    const r = await judge([story("Chennai: 5-year-old girl kidnapped after going to school - Police rescued her immediately"), story("Chief Minister inaugurates drinking water project")]);
+    expect(r.get(0)?.kind).toBe("incident");
+    expect(r.get(1)?.kind).toBe("government_action");
+    const call = generateJson.mock.calls[0][0] as { schema: { safeParse: (x: unknown) => { success: boolean } }; system: string };
+    expect(call.schema.safeParse({ items: [item(1, { kind: "alert" })] }).success).toBe(true);
+    expect(call.schema.safeParse({ items: [item(1, {})] }).success).toBe(false);
+    expect(call.schema.safeParse({ items: [item(1, { kind: "rescue" })] }).success).toBe(false);
+    // the definitions, with a rescue after harm still an incident
+    expect(call.system).toMatch(/\bkind: what the report is/);
+    expect(call.system).toMatch(/kidnapped on her way to school, police rescue her" is an incident, not a resolution/);
+    for (const k of ["incident", "alert", "government_action", "resolution", "roundup", "opinion", "other"]) expect(call.system).toMatch(new RegExp(`\\n ${k}\\s`));
+  });
+  it("a kind the model made up is not kept: the rules decide that story", async () => {
+    generateJson.mockResolvedValue({ object: { items: [item(1, { kind: "rescue" })] }, info: { model: "m" } });
+    expect((await judge([story("x")])).get(0)?.kind).toBeUndefined();
+  });
   it("an unknown category, area or reason is not kept", async () => {
     generateJson.mockResolvedValue({ object: { items: [item(1, { verdict: "skip", skip_reason: "boring", category: "MADE_UP", area: "Nowhere" })] }, info: { model: "m" } });
     expect((await judge([story("x")])).get(0)).toMatchObject({ skip: "other", cat: "", area: "" });

@@ -305,21 +305,23 @@ export const POLICY: Record<string, TableSpec> = {
       priority_reasons: ["label", "why it ranks high"], attention_reason: ["label", "why it needs attention"] }
   },
   mandi_market_prices: {
-    db: "ops", d: "Daily prices at each Chennai market reporting to AGMARKNET (Uzhavar Sandhai farmer markets). Koyambedu does not report.",
-    grain: "one row per day, market, commodity and variety", time: "date", cap: "`date` <= DATE(:asOf)", test: "0",
+    // 27 Nov: the Uzhavar Sandhai retail prices (TN Agricultural Marketing department; AGMARKNET's copy of the same figures until 6 Oct). The
+    // "Anna Nagar" and "K.K. Nagar" rows are Madurai's and Tiruchirappalli's markets (matched by name across the state): every query leaves them out
+    db: "ops", d: "Daily retail prices at each Uzhavar Sandhai farmer market in and around Chennai (TN Agricultural Marketing department). Koyambedu, the wholesale market, publishes no daily prices.",
+    grain: "one row per day, market, commodity and variety", time: "date", cap: "`date` <= DATE(:asOf) AND `market` NOT IN ('Anna Nagar', 'K.K. Nagar')", test: "0",
     cols: { date: ["time", "day"], market: ["dim", "market"], commodity: ["dim", "commodity"], variety: ["dim", "variety"], cmdt_group: ["dim", "commodity group"],
       min_price: ["measure", "minimum price", { unit: "Rs/quintal" }], max_price: ["measure", "maximum price", { unit: "Rs/quintal" }],
       modal_price: ["measure", "most common price", { unit: "Rs/quintal" }], arrival: ["measure", "arrivals", { unit: "tonnes" }] }
   },
   mandi_prices: {
-    db: "ops", d: "Daily AGMARKNET prices for Tamil Nadu and for the districts around Chennai.", grain: "one row per day, scope and commodity", time: "date",
+    db: "ops", d: "Daily AGMARKNET prices for Tamil Nadu and for the districts around Chennai (not updated since 26 Oct 2026: AGMARKNET asks for a CAPTCHA).", grain: "one row per day, scope and commodity", time: "date",
     cap: "`date` <= DATE(:asOf)", test: "0",
     cols: { date: ["time", "day"], scope: ["dim", "area", { values: ["chennai_markets", "tamil_nadu"] }], commodity: ["dim", "commodity"],
       cmdt_group: ["dim", "commodity group"], price: ["measure", "modal price", { unit: "Rs/quintal" }], arrival: ["measure", "arrivals", { unit: "tonnes" }],
       msp: ["measure", "minimum support price", { unit: "Rs/quintal" }] }
   },
   mandi_weekly: {
-    db: "ops", d: "Weekly average wholesale prices (AGMARKNET price trend) for the region around Chennai and for Tamil Nadu.",
+    db: "ops", d: "Weekly average wholesale prices (AGMARKNET price trend) for the region around Chennai and for Tamil Nadu (not updated since the week of 24 Oct 2026).",
     grain: "one row per week, scope and commodity", time: "week_start", cap: "`week_start` <= DATE(:asOf)", test: "0",
     cols: { week_start: ["time", "week start"], week_label: ["label", "week"], scope: ["dim", "area", { values: ["chennai_region", "tamil_nadu"] }],
       commodity: ["dim", "commodity"], price: ["measure", "average price", { unit: "Rs/quintal" }], districts: ["measure", "districts averaged"],
@@ -340,7 +342,7 @@ export const POLICY: Record<string, TableSpec> = {
       status: ["dim", "Assigned, Acknowledged or Closed"], assigned_at: ["time", "routed"] }
   },
   sources: {
-    db: "ops", d: "Data sources registered on the console: the pipeline's feeds, AGMARKNET and sources the Collector added.", grain: "one row per source",
+    db: "ops", d: "Data sources registered on the console: the pipeline's feeds, the Uzhavar Sandhai market prices and sources the Collector added.", grain: "one row per source",
     test: "0", cap: null,
     cols: { source_id: ["id", "source ID"], name: ["label", "name"], kind: ["dim", "kind"], description: ["label", "description"],
       pipeline_key: ["dim", "pipeline feed"], refresh_minutes: ["measure", "refresh interval", { unit: "minutes" }], enabled: ["flag", "enabled"],

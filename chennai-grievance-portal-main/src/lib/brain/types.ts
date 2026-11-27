@@ -113,8 +113,17 @@ export interface Show {
   limit?: number | null;
 }
 
+/**
+ * What a question is about, as the model judges it (the topic guard, 27 Nov): the district's records, this console, District IQ itself, a civic
+ * term, small talk, or none of these ("offtopic": declined in a fixed sentence written by code, never answered from memory).
+ */
+export type AnswerScope = "records" | "console" | "product" | "civic" | "smalltalk" | "offtopic";
+
 export interface FinalAnswer {
-  kind: "answer" | "clarify" | "chat" | "refuse";
+  /** "offtopic": outside District IQ; say is the fixed decline (topicguard/reply.ts), never the model's words */
+  kind: "answer" | "clarify" | "chat" | "refuse" | "offtopic";
+  /** the model's verdict on what the question is about; absent from an older answer or a model that left it out */
+  scope?: AnswerScope | null;
   lang: Lang;
   say: string;
   title: string;

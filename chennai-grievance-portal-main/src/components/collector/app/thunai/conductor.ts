@@ -65,6 +65,14 @@
  * v14 (21 Nov, the adversarial review of v13): a lone "Okay." or "Sorry." never stops an answer's voice that plays or is on its way; a tail that
  * points back at the question in flight ("and how many are there?") is joined to it again (freshTail); "Sorry?" asked as a question is
  * asksAgain (the page repeats the last answer); and the closed listener's device wake can leave the reply to the quiet here (replyWhenQuiet).
+ *
+ * 27 Nov (the hosted copy in Chrome sat on "Opening the microphone" with nothing said):
+ *  - B3: a start watchdog. A start that stays on one step for MIC_START_LIMIT_MS is given up (onFail "stalled": the page says the microphone
+ *    did not start and how to try again), and its step, how long it ran, the audio context's state and the microphone permission go to the
+ *    page as a words-free report (onStall). The browser's own question is never a stall: while the microphone is not allowed yet the wait goes on.
+ *  - B1: the ears no longer wait for a click to start their context; when it is still suspended GESTURE_GRACE_MS after the start, onFail
+ *    "gesture" (the page asks for a click). This check could never fire before: the start waited on resume() for ever.
+ *  - B10: /hear answering 401 or 403 is a signed-out session (onSignedOut), not "I didn't catch that".
  */
 import { addressed, ENGAGED_MS, isStatement, levelAllowed, namedIn, selfHeard, type Addressed } from "@/lib/thunai/addressed";
 import { isBackchannel, words } from "@/lib/thunai/backchannel";
@@ -182,6 +190,32 @@ export function onlyNoise(t: string): boolean {
 }
 /** v6: a name-only sentence that arrives this soon after an on-device wake is the same call (it was answered already) */
 export const WAKE_SAME_CALL_MS = 5000;
+/** B3 (27 Nov): a microphone start that stays this long on one step (the browser's question aside) is given up (ms) */
+export const MIC_START_LIMIT_MS = 10_000;
+/** B1 (27 Nov): an audio context still suspended this long after the start waits for a click (ms): one the browser lets start runs by then */
+export const GESTURE_GRACE_MS = 1200;
+/** B3: what the start watchdog reports when it gives a start up: words-free, timings and states only */
+export interface StallInfo { stage: string; ms: number; ctx: string; permission: string }
+/** B3: the microphone permission, as the browser says it ("unknown" where it cannot be asked: no Permissions API, or not for the microphone) */
+export async function micPermission(): Promise<"granted" | "prompt" | "denied" | "unknown"> {
+  try {
+    const p = (typeof navigator !== "undefined" ? navigator.permissions : undefined) as Permissions | undefined;
+    if (!p?.query) return "unknown";
+    const st = await p.query({ name: "microphone" as PermissionName });
+    return st.state === "granted" || st.state === "prompt" || st.state === "denied" ? st.state : "unknown";
+  } catch { return "unknown"; }
+}
+/**
+ * B3: the report as one telemetry code for POST /api/jarvis/ignored (its reason takes [a-z0-9-], 40 characters at most):
+ * open-stall-<step>-t<seconds>-<context>-<permission>, e.g. "open-stall-worklet-t12-susp-granted"
+ */
+export function stallCode(s: StallInfo): string {
+  const stage = /^[a-z]{1,8}$/.test(s.stage) ? s.stage : "unknown";
+  const ctx = s.ctx === "running" ? "run" : s.ctx === "suspended" ? "susp" : s.ctx === "closed" ? "closed" : "none";
+  const perm = s.permission === "granted" || s.permission === "prompt" || s.permission === "denied" ? s.permission : "unknown";
+  const sec = Math.min(999, Math.max(0, Math.round((Number.isFinite(s.ms) ? s.ms : 0) / 1000)));
+  return `open-stall-${stage}-t${sec}-${ctx}-${perm}`;
+}
 /** v8: how long after the name the first sentence still counts as the call's own request (the gate's `called`) */
 export const CALL_MS = 12_000;
 
@@ -243,7 +277,12 @@ export interface ConductorHooks {
   /** what has been heard so far, or that a sentence is being read */
   onHearing?: (what: "speech" | "reading" | "idle") => void;
   onBudget?: (b: { low: boolean; ambient: number }) => void;
+  /** the microphone could not open ("stalled": B3's watchdog gave the start up), or ("gesture") it waits for a click on the page */
   onFail?: (why: EarsError | "gesture") => void;
+  /** B3: the start watchdog gave a start up: which step it was on, how long it ran, the context's state, the permission (words-free) */
+  onStall?: (s: StallInfo) => void;
+  /** B10: /hear said the session is gone (401 or 403): the Collector must sign in again; never "I didn't catch that" */
+  onSignedOut?: () => void;
   onEndSession?: () => void;
   onHold?: () => void;
   /**
@@ -290,13 +329,13 @@ export interface ConductorHooks {
   /** the speech ended (also on stop and close): the captions stop */
   onSpeechEnd?: () => void;
   /**
-   * an engaged sentence the transcriber did not answer in time, or could not read (a 502, a 401): it counts as not heard (a calm "I
-   * didn't catch that" is the console's). Never for side talk
+   * an engaged sentence the transcriber did not answer in time, or could not read (a 502, a 500): it counts as not heard (a calm "I
+   * didn't catch that" is the console's). Never for side talk. (B10: a 401 or a 403 is onSignedOut, not this)
    */
   onMissed?: (why: "timeout" | "error") => void;
 }
 
-type Own = "ok" | "timeout" | "abort" | "error" | "outage";
+type Own = "ok" | "timeout" | "abort" | "error" | "outage" | "signedout";
 /** one sentence's transcription: its own request, and the reading of the part before it when the sentence was said in two */
 interface Post {
   gen: number; ctl: AbortController; p: Promise<HearReply | null>;
@@ -323,8 +362,10 @@ interface Early {
 class HearTimeout extends Error { constructor() { super("timeout"); this.name = "HearTimeout"; } }
 /** /hear answered, but not with words */
 class HearHttp extends Error { constructor(readonly status: number) { super(String(status)); this.name = "HearHttp"; } }
+/** B10: /hear refused the session (401: none or expired; 403: refused): the Collector is signed out on this tab */
+export const signedOutStatus = (status: number): boolean => status === 401 || status === 403;
 /** how a /hear request that threw went */
-const ownOf = (err: unknown): Own => err instanceof HearTimeout ? "timeout" : (err as Error)?.name === "AbortError" ? "abort" : hearOutage(err) ? "outage" : "error";
+const ownOf = (err: unknown): Own => err instanceof HearTimeout ? "timeout" : (err as Error)?.name === "AbortError" ? "abort" : err instanceof HearHttp && signedOutStatus(err.status) ? "signedout" : hearOutage(err) ? "outage" : "error";
 
 /**
  * Whisper is really out: the network failed (fetch rejects with a TypeError), or the server has no transcriber (503). A 401, a 502
@@ -496,8 +537,10 @@ export class Conductor {
       }
     });
     this.ears = e;
+    // B3: a start that hangs on one step (the browser's question aside) is given up, said, and reported (watchStart)
+    const watch = this.watchStart(e);
     try {
-      await e.start();
+      await Promise.race([e.start(), watch.stalled]);
     } catch (err) {
       // the microphone may already be open when a later step fails: its tracks stop here
       e.stop();
@@ -508,10 +551,14 @@ export class Conductor {
       this.ears = null;
       this.h.onFail?.((err as Error).message as EarsError);
       throw err;
+    } finally {
+      watch.done();
     }
     this.starting = false;
     if (this.ears !== e) { e.stop(); return; }
-    if (e.needsGesture) this.h.onFail?.("gesture");
+    // B1: the ears no longer wait for a click to start their audio context. One the browser lets start runs within a moment; one still
+    // suspended after GESTURE_GRACE_MS waits for a click on the page, and the page asks for it (no frame is heard until then)
+    if (e.needsGesture) void e.awake(GESTURE_GRACE_MS).then((ok) => { if (!ok && this.ears === e) this.h.onFail?.("gesture"); }).catch(() => undefined);
     this.dispatch({ type: "open" });
     // the strip's count is this minute's, so it falls as the minute passes
     this.pruneT = setInterval(() => {
@@ -519,6 +566,43 @@ export class Conductor {
       this.ambient = this.ambient.filter((t) => Date.now() - t < 60_000);
       if (this.ambient.length !== n) this.h.onBudget?.({ low: this.budgetLow, ambient: this.ambient.length });
     }, 5000);
+  }
+
+  /**
+   * B3 (27 Nov): the start watchdog. A step of the start is given MIC_START_LIMIT_MS from when it began (the ears record it; else from when
+   * the watchdog first saw it): a step that moved on gets its own time (a slow worklet after a slow model is slow, not stuck). Past it, still
+   * asking for the microphone while the permission is not "granted" is the browser's own question (or one it cannot tell apart from it), and
+   * the wait is counted again from then; any other step is a stall: reported (onStall) and `stalled` rejects with "stalled", so open() gives
+   * the start up at once. done() ends it.
+   */
+  private watchStart(e: Ears): { stalled: Promise<never>; done: () => void } {
+    let over = false, timer: ReturnType<typeof setTimeout> | null = null;
+    let fail: (err: Error) => void = () => undefined;
+    const stalled = new Promise<never>((_, rej) => { fail = rej; });
+    stalled.catch(() => undefined);
+    const t0 = performance.now();
+    const stageOf = () => String(e.stage ?? "unknown");
+    let seen = stageOf(), from = 0;
+    const arm = (ms: number) => { timer = setTimeout(tick, Math.max(50, ms)); };
+    const tick = () => {
+      timer = null;
+      if (over || this.ears !== e) return;
+      const now = performance.now() - t0;
+      const stage = stageOf();
+      if (stage !== seen) { seen = stage; from = (e.stageAt as Record<string, number> | undefined)?.[stage] ?? now; }
+      const left = MIC_START_LIMIT_MS - (now - from);
+      if (left > 1) { arm(left); return; }
+      void micPermission().then((permission) => {
+        if (over || this.ears !== e) return;
+        if (stageOf() !== stage) { tick(); return; }
+        if (stage === "gum" && permission !== "granted") { from = performance.now() - t0; arm(MIC_START_LIMIT_MS); return; }
+        over = true;
+        try { this.h.onStall?.({ stage, ms: Math.round(performance.now() - t0), ctx: e.ctxState ?? "none", permission }); } catch { /* a report never stops the give-up */ }
+        fail(new Error("stalled"));
+      });
+    };
+    arm(MIC_START_LIMIT_MS);
+    return { stalled, done: () => { over = true; if (timer) { clearTimeout(timer); timer = null; } } };
   }
 
   /** The microphone closes: tracks stopped, nothing listens. */
@@ -906,8 +990,12 @@ export class Conductor {
     const over = this.sayingAtOnset ? Date.now() : last;
     return addressed({ text, lastTurnAt: over, now: Date.now(), rulesSure: r.sure, districtNoun: r.districtNoun, awaitingAnswer, called: this.calledNow() });
   }
-  /** v8: the first sentence after "Hey Jarvis" (the name heard, nothing answered since, within 12 s) is the call's own request */
-  private calledNow(): boolean { return this.engaged > 0 && this.engaged > (this.h.lastTurnAt() ?? 0) && Date.now() - this.engaged < CALL_MS; }
+  /**
+   * v8: the first sentence after "Hey Jarvis" (the name heard, nothing answered since, within 12 s) is the call's own request.
+   * 27 Nov (review): ">=": the page marks the call as a turn (engagedNow) and then calls called() in the same millisecond, so ">" left the call
+   * uncounted most of the time (the closed listener's wake and, since B4, a click-open)
+   */
+  private calledNow(): boolean { return this.engaged > 0 && this.engaged >= (this.h.lastTurnAt() ?? 0) && Date.now() - this.engaged < CALL_MS; }
   /** v8: a yes, a card or a question back is waiting: a plain "okay" is its answer, not a filler */
   private answerAwaited(): boolean { return !!(this.h.wantsYes?.() || this.h.clarifyPending?.() || this.h.offerPending?.()); }
   /**
@@ -995,8 +1083,11 @@ export class Conductor {
     const { j, own } = rec.out, gen = rec.gen;
     // cancelled: a newer sentence, a stop or a close took over
     if (own === "abort") return;
+    // B10 (27 Nov): the session is gone (401, 403): said as that, whatever the lane (every later sentence would fail the same way), never as
+    // "I didn't catch that" for an engaged sentence and silence for the rest
+    if (!j && own === "signedout") { this.h.onSignedOut?.(); this.dispatch({ type: "text", text: "", gen }); return; }
     if (!j) {
-      // too slow, or unreadable (a 502, a 401): not heard, and Jarvis listens again. The console says so calmly for an engaged
+      // too slow, or unreadable (a 502, a 500): not heard, and Jarvis listens again. The console says so calmly for an engaged
       // sentence only: side talk that was not transcribed is nobody's business. v12 (RC9): and only for the sentence now being read: an
       // older one's "I didn't catch that" cut in over the newer answer
       if ((own === "timeout" || own === "error") && rec.lane === "engaged" && gen === this.m.gen) this.h.onMissed?.(own);

@@ -53,20 +53,49 @@ export interface KwsHooks {
   onFail?: (why: string) => void;
 }
 
+/**
+ * B6 (27 Nov, the hosted copy): one wake-word worker for the page. Each start (every open, every close, every return to the tab) made a new
+ * worker that imported the runtime again, fetched the 7.4 MB model again and ran its 25 warm-up steps, deaf meanwhile. Now the worker and its
+ * loaded model stay, and one listener at a time owns it: the open ears or the closed listener, never both. A new owner takes it over (the one
+ * before goes quiet: it is no longer fed or heard), its session starts from the warm state (reset), and its sample count goes on from the
+ * last one's with a gap (`base`), so the worker's own count (its cool-down after a wake) never mixes two sessions and a late wake from the one
+ * before (its count under the new base) is never heard. Nobody owning it for SHARED_IDLE_MS, it is let go; an error ends it for good, and the
+ * next start makes a new one. NEXT_PUBLIC_JARVIS_KWS_SHARE=0 gives each listener its own worker again (v6).
+ */
+export const SHARED_IDLE_MS = 120_000;
+/** samples (16 kHz) between two owners' counts: more than the worker's cool-down after a wake (KWS_COOLDOWN_MS), so one never holds the next */
+const OWNER_GAP = 16_000 * 4;
+const shareOn = () => flag("NEXT_PUBLIC_JARVIS_KWS_SHARE", process.env.NEXT_PUBLIC_JARVIS_KWS_SHARE) !== "0";
+interface Shared { w: Worker; threshold: number; ready: boolean; owner: Kws | null; total: number; idle: ReturnType<typeof setTimeout> | null }
+let shared: Shared | null = null;
+type KwsMsg = { type: string; score?: number; end?: number; why?: string };
+function endShared(s: Shared) {
+  if (shared === s) shared = null;
+  if (s.idle) { clearTimeout(s.idle); s.idle = null; }
+  try { s.w.terminate(); } catch { /* gone */ }
+}
+/** tests only: let the page's shared worker go */
+export function resetKwsShare() { if (shared) endShared(shared); shared = null; }
+
 /** One wake-word listener: feed it 16 kHz audio as it comes; it says when it heard the name. */
 export class Kws {
   private w: Worker | null = null;
   private ready = false;
   private count = 0;
   private buf: number[] = [];
+  /** B6: the shared worker this listener owns now (null: its own worker, or none) */
+  private sh: Shared | null = null;
+  /** B6: where this listener's count starts in the shared worker's count */
+  private base = 0;
   constructor(private hooks: KwsHooks, private threshold = kwsThreshold()) {}
 
   start(): void {
     if (this.w || typeof Worker === "undefined") return;
     try {
+      if (shareOn()) { this.take(); return; }
       const w = new Worker("/thunai/kws.worker.js", { type: "module" });
       this.w = w;
-      w.onmessage = (ev: MessageEvent<{ type: string; score?: number; end?: number; why?: string }>) => {
+      w.onmessage = (ev: MessageEvent<KwsMsg>) => {
         const m = ev.data;
         if (m.type === "ready") this.ready = true;
         else if (m.type === "error") { this.hooks.onFail?.(m.why ?? "error"); this.stop(); }
@@ -76,9 +105,43 @@ export class Kws {
       w.postMessage({ type: "init", model: KWS_MODEL, ort: "/thunai-ort/", threshold: this.threshold, cooldownMs: KWS_COOLDOWN_MS });
     } catch (e) {
       this.hooks.onFail?.((e as Error).message ?? "worker");
-      this.w = null;
+      this.w = null; this.sh = null;
     }
   }
+
+  /** B6: own the page's worker (made the first time, or when the one before failed or has another threshold) */
+  private take() {
+    let s = shared;
+    if (s && s.threshold !== this.threshold) { endShared(s); s = null; }
+    if (!s) {
+      const w = new Worker("/thunai/kws.worker.js", { type: "module" });
+      const made: Shared = { w, threshold: this.threshold, ready: false, owner: null, total: 0, idle: null };
+      s = made;
+      w.onmessage = (ev: MessageEvent<KwsMsg>) => {
+        const m = ev.data, o = made.owner;
+        if (m.type === "ready") { made.ready = true; if (o) o.ready = true; }
+        else if (m.type === "error") { endShared(made); if (o) { o.drop(); o.hooks.onFail?.(m.why ?? "error"); } }
+        // a wake from an earlier owner's audio (its count under this owner's base) is not this owner's
+        else if (m.type === "wake" && m.end != null && o && m.end >= o.base) o.hooks.onWake(m.end - o.base, m.score ?? 1);
+      };
+      w.onerror = () => { const o = made.owner; endShared(made); if (o) { o.drop(); o.hooks.onFail?.("worker"); } };
+      w.postMessage({ type: "init", model: KWS_MODEL, ort: "/thunai-ort/", threshold: this.threshold, cooldownMs: KWS_COOLDOWN_MS });
+      shared = made;
+    } else {
+      // the one before goes quiet (never told it failed: its listener stays up), and the worker starts this session from its warm state
+      if (s.owner && s.owner !== this) s.owner.drop();
+      if (s.idle) { clearTimeout(s.idle); s.idle = null; }
+      if (s.ready) s.w.postMessage({ type: "reset" });
+    }
+    this.base = s.total > 0 ? s.total + OWNER_GAP : 0;
+    s.total = this.base;
+    s.owner = this;
+    this.sh = s;
+    this.w = s.w;
+    this.ready = s.ready;
+  }
+  /** B6: no longer this listener's worker (another took it, or it failed): nothing is fed or heard */
+  private drop() { this.w = null; this.ready = false; this.buf = []; this.sh = null; }
 
   /** 16 kHz samples, in order; sent to the worker in 80 ms batches (one model step each) */
   feed(x: Float32Array): void {
@@ -88,7 +151,9 @@ export class Kws {
     if (this.buf.length < 1280 || !this.ready) { if (!this.ready && this.buf.length > 16000) this.buf.splice(0, this.buf.length - 16000); return; }
     const samples = Float32Array.from(this.buf);
     this.buf = [];
-    this.w.postMessage({ type: "audio", samples, end: this.count }, [samples.buffer]);
+    const end = this.base + this.count;
+    if (this.sh) this.sh.total = Math.max(this.sh.total, end);
+    this.w.postMessage({ type: "audio", samples, end }, [samples.buffer]);
   }
 
   /** forget what was heard (a new session) */
@@ -97,8 +162,18 @@ export class Kws {
   get live(): boolean { return !!this.w && this.ready; }
 
   stop(): void {
-    try { this.w?.terminate(); } catch { /* gone */ }
-    this.w = null; this.ready = false; this.buf = [];
+    const s = this.sh;
+    if (s) {
+      // the shared worker stays for the next listener (its model loaded), and is let go if nobody takes it for SHARED_IDLE_MS
+      if (s.owner === this) {
+        s.owner = null;
+        if (s.idle) clearTimeout(s.idle);
+        s.idle = setTimeout(() => { s.idle = null; if (!s.owner) endShared(s); }, SHARED_IDLE_MS);
+      }
+    } else {
+      try { this.w?.terminate(); } catch { /* gone */ }
+    }
+    this.w = null; this.ready = false; this.buf = []; this.sh = null;
   }
 }
 

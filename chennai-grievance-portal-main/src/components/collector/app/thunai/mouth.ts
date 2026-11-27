@@ -199,6 +199,25 @@ export const voicePath = () => path;
 export const hasVoice = (lang: string) => (serverUp() ? true : browser.hasVoice(lang));
 export const warmVoices = browser.warmVoices;
 export const voicesFor = browser.voicesFor;
+/** B8: who is told when the browser refuses to sound the voice (voice.ts); B1: the browser's voice unlocked inside a click */
+export const setAudioBlocked = browser.setAudioBlocked;
+export const unlockSpeech = browser.unlockSpeech;
+/**
+ * B1 (27 Nov): a click or a key on the page: the voice's and the earcons' contexts start if the browser held them (a page nobody had clicked
+ * yet). Never the voice's context while a barge-in paused it on purpose (pauseVoice), and none is made here.
+ */
+export function resumeMouth(): Promise<void> {
+  const ps: Promise<unknown>[] = [];
+  if (ctx && ctx.state === "suspended" && !paused) ps.push(ctx.resume().catch(() => undefined));
+  if (fx && fx.state === "suspended") ps.push(fx.resume().catch(() => undefined));
+  return Promise.all(ps).then(() => undefined);
+}
+/**
+ * B8 (27 Nov): the server voice's first audio was scheduled this long ago and its context is still suspended (the browser waits for a click):
+ * nothing of it is being heard, so the page asks for a click and the answer goes to the next rung (its words are on screen); before, it sat
+ * "speaking" in silence with nothing to end it
+ */
+export const PCM_STALL_MS = 1500;
 /** the words being said right now (the self-hearing guard), as shown */
 export const nowSaying = (): string | null => (sounding() && cur ? (cur.gated ? cur.pieces : cur.raw).map((p) => p.text).join(" ") : null);
 /** v5 F1: chunks not said because a number sign was left in them after the words (a count only, never the text) */
@@ -402,8 +421,24 @@ async function runPcm(s: Speech, my: number, l: "ta" | "en", start: (p: VoicePat
     }
   };
   const iv = setInterval(tick, 50);
+  // B8: the browser holds this context until a click: PCM_STALL_MS after the first audio was scheduled, still suspended (and not paused by a
+  // barge-in) means nothing is heard: the page is told, the player stops, and the whole answer goes to the next rung
+  let blocked = false, stallT: ReturnType<typeof setTimeout> | null = null;
+  let unblock: (v: null) => void = () => undefined;
+  const blockedP = new Promise<null>((r) => { unblock = r; });
+  const watch = () => {
+    if (stallT || blocked) return;
+    stallT = setTimeout(() => {
+      stallT = null;
+      if (my !== token || paused || c.state !== "suspended") return;
+      blocked = true;
+      browser.audioBlocked("audio");
+      p.stop();
+      unblock(null);
+    }, PCM_STALL_MS);
+  };
   // the trace: the first sample of an answer (not an acknowledgement) is scheduled
-  const scheduled = () => { if (!s.ack) stamp("voiceStart"); };
+  const scheduled = () => { if (!s.ack) stamp("voiceStart"); watch(); };
   try {
     ensureGroups(s);
     let broke = false;
@@ -418,15 +453,17 @@ async function runPcm(s: Speech, my: number, l: "ta" | "en", start: (p: VoicePat
         place(estimate(gr.text, l), 0);
         tick();
         gr.pending = fetchAudio(gr.text, l, c, (b) => { if (my === token) { start("pcm"); p.push(b); scheduled(); } }).then((b) => { gr.buf = b; gr.pending = null; return b; });
-        const b = await gr.pending;
+        const b = await Promise.race([gr.pending, blockedP]);
         if (my !== token) return "cut";
+        if (blocked) return "failed";
         if (!b) { broke = true; break; }
         place(b.duration, 0);
         continue;
       }
       // audio this answer already has (it was cut, and goes on): from the piece it was on, no second request
-      const b = gr.buf ?? (await gr.pending);
+      const b = gr.buf ?? (await Promise.race([gr.pending, blockedP]));
       if (my !== token) return "cut";
+      if (blocked) return "failed";
       if (!b) { broke = true; break; }
       const skip = pieceStarts(lengths, b.duration)[from - gr.from];
       place(b.duration, skip);
@@ -438,6 +475,7 @@ async function runPcm(s: Speech, my: number, l: "ta" | "en", start: (p: VoicePat
     p.end();
     tick();
     const ok = await p.done();
+    if (my === token && blocked) return "failed";
     if (my !== token || !ok) return "cut";
     // all of it played: every piece was said (after a failed run, the rest is on screen and is not handed to another voice)
     if (!broke) while (said + 1 < s.pieces.length) { said++; if (s.pieces[said].first) s.o.onLine?.(s.pieces[said].line); }
@@ -445,6 +483,7 @@ async function runPcm(s: Speech, my: number, l: "ta" | "en", start: (p: VoicePat
     return "played";
   } finally {
     clearInterval(iv);
+    if (stallT) clearTimeout(stallT);
   }
 }
 

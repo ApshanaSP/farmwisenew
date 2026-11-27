@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireConfirm } from "@/lib/security/stepup";
 import { z } from "zod";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
+import type { PoolConnection } from "mysql2/promise";
 import intelPool, { ops } from "@/lib/collector/db";
 import { collectorSession } from "@/lib/collector/guard";
 import { syncComplaints } from "@/lib/complaint-progress";
@@ -33,6 +34,24 @@ const SCORE_FACTS = ["severity_score", "severity_level", "category_label", "sour
 function nextLevel(route: string | null): string | null {
   const steps = String(route ?? "").split("→").map((s) => s.trim()).filter((s) => s && s !== "-");
   return steps[1] ?? steps[0] ?? null;
+}
+
+/**
+ * The cases among `ids` that wait for the Collector: the department's latest step is a send, and the Collector has not verified, returned,
+ * resolved or rejected it since (a decision in the same second counts as after it). The Collector console's My Tasks reads the same
+ * (lib/collector/intel.ts SENT_BY_OFFICER). None before the officer tables are set up.
+ */
+async function sentForApproval(conn: PoolConnection, ids: string[]): Promise<Set<string>> {
+  try {
+    const [rows] = await conn.query<RowDataPacket[]>(
+      `SELECT s.incident_id FROM ${ops("officer_steps")} s WHERE s.incident_id IN (?) AND s.step = 'send'
+         AND NOT EXISTS (SELECT 1 FROM ${ops("officer_steps")} s2 WHERE s2.incident_id = s.incident_id AND (s2.at > s.at OR (s2.at = s.at AND s2.step_id > s.step_id)))
+         AND NOT EXISTS (SELECT 1 FROM ${ops("collector_decisions")} x WHERE x.incident_id = s.incident_id
+                         AND x.decision IN ('verify', 'reject', 'resolve', 'reopen') AND x.decided_at >= s.at)`, [ids]);
+    return new Set(rows.map((r) => String(r.incident_id)));
+  } catch {
+    return new Set();
+  }
 }
 
 /**
@@ -73,9 +92,14 @@ export async function POST(req: NextRequest) {
     if (incs.length !== new Set(d.incidentIds).size) {
       return NextResponse.json({ error: "Incident not found." }, { status: 404 });
     }
-    // the Collector verifies severe work only; the department verifies and closes everything else itself
-    if (d.decision === "verify" && incs.some((i) => i.severity_level !== "Severe")) {
-      return NextResponse.json({ error: "Only severe incidents are verified by the Collector; the department closes the rest itself." }, { status: 409 });
+    // the Collector verifies severe work, and any other case its department sent for the Collector's approval (the owner's decision of
+    // 27 Nov: an officer may send any open case); the department verifies and closes everything else itself
+    if (d.decision === "verify") {
+      const plain = incs.filter((i) => i.severity_level !== "Severe").map((i) => String(i.incident_id));
+      const sent = plain.length ? await sentForApproval(conn, plain) : new Set<string>();
+      if (plain.some((id) => !sent.has(id))) {
+        return NextResponse.json({ error: "Only severe incidents, and those a department sent for your approval, are verified by the Collector; the department closes the rest itself." }, { status: 409 });
+      }
     }
     if (d.escalateTo) {
       const [dept] = await conn.query<RowDataPacket[]>("SELECT code FROM ref_departments WHERE code = ?", [d.escalateTo]);
@@ -130,7 +154,8 @@ export async function POST(req: NextRequest) {
     }
     await conn.commit();
     bumpDataEpoch(); // every cache that holds a read of the store is emptied: the next answer, screen or story shows this decision (RC-35)
-    // verify / resolve / return / reject reach the residents' trackers (complaint-progress.ts); notes and escalations do not
+    // verify / resolve / return / reject reach the residents' trackers (complaint-progress.ts); notes and escalations do not: they change no
+    // status. All of them reach the department: an escalation in its feedback card and bell, a note in the case's timeline (lib/officer/data.ts)
     if (["verify", "resolve", "reopen", "reject"].includes(d.decision)) await syncComplaints(saved.map((x) => x.incident_id), session.userId);
     return NextResponse.json({ saved }, { status: 201 });
   } catch (err) {

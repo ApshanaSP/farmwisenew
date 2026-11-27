@@ -16,6 +16,7 @@ import { AddedRow } from "./Added";
 import { ConflictList, DiffBadge, differView, hasConflict } from "./Conflicts";
 import { NextDoorList, nextDoorCount } from "./Nearby";
 import { useEffect, useState } from "react";
+import { useLang } from "@/lib/i18n/lang";
 import { AttentionCard } from "./Attention";
 import AskOverlay from "./askmap/AskOverlay";
 import { useMapChrome } from "./askmap/Chrome";
@@ -134,8 +135,10 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
   const iv = () => ({ "--i": ix++ }) as React.CSSProperties;
   const addedPins = d.added.pins;
 
-  // Under the band the map leads: it takes the left half and more, full height; by severity (what is urgent) and my
-  // tasks (what to check) stack beside it, and the latest news runs down the right. The counts live in the band above.
+  // Under the band the map leads: it takes about two fifths of the width, full height; by severity (what is urgent) and my
+  // tasks (what to check) stack beside it, and the latest news runs down the right, the two as wide as each other (27 Nov: the
+  // map was narrowed from 1.9fr so a severe row's facts fit on one line and the news has room; under 1.5fr the map's pills wrap).
+  // The counts live in the band above.
   const W: Record<string, string> = { map: "1.3fr", sev: "1fr", tasks: "1fr", brief: "1.12fr" };
   const cols = ([["map", L.panels.map], ["sev", L.panels.severity], ["tasks", L.panels.tasks], ["brief", L.panels.brief]] as const)
     .filter(([, on]) => on).map(([k]) => k as string);
@@ -147,7 +150,7 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
   if (stack.length) { r0.push(stack[0]); r1.push(stack[1] ?? stack[0]); }
   if (cols.includes("brief")) { r0.push("brief"); r1.push("brief"); }
   const grid: React.CSSProperties = cols.includes("map") && cols.length > 1 ? {
-    gridTemplateColumns: ["minmax(0,1.9fr)", ...r0.slice(1).map((k) => (k === "brief" ? "minmax(0,1fr)" : "minmax(0,1.15fr)"))].join(" "),
+    gridTemplateColumns: ["minmax(0,1.6fr)", ...r0.slice(1).map(() => "minmax(0,1.2fr)")].join(" "),
     gridTemplateRows: "minmax(0,1.15fr) minmax(0,.85fr)",
     gridTemplateAreas: `"${r0.join(" ")}" "${r1.join(" ")}"`
   } : {
@@ -479,7 +482,7 @@ export function NewsStory({ i, now, c }: { i: Story; now: string; c: Console }) 
     <button className="brief nw" onClick={() => c.openStory(i)} title={i.desk?.why || (i.incident ? "Open the incident: the news and the grievances together" : "Read the story and every outlet's report")}>
       <span className={`bic ${act || i.incident ? "t-high" : "t-info"}`}><I n="news" /></span>
       <span style={{ minWidth: 0, flex: 1 }}>
-        <b title={i.original ?? undefined}>{i.title}</b>
+        <NewsHead en={i.title} ta={i.original} taLead={i.taLead} />
         {i.desk?.gist && <span className="nw-g">{i.desk.gist}</span>}
         <span className="loc">{outletLine(i)} · {i.loc ?? "Chennai"} · {rel(i.t, now)}</span>
         <span className="nw-tags">
@@ -489,6 +492,28 @@ export function NewsStory({ i, now, c }: { i: Story; now: string; c: Console }) 
       </span>
     </button>
   );
+}
+
+/**
+ * A news headline in the language it was published in (27 Nov 2026: since 6 Oct only the English translation showed, the Tamil only on
+ * hover). A story in Tamil only, or led by a Tamil report, shows its Tamil headline first with the English line under it; a story with
+ * English and Tamil reports shows English first with the Tamil headline under it. With the site in Tamil, the Tamil headline alone: the
+ * English line would only be translated back. The Tamil is marked translate="no", so the site's translator leaves it as published.
+ * Each line is clamped (news.css), so a list still fits the 680 px canvas. `h` and `line` are the elements (a card's h4 and p).
+ */
+export function NewsHead({ en, ta, taLead, h: H = "b", line: L = "span", title }: {
+  en: string; ta?: string | null; taLead?: boolean | null; h?: "b" | "h4"; line?: "span" | "p" | "small"; title?: string
+}) {
+  const [lang] = useLang();
+  // a clamped line keeps its whole words on hover
+  if (ta && (taLead || lang === "ta")) return <>
+    <H lang="ta" translate="no" title={title ?? ta}>{ta}</H>
+    {lang !== "ta" && en && en !== ta && <L className="nw-en" title={en}>{en}</L>}
+  </>;
+  return <>
+    <H title={title}>{en}</H>
+    {ta && <L className="nw-ta" lang="ta" translate="no" title={ta}>{ta}</L>}
+  </>;
 }
 
 /** Why a story is here: needs action or for information, and the area it is about (the news desk's reading). */
@@ -522,7 +547,7 @@ export function NewsItem({ i, now, c, showDept }: { i: Row; now: string; c: Cons
     <button className="brief" onClick={() => c.openInc(i.id)} title={String(i.news_title ?? fullTitle(i))}>
       <span className="bic t-high"><I n="news" /></span>
       <span style={{ minWidth: 0, flex: 1 }}>
-        <b title={i.news_title ? `Incident: ${fullTitle(i)}` : undefined}>{i.news_title ?? fullTitle(i)}</b>
+        <NewsHead en={String(i.news_title ?? fullTitle(i))} ta={i.news_ta} taLead={i.news_ta_lead} title={i.news_title ? `Incident: ${fullTitle(i)}` : undefined} />
         <span className="loc">{outlets.length ? outlets.join(", ") : "News"} · {i.zone_name ?? "Chennai"} · {rel(i.t, now)}</span>
         {showDept && !i.assigned && <span className="routed"><I n="gov" />Belongs to {i.dept_name ?? i.dept}</span>}
         {i.assigned && <span className="routed"><I n="send" />Sent to {i.assigned.officer_designation ?? i.dept_name}</span>}

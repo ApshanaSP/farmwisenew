@@ -108,6 +108,8 @@ export interface Ctx {
   openSend: (r: Row) => void;
   openList: (cat: string | null, label: string, flag?: ListFlag, more?: { sev?: string | null; tab?: string }) => void;
   approve: (r: Row) => Promise<void>;
+  /** the progress update on an approved case: work has started (the citizen's tracker shows In Progress) */
+  startWork: (r: Row) => Promise<void>;
   toast: (msg: string, kind?: "ok" | "alert", act?: Toast["act"]) => void;
   closeAll: () => void;
 }
@@ -300,7 +302,8 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
           changed = true;
         }
         if (was.lastDecision && m.lastDecision && m.lastDecision !== was.lastDecision) {
-          toast("The Collector has reviewed one of your reports. See Notifications.", "alert");
+          // a decision on a report, or an escalation of one of the department's cases (both are in Notifications)
+          toast("The Collector has acted on one of your cases. See Notifications.", "alert");
           changed = true;
         }
         if (m.updatedAt && m.updatedAt !== was.updatedAt) {
@@ -372,6 +375,21 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
     }
   };
 
+  const startWork = async (r: Row) => {
+    markBusy(r.id, true);
+    try {
+      await api(`/api/officer/grievances/${encodeURIComponent(r.id)}`, { step: "action" });
+      setFresh(r.id);
+      toast(`Work started: ${r.type}${r.zone_name ? `, ${r.zone_name}` : ""}. The citizen's tracker now shows it In Progress.`);
+      setReloadKey((k) => k + 1);
+    } catch (e: any) {
+      toast(e.message, "alert");
+      setReloadKey((k) => k + 1);
+    } finally {
+      markBusy(r.id, false);
+    }
+  };
+
   /** The PDF report of what is on screen: this period, this area, with the department's insights. */
   const exportPdf = async () => {
     if (exporting) return;
@@ -411,7 +429,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
     openGrievance: (id, mode = "off") => { setModal(null); setDrawer({ id, mode }); },
     openSend: (r) => { setDrawer(null); setModal({ kind: "send", row: r }); },
     openList: (cat, label, flag, more) => { setDrawer(null); setModal({ kind: "list", cat, label, flag, sev: more?.sev ?? null, tab: more?.tab }); },
-    approve, toast, closeAll
+    approve, startWork, toast, closeAll
   };
 
   // ----------------------------------------------------------- keyboard --
@@ -481,7 +499,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
     }
   };
 
-  const modalTitle = !modal ? "" : modal.kind === "send" ? (modal.row.sev === "Severe" ? "Completion report to the Collector" : "Completion report · close as done")
+  const modalTitle = !modal ? "" : modal.kind === "send" ? (modal.row.sev === "Severe" ? "Completion report to the Collector" : "Completion report · close as done or send for approval")
     : modal.kind === "module" ? `${moduleOpen?.title ?? "Department data"} · ${areaName ?? dept.name}`
       : modal.kind === "contacts" ? `${dept.name} · contacts`
         : modal.kind === "news" ? `${dept.short} in the news · ${ov.periodInfo.label}`
@@ -641,12 +659,12 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
         {modal && (
           <Modal narrow={modal.kind !== "module" && modal.kind !== "news"} title={modalTitle} onClose={closeAll}>
             {modal.kind === "send" ? (
-              <SendReport row={modal.row} c={c} onSent={() => {
+              <SendReport row={modal.row} c={c} onSent={(step) => {
                 const r = modal.row;
-                toast(r.sev === "Severe" ? `Sent to the Collector for verification: ${r.type}.` : `Closed as done by your department: ${r.type}.`);
+                toast(step === "send" ? `Sent to the Collector for ${r.sev === "Severe" ? "verification" : "approval"}: ${r.type}.` : `Closed as done by your department: ${r.type}.`);
                 setFresh(r.id);
                 setModal(null);
-                setTab("sent");
+                setTab(step === "send" ? "sent" : "verified");
                 setDrawer({ id: r.id, mode: "off" });
                 setReloadKey((k) => k + 1);
               }} />

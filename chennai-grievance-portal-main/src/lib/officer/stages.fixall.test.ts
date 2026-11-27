@@ -48,7 +48,8 @@ describe("officer-day-26: the step bar and the API's next step follow the path t
     expect(nextStep("action", "Low")).toBe("close");
     expect(nextStep("approved", "Severe")).toBe("send");
     expect(nextStep("action", "Severe")).toBe("send");
-    expect(nextStep("sent", "Medium")).toBe("close");
+    // 27 Nov: a case at "sent" waits for the Collector whatever its severity (any case may now be sent for approval)
+    expect(nextStep("sent", "Medium")).toBeNull();
     expect(nextStep("sent", "Severe")).toBeNull();
     expect(nextStep("verified", "Medium")).toBeNull();
   });

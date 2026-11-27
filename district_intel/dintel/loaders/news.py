@@ -28,7 +28,7 @@ from ..refdata import Reference
 from ..schema import DOC_COLUMNS, EVENT_COLUMNS, conform
 from ..util import INTEL_DIR, IST, REF_DIR, Settings, UnionFind, epoch_hours, log, mixed_to_ist, sha256_file
 
-from ..reporttype import NON_INCIDENT_KINDS, report_kind
+from ..reporttype import NON_INCIDENT_KINDS, overriding_kind, report_kind
 
 NON_INCIDENT_TYPES = ["service_notice", "announcement", "court", "politics", "entertainment_sport", "business"]
 
@@ -555,9 +555,11 @@ def _classify(settings: Settings, ref: Reference, d: pd.DataFrame, text: pd.Seri
                & outside_headline(d["title"])).to_numpy()
     in_chennai = lab["in_chennai"].astype(bool).to_numpy() & ~outside
     # the headline's kind (dintel/reporttype.py, LT-03): a forecast, government work, a rescue, a roundup, an opinion or a
-    # promotion is news, not an incident, whatever the model said
+    # promotion is news, not an incident. 27 Nov 2026: over the language model's own label only a forecast or a roundup
+    # (overriding_kind); the website's news desk decides the rest
     kinds = [report_kind(en if isinstance(en, str) else None, t) for en, t in zip(d.get("title_en", pd.Series(None, index=d.index)), d["title"])]
-    lab["report_type"] = [k if k in NON_INCIDENT_KINDS else rt for k, rt in zip(kinds, lab["report_type"])]
+    from_ai = lab["method"].astype(str).str.startswith("llm:").to_numpy()
+    lab["report_type"] = [overriding_kind(k, bool(ai)) or rt for k, ai, rt in zip(kinds, from_ai, lab["report_type"])]
     incident =lab["is_incident"].astype(bool).to_numpy() & in_chennai & ~lab["report_type"].isin(NON_INCIDENT_TYPES + NON_INCIDENT_KINDS).to_numpy()
     d["report_type"] = lab["report_type"].to_numpy()
     d["is_district"] = in_chennai.astype(int)

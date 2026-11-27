@@ -44,11 +44,15 @@ describe("officer-day-16: the case is checked before the password is asked", () 
     expect(await asksPassword(r)).toBe(false);
   });
 
-  it("a Medium case sent to the Collector: 409 with the reason, no confirm box", async () => {
+  // the owner's decision of 27 Nov: any open case may go to the Collector for approval, so a Medium send is a step the case allows
+  it("a Medium case sent to the Collector for approval: allowed, so the password is asked and nothing is recorded without it", async () => {
     const r = await send("INC-W-2026-MED001", "send");
-    expect(r.status).toBe(409);
-    expect((await r.clone().json()).error).toMatch(/Only severe grievances go to the Collector/);
-    expect(await asksPassword(r)).toBe(false);
+    expect(r.status).not.toBe(409);
+    expect(await asksPassword(r)).toBe(true);
+    expect(H.recorded).toBe(0);
+    // the confirm box says what the officer chose: approval, not the severe case's verification
+    expect((await r.clone().json()).confirm.summary).toBe("Send case INC-W-2026-MED001 to the Collector for approval");
+    expect((await (await send("INC-W-2026-SEV001", "send")).clone().json()).confirm.summary).toBe("Send case INC-W-2026-SEV001 to the Collector for verification");
   });
 
   it("a severe case closed by the department, or a case already verified: 409, no confirm box", async () => {

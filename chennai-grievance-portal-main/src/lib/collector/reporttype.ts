@@ -17,13 +17,20 @@
  * Rules on the headline (the English translation of a Tamil one when there is one). The order matters: a roundup or
  * an opinion piece names incidents too, and a death beats everything after it ("Woman dies while rescuing son" is an
  * incident, not a rescue). `null` means the headline says nothing decisive: the pipeline's label stands.
- * The pipeline has the same rules (district_intel/dintel/reporttype.py): keep the two in step.
+ *
+ * 27 Nov 2026: these rules are the FALLBACK. The AI news desk (newsdesk.ts) gives every story it reads one of the same
+ * kinds, and its kind decides (derive.ts reportKinds and applyDesk); the rules decide only for a story the desk has not
+ * read (older news, no model, the day's call cap reached). Fix a new mistake in the desk's instructions, not with a new
+ * word here. The pipeline has a copy (district_intel/dintel/reporttype.py), which now applies to the model's labels
+ * only for forecasts and roundups.
  */
 
 import { plainEvents } from "./idioms";
 
-export type ReportKind = "incident" | "alert" | "government_action" | "resolution" | "roundup" | "opinion" | "other";
-export const NON_INCIDENT_KINDS: ReportKind[] = ["alert", "government_action", "resolution", "roundup", "opinion", "other"];
+/** Every kind, in the order the news desk is told them (its answer is one of these). */
+export const REPORT_KINDS = ["incident", "alert", "government_action", "resolution", "roundup", "opinion", "other"] as const;
+export type ReportKind = (typeof REPORT_KINDS)[number];
+export const NON_INCIDENT_KINDS: ReportKind[] = REPORT_KINDS.filter((k) => k !== "incident");
 
 const rx = (parts: string[]) => new RegExp(parts.join("|"), "i");
 

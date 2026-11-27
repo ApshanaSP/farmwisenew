@@ -26,7 +26,7 @@ import { ToolError, listTools, runTool, unknownSubject } from "@/lib/assistant/t
 import { ENV_METRICS } from "@/lib/assistant/queries";
 import { applyTopN, presentAll, spec, type Presentation } from "@/lib/assistant/datasets";
 import { correctSpelling } from "@/lib/assistant/spell";
-import { holdSync, hybridSearch, lanceWarm } from "@/lib/assistant/lance";
+import { holdSync, lanceWarm } from "@/lib/assistant/lance";
 import { multiPart, questionParts } from "@/lib/assistant/parts";
 import { warmUp } from "@/lib/assistant/embed";
 import { buildFacts, factLines, slug } from "@/lib/assistant/facts";
@@ -242,24 +242,10 @@ function lockQuery<T extends { filters: { field: string }[]; dimensions: { field
   return { ...q, filters: q.filters.filter((f) => !isDept(f.field)), dimensions: q.dimensions.filter((d) => !isDept(d.field)) };
 }
 
-const NEWS_STOP = new Set(["what", "whats", "happening", "happened", "that", "this", "about", "tell", "there", "which", "where", "when", "with", "from",
-  "have", "news", "today", "chennai", "please", "know", "going", "explain", "something", "anything", "event"]);
-
-/**
- * Whether a question the router called out of scope names a story in the last 7 days of district news: two of its own words
- * (or one long one) in a headline the search finds. "Who won the IPL?" names none and stays refused.
- */
-export async function inOurNews(message: string, now: string): Promise<boolean> {
-  const words = message.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter((w) => w.length >= 4 && !NEWS_STOP.has(w));
-  if (!words.length) return false;
-  const since = Date.parse(now.replace(" ", "T") + "+05:30") / 1000 - 168 * 3600;
-  const found = await hybridSearch("news", message, { since }, 5).catch(orNull("pipeline:inOurNews"));
-  return !!found?.some((f) => {
-    const title = String(f.rec.title ?? "").toLowerCase();
-    const hits = words.filter((w) => title.includes(w));
-    return hits.length >= 2 || hits.some((w) => w.length >= 8);
-  });
-}
+// inOurNews moved to topicguard/news.ts (the brain uses it too); kept exported here for its callers
+export { inOurNews } from "@/lib/topicguard/news";
+import { inOurNews } from "@/lib/topicguard/news";
+import { scopeOf } from "@/lib/topicguard/scope";
 
 /** Asks whom to contact: an officer, a phone number or the person in charge (of a department or zone, never of a citizen). */
 // (phrases, not single words: "number of accidents" or "not confirmed by an officer" are not contact questions)
@@ -522,7 +508,7 @@ const BRIEF: Record<string, string> = {
   developing_stories: "news stories followed over days (place optional)",
   contacts: "officials for a department (dept) and/or zone (zone), from the GCC directory",
   environment: "latest reading per place for one metric (metric; above/below): air quality, rain, temperature, IMD warning, lakes, hospital beds",
-  mandi_prices: "vegetable and fruit prices at Chennai markets (commodity: one or more names, comma-separated; market: only a market the message names, never \"Chennai\"); Koyambedu does not report",
+  mandi_prices: "vegetable and fruit retail prices at the Uzhavar Sandhai farmer markets in and around Chennai: Nanganallur, Ambattur, Pallavaram, Medavakkam, Keelkattalai, Guduvancheri, Kundrathur, Padappai (commodity: one or more names, comma-separated; market: only a market the message names, never \"Chennai\"); Koyambedu, the wholesale market, publishes no daily prices",
   source_health: "freshness of the data feeds",
   resolve_place: "place name to ward, zone and taluk",
   incident_series: "incidents over time in the scope, with the usual range (trend lines)"
@@ -1223,6 +1209,8 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   const notes: string[] = [];
   let route: Route | null = null;
   const card0 = (scope: Scope | null) => baseCard(lang, scope, scope ? describeScope(scope, names, lang, now) : "", now);
+  // an officer's decline names their department (topicguard/reply.ts)
+  const lockName = i.lockDept ? names.depts.get(i.lockDept)?.name ?? i.lockDept : null;
 
   const finish = async (card: AnswerCard, plan: unknown): Promise<ChatOutput> => {
     card.sources.models = models.map((m) => ({ step: m.step, provider: m.provider, model: m.model, ms: m.ms, tokens: m.inputTokens + m.outputTokens,
@@ -1296,6 +1284,12 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
       .catch((e) => { if (i.signal?.aborted) throw e; console.warn(`[assistant] brain: ${(e as Error).message?.slice(0, 200)}`); return null; });
     if (b) {
       i.stage("drawing");
+      // (27 Nov) outside District IQ, by the code check or the brain's verdict: the one decline card, in the chat's own language (Tanglish stays
+      // Tanglish), the topic named when code knows it, an officer's naming their department
+      if (b.answer.kind === "offtopic") {
+        const topic = scopeOf(typed).topic ?? scopeOf(message).topic;
+        return finish(refusalCard(card0(null), null, topic, { dept: lockName }), { intent: "out_of_scope", brain: true, model: b.model, guard: topic ?? "brain", tools: [], rounds: b.rounds });
+      }
       lang = b.answer.lang === "ta" ? "ta" : "en";
       return finish(brainCard(b, card0(null), await serverWorld()), { intent: "brain", brain: true, model: b.model, tools: b.evidence.map((e) => e.tool), rounds: b.rounds });
     }
@@ -1307,7 +1301,7 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
   if (message !== typed && (!guard || guard.kind === "bulk")) guard = (await codeGuard(message)) ?? guard;
   if (guard?.kind === "unsafe") return finish(refusalCard(card0(null), guard.reason), { intent: "unsafe", guard: guard.reason });
   // plainly off-topic ("who won the IPL?"): answered at once, no model, no tokens
-  if (guard?.kind === "off_topic") return finish(refusalCard(card0(null), null, guard.topic), { intent: "out_of_scope", guard: guard.topic });
+  if (guard?.kind === "off_topic") return finish(refusalCard(card0(null), null, guard.topic, { dept: lockName }), { intent: "out_of_scope", guard: guard.topic });
 
   // "reset", "start over", "clear the chat": the conversation's memory starts again
   if (RESET.test(message)) { forgetBrain(`chat:${sessionId}`); return finish(resetCard(card0(null)), { intent: "reset" }); }
@@ -1555,7 +1549,7 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
           }
           const why = outcome.refusal ?? "";
           return finish(refusalCard(card0(null), /personal|phone|address|aadhaa?r|name/i.test(why) ? "personal data" : /delet|chang|modif|updat|data change/i.test(why) ? "data change"
-            : /instruction|prompt|rule/i.test(why) ? "instructions" : null), agentPlan);
+            : /instruction|prompt|rule/i.test(why) ? "instructions" : null, scopeOf(message).topic, { dept: lockName }), agentPlan);
         }
         case "smalltalk":
           if (!SMALLTALK.test(message) && isHelpQuestion(message)) return finish(await helpAnswer(i, asRoute(consoleScope), message, lang, names, now, models), agentPlan);
@@ -1805,7 +1799,7 @@ async function answer(i: ChatInput): Promise<ChatOutput> {
 
   switch (route.intent) {
     case "out_of_scope":
-      return finish(refusalCard(card0(null), null), plan);
+      return finish(refusalCard(card0(null), null, scopeOf(message).topic, { dept: lockName }), plan);
     case "unsafe":
       return finish(refusalCard(card0(null), /personal|phone|address|aadhaa?r|name/i.test(route.refusal ?? "") ? "personal data"
         : /delet|chang|modif|updat|data change/i.test(route.refusal ?? "") ? "data change" : /email|mail/i.test(route.refusal ?? "") ? "email outside the official directory"

@@ -292,7 +292,10 @@ export interface WinPrices { market: string | null;
   rows: WinPrice[]; latest: string | null; inWindow: boolean;
   /** v18 round 2: the first and last day any report is kept for (this market, or every Chennai market) */
   held: { from: string; to: string } | null;
-  /** a day read from data.gov.in for this answer came back with Chennai rows; a data.gov.in key is set */
+  /**
+   * a day read from data.gov.in for this answer came back with Chennai rows; newer days are being collected (27 Nov: always, by the TN
+   * Agricultural Marketing department's feed, which needs no key; before, only with a data.gov.in key)
+   */
   fetched: boolean; keyed: boolean;
   /**
    * v18 round 3: what data.gov.in gave for this answer, day by day (null when it was not asked: no key, or a caller that does not wait for
@@ -306,13 +309,16 @@ const STAPLES = ["tomato", "onion", "potato", "brinjal", "beans", "carrot", "cab
 const OGD_DAYS = 7, OGD_WAIT_MS = 2500;
 
 /**
- * Vegetable prices at the area's market (the Uzhavar Sandhai in its zone: Anna Nagar, K.K. Nagar, Nanganallur, Ambattur) or across the
- * Chennai markets, over the window: each item's latest modal price a kilo and its price at the window's start. Markets report to AGMARKNET a
- * few days late, so a window with no report gives the latest report before its end (inWindow false: the screen says the date).
- * `opts.fetch` false: no day is read from data.gov.in (the summary, which must not wait on it).
+ * Vegetable prices at the area's market (the Uzhavar Sandhai in its zone: Nanganallur in Alandur, Ambattur) or across the Chennai markets,
+ * over the window: each item's latest modal price a kilo and its price at the window's start. A window with no report gives the latest
+ * report before its end (inWindow false: the screen says the date). `opts.fetch` false: no day is read from data.gov.in (the summary,
+ * which must not wait on it).
+ * 27 Nov: read through tnprices.marketRows: the TN Agricultural Marketing department's Uzhavar Sandhai prices kept on this copy, with the
+ * store's rows (AGMARKNET's to 6 Oct); the Madurai and Tiruchirappalli markets once filed as "Anna Nagar" and "K.K. Nagar" are left out.
+ * `keyed` is true while that feed collects newer days without a key (window18's "needs a data.gov.in key" line is then not said).
  */
 export async function winPrices(w: Win, zone: number | null, named: string | null = null, opts: { fetch?: boolean } = {}): Promise<WinPrices> {
-  // v18 round 2: a market named in the words ("K.K. Nagar market", "Medavakkam"), else the one in the zone asked about, else every Chennai market
+  // v18 round 2: a market named in the words ("Nanganallur market", "Medavakkam"), else the one in the zone asked about, else every Chennai market
   const market = (named ? CHENNAI_MARKETS.find((m) => m.key.toLowerCase().replace(/[^a-z]/g, "") === named.toLowerCase().replace(/[^a-z]/g, ""))?.key : null)
     ?? (zone ? CHENNAI_MARKETS.find((m) => m.zone === zone)?.key ?? null : null);
   const day = (t: string) => t.slice(0, 10);
@@ -320,29 +326,42 @@ export async function winPrices(w: Win, zone: number | null, named: string | nul
   // later report is never shown under the day asked (the browser drive of 24 Nov showed 2 Oct tomato prices under "1 Oct")
   const endMs = Date.parse(`${w.to.replace(" ", "T")}+05:30`) - 1000;
   const lastDay = day(new Date(endMs + 330 * 60_000).toISOString());
-  const read = (from: string, to: string) => q(`SELECT DATE_FORMAT(date, '%Y-%m-%d') AS d, market, commodity, AVG(modal_price) AS price, MIN(min_price) AS lo, MAX(max_price) AS hi
-    FROM ${ops("mandi_market_prices")} WHERE date >= ? AND date <= ?${market ? " AND market = ?" : ""} GROUP BY date, market, commodity ORDER BY date`,
-    market ? [from, to, market] : [from, to]).catch(() => [] as Row[]);
+  const tn = await import("@/lib/collector/tnprices");
+  const read = async (from: string, to: string): Promise<Row[]> => {
+    const by = new Map<string, { d: string; market: string; commodity: string; p: number[]; lo: number | null; hi: number | null }>();
+    for (const r of await tn.marketRows(from, to, market).catch(() => [] as Awaited<ReturnType<typeof tn.marketRows>>)) {
+      const k = `${r.d}\u0000${r.market}\u0000${r.commodity}`;
+      const x = by.get(k) ?? by.set(k, { d: r.d, market: r.market, commodity: r.commodity, p: [], lo: null, hi: null }).get(k)!;
+      x.p.push(r.modal);
+      if (r.min != null) x.lo = x.lo == null ? r.min : Math.min(x.lo, r.min);
+      if (r.max != null) x.hi = x.hi == null ? r.max : Math.max(x.hi, r.max);
+    }
+    return [...by.values()].map((x) => ({ d: x.d, market: x.market, commodity: x.commodity, price: x.p.reduce((a, b) => a + b, 0) / x.p.length, lo: x.lo, hi: x.hi }))
+      .sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : 0));
+  };
   // v18 round 2: a day not kept yet is read from data.gov.in when its key is set (at most a week of days), then counted as kept.
   // v18 round 3: the answer waits 2.5 s at most (the read goes on in the background, kept for the next question), and says what really came back
   const { ogdKey, ogdReadDays, ogdEmptyDays, missingDays } = await import("@/lib/collector/ogdprices");
   let ogd: WinPrices["ogd"] = null;
   if (ogdKey() && opts.fetch !== false) {
     const toDay = day(new Date(Math.min(endMs, Date.now()) + 330 * 60_000).toISOString());
-    const miss = await missingDays(day(w.from), toDay, OGD_DAYS + 1).catch(() => [] as string[]);
+    // (27 Nov: a day the TN feed already holds is not asked of data.gov.in)
+    const held = day(w.from) <= toDay ? tn.fileDays(day(w.from), toDay) : new Set<string>();
+    const miss = (await missingDays(day(w.from), toDay, OGD_DAYS + 8).catch(() => [] as string[])).filter((d) => !held.has(d)).slice(0, OGD_DAYS + 1);
     const got = miss.length ? await ogdReadDays(miss.slice(0, OGD_DAYS), OGD_WAIT_MS) : null;
     // (a day it answered with none in the last 3 hours is not asked again, but it is still a day it had none for)
     const none = [...new Set([...(got?.none ?? []), ...(day(w.from) <= toDay ? ogdEmptyDays(day(w.from), toDay) : [])])].sort().reverse();
     ogd = { tried: got?.tried ?? [], none, failed: got?.failed ?? [], late: got?.late ?? [], error: got?.error ?? null, fetched: !!got?.fetched, capped: miss.length > OGD_DAYS };
   }
   const fetched = !!ogd?.fetched;
-  const [heldRow] = await q(`SELECT DATE_FORMAT(MIN(date), '%Y-%m-%d') AS a, DATE_FORMAT(MAX(date), '%Y-%m-%d') AS b FROM ${ops("mandi_market_prices")}${market ? " WHERE market = ?" : ""}`, market ? [market] : []).catch(() => [] as Row[]);
-  const held = heldRow?.a ? { from: String(heldRow.a), to: String(heldRow.b) } : null;
+  const span = await tn.marketSpan(market).catch(() => ({ from: null, to: null, fetched: null }));
+  const held = span.from && span.to ? { from: span.from, to: span.to } : null;
   let rows = await read(day(w.from), lastDay);
   let inWindow = rows.length > 0;
-  if (!rows.length) {
-    const [last] = await q(`SELECT DATE_FORMAT(MAX(date), '%Y-%m-%d') AS d FROM ${ops("mandi_market_prices")} WHERE date <= ?${market ? " AND market = ?" : ""}`, market ? [lastDay, market] : [lastDay]).catch(() => [] as Row[]);
-    if (last?.d) { rows = await read(String(last.d), String(last.d)); inWindow = false; }
+  if (!rows.length && held && held.from <= lastDay) {
+    // the latest report before the window's end, under its own date
+    const lastD = await tn.newestOnOrBefore(lastDay, market).catch(() => null);
+    if (lastD) { rows = await read(lastD, lastD); inWindow = false; }
   }
   const by = new Map<string, Row[]>();
   for (const r of rows) (by.get(String(r.commodity)) ?? by.set(String(r.commodity), []).get(String(r.commodity))!).push(r);
@@ -362,7 +381,7 @@ export async function winPrices(w: Win, zone: number | null, named: string | nul
   out.sort((a, b) => rank(a.commodity) - rank(b.commodity) || b.markets - a.markets || a.commodity.localeCompare(b.commodity));
   const latest = out.reduce((a, r) => (r.date > a ? r.date : a), "") || null;
   // v18 round 3: every item, so one the Collector names is found however far down the list it is (each screen shows its own first twelve)
-  return { market, rows: out, latest, inWindow, held, fetched, keyed: !!ogdKey(), ogd };
+  return { market, rows: out, latest, inWindow, held, fetched, keyed: true, ogd };
 }
 
 // ------------------------------------------------------------------ live --
