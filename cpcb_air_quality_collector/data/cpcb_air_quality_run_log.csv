@@ -3011,3 +3011,251 @@
 2026-11-26T15:05:13+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T10:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1476; pollutants=0,aqi=53/90; pollutants=0/90
 2026-11-26T15:05:13+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1476; pollutants=0,aqi=53/90; pollutants=0/90
 2026-11-26T15:05:13+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1476; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T18:16:31+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1476; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T18:16:31+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T10:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1476; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T18:16:31+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1476; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T18:16:31+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1476; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T18:19:47+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1476; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T18:19:47+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T10:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1476; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T18:19:47+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1476; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T18:19:47+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1476; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T18:22:44+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1476; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T18:22:44+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T10:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1476; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T18:22:44+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1476; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T18:22:44+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1476; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T19:00:13+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T19:00:13+05:30,CPCB CCR live city map,200,playwright,2026-11-26T18:00:00+05:30,6,3,6,6,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T19:00:13+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T19:00:13+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T20:00:09+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T20:00:09+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T18:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T20:00:09+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T20:00:09+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T20:02:44+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T20:02:44+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T18:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T20:02:44+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T20:02:44+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T20:06:09+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T20:06:09+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T18:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T20:06:09+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T20:06:09+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T21:00:07+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T21:00:07+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T18:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T21:00:07+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T21:00:07+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1482; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T21:02:30+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T21:02:30+05:30,CPCB CCR live city map,200,playwright,2026-11-26T20:00:00+05:30,6,3,6,6,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T21:02:30+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T21:02:30+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T22:00:07+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T22:00:07+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T20:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T22:00:07+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T22:00:07+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T22:01:24+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T22:01:24+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T20:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T22:01:24+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T22:01:24+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T22:02:42+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T22:02:42+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T20:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T22:02:42+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T22:02:42+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T23:12:27+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T23:12:27+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T20:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T23:12:27+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T23:12:27+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T23:16:25+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T23:16:25+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T20:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T23:16:25+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T23:16:25+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T23:19:34+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T23:19:34+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T20:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T23:19:34+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-26T23:19:34+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T00:00:08+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T00:00:08+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T20:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T00:00:08+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T00:00:08+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T00:03:53+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T00:03:53+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T20:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T00:03:53+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T00:03:53+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T00:06:54+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T00:06:54+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T20:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T00:06:54+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T00:06:54+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T01:00:12+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T01:00:12+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T20:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T01:00:12+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T01:00:12+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T01:03:15+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T01:03:15+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T20:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T01:03:15+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T01:03:15+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T01:06:20+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T01:06:20+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T20:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T01:06:20+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T01:06:20+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T02:00:10+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T02:00:10+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T20:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T02:00:10+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T02:00:10+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T02:02:37+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T02:02:37+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-26T20:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T02:02:37+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T02:02:37+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1488; pollutants=0,aqi=53/90; pollutants=0/90
+2026-11-27T02:05:06+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1490; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T02:05:06+05:30,CPCB CCR live city map,200,playwright,2026-11-27T01:00:00+05:30,2,7,2,2,0,0,0,0,0,0,aqi=1490; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T02:05:06+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1490; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T02:05:06+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1490; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T03:00:10+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1490; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T03:00:10+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T01:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1490; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T03:00:10+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1490; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T03:00:10+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1490; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T03:02:32+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T03:02:32+05:30,CPCB CCR live city map,200,playwright,2026-11-27T02:00:00+05:30,6,3,6,6,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T03:02:32+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T03:02:32+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T04:00:08+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T04:00:08+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T04:00:08+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T04:00:08+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T04:01:27+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T04:01:27+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T04:01:27+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T04:01:27+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T04:02:45+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T04:02:45+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T04:02:45+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T04:02:45+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T05:00:07+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T05:00:07+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T05:00:07+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T05:00:07+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T05:01:25+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T05:01:25+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T05:01:25+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T05:01:25+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T05:02:42+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T05:02:42+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T05:02:42+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T05:02:42+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T06:00:06+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T06:00:06+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T06:00:06+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T06:00:06+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T06:01:24+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T06:01:24+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T06:01:24+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T06:01:24+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T06:02:42+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T06:02:42+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T06:02:42+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T06:02:42+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T07:00:07+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T07:00:07+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T07:00:07+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T07:00:07+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T07:01:25+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T07:01:25+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T07:01:25+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T07:01:25+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T07:02:43+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T07:02:43+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T07:02:43+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T07:02:43+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T08:00:07+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T08:00:07+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T08:00:07+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T08:00:07+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T08:01:25+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T08:01:25+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T08:01:25+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T08:01:25+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T08:02:43+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T08:02:43+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T08:02:43+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T08:02:43+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T09:00:07+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T09:00:07+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T09:00:07+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T09:00:07+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T09:01:25+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T09:01:25+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T09:01:25+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T09:01:25+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T09:02:43+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T09:02:43+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T09:02:43+05:30,CPCB CCR historical (advance search / repository),playwright-error,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T09:02:43+05:30,app.cpcbccr.com AQI_India,ConnectionError,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T10:00:10+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T10:00:10+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T10:00:10+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T10:00:10+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T10:02:36+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T10:02:36+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T10:02:36+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T10:02:36+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T10:05:02+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T10:05:02+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T10:05:02+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T10:05:02+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T11:01:20+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T11:01:20+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T11:01:20+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T11:01:20+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T11:05:57+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T11:05:57+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T11:05:57+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T11:05:57+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T11:11:01+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T11:11:01+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T11:11:01+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T11:11:01+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T12:00:17+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T12:00:17+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T12:00:17+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T12:00:17+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T12:03:12+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T12:03:12+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T12:03:12+05:30,CPCB CCR historical (advance search / repository),200 ungated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T12:03:12+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T12:06:29+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T12:06:29+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T12:06:29+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T12:06:29+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T13:00:16+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T13:00:16+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T13:00:16+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T13:00:16+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T13:03:18+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T13:03:18+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T13:03:18+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T13:03:18+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T13:05:56+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T13:05:56+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T13:05:56+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T13:05:56+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T14:00:19+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T14:00:19+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T14:00:19+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T14:00:19+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T14:03:21+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T14:03:21+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T14:03:21+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T14:03:21+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T14:05:48+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T14:05:48+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T14:05:48+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T14:05:48+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T15:00:12+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T15:00:12+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T15:00:12+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T15:00:12+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T15:05:48+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T15:05:48+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T15:05:48+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T15:05:48+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T15:08:39+05:30,data.gov.in CPCB real-time air quality (3b01bcb8),no-api-key,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T15:08:39+05:30,CPCB CCR live city map,playwright-error (stale),playwright,2026-11-27T02:00:00+05:30,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T15:08:39+05:30,CPCB CCR historical (advance search / repository),captcha-gated,playwright,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
+2026-11-27T15:08:39+05:30,app.cpcbccr.com AQI_India,200 rejected: US-AQI scale,requests,,0,,0,0,0,0,0,0,0,0,aqi=1496; pollutants=0,aqi=54/90; pollutants=0/90
