@@ -76,7 +76,7 @@ describe("v14 routing 5 and scenarios 8: the views themselves", () => {
     expect(tv).toContain("const [zone, setZone] = useState<number | null>(start.zone ?? null);");
   });
   it("Rain & flooding moves back to every rain in place (the bridge's \"all\")", () => {
-    expect(rv).toContain('if (a.rain === "all") { setPick(null); setAllReports(false); setView({ kind: "all", zone: null });');
+    expect(rv).toContain('if (a.rain === "all") { setOpen(null); setArea(null); setRainId(null);');
   });
 });
 

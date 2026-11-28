@@ -78,7 +78,7 @@ export function codeForPortalDept(portalName: string | null | undefined): string
 /** Tunables of the officer console, in one place. */
 export const OFFICER = {
   /** period shown when the console opens (daily | weekly | monthly | quarterly) */
-  defaultPeriod: "monthly",
+  defaultPeriod: "daily",
   newsItems: 8,
   feedbackItems: 8,
   areaBars: 6,

@@ -106,7 +106,7 @@ export default function AuthHero({ headline, children }: { headline: ReactNode; 
           {children}
         </div>
         <div className="grid grid-cols-3 gap-4 border-t pt-5" style={{ borderColor: "var(--h-line-strong)" }}>
-          {([[15, "Zones"], [200, "Wards"], [8, "Data feeds"]] as const).map(([v, l]) => (
+          {([[15, "Zones"], [200, "Wards"], [13, "Data feeds"]] as const).map(([v, l]) => (
             <div key={l}>
               <p className="font-display text-[28px] font-extrabold tracking-[-0.035em] tabular" style={{ color: "var(--h-text)" }}><CountUp value={v} duration={1200} /></p>
               <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--h-text-3)" }}>{l}</p>

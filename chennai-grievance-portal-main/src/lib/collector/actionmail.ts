@@ -83,7 +83,7 @@ export function delivery(intended: string | null): Delivery {
 }
 
 /** The department's officer account, and the department head from the GCC directory. */
-async function recipients(dept: string | null, contacts: Row[]): Promise<{ to: Recipient | null; head: Recipient | null }> {
+export async function recipients(dept: string | null, contacts: Row[]): Promise<{ to: Recipient | null; head: Recipient | null }> {
   let to: Recipient | null = null;
   if (dept) {
     const [u] = await q(
@@ -264,10 +264,10 @@ export async function sendAction(id: string, input: unknown, user: string, facto
   };
 }
 
-const istNow = (plusHours = 0) => new Date(Date.now() + (330 + plusHours * 60) * 60_000).toISOString().slice(0, 19).replace("T", " ");
+export const istNow = (plusHours = 0) => new Date(Date.now() + (330 + plusHours * 60) * 60_000).toISOString().slice(0, 19).replace("T", " ");
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
-function mailHtml(subject: string, body: string, banner: string | null, stamp = "") {
+export function mailHtml(subject: string, body: string, banner: string | null, stamp = "") {
   return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:620px;margin:0 auto;padding:8px;color:#111">
   ${banner ? `<p style="background:#FFF4E5;border:1px solid #F5C77E;border-radius:6px;padding:8px 10px;font-size:12px;color:#7A4B00">${esc(banner)}</p>` : ""}
   <h2 style="color:#14532D;margin:0 0 2px">District Collectorate &ndash; Chennai</h2>

@@ -44,7 +44,6 @@ import { InsightsSection, ModuleFull } from "./Insights";
 import { OfficerAttention, type WorkTab } from "./OfficerAttention";
 import { FeedsBody, ListBody, Modal, NewsAll, isTestFeed } from "./Overlays";
 import { SendReport } from "./Report";
-import OfficerJarvis from "./Jarvis";
 import { PERIOD_KEYS, type Period } from "./format";
 import "@/components/collector/app/tokens.css";
 import "@/components/collector/app/collector.css";
@@ -58,6 +57,7 @@ import "@/components/collector/app/briefing.css";
 import "@/components/collector/app/clear.css";
 import "@/components/collector/app/dock.css";
 import "./officer.css";
+import "@/components/collector/app/pagescroll.css";
 import { MotionConfig } from "motion/react";
 import { PageTabs, Palette, ToastStack, greeting, type Hit } from "@/components/collector/app/Shell";
 import { officerHits } from "./SearchHits";
@@ -575,7 +575,6 @@ export default function OfficerApp({ initial, user }: { initial: OfficerConsole;
     { g: "Go to", ic: "refresh", l: "Reopened by the Collector", s: "My work · Reopened", run: () => openWork("returned") },
     { g: "Go to", ic: "send", l: "Sent to the Collector", s: "The list of reports waiting for the Collector", run: () => c.setTab("sent") },
     { g: "Actions", ic: "chat", l: "Ask District IQ", s: `Answers about ${dept.short} only`, kbd: "Ctrl K", run: () => setAsk(true) },
-    { g: "Actions", ic: "mic", l: "Jarvis", s: `Ask by voice, in English or Tamil: answers about ${dept.short} only`, run: () => window.dispatchEvent(new CustomEvent("jarvis:mode", { detail: { toggle: true } })) },
     ...menu.map((m) => ({ g: "Actions", ic: m.icon, l: m.label, s: m.sub, run: m.run }))
   ];
   /** the department's grievances (the last 90 days, or the dates searched), its cases' news and its readings of any date (SearchHits.ts, 28 Nov) */
@@ -725,10 +724,8 @@ export default function OfficerApp({ initial, user }: { initial: OfficerConsole;
         )}
         <Palette open={palette} onClose={() => setPalette(false)} actions={actions} search={searchHits} ask={askWith} />
         <ToastStack toasts={toasts} dismiss={(id) => setToasts((x) => x.filter((y) => y.id !== id))} />
-        {/* the dock, as the Collector's: Jarvis and the chatbot side by side at the bottom right, in a strip the page keeps free (dock.css) */}
-        <div className="cdock" role="group" aria-label="Jarvis and Ask District IQ">
-          {/* 23 Nov: Jarvis for the officer, by voice, over Ask District IQ locked to this department */}
-          <OfficerJarvis deptShort={dept.short} open={() => setAsk(true)} hidden={ask} />
+        {/* the dock: Ask District IQ at the bottom right (dock.css). 28 Nov, the owner: no Jarvis on the department officer console */}
+        <div className="cdock" role="group" aria-label="Ask District IQ">
           {!ask && (
             <button className="ask-fab ask-fab-v2" onClick={() => setAsk(true)} aria-keyshortcuts="Control+K" title={`Ask District IQ: type a question about ${dept.short} (Ctrl+K)`}>
               <i className="ask-ico"><AskIcon size={18} /></i>

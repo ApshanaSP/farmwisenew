@@ -32,7 +32,60 @@ import { SseAudio, STREAM_RATE, streamBody } from "@/lib/thunai/ttsstream";
 export const dynamic = "force-dynamic";
 
 const MODELS = (process.env.JARVIS_TTS_MODELS || "gemini-3.8-flash-lite-tts,gemini-3.8-flash-tts").split(",").map((x) => x.trim()).filter(Boolean);
-const provider = () => { const p = (process.env.TTS_PROVIDER ?? "auto").trim().toLowerCase(); return p === "azure" || p === "gemini" ? p : "auto"; };
+const provider = () => { const p = (process.env.TTS_PROVIDER ?? "auto").trim().toLowerCase(); return p === "azure" || p === "gemini" || p === "sarvam" ? p : "auto"; };
+/** Sarvam speaks first when its key is set (28 Nov, the owner: "use the Sarvam speaking model so Jarvis replies in Chrome too, not only Edge") */
+const sarvamOn = () => !!process.env.SARVAM_API_KEY && provider() !== "gemini" && provider() !== "azure";
+const SARVAM_TTS_URL = "https://api.sarvam.ai/text-to-speech";
+const SARVAM_TTS_MODEL = process.env.JARVIS_SARVAM_TTS_MODEL || "bulbul:v3";
+const SARVAM_SPEAKER = process.env.JARVIS_SARVAM_SPEAKER || "priya";
+
+/** an answer in pieces of about 400 characters, cut at sentence ends (a whole long answer took 48 s in one request; pieces go in parallel) */
+function pieces(text: string, max = 400): string[] {
+  const out: string[] = [];
+  let cur = "";
+  for (const sen of text.split(/(?<=[.!?।])\s+/)) {
+    if (cur && (cur + " " + sen).length > max) { out.push(cur); cur = ""; }
+    if (sen.length > max) { for (let k = 0; k < sen.length; k += max) out.push(sen.slice(k, k + max)); continue; }
+    cur = cur ? `${cur} ${sen}` : sen;
+  }
+  if (cur.trim()) out.push(cur);
+  return out.filter((x) => x.trim());
+}
+/** the PCM samples of a WAV (its "data" chunk) and its rate */
+function pcmOf(w: Buffer): { pcm: Buffer; rate: number } {
+  const rate = w.readUInt32LE(24);
+  let at = 12;
+  while (at + 8 <= w.length) {
+    const id = w.subarray(at, at + 4).toString(), n = w.readUInt32LE(at + 4);
+    if (id === "data") return { pcm: w.subarray(at + 8, Math.min(w.length, at + 8 + n)), rate };
+    at += 8 + n + (n % 2);
+  }
+  return { pcm: w.subarray(44), rate };
+}
+/** Sarvam (Bulbul): the answer's pieces, at most four at a time, joined into one WAV */
+async function sarvam(text: string, lang: "en" | "ta"): Promise<Buffer> {
+  const one = async (t: string): Promise<Buffer> => {
+    const r = await fetch(SARVAM_TTS_URL, {
+      method: "POST", signal: AbortSignal.timeout(20_000),
+      headers: { "api-subscription-key": process.env.SARVAM_API_KEY ?? "", "Content-Type": "application/json" },
+      body: JSON.stringify({ text: t, target_language_code: lang === "ta" ? "ta-IN" : "en-IN", model: SARVAM_TTS_MODEL, speaker: SARVAM_SPEAKER })
+    });
+    if (r.status === 429) throw new Error("busy");
+    if (!r.ok) throw new Error(`sarvam ${r.status} ${(await r.text().catch(() => "")).slice(0, 100)}`);
+    const j = (await r.json()) as { audios?: string[] };
+    if (!j.audios?.length) throw new Error("no audio");
+    return Buffer.concat(j.audios.map((a) => Buffer.from(a, "base64")).map((b) => pcmOf(b).pcm));
+  };
+  const parts = pieces(text);
+  const got: Buffer[] = new Array(parts.length);
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(4, parts.length) }, async () => {
+    while (next < parts.length) { const k = next++; got[k] = await one(parts[k]); }
+  }));
+  // the rate of Bulbul's WAVs (22,050 Hz); a short pause between the pieces
+  const gap = Buffer.alloc(Math.round(22_050 * 0.12) * 2);
+  return wav(Buffer.concat(got.flatMap((g, k) => (k ? [gap, g] : [g]))), 22_050);
+}
 const streamOn = () => process.env.JARVIS_TTS_STREAM === "1";
 const Body = z.object({ text: z.string().trim().min(1).max(2400), lang: z.enum(["en", "ta"]), voice: z.enum(JARVIS_VOICES).optional(), stream: z.boolean().optional() });
 
@@ -146,8 +199,8 @@ function pcmOut(up: ReadableStreamDefaultReader<Uint8Array>, done: (pcm: Buffer 
 export async function POST(req: NextRequest) {
   const s = await collectorSession();
   if (s instanceof NextResponse) return s;
-  const az = provider() !== "gemini" && !!(process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION);
-  if (!process.env.GEMINI_API_KEY && !az) return NextResponse.json({ error: "no-tts" }, { status: 503 });
+  const az = provider() !== "gemini" && provider() !== "sarvam" && !!(process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION);
+  if (!process.env.GEMINI_API_KEY && !az && !sarvamOn()) return NextResponse.json({ error: "no-tts" }, { status: 503 });
   if (!checkRateLimit(`jarvis-say:${s.email}`, 60, 60).allowed) return NextResponse.json({ error: "busy" }, { status: 429 });
   const capped = await readJsonCapped(req);
   if (capped.tooLarge) return tooLargeResponse();
@@ -160,10 +213,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "digit" }, { status: 400 });
   }
   const voice = b.data.voice ?? "Despina";
-  const key = `${voice}|${lang}|${text}`;
+  const key = `${sarvamOn() ? `sarvam:${SARVAM_SPEAKER}` : voice}|${lang}|${text}`;
   const t0 = Date.now();
   // one "tts" row per request, timings, codes and counts only: never the text
-  const note = (ok: boolean, prov: "gemini" | "azure" | "cache", path: string, model: string | null, why?: string, bytes?: number) =>
+  const note = (ok: boolean, prov: "gemini" | "azure" | "sarvam" | "cache", path: string, model: string | null, why?: string, bytes?: number) =>
     telemetry("tts", { provider: prov, model: model ?? undefined, ms: Date.now() - t0, chars: text.length, ok, path, lang, cached: prov === "cache", why, bytes });
   /** a 429: where the answer went instead (the next Gemini model with room, or the browser's own voice on the client) */
   const refused = (prov: "gemini" | "azure", model: string, after: number) => {
@@ -172,6 +225,13 @@ export async function POST(req: NextRequest) {
   };
   let audio = cache.get(key);
   if (audio) note(true, "cache", "cache", null, undefined, audio.length);
+  if (!audio && sarvamOn()) {
+    try { audio = await sarvam(text, lang); note(true, "sarvam", "unary", SARVAM_TTS_MODEL, undefined, audio.length); } catch (e) {
+      const why = (e as Error).message;
+      note(false, "sarvam", "unary", SARVAM_TTS_MODEL, why.split(" ")[0]);
+      console.warn("[jarvis] sarvam could not speak:", why.slice(0, 120));
+    }
+  }
   if (!audio && az) {
     try { audio = await azure(text, lang); note(true, "azure", "unary", "azure"); } catch (e) {
       const why = (e as Error).message;
@@ -179,7 +239,7 @@ export async function POST(req: NextRequest) {
       if (why === "busy") refused("azure", "azure", 0); else console.warn("[jarvis] azure could not speak:", why);
     }
   }
-  const gemini = !audio && !!process.env.GEMINI_API_KEY && provider() !== "azure";
+  const gemini = !audio && !!process.env.GEMINI_API_KEY && provider() !== "azure" && provider() !== "sarvam";
   if (gemini && b.data.stream && streamOn()) {
     for (const [i, m] of MODELS.entries()) {
       if (!ledger().room("gemini", m).ok) continue;

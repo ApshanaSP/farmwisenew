@@ -16,6 +16,8 @@ type Full = { status: string; text: string | null; url: string | null } | "loadi
  * report), the key facts, the report itself in full (fetched from the outlet when the monitor kept only a headline),
  * how the story unfolded across outlets, and the department that handles it with its contacts.
  */
+import { NewsActButton } from "./NewsAct";
+
 export function NewsView({ s, c }: { s: Story; c: Console }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [dept, setDept] = useState<Row | null>(null);
@@ -104,6 +106,7 @@ export function NewsView({ s, c }: { s: Story; c: Console }) {
         {lead.lang !== "en" && lead.title_en && <p className="nv-orig" lang="ta" translate="no">{lead.title}</p>}
         <div className="iv-where">
           {s.desk && <span className="nw-tags"><DeskTags i={s} /></span>}
+          {s.desk?.v === "act" && <NewsActButton s={s} className="big" />}
           <span><I n="pin" />{place}</span>
           {dept && <span><I n={deptIcon(dept.code)} />{dept.name}</span>}
           <span><I n="clock" />First reported {fmtShort(times[0])} ({rel(times[0], c.now)})</span>

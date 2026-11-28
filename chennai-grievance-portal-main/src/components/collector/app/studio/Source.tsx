@@ -69,19 +69,19 @@ export default function SourceBar({ meta, c, onChoose, onRefresh, onChanged }: {
       )}
       {cx && (
         <>
-          <span className="ds-src-chip" title={cx.method === "browser" ? "Opened in a real browser (the page builds itself with JavaScript, or a sign-in)" : "Downloaded as the site sends it"}>
-            <I n={cx.method === "browser" ? "app" : "download"} />{cx.method === "browser" ? "Read in a browser" : "Downloaded"}
-          </span>
-          <span className="ds-src-chip" title={AUTH_LABEL[cx.auth]}>
-            <I n={cx.auth === "none" ? "gov" : "shield"} />{cx.auth === "none" ? "Public" : cx.account ? `Signed in as ${cx.account}` : AUTH_LABEL[cx.auth]}
-          </span>
-          <button className={`ds-src-chip btn${open === "tables" ? " on" : ""}`} onClick={() => setOpen(open === "tables" ? null : "tables")} title="What on the link is used">
-            <I n={KIND_IC[cx.candidates.find((x) => x.id === cx.choice)?.kind ?? "table"] ?? "table"} />{cx.via}{cx.candidates.length > 1 && <em>{cx.candidates.length}</em>}<I n="chevd" />
+          {/* 28 Nov (the owner: "make the fetch prompt, I should see it"): when it was last fetched and how often, in one clear button; the
+              method and sign-in chips are gone (their words stay in the tooltip) */}
+          <button className={`ds-fetchstate${cx.lastError ? " bad" : ""}${open === "sync" ? " on" : ""}`} onClick={() => setOpen(open === "sync" ? null : "sync")}
+            title={`${cx.lastError ?? "Fetch now, or change how often it is fetched"} · ${cx.method === "browser" ? "read in a browser" : "downloaded"} · ${AUTH_LABEL[cx.auth]}`}>
+            <I n={cx.lastError ? "alert" : "clock"} /><span>{cx.lastError ? "Last fetch failed" : `Last fetched ${ago(cx.history[0]?.at ?? cx.fetchedAt)}`}</span>
+            <em>{cx.every ? EVERY.find((e) => e.v === cx.every)?.t ?? `${cx.every} min` : "By hand"}</em><I n="chevd" />
           </button>
+          {cx.candidates.length > 1 && (
+            <button className={`ds-src-chip btn${open === "tables" ? " on" : ""}`} onClick={() => setOpen(open === "tables" ? null : "tables")} title="What on the link is used">
+              <I n={KIND_IC[cx.candidates.find((x) => x.id === cx.choice)?.kind ?? "table"] ?? "table"} />{cx.via}<em>{cx.candidates.length}</em><I n="chevd" />
+            </button>
+          )}
           {live && <span className={`ds-health h-${live.status}`} title="Live Connector: see Live Connectors in the list"><I n="refresh" />Live · {LIVE_WORD[live.status] ?? live.status}</span>}
-          <button className={`ds-src-chip btn${cx.lastError ? " bad" : ""}${open === "sync" ? " on" : ""}`} onClick={() => setOpen(open === "sync" ? null : "sync")} title={cx.lastError ?? "Refresh"}>
-            <I n={cx.lastError ? "alert" : "refresh"} />{cx.lastError ? "Last refresh failed" : `Fetched ${ago(cx.history[0]?.at ?? cx.fetchedAt)}`}{cx.every ? <em>{EVERY.find((e) => e.v === cx.every)?.t ?? `${cx.every} min`}</em> : null}<I n="chevd" />
-          </button>
         </>
       )}
       <AnimatePresence>

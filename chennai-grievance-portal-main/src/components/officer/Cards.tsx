@@ -1,7 +1,7 @@
 "use client";
 
 /* The officer page's cards under the map. Each takes the console context `c`; the look is the Collector console's (collector.css, marina.css). */
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { I } from "@/components/collector/app/icons";
 import { OfficerCard } from "@/components/collector/app/Overview";
 import { Chart, Empty, HBars, fmtDate, fullTitle, rel, type Row } from "@/components/collector/app/lib";
@@ -65,7 +65,7 @@ export function SourceIcons({ r }: { r: Row }) {
 
 // ------------------------------------------------------------------ news --
 
-export type NewsTab = "news" | "gaps";
+export type NewsTab = "news" | "gaps" | "col";
 
 /**
  * Latest news for the department, as the Collector's Overview card: the news linked to the department's incidents, and (a tab) the
@@ -77,6 +77,8 @@ export function NewsCard({ c, gaps, gapsFailed, tab, setTab, style }: {
   const seen = new Set<string>();
   const news = (c.ov.news as Row[]).filter((r) => { const t = fullTitle(r).toLowerCase(); return seen.has(t) ? false : (seen.add(t), true); });
   const when = c.ov.period === "daily" ? labelLower(c.ov.periodInfo.label) : "in this period";
+  const col = useCollectorNews();
+  const openCol = col.items?.filter((x) => !x.done).length ?? 0;
   return (
     <article className="card a-brief ofc-news" id="ofc-news" style={style}>
       <div className="ch"><I n="news" /><h2>Latest news</h2>
@@ -88,9 +90,14 @@ export function NewsCard({ c, gaps, gapsFailed, tab, setTab, style }: {
         <button role="tab" aria-selected={tab === "gaps"} className={`${tab === "gaps" ? "on" : ""}${gaps?.gapsTotal ? " warn" : ""}`} onClick={() => setTab("gaps")}
           title={`${c.dept.short} incidents seen only in the news, with no department record yet`}>
           Only in the news{gaps && <> <b className="tab-n">{gaps.gapsTotal}</b></>}</button>
+        {!!col.items?.length && (
+          <button role="tab" aria-selected={tab === "col"} className={`${tab === "col" ? "on" : ""}${openCol ? " warn" : ""}`} onClick={() => setTab("col")}
+            title="News the Collector sent your department to act on">From the Collector <b className="tab-n">{openCol || col.items.length}</b></button>
+        )}
       </div>
       <div className="fitlist scroll">
-        {tab === "news" ? (news.length ? news.map((i) => (
+        {tab === "col" ? <CollectorNews c={c} col={col} />
+          : tab === "news" ? (news.length ? news.map((i) => (
           <button key={i.id} className="brief" onClick={() => c.openGrievance(i.id, "news")} title={fullTitle(i)}>
             <span className="bic t-high"><I n="news" /></span>
             <span style={{ minWidth: 0, flex: 1 }}>
@@ -113,6 +120,59 @@ export function NewsCard({ c, gaps, gapsFailed, tab, setTab, style }: {
       </div>
     </article>
   );
+}
+
+/**
+ * News the Collector sent this department that has no case yet (lib/collector/newsaction.ts): each with the Collector's instruction and
+ * a box to say what was done. The answer closes the follow-up and shows on the Collector's story.
+ */
+type ColNews = { key: string; emailId: number; subject: string; body: string; at: string; due: string | null; done: boolean; reply: string | null };
+function useCollectorNews() {
+  const [items, setItems] = useState<ColNews[] | null>(null);
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    let live = true;
+    fetch("/api/officer/news").then((r) => (r.ok ? r.json() : null)).then((j) => { if (live && j) setItems(j.items ?? []); }).catch(() => undefined);
+    const t = setInterval(() => setTick((k) => k + 1), 120_000);
+    return () => { live = false; clearInterval(t); };
+  }, [tick]);
+  return { items, reload: () => setTick((k) => k + 1) };
+}
+function CollectorNews({ c, col }: { c: Ctx; col: ReturnType<typeof useCollectorNews> }) {
+  const [openId, setOpenId] = useState<number | null>(null);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  if (!col.items?.length) return <Empty>No news from the Collector.</Empty>;
+  const send = async (x: ColNews) => {
+    setBusy(true);
+    try {
+      const r = await fetch("/api/officer/news", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: x.key, email: x.emailId, note }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || "Could not save.");
+      c.toast("Sent to the Collector: the news is marked done.");
+      setOpenId(null); setNote(""); col.reload();
+    } catch (e) { c.toast((e as Error).message, "alert"); } finally { setBusy(false); }
+  };
+  return <>{col.items.map((x) => (
+    <div key={x.emailId} className={`brief ocn${x.done ? " done" : ""}`}>
+      <span className={`bic ${x.done ? "t-info" : "t-high"}`}><I n={x.done ? "checkc" : "news"} /></span>
+      <span style={{ minWidth: 0, flex: 1 }}>
+        <b>{x.subject.replace(/^(Urgent|Action needed):\s*/i, "")}</b>
+        <span className="loc">From the Collector · {rel(x.at, c.now)}{x.due && !x.done ? ` · report due by ${new Date(`${x.due.replace(" ", "T")}+05:30`).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" })}` : ""}</span>
+        {x.done ? <p className="ocn-reply"><I n="checkc" />{x.reply ?? "Done"}</p>
+          : openId === x.emailId ? (
+            <span className="ocn-form">
+              <details open><summary>The Collector&apos;s instruction</summary><p className="ocn-body">{x.body}</p></details>
+              <textarea rows={3} maxLength={600} placeholder="What did your department do?" value={note} onChange={(e) => setNote(e.target.value)} aria-label="What was done" />
+              <span className="ocn-acts">
+                <button className="btn sm" disabled={busy || note.trim().length < 5} onClick={() => send(x)}><I n="send" />{busy ? "Sending…" : "Mark done and tell the Collector"}</button>
+                <button className="btn plain sm" disabled={busy} onClick={() => setOpenId(null)}>Cancel</button>
+              </span>
+            </span>
+          ) : <button className="btn sm ocn-go" onClick={() => { setOpenId(x.emailId); setNote(""); }}><I n="tasks" />Take action</button>}
+      </span>
+    </div>
+  ))}</>;
 }
 
 // ----------------------------------------------------------------- trend --

@@ -1,5 +1,6 @@
 "use client";
 
+import { NewsActButton, NewsActLine } from "./NewsAct";
 import { labelLower } from "@/lib/period/day";
 import type { Overview as OverviewData, Station } from "@/lib/collector/intel";
 import type { MapGeo } from "@/lib/collector/geo";
@@ -483,6 +484,7 @@ export function NewsStory({ i, now, c }: { i: Story; now: string; c: Console }) 
   const diff = c.conflicts?.stories.find((s) => s.id === i.id || s.docIds.includes(i.id));
   const act = i.desk?.v === "act";
   return (
+    <div className={`nw-row${act ? " has-act" : ""}`}>
     <button className="brief nw" onClick={() => c.openStory(i)} title={i.desk?.why || (i.incident ? "Open the incident: the news and the grievances together" : "Read the story and every outlet's report")}>
       <span className={`bic ${act || i.incident ? "t-high" : "t-info"}`}><I n="news" /></span>
       <span style={{ minWidth: 0, flex: 1 }}>
@@ -493,8 +495,11 @@ export function NewsStory({ i, now, c }: { i: Story; now: string; c: Console }) 
           <DeskTags i={i} />
           {diff && hasConflict(diff) ? <DiffBadge s={diff} /> : <StoryLink i={i} />}
         </span>
+        <NewsActLine s={i} now={now} />
       </span>
     </button>
+    <NewsActButton s={i} />
+    </div>
   );
 }
 

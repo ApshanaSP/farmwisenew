@@ -9,6 +9,11 @@
 /** Ask the Map's batch: the follow-up of each case it lists (lib/collector/actionmail.ts sendBatchAction). */
 export const batchFollowupSummary = (dept: string) => `Completion report with photos (map send to ${dept})`;
 
+/** A news story that needs action, sent to its department (lib/collector/actionmail.ts sendNewsAction). */
+export const newsFollowupSummary = (dept: string) => `Report on the news story (news send to ${dept})`;
+/** The follow-up key of a news story with no case: the officer console finds it by this (lib/officer/newsacts.ts). */
+export const newsKey = (storyId: string) => `NEWS-${storyId}`.slice(0, 64);
+
 /** The rain rehearsal's header (lib/rehearsal/tasks.ts encodeSummary): `[RR] {"r":..,"d":dept,...} ` then the job. */
 const RR = "[RR] ";
 
@@ -24,6 +29,6 @@ export function followupDept(summary: unknown): string | null {
       return null;
     }
   }
-  const m = /\(map send to ([A-Za-z0-9-]{2,20})\)$/.exec(s);
+  const m = /\((?:map|news) send to ([A-Za-z0-9-]{2,20})\)$/.exec(s);
   return m ? m[1] : null;
 }

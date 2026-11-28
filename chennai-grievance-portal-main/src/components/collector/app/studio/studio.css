@@ -1012,3 +1012,53 @@
 .dic .ds-linkwrap .ds-linkc{max-width:760px}
 .dic .ds-alerts-tab{flex:1;min-height:0;overflow:auto;padding:12px 14px;max-width:760px}
 .dic .ds-ws.ds-span{grid-column:2 / 4}
+
+/* ---- 28 Nov: the Datasets tab in one column (Studio.tsx): Add data across the top, the datasets as cards, the open dataset under them */
+.dic .ds.ds-v2{grid-template-columns:minmax(0,1fr);align-content:start}
+.dic .ds.ds-v2>.ds-span{grid-column:1 / -1}
+.dic .ds-addbar{padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.dic .ds-addbar .ds-add-h{gap:10px}
+.dic .ds-addbar .ds-add-sub{margin-left:0!important;text-transform:none!important;letter-spacing:0!important;font-size:12px!important;font-weight:500!important;color:var(--text-3)}
+.dic .ds-addbar .ds-add-h small:last-child{margin-left:auto}
+.dic .ds-addbar-g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:14px;align-items:stretch}
+.dic .ds-addbar .ds-drop{height:auto;min-height:132px;padding:14px}
+.dic .ds-addbar .ds-drop b{font-size:15px}
+.dic .ds-addbar .ds-drop small{font-size:12px;max-width:340px}
+.dic .ds-fetch{display:flex;flex-direction:column;justify-content:center;gap:10px;padding:16px 18px;border-radius:13px;border:1.5px solid var(--accent-line,#86EFAC);background:var(--accent-soft,#ECFDF5)}
+.dic .ds-fetch>b{font:700 15px var(--dic-display,inherit),sans-serif;color:var(--text)}
+.dic .ds-fetch-row{display:flex;gap:8px;align-items:stretch}
+.dic .ds-fetch-in{flex:1;min-width:0;display:flex;align-items:center;gap:8px;height:46px;padding:0 12px;border-radius:11px;background:var(--surface);border:1.5px solid var(--line-3,var(--line))}
+.dic .ds-fetch-in:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft,#DCFCE7)}
+.dic .ds-fetch-in>.ic{width:16px;height:16px;color:var(--text-3);flex:none}
+.dic .ds-fetch-in input{flex:1;min-width:0;border:0;outline:0;background:transparent;font-size:14px;color:var(--text)}
+.dic .ds-fetch-go{flex:none;display:inline-flex;align-items:center;gap:7px;height:46px;padding:0 22px;border-radius:11px;background:var(--accent-3,#15803D);color:#fff;font:700 15px var(--font-ui,inherit);
+  box-shadow:0 8px 18px -8px rgba(21,128,61,.9);cursor:pointer;transition:filter .15s,transform .15s}
+.dic .ds-fetch-go .ic{width:17px;height:17px;transform:rotate(180deg)}
+.dic .ds-fetch-go:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px)}
+.dic .ds-fetch-go:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+.dic .ds-fetch-more{align-self:flex-start;font-size:12px}
+.dic .ds-addbar .ds-samples{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.dic .ds-addbar .ds-samples>small{width:100%;font-size:11.5px;color:var(--text-3)}
+.dic .ds-addbar .ds-samples button{flex:0 1 auto;max-width:280px}
+.dic .ds-picks{padding:12px 14px}
+.dic .ds-picks>header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.dic .ds-picks>header b{font:700 14px var(--dic-display,inherit),sans-serif}
+.dic .ds-picks>header small{margin-left:auto;font-size:11.5px;color:var(--text-3)}
+.dic .ds-picks-l{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.dic .ds-pick{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);text-align:left;cursor:pointer;min-width:0;transition:border-color .15s,background .15s}
+.dic .ds-pick:hover{border-color:var(--accent-line,#86EFAC)}
+.dic .ds-pick.on{border-color:var(--accent);background:var(--accent-soft,#ECFDF5);box-shadow:0 0 0 2px var(--accent-soft,#DCFCE7)}
+.dic .ds-pick .ds-li-b{min-width:0;display:flex;flex-direction:column}
+/* the open dataset's Fetch now, and when it was last fetched */
+.dic .ds-fetchnow{height:34px;padding:0 14px}
+.dic .ds-fetchstate{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border-radius:999px;border:1.5px solid var(--accent-line,#86EFAC);background:var(--accent-soft,#ECFDF5);
+  color:var(--accent-2,#15803D);font:700 12.5px var(--font-ui,inherit);cursor:pointer}
+.dic .ds-fetchstate .ic{width:14px;height:14px}
+.dic .ds-fetchstate em{font-style:normal;font-weight:600;font-size:11px;padding:2px 8px;border-radius:999px;background:var(--surface);color:var(--text-2)}
+.dic .ds-fetchstate.bad{border-color:#FCA5A5;background:#FEF2F2;color:#B91C1C}
+.dic .ds-took-tg{grid-column:1 / -1;margin:2px 0 0;font-size:12px;justify-self:start}
+@media (max-width:899px){.dic .ds-addbar-g{grid-template-columns:1fr}.dic .ds-fetch-row{flex-direction:column}.dic .ds-fetch-go{justify-content:center}}
+.dic .ds-picks-l>.ds-pick{flex-direction:row;justify-content:flex-start;align-items:center;text-align:left;height:auto;min-height:0}
+.dic .ds-pick .ds-li-b{align-items:flex-start}
+.dic .ds-pick .ds-li-b b{font-size:13px;line-height:1.3;text-align:left;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dic .ds-pick .ds-li-b small{font-size:11.5px;color:var(--text-3);text-align:left}

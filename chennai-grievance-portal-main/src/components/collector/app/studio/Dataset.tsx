@@ -178,16 +178,6 @@ export default function Dataset({ id, c, dashboards, onDashes, onOpenDash, onDas
         <div className="ds-ws-b" key={tab}>
           {tab === "dash" && (
             <div className="ds-dash">
-              {m.rows <= 20 && (
-                <div className="ds-enrich" role="group" aria-label="Make a small dataset more useful">
-                  <span><I n="info" />{m.rows <= 5 ? "A few figures: shown as numbers, not charts." : "A small table: shown sorted, with at most one chart."} Make it more useful:</span>
-                  <button className="ds-ghost" onClick={() => setTab("card")}><I n="clock" />Compare with the last refresh</button>
-                  <button className="ds-ghost" onClick={() => askJarvis("Is there a link with district incidents by zone?")}><I n="compare" />Compare with district incidents</button>
-                  {m.source.url && <button className="ds-ghost" onClick={() => onFindMore?.(m.source.url!)} data-jarvis-never><I n="search" />Find more on this site</button>}
-                  <button className="ds-ghost" disabled title="Needs ward and zone population: the district reference does not hold it yet"><I n="social" />Per 1,000 people (needs population)</button>
-                  <button className="ds-ghost" onClick={() => askJarvis("What should these figures be compared with?")}><I n="target" />What should this be compared with?</button>
-                </div>
-              )}
               {chips.length > 0 && (
                 <div className="ds-focus">
                   <I n="target" /><span>Every chart shows</span>
@@ -300,7 +290,6 @@ function Head({ data, tab, setTab, issuesN, c, onRefresh, onDeleted, onRenamed, 
           <span title={m.source.url ?? m.source.file}>{m.source.file}</span>
           <span>{m.rows.toLocaleString("en-IN")} rows</span>
           {m.spec.deptName && <span>{m.spec.deptName}</span>}
-          <span className={`ds-by ${m.spec.by}`} title={m.spec.model ?? "Read by rules"}><I n="spark" />{m.spec.by === "ai" ? "AI-read" : "Rules-read"}</span>
           {m.sample && <span className="ds-tag warn">Sample · synthetic</span>}
           {onDashes.length > 0 && (
             <span className="ds-ondash">
@@ -313,22 +302,19 @@ function Head({ data, tab, setTab, issuesN, c, onRefresh, onDeleted, onRenamed, 
       </div>
       <div className="ds-acts">
         {addToDash}
-        {m.source.kind === "link" && <button className="ds-icon" onClick={onRefresh} title="Fetch the link again" data-jarvis-never><I n="refresh" /></button>}
+        {m.source.kind === "link" && <button className="ds-btn ds-fetchnow" onClick={onRefresh} title="Read the link again now" data-jarvis-never><I n="refresh" />Fetch now</button>}
         <a className="ds-icon" href={`/api/collector/studio/${m.id}?export=csv`} onClick={viaConfirm(`/api/collector/studio/${m.id}?export=csv`)} title="Download the cleaned data (CSV)" aria-label="Download the cleaned data (CSV)"><I n="download" /></a>
-        <a className="ds-icon" href={`/api/collector/studio/${m.id}?export=xlsx`} onClick={viaConfirm(`/api/collector/studio/${m.id}?export=xlsx`)} title="Download as Excel, with a What changed sheet" aria-label="Download as Excel"><I n="table" /></a>
-        <a className="ds-icon" href={`/api/collector/studio/${m.id}?brief=pdf&lang=en`} onClick={viaConfirm(`/api/collector/studio/${m.id}?brief=pdf&lang=en`)} title="The dataset brief (PDF, English): data card, top three, Needs action" aria-label="Dataset brief PDF in English"><I n="doc" /></a>
-        <a className="ds-icon" lang="ta" href={`/api/collector/studio/${m.id}?brief=pdf&lang=ta`} onClick={viaConfirm(`/api/collector/studio/${m.id}?brief=pdf&lang=ta`)} title="தரவுச் சுருக்கம் (PDF, தமிழ்)" aria-label="Dataset brief PDF in Tamil">த</a>
         {confirm ? (
           <span className="ds-confirm">Delete?<button onClick={del} data-jarvis-never>Yes</button><button onClick={() => setConfirm(false)}>No</button></span>
         ) : <button className="ds-icon" onClick={() => setConfirm(true)} title="Delete this dataset"><I n="trash" /></button>}
       </div>
       </div>
       <nav className="ds-tabs" role="tablist">
-        {([["dash", "Insights", "bulb"], ["alerts", "Alerts", "bell"], ["detective", "Data Detective", "shield"], ["mapping", "AI reading", "spark"], ["rows", "Rows", "table"], ["card", "Data card", "doc"]] as const).map(([k, t, ic]) => (
+        {/* 28 Nov (the owner: "remove AI reading, Rows, Data card...: simplify"): Insights and Alerts only */}
+        {([["dash", "Insights", "bulb"], ["alerts", "Alerts", "bell"]] as const).map(([k, t, ic]) => (
           <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>
-            <I n={ic} />{t}{k === "detective" && <em className={m.detective.after >= 85 ? "ok" : "warn"}>{m.detective.after}</em>}
+            <I n={ic} />{t}
             {k === "alerts" && data.alerts.length > 0 && <em className={data.alerts.some((a) => !a.ok) ? "warn" : "ok"}>{data.alerts.filter((a) => !a.ok).length || data.alerts.length}</em>}
-            {k === "detective" && issuesN > 0 && <span className="ds-sr">{issuesN} issues</span>}
           </button>
         ))}
       </nav>

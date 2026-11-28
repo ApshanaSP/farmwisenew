@@ -16,7 +16,7 @@ import type { RainLayer } from "./rehearsal/rainLayer";
 import "./askmap/askmap.css";
 import GeoTools, { geoBusy } from "./geotools/GeoTools";
 import { onMapCmd } from "./askmap/bridge";
-import { addBasemap, readBaseChoice, saveBaseChoice, type Basemap, type BaseKind, type Tone } from "@/components/map/basemap";
+import { addBasemap, saveBaseChoice, type Basemap, type BaseKind, type Tone } from "@/components/map/basemap";
 import { baseAsked, type BaseSeen } from "@/components/map/basemapPlan";
 
 export interface MapStation { id: string; name: string; kind: "aqi" | "rain" | "lake"; lat: number; lon: number; label: string }
@@ -140,7 +140,7 @@ export default function SatMap(props: Props) {
   // in this browser. Rain & flooding draws on the street map while it is open; the choice comes back after.
   const [view, setView] = useState<BaseKind>("map");
   const choose = (v: BaseKind) => { setView(v); saveBaseChoice(v); };
-  useEffect(() => { const v = readBaseChoice(); if (v) setView(v); }, []);
+  // 28 Nov (the owner: "the map should be the default everywhere"): every map opens on the street map; Satellite lasts while it is chosen
   // Rain & flooding and the live traffic view hand the map "streets" with no Ask the Map (Overview.tsx), before their own
   // layer arrives: the street map is forced then, not the Collector's choice
   const forced = !!props.rain || (!props.ask && props.base === "streets");
@@ -196,7 +196,7 @@ export default function SatMap(props: Props) {
       map.on("zoomend moveend", declutter);
       // the base map, sharp on any screen: the street map or the imagery with names over it. Its own road and place names wait
       // for zoom 13, so the district view stays uncluttered under the console's zone names.
-      const base = addBasemap(L, map, cb.current.rain ? "map" : readBaseChoice() ?? "map", { labels: true, namesFrom: 13 });
+      const base = addBasemap(L, map, "map", { labels: true, namesFrom: 13, raster: true });
       setTone(base.tone);
       base.onTone(setTone);
 
@@ -697,7 +697,7 @@ export default function SatMap(props: Props) {
       power: ["#94A3B8", "#FDE047", "#EAB308", "#A16207"], metro: ["#94A3B8", "#C4B5FD", "#8B5CF6", "#5B21B6"] };
     const SEL: Record<string, string> = { flood: "#1D4ED8", traffic: "#9A3412", power: "#854D0E", metro: "#4C1D95" };
     const W = [1.4, 2.2, 3.2, 4.4], C = PAL[theme] ?? PAL.flood, O = [0.5, 0.85, 0.95, 1];
-    const pick = (kind: "street" | "report" | "point" | "area" | "line", id: string) => (e: Leaflet.LeafletMouseEvent) => { L.DomEvent.stopPropagation(e); cb.current.rain?.onPick(kind, id); };
+    const pick = (kind: "street" | "report" | "point" | "area" | "line" | "ring", id: string) => (e: Leaflet.LeafletMouseEvent) => { L.DomEvent.stopPropagation(e); cb.current.rain?.onPick(kind, id); };
     // a road or a rail line is only a few pixels wide: an invisible, wider band over it takes the hover and the click, so its
     // name and what happened there come up as soon as the pointer is near it (owner, 17 Nov 2026: Traffic and Power roads could not be hovered)
     const hitLine = (path: [number, number][][] | [number, number][], tip: string, onClick?: (e: Leaflet.LeafletMouseEvent) => void) => {
@@ -714,11 +714,25 @@ export default function SatMap(props: Props) {
         fillColor: C[a.level], fillOpacity: on ? 0.5 : [0.04, 0.16, 0.28, 0.42][a.level] })
         .bindTooltip(a.tip, { sticky: true, className: "dtip" }).on("click", pick("area", a.key)).addTo(s.rain);
     }
+    // the circles around the areas the chosen rain hit: the open one strong and dashed, with its name; the others faint, a click opens them
+    for (const g of r.rings ?? []) {
+      const col = SEL[theme] ?? SEL.flood;
+      const c = L.circle([g.lat, g.lon], { pane: "rainLines", renderer: s.rainLines, radius: g.r, color: col, weight: g.on ? 3 : 1.6, opacity: g.on ? 0.95 : 0.55,
+        dashArray: g.on ? "8 6" : "4 5", fillColor: col, fillOpacity: g.on ? 0.07 : 0.05, className: g.on ? "rv-ring on" : "rv-ring" })
+        .bindTooltip(`<b>${esc(g.label)}</b><span class="tl">${esc(String(g.n))} ${g.n === 1 ? "place" : "places"} hit${g.on ? "" : " · click to open"}</span>`, { sticky: true, className: "dtip" });
+      if (!g.on) c.on("click", pick("ring", g.key));
+      c.addTo(s.rain);
+      if (g.on) L.marker([g.lat, g.lon], { pane: "rainDots", interactive: false, keyboard: false,
+        icon: L.divIcon({ className: "", html: `<span class="rv-ringlab t-${theme}">${esc(g.label)} · ${esc(String(g.n))}</span>`, iconSize: [0, 0] }) })
+        .setLatLng([g.lat + g.r / 111_320, g.lon]).addTo(s.rain);
+    }
     // flood water a satellite saw in the chosen rain (rainLayer.ts satWater): cyan boxes under the streets, one shared tooltip
     if (r.satWater?.boxes.length) {
       const sw = L.featureGroup();
       for (const [s0, w0, n0, e0, c] of r.satWater.boxes)
-        L.rectangle([[s0, w0], [n0, e0]], { pane: "rainLines", renderer: s.rainLines, stroke: false, fillColor: c === 2 ? "#0891B2" : "#22D3EE", fillOpacity: c === 2 ? 0.6 : 0.42 }).addTo(sw);
+        // 28 Nov (the owner did not see the satellite water): a cell is tens of metres, so over the district it gets an outline that keeps it in sight
+        L.rectangle([[s0, w0], [n0, e0]], { pane: "rainLines", renderer: s.rainLines, stroke: zoom < 14, weight: zoom < 12 ? 4 : zoom < 14 ? 2.5 : 0, color: c === 2 ? "#0891B2" : "#06B6D4",
+          opacity: 0.85, fillColor: c === 2 ? "#0891B2" : "#22D3EE", fillOpacity: c === 2 ? 0.65 : 0.5 }).addTo(sw);
       sw.bindTooltip(r.satWater.tip, { sticky: true, className: "dtip" }).addTo(s.rain);
     }
     // rail lines; a line with a level is a place (Metro): grey when the chosen rain did not touch it, thicker the worse

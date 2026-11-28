@@ -297,3 +297,58 @@
 .dic .rv-livelink b{font:700 13px var(--font-ui);color:var(--text)}
 .dic .rv-livelink small{font-size:11.5px;color:var(--text-3)}
 .dic .rv-livelink > svg{width:14px;height:14px;color:var(--text-3)}
+
+/* ---- 28 Nov: the three steps (RainView.tsx): rains, then a rain's areas, then an area's places with their actions. One row per item,
+   the words on their own lines so nothing overlaps; the panel's body scrolls as one list. */
+.dic .rv.rw .rv-b{display:flex;flex-direction:column;gap:10px}
+.dic .rv-step{display:flex;align-items:baseline;gap:7px;margin:2px 0 0;font:700 13px var(--font-ui);color:var(--text)}
+.dic .rv-step>span{flex:none;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--rv);color:#fff;font-size:11px;align-self:center}
+.dic .rv-step small{font-weight:500;font-size:11.5px;color:var(--text-3)}
+.dic .rw-rains,.dic .rw-areas,.dic .rw-places{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.dic .rw-rains button{width:100%;display:grid;grid-template-columns:minmax(0,1fr) 16px;grid-template-areas:"top go" "bar go" "sub go";row-gap:5px;column-gap:10px;align-items:center;
+  padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);text-align:left;cursor:pointer;transition:border-color .15s,background .15s}
+.dic .rw-rains button:hover,.dic .rw-areas button:hover{border-color:var(--rv);background:var(--rv-soft)}
+.dic .rw-rains button>svg,.dic .rw-areas button>svg{grid-area:go;width:15px;height:15px;color:var(--text-4)}
+.dic .rw-top{grid-area:top;display:flex;align-items:baseline;justify-content:space-between;gap:10px;min-width:0}
+.dic .rw-top b{font:700 14px var(--font-ui);color:var(--text)}
+.dic .rw-top em{font-style:normal;font-weight:700;font-size:12px;color:var(--rv);white-space:nowrap}
+.dic .rw-bar{grid-area:bar;display:block;height:6px;border-radius:6px;background:var(--surface-3,#EEF2F6);overflow:hidden}
+.dic .rw-bar i{display:block;height:100%;border-radius:inherit;background:var(--rv-bar,var(--rv))}
+.dic .rw-sub{grid-area:sub;font-size:12px;color:var(--text-2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dic .rw-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;padding:2px 2px 0}
+.dic .rw-head h3{margin:0;font:800 17px var(--font-ui);color:var(--text)}
+.dic .rw-head em{font-style:normal;display:inline-flex;align-items:center;gap:4px;font-weight:700;font-size:12.5px;color:var(--rv)}
+.dic .rw-head em .ic{width:13px;height:13px}
+.dic .rw-head>span{flex-basis:100%;font-size:12.5px;color:var(--text-2)}
+.dic .rw-areas button{width:100%;display:grid;grid-template-columns:minmax(0,1fr) 72px 34px 16px;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;
+  background:var(--surface);text-align:left;cursor:pointer;transition:border-color .15s,background .15s}
+.dic .rw-areas .rw-bar{grid-area:auto}
+.dic .rw-areas button>svg{grid-area:auto}
+.dic .rw-an{display:flex;flex-direction:column;min-width:0}
+.dic .rw-an b{font:700 13.5px var(--font-ui);color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dic .rw-an small{font-size:11.5px;color:var(--text-3)}
+.dic .rw-n{font:800 15px var(--font-ui);color:var(--rv);text-align:right}
+.dic .rw-places>li{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.dic .rw-places>li.on{border-color:var(--rv);box-shadow:0 0 0 2px var(--rv-soft)}
+.dic .rw-ph{width:100%;display:flex;align-items:center;gap:9px;padding:9px 11px;border:0;background:transparent;text-align:left;cursor:pointer}
+.dic .rw-ph:hover{background:var(--rv-soft)}
+.dic .rw-ph>svg{flex:none;width:14px;height:14px;color:var(--text-3)}
+.dic .rw-k{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--rv-soft);color:var(--rv);font:700 11px var(--font-ui)}
+.dic .rw-pn{flex:1;min-width:0;display:flex;flex-direction:column}
+.dic .rw-pn b{font:700 13px var(--font-ui);color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dic .rw-pn small{font-size:11.5px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dic .rw-act{flex:none;font-size:11px;font-weight:700;color:#fff;background:var(--rv);border-radius:999px;padding:3px 9px}
+.dic .rw-pb{padding:0 11px 11px;border-top:1px solid var(--line-2,var(--line))}
+.dic .rw-pb .fx-box{margin-top:10px}
+/* the map's circle round an area, and its name */
+.dic .rv-ring.on{animation:rw-ring 2.4s ease-in-out infinite}
+@keyframes rw-ring{50%{stroke-opacity:.55}}
+@media (prefers-reduced-motion:reduce){.dic .rv-ring.on{animation:none}}
+.dic .rv-ringlab{position:absolute;transform:translate(-50%,-130%);white-space:nowrap;padding:3px 9px;border-radius:999px;background:#1D4ED8;color:#fff;font:700 12px var(--font-ui);
+  box-shadow:0 4px 12px -4px rgba(15,23,42,.45);pointer-events:none}
+.dic .rv-ringlab.t-traffic{background:#9A3412}.dic .rv-ringlab.t-power{background:#854D0E}.dic .rv-ringlab.t-metro{background:#4C1D95}
+.dic .rw-leg li{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text-2);margin:3px 0}
+.dic .rw-leg ul{list-style:none;margin:0;padding:0}
+.dic .rw-leg i.ln{flex:none;display:block;width:18px;border-radius:3px}
+.dic .rw-leg i.ring{flex:none;display:block;width:14px;height:14px;border-radius:50%;border:2px dashed;background:transparent}
+.dic .rw-leg i.sat{flex:none;display:block;width:14px;height:10px;border-radius:2px;background:#22D3EE;box-shadow:inset 0 0 0 1px #0891B2}

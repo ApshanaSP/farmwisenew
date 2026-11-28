@@ -33,6 +33,9 @@ export interface BasemapOptions {
   quiet?: boolean;
   /** the raster street map used when the sharp one cannot be drawn: Esri's (the console's) or OpenStreetMap's */
   fallback?: "esri" | "osm";
+  /** draw the raster street map (Esri's) even where the sharp vector map could be drawn: the consoles' default since 28 Nov (the owner
+   *  wants "the older map": Esri's street map with the zones' strong colours, not the light vector map) */
+  raster?: boolean;
 }
 
 export interface Basemap {
@@ -204,7 +207,7 @@ export function addBasemap(L: typeof Leaflet, map: Leaflet.Map, kind: BaseKind, 
   function apply() {
     if (dead) return;
     const theme = o.theme === "auto" ? pageTheme() : o.theme;
-    const p = (plan = planBasemap({ kind: cur, theme, webgl: webgl(), failed: failed || Date.now() < downUntil, room: sharpRoom(sharpLive, holds), labels: o.labels, quiet: o.quiet }));
+    const p = (plan = planBasemap({ kind: cur, theme, webgl: !o.raster && webgl(), failed: failed || Date.now() < downUntil, room: sharpRoom(sharpLive, holds), labels: o.labels, quiet: o.quiet }));
     if (p.imagery && !imagery) imagery = L.tileLayer(TILES.imagery, { ...imageryOptions(L.Browser.retina), attribution: ATTR.imagery }).addTo(map);
     else if (!p.imagery && imagery) { imagery.remove(); imagery = null; }
     // Esri's raster names (no WebGL): 256 px tiles, so no double resolution (their letters would come out half size)

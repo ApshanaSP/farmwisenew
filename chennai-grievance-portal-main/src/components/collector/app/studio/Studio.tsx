@@ -133,7 +133,7 @@ export default function Studio({ c }: { c: Console }) {
     const el = addCard.current;
     if (!flash || !el) return;
     el.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    el.querySelector<HTMLInputElement>(".ds-linkf input")?.focus({ preventScroll: true });
+    el.querySelector<HTMLInputElement>(".ds-fetch input")?.focus({ preventScroll: true });
     el.classList.remove("flash");
     void el.offsetWidth; // restart the highlight
     el.classList.add("flash");
@@ -315,36 +315,34 @@ export default function Studio({ c }: { c: Console }) {
         <button type="button" className="ds-btn ds-top-add" onClick={addData} title="Add a file, a link or a sample"><I n="plus" />Add data</button>
       </nav>
 
-      <div className={`ds${drag ? " dragging" : ""}${view !== "datasets" ? " ds-wide" : ""}`}>
+      <div className={`ds${drag ? " dragging" : ""}${view !== "datasets" ? " ds-wide" : " ds-v2"}`}>
         {view === "datasets" && (
-          <aside className="ds-rail">
-            <section ref={addCard} className="ds-add card">
-              <header className="ds-add-h"><span className="ds-spark-ic"><I n="spark" /></span><b>Add data</b>
+          <>
+            {/* 28 Nov (the owner: the Studio was congested and "Add data" squeezed): one clear row to add data, then the datasets as cards */}
+            <section ref={addCard} className="ds-addbar card ds-span">
+              <header className="ds-add-h"><span className="ds-spark-ic"><I n="spark" /></span><b>Add data</b><small className="ds-add-sub">A department file, or a link to a page, a file or an API</small>
                 <small className={list?.ai.available ? "ok" : ""} title={list?.ai.available ? `AI: ${list.ai.providers.join(", ")}` : "No AI model configured: the rules read the files"}>
                   <i />{list ? (list.ai.available ? "AI ready" : "Rules only") : "…"}</small></header>
-              <button className={`ds-drop${drag ? " over" : ""}`} onClick={() => fileIn.current?.click()} disabled={busy} aria-label="Choose a file to add">
-                <span className="ds-drop-ic"><I n="download" /></span>
-                <b>{drag ? "Drop to analyse" : "Drop a file or browse"}</b>
-                <small>Excel · CSV · PDF · a photo of a table · up to 15 MB</small>
-              </button>
-              <input ref={fileIn} type="file" accept={ACCEPT} hidden onChange={(e) => { addFile(e.target.files?.[0]); e.target.value = ""; }} />
-              <form className="ds-linkf" onSubmit={(e) => { e.preventDefault(); addLink(); }}>
-                <I n="ext" />
-                <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Paste a link: it is read at once" aria-label="Link to a data source" disabled={busy}
-                  onPaste={(e) => {
-                    // a whole link pasted into the empty box is read straight away (sign-in and schedule: the sliders button)
-                    const t = e.clipboardData.getData("text").trim();
-                    if (busy || link.trim() || !/^https?:\/\/\S+\.\S+$/i.test(t)) return;
-                    e.preventDefault();
-                    addLink({ url: t, name: null, auth: null, every: null });
-                  }} />
-                <button type="button" className="alt" disabled={busy} onClick={() => setConnecting(true)} aria-label="Sign-in and refresh options" title="Sign-in and refresh options"><I n="sliders" /></button>
-                <button disabled={busy || link.trim().length < 10} aria-label="Read the link" data-jarvis-never><I n="right" /></button>
-              </form>
-              <button type="button" className="ds-connect-cta" disabled={busy} onClick={() => setConnecting(true)}><I n="shield" />Connect with sign-in or schedule</button>
-              {!!list?.samples.length && (
+              <div className="ds-addbar-g">
+                <button className={`ds-drop${drag ? " over" : ""}`} onClick={() => fileIn.current?.click()} disabled={busy} aria-label="Choose a file to add">
+                  <span className="ds-drop-ic"><I n="download" /></span>
+                  <b>{drag ? "Drop to analyse" : "Upload a file"}</b>
+                  <small>Drop it here or click to browse · Excel, CSV, PDF, a photo of a table · up to 15 MB</small>
+                </button>
+                <input ref={fileIn} type="file" accept={ACCEPT} hidden onChange={(e) => { addFile(e.target.files?.[0]); e.target.value = ""; }} />
+                <form className="ds-fetch" onSubmit={(e) => { e.preventDefault(); addLink(); }}>
+                  <b>Fetch from a link</b>
+                  <div className="ds-fetch-row">
+                    <span className="ds-fetch-in"><I n="ext" />
+                      <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Paste a link: https://…" aria-label="Link to a data source" disabled={busy} /></span>
+                    <button className="ds-fetch-go" disabled={busy || link.trim().length < 10} data-jarvis-never><I n="download" />Fetch</button>
+                  </div>
+                  <button type="button" className="ds-lnk ds-fetch-more" disabled={busy} onClick={() => setConnecting(true)}><I n="shield" />Needs a sign-in or a schedule?</button>
+                </form>
+              </div>
+              {!!list?.samples.length && !datasets.length && (
                 <div className="ds-samples">
-                  <small>Samples</small>
+                  <small>Or try a sample</small>
                   {list.samples.map((s) => (
                     <button key={s.key} onClick={() => addSample(s.key)} disabled={busy} title={s.blurb} data-jarvis-never>
                       <span className={`ds-sample-ic ${s.icon}`}><I n={s.icon} /></span><span>{s.title}</span><em>{s.format}</em>
@@ -353,34 +351,25 @@ export default function Studio({ c }: { c: Console }) {
                 </div>
               )}
             </section>
-            <section className="ds-lib card">
-              <header><b>Datasets</b><span className="cnt-b">{datasets.length}</span></header>
-              <div className="ds-lib-l">
-                {running && (
-                  <button className="ds-li running" onClick={() => setMode({ k: "run" })}>
-                    <span className="ds-li-ic"><span className="ds-spin sm" /></span><span className="ds-li-b"><b>{run!.title}</b><small>Agents at work…</small></span>
-                  </button>
-                )}
-                {datasets.map((d, i) => {
-                  const on = onDash.get(d.id) ?? [];
-                  return (
-                    <button key={d.id} className={`ds-li${mode.k === "dataset" && mode.id === d.id ? " on" : ""}`} onClick={() => setMode({ k: "dataset", id: d.id })} style={{ ["--i" as string]: i }}>
-                      <span className={`ds-li-ic k-${d.kind}`}><I n={d.kind === "link" ? "ext" : d.kind === "sample" ? "spark" : "table"} /></span>
-                      <span className="ds-li-b">
-                        <b>{d.name}</b>
-                        <small>{d.rows.toLocaleString("en-IN")} rows · health {d.health}{(d.departments?.length ? ` · ${d.departments.join(", ")}` : d.department ? ` · ${d.department}` : "")}{(d.copies ?? 1) > 1 ? ` · same file added ${d.copies} times` : ""}</small>
-                        {on.length > 0 && <small className="ds-li-on" title={`On ${on.map((x) => `“${x.name}”`).join(", ")}`}><I n="grid" />On {on.length === 1 ? on[0].name : `${on.length} dashboards`}</small>}
-                      </span>
-                      {d.every ? <span className={`ds-li-sync${d.failing ? " bad" : ""}`} title={d.failing ? "The last automatic refresh failed" : `Refreshes ${d.every >= 1440 ? "daily" : d.every >= 360 ? "every 6 hours" : "hourly"}`}><I n={d.failing ? "alert" : "refresh"} /></span> : null}
-                      {d.link && d.link !== "none" && <span className={`ds-li-link s-${d.link}`} title={`${d.link} link with district incidents`}><I n="compare" /></span>}
+            {(datasets.length > 0 || running) && (
+              <section className="ds-picks card ds-span" aria-label="Your datasets">
+                <header><b>Your datasets</b><span className="cnt-b">{datasets.length}</span><small>Click one to open it</small></header>
+                <div className="ds-picks-l">
+                  {running && (
+                    <button className="ds-pick running" onClick={() => setMode({ k: "run" })}>
+                      <span className="ds-li-ic"><span className="ds-spin sm" /></span><span className="ds-li-b"><b>{run!.title}</b><small>Reading…</small></span>
                     </button>
-                  );
-                })}
-                {list && !datasets.length && <p className="ds-muted pad">Nothing added yet. Drop a file above or try a sample.</p>}
-                {list?.hidden?.length ? <p className="ds-muted pad" title={list.hidden.map((h) => h.name).join(", ")}>{list.hidden.length} {list.hidden.length === 1 ? "file" : "files"} not shown: no Chennai rows ({list.hidden.map((h) => h.name).join(", ")})</p> : null}
-              </div>
-            </section>
-          </aside>
+                  )}
+                  {datasets.map((d) => (
+                    <button key={d.id} className={`ds-pick${mode.k === "dataset" && mode.id === d.id ? " on" : ""}`} onClick={() => setMode({ k: "dataset", id: d.id })}>
+                      <span className={`ds-li-ic k-${d.kind}`}><I n={d.kind === "link" ? "ext" : d.kind === "sample" ? "spark" : "table"} /></span>
+                      <span className="ds-li-b"><b>{d.name}</b><small>{d.rows.toLocaleString("en-IN")} rows{d.department ? ` · ${d.department}` : ""}</small></span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
         )}
 
         {view === null ? (

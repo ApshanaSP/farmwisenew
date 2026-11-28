@@ -238,7 +238,12 @@ const short = (l: string) => (l.toLowerCase().startsWith("ta") ? "ta" : "en") as
  * the browser has a natural (online, neural) woman's voice for the language: it speaks, free and at once. Microsoft
  * Edge has them for Tamil (Pallavi) and Indian English (Neerja); Chrome has Google's English ones but no Tamil.
  */
+const SERVER_FIRST = !(typeof process !== "undefined" && process.env?.VITEST);
 function natural(lang: "ta" | "en"): boolean {
+  // 28 Nov (the owner: "use the Sarvam speaking model instead of Edge's Neerja and Pallavi, so Jarvis answers in Chrome too"): the server's
+  // voice (Sarvam first, api/jarvis/say) speaks whenever it is up and the page can play audio; the browser's voices only when it is not
+  // (the unit tests keep the browser rung first: they test that rung, which is still the fallback when the server cannot speak)
+  if (SERVER_FIRST && serverUp() && AC()) return false;
   const v = browser.bestVoice(lang === "ta" ? "ta-IN" : "en-IN");
   return !!v && v.lang.toLowerCase().startsWith(lang);
 }
@@ -260,7 +265,7 @@ export const pathFor = (lang: string): VoicePath => choosePath(short(lang));
 export function voiceInfo(lang: "ta" | "en"): { name: string | null; how: "browser" | "server" | "none" } {
   const v = browser.bestVoice(lang === "ta" ? "ta-IN" : "en-IN");
   if (natural(lang) && v) return { name: v.name.replace(/^Microsoft\s+/, "").replace(/\s*\(Natural\).*$/, "").replace(/\s+Online.*$/, ""), how: "browser" };
-  if (serverUp()) return { name: jarvisVoice, how: "server" };
+  if (serverUp()) return { name: "Sarvam", how: "server" };
   return v && v.lang.toLowerCase().startsWith(lang) ? { name: v.name, how: "browser" } : { name: null, how: "none" };
 }
 

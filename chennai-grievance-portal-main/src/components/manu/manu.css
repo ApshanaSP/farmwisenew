@@ -181,5 +181,5 @@
   .mn.mn-cards>.mn-q{max-height:none}
 }
 .mn.mn-cards{min-height:0;height:calc(100dvh - 330px);min-height:520px}
-.mn.mn-cards .mn-home{justify-content:flex-start;padding-top:48px}
+.mn.mn-cards .mn-home{align-content:start;padding-top:48px}
 .mn-cband .cz-hello{font-size:24px;font-weight:800;margin:2px 0 4px}

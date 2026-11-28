@@ -1,5 +1,6 @@
 "use client";
 
+import { NewsActButton, NewsActLine } from "./NewsAct";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useGrowFrom } from "./Shell";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
@@ -397,7 +398,8 @@ export function NewsAllBody({ d, c }: { d: OverviewData; c: Console }) {
         ) : list.length ? (
           <div className="ngrid">
             {list.map((i) => (
-              <button key={i.id} className={`ncard nw${i.desk?.v === "act" ? " act" : ""}`} onClick={() => c.openStory(i)}>
+              <div key={i.id} className="ncard-w">
+              <button className={`ncard nw${i.desk?.v === "act" ? " act" : ""}`} onClick={() => c.openStory(i)}>
                 <div className="nw-tags"><DeskTags i={i} />{i.sev && <SevChip s={i.sev} />}</div>
                 <NewsHead en={i.title} ta={i.original} taLead={i.taLead} h="h4" line="p" />
                 {i.desk?.gist && <p title={i.desk.gist}>{i.desk.gist}</p>}
@@ -406,7 +408,10 @@ export function NewsAllBody({ d, c }: { d: OverviewData; c: Console }) {
                   {i.outletNames.length > 5 && <span>+{i.outletNames.length - 5}</span>}</div>
                 <div className="nmeta"><span>{i.loc ?? "Chennai"}</span><span>{rel(i.t, d.now)}</span></div>
                 <StoryLink i={i} />
+                <NewsActLine s={i} now={d.now} />
               </button>
+              <NewsActButton s={i} />
+              </div>
             ))}
           </div>
         ) : <Empty>{d.allNews.length ? "No news of this kind in this period." : "No news in this period."}</Empty>}

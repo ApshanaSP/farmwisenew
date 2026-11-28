@@ -1,5 +1,6 @@
 "use client";
 
+import { NewsActHost } from "./NewsAct";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Overview as OverviewData, Period } from "@/lib/collector/intel";
@@ -69,6 +70,7 @@ import "./shell2.css";
 import "./briefing.css";
 import "./clear.css";
 import "./dock.css";
+import "./pagescroll.css";
 import ConfirmHost from "@/components/security/Confirm";
 const SecurityPanel = dynamic(() => import("@/components/security/SecurityPanel"), { ssr: false });
 // The friend's Command Centre look (navy bar, ocean accent) is off: it overrides the FarmWise green. To try it, import
@@ -1102,6 +1104,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
         {(inc || modal) && <div className="scrim" onClick={closeAll} />}
         {inc && <IncidentView key={inc} id={inc} c={c} startAction={actionFor === inc} />}
         {modal?.kind === "story" && <NewsView key={modal.story.id} s={modal.story} c={c} />}
+        <NewsActHost c={c} />
         {modal && modal.kind !== "story" && (
           <Modal title={modal.title} c={c} narrow={["depts", "zones", "customize", "item"].includes(modal.kind)} wide={["dept", "stories", "markets", "pattern", "story", "review", "nearby", "nextdoor", "conflict"].includes(modal.kind)}>
             {modal.kind === "list" ? <ListBody key={`${modal.title}|${JSON.stringify(modal.preset)}|${qs}`} preset={modal.preset} c={c} />

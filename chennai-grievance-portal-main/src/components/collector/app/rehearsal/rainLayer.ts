@@ -15,7 +15,7 @@ export interface RainStart { rain: string | null; seq: number; lens?: "traffic" 
 
 /** which tab draws: its colours (flood blue, traffic orange, power amber, metro violet) */
 export type RainTheme = "flood" | "traffic" | "power" | "metro";
-export type RainPickKind = "street" | "report" | "point" | "area" | "line";
+export type RainPickKind = "street" | "report" | "point" | "area" | "line" | "ring";
 
 export interface RainLayer {
   theme?: RainTheme;
@@ -39,6 +39,9 @@ export interface RainLayer {
   /** flood water a satellite saw in the chosen rain (satflood.ts): small boxes [south, west, north, east, 1 medium | 2 high
    *  confidence], drawn in cyan under the streets; `tip` names the pass */
   satWater?: { boxes: [number, number, number, number, 1 | 2][]; tip: string } | null;
+  /** circles around the areas a rain hit (28 Nov, the owner: "click an area: a circle around it, and the map zooms in"): `on` is the area
+   *  open now (drawn strong, the others faint and clickable); `n` is shown in the circle's label */
+  rings?: { key: string; lat: number; lon: number; r: number; label: string; n: number; on: boolean }[];
   /** what is chosen: drawn on top */
   sel: { kind: RainPickKind; id: string } | null;
   /** the camera: each new seq frames these points (null: the whole district) */

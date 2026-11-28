@@ -1,0 +1,42 @@
+/* Page scroll, not tile scroll (28 Nov 2026, the owner: "the Briefing's layout is so good: scrolling down the page to see things, not
+   scrolling inside a tile. Do the same on every page of every console"). Loaded last, after dock.css.
+   Every page grows with its cards, and the page area (#view on the Collector, .body on the officer console) is the one thing that
+   scrolls. A card's list is shown at its full length; the lists that can run to hundreds of rows show their first ones and keep their
+   "See all". The Overview's map stays in sight (sticky) while the cards beside it run down the page. */
+
+/* ---- the Collector: every page as tall as its content (at least the window) */
+.dic.fit #view>*:not(.p1){height:auto;min-height:100%}
+.dic.fit #view>.p3.trends,.dic.fit #view>.p2.env3,.dic.fit #view>.p3.bpage{grid-template-rows:auto auto!important}
+
+/* the Overview: the map keeps the window's height and stays in sight; the cards beside it grow with their lists */
+.dic.fit #view>.p1{height:auto;min-height:calc(100% - 12px);align-items:start;grid-template-rows:auto auto!important}
+.dic.fit #view>.p1>.a-map{position:sticky;top:0;align-self:start;height:max(440px,calc(100vh / var(--z,1) - 238px))}
+/* grown (Ask the Map, Rain, Live traffic): the band steps aside, so the map takes the window down to the dock */
+.dic.fit.map-grown #view>.p1{min-height:0}
+.dic.fit.map-grown #view>.p1>.a-map{height:max(440px,calc(100vh / var(--z,1) - 72px - var(--dock-h) - 10px))}
+.dic.fit #view>.p1>.card:not(.a-map){min-height:0}
+.dic.fit #view>.p1>.card:not(.a-map)>:last-child{overflow:visible}
+
+/* lists inside cards: their whole length, no scrollbar of their own */
+.dic.fit #view .fitlist,.dic.fit #view .fitlist.scroll,.dic.fit #view .att-list,.dic.fit #view .rs-body,.dic.fit #view .lr2-list,
+.dic.fit #view .mk-scroll,.dic.fit #view .ds-bm-b,.dic.fit #view .rs-ai{overflow:visible;max-height:none;flex:none;min-height:0;mask-image:none;-webkit-mask-image:none}
+.dic.fit #view .fitlist{flex-wrap:nowrap}
+.dic.fit #view .card{min-height:0}
+/* the prices table keeps its header in sight while the page scrolls past it */
+.dic.fit #view .mk-scroll table.mk thead th{top:0}
+
+/* the long lists show their first rows; "See all" in the card's header opens the rest */
+.dic.fit #view .p1 .fitlist.scroll>.nw-row:nth-child(n+9),.dic.fit #view .p1 .fitlist.scroll>.brief:nth-child(n+9){display:none}
+.dic.fit #view .p1 .att-list>*:nth-child(n+11){display:none}
+
+/* the Data Studio: its columns and boards grow too */
+.dic.fit #view>.ds-page{height:auto}
+.dic.fit .ds,.dic.fit .ds-rail,.dic.fit .ds-ws,.dic.fit .ds-span{min-height:0;height:auto}
+.dic.fit .ds-rail{overflow:visible}
+
+/* ---- the officer console: the page (.body) scrolls; its cards grow with their lists */
+.dic.ofc.fit .body .card{height:auto;min-height:0}
+.dic.ofc.fit .body .fitlist,.dic.ofc.fit .body .fitlist.scroll,.dic.ofc.fit .body .att-list,.dic.ofc.fit .body .oi-types .fitlist,
+.dic.ofc.fit .body .mk-scroll,.dic.ofc.fit .body .cb{overflow:visible;max-height:none;min-height:0}
+.dic.ofc.fit .body .att-list>*:nth-child(n+16){display:none}
+.dic.ofc.fit .body .ofc-news .fitlist>.brief:nth-child(n+9){display:none}
