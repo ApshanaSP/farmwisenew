@@ -1,0 +1,247 @@
+/* =====================================================================================================================
+   The citizen portal and the sign-in pages in the consoles' look (Marina: components/collector/app/marina.css). One white
+   top bar (the logo and the place after a hairline, the pages as tabs with a green bar under the one you are on, the
+   language, the theme and the account), the green band at the top of every page (the day, the page's title, what it is
+   for), white cards with an icon tile in their head, deep green for what is interactive. Light by default; the dark theme
+   follows the same tokens (tokens.css). Under 1024 px the pages move to a bottom bar, as on the consoles.
+   Display (shown or hidden) of the tabs, the bottom bar and the helpline is left to Tailwind's hidden / lg:flex / lg:hidden
+   classes or to media queries here, never to a `display` in a class that also carries them (this file loads after the
+   utilities, so it would win).
+   ===================================================================================================================== */
+
+/* ---------------- top bar ---------------- */
+.cz-top{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:8px;height:60px;padding:0 16px 0 14px;
+  background:var(--surface);border-bottom:1px solid var(--line);box-shadow:0 1px 0 rgba(15,27,45,.02)}
+.cz-brand{flex:none;display:flex;align-items:center;gap:12px;min-width:0;border-radius:10px;color:inherit;text-decoration:none}
+.cz-brand .cz-wm{height:38px}
+.cz-tsub{display:block;padding-left:12px;border-left:1px solid var(--line);font:600 11.5px/1.25 var(--font-ui);color:var(--text-3);white-space:nowrap}
+@media (max-width:639px){.cz-brand .cz-wm{height:32px}.cz-tsub{display:none}.cz-top{padding:0 10px 0 10px;gap:6px}}
+/* with the pages in the bar the place line makes room for them below 1280 px, and in Tamil, whose page names are longer */
+@media (max-width:1279px){.cz-top.has-tabs .cz-tsub{display:none}}
+html[data-lang="ta"] .cz-top.has-tabs .cz-tsub{display:none}
+
+/* the pages as tabs: icon and name, the 3 px green bar under the page you are on slides to the next */
+.cz-tabs{position:relative;align-self:stretch;align-items:stretch;gap:2px;margin-left:22px}
+.cz-tab{position:relative;display:flex;align-items:center;gap:8px;padding:0 14px;color:var(--text-3);font:650 13.5px var(--font-ui);white-space:nowrap;
+  text-decoration:none;transition:color var(--t-fast),background var(--t-fast)}
+.cz-tab svg{flex:none;width:16px;height:16px}
+.cz-tab:hover{color:var(--text);background:var(--surface-2)}
+.cz-tab[aria-current="page"]{color:var(--accent-3)}
+:root[data-theme="dark"] .cz-tab[aria-current="page"]{color:var(--accent-2)}
+.cz-tab:focus-visible{outline:2px solid var(--accent);outline-offset:-6px;border-radius:12px}
+.cz-tab-bar{position:absolute;left:0;bottom:-1px;height:3px;border-radius:3px 3px 0 0;background:var(--accent-3);pointer-events:none}
+:root[data-theme="dark"] .cz-tab-bar{background:var(--accent)}
+html[data-lang="ta"] .cz-tab{padding:0 10px;gap:6px;font-size:13px}
+@media (max-width:1279px){html[data-lang="ta"] .cz-tab svg{display:none}}
+
+/* the controls on the right: helpline, English / தமிழ், theme, account */
+.cz-tright{margin-left:auto;display:flex;align-items:center;gap:8px;min-width:0}
+.cz-tright>*{flex:none}
+.cz-tbtn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 12px;border-radius:var(--r-sm);
+  border:1px solid var(--line);background:var(--surface);color:var(--text-2);font:600 13px/1 var(--font-ui);white-space:nowrap;text-decoration:none;cursor:pointer;
+  transition:background var(--t-fast),border-color var(--t-fast),color var(--t-fast)}
+.cz-tbtn:hover{background:var(--surface-2);border-color:var(--line-3);color:var(--text)}
+.cz-tbtn:active{transform:scale(.97)}
+.cz-tbtn.icon{width:36px;padding:0;overflow:hidden}
+.cz-tbtn svg{flex:none;width:16px;height:16px}
+.cz-tbtn b{font:700 13px/1 var(--font-code);color:var(--text)}
+.cz-tbtn .cz-help-ic{color:var(--accent-2)}
+.cz-tbtn.lang{padding:0 11px 0 6px}
+.cz-lang-a{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;flex:none;background:var(--accent-soft);color:var(--accent-2);font:700 13px/1 var(--font-ui)}
+.cz-lang-a::before{content:attr(data-g)} /* the letter is drawn, so the button's name is exactly the word it shows (PB-323) */
+/* on a 360 px phone the letter alone: the name is the aria-label, and the top bar has no room for the word (RC-46) */
+@media (max-width:399.98px){.cz-tbtn.lang{padding:0;width:36px}.cz-tbtn.lang .cz-lang-w{display:none}}
+/* the helpline: in the bar from 1280 px with the pages there, from 640 px on the sign-in pages */
+.cz-help{display:none}
+@media (min-width:1280px){.cz-help{display:inline-flex}}
+@media (min-width:640px){.cz-top:not(.has-tabs) .cz-help{display:inline-flex}}
+
+/* the account: avatar, who is signed in (from 1280 px), the menu under it */
+.cz-acct{position:relative}
+.cz-me{display:flex;align-items:center;gap:8px;height:42px;padding:3px 6px 3px 3px;border:0;border-radius:12px;background:none;color:var(--text);cursor:pointer}
+.cz-me:hover,.cz-me[aria-expanded="true"]{background:var(--surface-2)}
+.cz-avatar{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--ai-grad);color:#fff;font:700 12.5px/1 var(--font-ui);letter-spacing:.02em}
+.cz-who{display:none;flex-direction:column;align-items:flex-start;min-width:0;line-height:1.15;text-align:left}
+@media (min-width:1280px){.cz-who{display:flex}}
+.cz-who small{font:500 11.5px var(--font-ui);color:var(--text-3)}
+.cz-who b{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 13px var(--font-ui)}
+.cz-chev{flex:none;width:15px;height:15px;color:var(--text-3);transition:transform .2s}
+.cz-me[aria-expanded="true"] .cz-chev{transform:rotate(180deg)}
+.cz-pop{position:absolute;right:0;top:calc(100% + 8px);z-index:60;width:300px;max-width:calc(100vw - 20px);padding:6px;border-radius:var(--r);
+  background:var(--elev);border:1px solid var(--line-3);box-shadow:var(--shadow-pop);transform-origin:top right}
+.cz-pop-me{display:flex;align-items:center;gap:10px;min-width:0;padding:8px 10px 10px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+.cz-pop-me>span:last-child{min-width:0}
+.cz-pop-me b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 13.5px/1.25 var(--font-ui);color:var(--text)}
+.cz-pop-me small{display:block;font:500 12px/1.3 var(--font-ui);color:var(--text-3)}
+.cz-pop-i{display:flex;align-items:center;gap:10px;width:100%;padding:7px 8px;border:0;border-radius:10px;background:none;color:var(--text);text-align:left;text-decoration:none;cursor:pointer}
+.cz-pop-i:hover{background:var(--accent-soft)}
+.cz-pop-i:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.cz-pop-i:disabled{opacity:.6;cursor:default}
+.cz-pop-ic{flex:none;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-2)}
+.cz-pop-ic svg{width:16px;height:16px}
+.cz-pop-i b{display:block;font:650 13.5px/1.25 var(--font-ui)}
+.cz-pop-i small{display:block;margin-top:1px;font:500 12px/1.3 var(--font-ui);color:var(--text-3)}
+.cz-pop-i.out .cz-pop-ic{background:var(--critical-soft);color:var(--critical-ink)}
+.cz-pop-i.out:hover{background:var(--critical-soft)}
+
+/* ---------------- phones and tablets: the pages as a bottom bar (the colour of the page you are on is a Tailwind class, P5-038) ---------------- */
+.cz-bbar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);
+  box-shadow:0 -8px 24px -18px rgba(15,27,45,.25)}
+.cz-bbar-in{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));height:60px}
+.cz-bbar a{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:44px;padding:0 6px;
+  font:650 11px/1.2 var(--font-ui);text-align:center;text-decoration:none}
+.cz-bbar a svg{width:20px;height:20px;flex:none}
+.cz-bbar a[aria-current="page"]::before{content:"";position:absolute;top:-1px;left:24%;right:24%;height:3px;border-radius:0 0 3px 3px;background:var(--accent-3)}
+:root[data-theme="dark"] .cz-bbar a[aria-current="page"]::before{background:var(--accent)}
+.cz-bbar a:focus-visible{outline:2px solid var(--accent);outline-offset:-4px;border-radius:10px}
+
+/* ---------------- the page body ---------------- */
+.cz-body{flex:1;width:100%;max-width:1280px;margin:0 auto;padding:14px 22px 28px;display:flex;flex-direction:column;gap:14px;min-width:0}
+@media (max-width:639px){.cz-body{padding:12px 12px 20px;gap:12px}}
+
+/* ---------------- the green band (white text on it in both themes) ---------------- */
+.cz-band{position:relative;isolation:isolate;overflow:hidden;flex:none;border-radius:var(--r-lg);background:var(--band);color:var(--band-ink);
+  padding:16px 20px 16px 22px;box-shadow:0 18px 40px -26px rgba(11,59,34,.75)}
+.cz-band::before{content:"";position:absolute;z-index:-1;right:-70px;bottom:-150px;width:460px;height:250px;border-radius:50%;border:1px solid rgba(255,255,255,.11);
+  box-shadow:0 0 0 34px rgba(255,255,255,.028),0 0 0 70px rgba(255,255,255,.022);pointer-events:none}
+/* a faint dot field on the right, like the pulli dots of a kolam (as on the consoles) */
+.cz-band::after{content:"";position:absolute;z-index:-1;inset:0 0 0 45%;pointer-events:none;background-image:radial-gradient(rgba(255,255,255,.16) 1px,transparent 1.3px);
+  background-size:16px 16px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 70%);mask-image:linear-gradient(90deg,transparent,#000 70%);opacity:.55}
+.cz-band-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 18px;min-width:0}
+.cz-band-t{flex:1 1 320px;min-width:0}
+.cz-band-eb{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin:0;font:600 12px/1.4 var(--font-ui);color:var(--band-ink-2)}
+.cz-band-eb>i{font-style:normal;color:var(--band-ink-3)}
+.cz-band h1{margin:2px 0 0;font:800 26px/1.22 var(--font-ui);letter-spacing:-.025em;color:var(--band-ink);overflow-wrap:anywhere}
+.cz-band h1 .cz-ta{font-weight:500;color:var(--band-ink-3)}
+.cz-band-sub{margin:4px 0 0;max-width:64ch;font:500 14px/1.5 var(--font-ui);color:var(--band-ink-2)}
+.cz-band.slim{padding:12px 16px 12px 22px}
+.cz-band.slim h1{font-size:21px;line-height:1.28}
+.cz-band.slim .cz-band-sub{font-size:13px;margin-top:2px}
+.cz-band-acts{display:flex;flex-wrap:wrap;gap:8px}
+.cz-band :focus-visible{outline:2px solid #fff;outline-offset:2px}
+.cz-chip{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:var(--r-pill);background:var(--band-glass);border:1px solid var(--band-line);
+  color:var(--band-ink);font:650 12px/1 var(--font-ui);white-space:nowrap}
+.cz-chip svg{width:13px;height:13px}
+/* buttons on the band: glass, or the one white button for the main thing to do */
+.cz-bbtn{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 15px;border-radius:12px;border:1px solid var(--band-line);background:var(--band-glass);
+  color:#fff;font:650 14px/1 var(--font-ui);white-space:nowrap;text-decoration:none;transition:background var(--t-fast),transform var(--t-fast)}
+.cz-bbtn:hover{background:var(--band-glass-2);border-color:rgba(255,255,255,.3)}
+.cz-bbtn.solid{background:#fff;border-color:transparent;color:#14532D;font-weight:750;box-shadow:0 10px 24px -12px rgba(0,0,0,.6)}
+.cz-bbtn.solid:hover{background:#F1FAF4;transform:translateY(-1px)}
+.cz-bbtn svg{width:17px;height:17px;flex:none}
+@media (max-width:639px){
+  .cz-band{padding:14px 14px 14px 16px;border-radius:var(--r)}
+  .cz-band h1{font-size:22px}
+  .cz-band.slim{padding:11px 14px}
+  .cz-band.slim h1{font-size:19px}
+  .cz-band-acts{width:100%}
+  .cz-band-acts .cz-bbtn{flex:1 1 0;justify-content:center;padding:0 10px}
+}
+
+/* the three counts as glass tiles inside the band (the Overview's hero band) */
+.cz-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+.cz-kpi{display:flex;align-items:center;gap:12px;min-width:0;padding:12px 14px 11px;border-radius:14px;background:var(--band-glass);border:1px solid var(--band-line);color:#fff}
+.cz-kpi-ic{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.12);color:var(--kc);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.cz-kpi-ic svg{width:19px;height:19px}
+.cz-kpi-t{min-width:0}
+.cz-kpi-l{margin:0;font:650 12px/1.25 var(--font-ui);color:var(--band-ink-2)}
+.cz-kpi-n{margin:3px 0 1px;font:800 30px/1.05 var(--font-num);letter-spacing:-.035em;color:#fff;font-variant-numeric:tabular-nums}
+.cz-kpi-note{margin:0;font:500 11.5px/1.3 var(--font-ui);color:var(--band-ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:639px){
+  .cz-kpis{gap:8px;margin-top:12px}
+  .cz-kpi{flex-direction:column;align-items:flex-start;gap:6px;padding:10px}
+  .cz-kpi-ic{width:30px;height:30px;border-radius:9px}
+  .cz-kpi-ic svg{width:16px;height:16px}
+  .cz-kpi-n{font-size:24px}
+  .cz-kpi-note{display:none}
+}
+
+/* ---------------- cards ---------------- */
+.cz-card{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.cz-ch{display:flex;align-items:center;gap:10px;min-width:0;padding:12px 15px 10px}
+.cz-ch-ic{flex:none;width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-2)}
+.cz-ch-ic svg{width:16px;height:16px}
+.cz-ch-t{min-width:0;display:flex;flex-direction:column;gap:1px}
+.cz-ch-t :is(h2,h3){margin:0;font:750 14.5px/1.25 var(--font-ui);letter-spacing:-.012em;color:var(--text)}
+.cz-ch-t small{font:500 12px/1.35 var(--font-ui);color:var(--text-3)}
+.cz-ch-r{margin-left:auto;flex:none;display:flex;align-items:center;gap:8px}
+.cz-count{min-width:22px;height:20px;padding:0 7px;border-radius:var(--r-pill);display:inline-grid;place-items:center;background:var(--accent-soft);color:var(--accent-2);
+  font:700 11px/1 var(--font-num);font-variant-numeric:tabular-nums}
+.cz-more{display:inline-flex;align-items:center;gap:3px;height:28px;padding:0 8px 0 10px;border-radius:var(--r-pill);color:var(--accent-2);font:650 12.5px/1 var(--font-ui);
+  white-space:nowrap;text-decoration:none}
+.cz-more:hover{background:var(--accent-soft)}
+.cz-more svg{width:14px;height:14px;transition:transform var(--t-fast)}
+.cz-more:hover svg{transform:translateX(2px)}
+/* a step's head inside a card (File a complaint): the icon tile and the title, as a card head */
+.cz-sh{display:flex;align-items:flex-start;gap:12px;margin-bottom:20px}
+.cz-sh .cz-ch-ic{width:36px;height:36px;border-radius:11px}
+.cz-sh .cz-ch-ic svg{width:18px;height:18px}
+.cz-sh h2{margin:0;font:750 17px/1.25 var(--font-ui);letter-spacing:-.015em;color:var(--text)}
+.cz-sh p{margin:2px 0 0;font:500 13.5px/1.45 var(--font-ui);color:var(--text-2)}
+
+/* rows inside cards: a complaint, a quick action */
+.cz-row{display:block;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface);color:inherit;text-decoration:none;
+  transition:background var(--t-fast),border-color var(--t-fast)}
+.cz-row:hover{background:var(--surface-2);border-color:var(--line-3)}
+.cz-row.on{border-color:var(--accent-line);background:color-mix(in srgb,var(--accent) 5%,var(--surface));box-shadow:inset 3px 0 0 var(--accent)}
+.cz-act{display:flex;align-items:center;gap:12px;min-width:0;padding:10px 12px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface);color:var(--text);
+  text-decoration:none;transition:background var(--t-fast),border-color var(--t-fast)}
+.cz-act:hover{background:var(--surface-2);border-color:var(--line-3)}
+.cz-act-ic{flex:none;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:var(--kc,var(--accent));
+  background:color-mix(in srgb,var(--kc,var(--accent)) 13%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--kc,var(--accent)) 26%,transparent)}
+.cz-act-ic svg{width:18px;height:18px}
+.cz-act b{display:block;font:650 14px/1.3 var(--font-ui)}
+.cz-act small{display:block;margin-top:1px;font:500 12.5px/1.35 var(--font-ui);color:var(--text-3)}
+.cz-act>svg:last-child{flex:none;margin-left:auto;width:16px;height:16px;color:var(--text-4);transition:transform var(--t-fast),color var(--t-fast)}
+.cz-act:hover>svg:last-child{color:var(--accent-2);transform:translateX(2px)}
+
+/* where a complaint stands now, above its journey: the step, the next step, and a bar of the steps */
+.cz-stage{margin:0 0 16px;padding:12px 14px;border-radius:12px;background:var(--accent-soft);border:1px solid var(--accent-line)}
+.cz-stage.done{background:var(--ok-soft);border-color:var(--ok-line)}
+.cz-stage p{margin:0;font:500 13.5px/1.45 var(--font-ui);color:var(--text)}
+.cz-stage p b{font-weight:750}
+.cz-stage .cz-stage-next{margin-top:2px;font-size:12.5px;color:var(--text-2)}
+.cz-stage-bar{display:flex;gap:4px;margin-top:9px}
+.cz-stage-bar span{flex:1;height:6px;border-radius:3px;background:color-mix(in srgb,var(--text-3) 22%,transparent)}
+.cz-stage-bar span.on{background:var(--accent)}
+.cz-stage.done .cz-stage-bar span.on{background:var(--ok)}
+/* the journey itself (StatusTracker): a little larger, for reading on a phone */
+.cz-track .ui-tl-b b{font-size:14.5px}
+.cz-track .ui-tl-b time{font-size:12.5px}
+.cz-track .ui-tl-b p{font-size:13.5px;overflow-wrap:anywhere}
+
+/* ---------------- the sign-in pages: the form on a white card (flat on a phone, where the page is the card) ---------------- */
+.auth-card{min-width:0}
+@media (min-width:640px){
+  .auth-card{padding:28px 30px 26px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow)}
+}
+
+/* ---------------- a password field: one show / hide button (components/auth/PasswordInput.tsx). Edge's own eye is hidden in globals.css ---------------- */
+.pw-eye{position:absolute;top:0;bottom:0;right:0;width:44px;display:flex;align-items:center;justify-content:center;border:0;background:none;
+  border-radius:0 10px 10px 0;color:var(--text-3);cursor:pointer;transition:color var(--t-fast)}
+.pw-eye:hover{color:var(--accent-2)}
+.pw-eye:focus-visible{outline:2px solid var(--accent);outline-offset:-3px;border-radius:9px}
+.pw-eye svg{width:18px;height:18px}
+
+/* ---------------- /track (a petition's slip, public): the band and cards of the citizen pages over manu.css's .trk ---------------- */
+.trk .trk-band{margin-bottom:14px}
+.trk .cz-band h1{margin:0;font:800 21px/1.28 var(--font-ui);letter-spacing:-.02em;color:var(--band-ink)}
+.trk .trk-card{border-radius:var(--r);box-shadow:var(--shadow)}
+/* 16 px in the fields: iOS Safari zooms into a smaller field and stays zoomed */
+.trk .trk-form input{font-size:16px;border-radius:10px}
+.trk .trk-btn{border-radius:10px;box-shadow:var(--glow)}
+/* the error in the theme's red text colour: the fixed #A01622 was 2.3:1 on the dark card */
+.trk .trk-err{color:var(--critical-ink)}
+
+/* ---------------- footer ---------------- */
+.cz-foot{margin-top:auto;border-top:1px solid var(--line);background:var(--surface)}
+.cz-foot-in{max-width:1280px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 16px;padding:12px 22px;
+  font:500 12.5px/1.45 var(--font-ui);color:var(--text-3)}
+.cz-foot-in p{margin:0}
+.cz-foot-in b{font-weight:700;color:var(--text)}
+.cz-foot-in a{font:700 12.5px var(--font-code);color:var(--text);text-decoration:none}
+.cz-foot-in a:hover{color:var(--accent-2)}
+.cz-foot.compact .cz-foot-in{padding:8px 22px;font-size:12px}
+@media (max-width:639px){.cz-foot-in{justify-content:center;text-align:center;padding:12px}}
+
+@media (prefers-reduced-motion:reduce){.cz-tbtn:active{transform:none}.cz-bbtn.solid:hover{transform:none}.cz-act:hover>svg:last-child,.cz-more:hover svg{transform:none}}

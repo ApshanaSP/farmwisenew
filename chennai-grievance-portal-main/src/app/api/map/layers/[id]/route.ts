@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /** The layers the map's Layers menu can switch on (roads stay on the server: only an answer's own road is sent). */
-const TOGGLEABLE = new Set<string>(["schools", "colleges", "hospitals", "fire_stations", "police", "water_bodies", "waterways", "rail_metro", "lakes_store", "gauges", ...COLLECTOR_LAYERS, "my_list"]);
+const TOGGLEABLE = new Set<string>(["schools", "colleges", "hospitals", "fire_stations", "police", "water_bodies", "waterways", "rail_metro", "lakes_store", "gauges", ...COLLECTOR_LAYERS]);
 
 const NEWS_DAYS = 30;
 /**

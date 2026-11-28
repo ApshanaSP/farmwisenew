@@ -668,7 +668,8 @@ function placeAsScope(route: Route, p: Row, n: RefNames): Route {
     moved = true;
     // "Kolathur taluk": the taluk the text names, not the locality's zone
     if (askedTaluk) return { ...t, args: { ...t.args, ...(sameAsPlace ? { q: null } : {}), scope: { ...s, zone: null, taluk: askedTaluk } } };
-    // "Kolathur" is a locality (in Ayanavaram taluk) and a taluk of its own: naming another taluk than the locality's would mislead
+    // "Kolathur" is a locality and a taluk of its own (its point lies in a Kolathur-taluk ward): naming another taluk than the
+    // locality's would mislead
     const otherTalukNamed = !!named && named.code !== p.taluk;
     const taluk = p.taluk && !otherTalukNamed && n.taluks.has(p.taluk) && !n.taluks.get(p.taluk)?.note ? String(p.taluk) : null;
     return { ...t, args: { ...t.args, ...(sameAsPlace ? { q: null } : {}), scope: { ...s, zone: Number(p.zone), taluk } } };

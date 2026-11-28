@@ -7,6 +7,7 @@ import { AlertCircle, ArrowRight, CheckCircle2, KeyRound, Loader2, Mail } from "
 import AuthShell from "@/components/AuthShell";
 import { authError } from "@/components/auth/AuthCard";
 import PasswordStrengthMeter from "@/components/PasswordStrengthMeter";
+import PasswordInput from "@/components/auth/PasswordInput";
 import { CountdownRing, OtpInput, Stepper, SuccessCheck } from "@/components/ui";
 import { EASE_OUT } from "@/components/ui/motion";
 
@@ -176,12 +177,12 @@ export default function ForgotPasswordPage() {
                 <form onSubmit={resetPassword} noValidate className="space-y-4">
                   <div>
                     <label htmlFor="newPassword" className="auth-label">New password</label>
-                    <input id="newPassword" type="password" required autoComplete="new-password" className="auth-input" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                    <PasswordInput id="newPassword" required autoComplete="new-password" className="auth-input" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                     <PasswordStrengthMeter password={newPassword} />
                   </div>
                   <div>
                     <label htmlFor="confirmPassword" className="auth-label">Confirm password</label>
-                    <input id="confirmPassword" type="password" required autoComplete="new-password" className="auth-input" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                    <PasswordInput id="confirmPassword" required autoComplete="new-password" className="auth-input" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                   </div>
                   <Submit busy="Resetting..." label="Reset password" />
                 </form>

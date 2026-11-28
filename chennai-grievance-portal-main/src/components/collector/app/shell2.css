@@ -162,3 +162,53 @@ html[data-lang="ta"] .dic .card [role="tablist"]{gap:2px}
 .dic .rs-empty{display:flex;align-items:center;gap:10px;margin:18px 4px;padding:16px 18px;border-radius:12px;background:var(--low-soft,#ECFDF3);color:var(--text-2);font:500 13.5px/1.5 var(--font-ui)}
 .dic .rs-empty .ic{width:18px;height:18px;color:var(--low,#16A34A);flex:none}
 .dic .band.hero .daily:has(em.late) small{display:none}
+
+/* ---- 28 Nov: a saved workspace on screen (CollectorApp SavedBar). In the top bar, a small framed box: "Saved workspace" on its frame, the
+   workspace's name and when it was saved, and the green "Back to live dashboard" under them. To make its room at 1366 px the brand's second
+   line goes, Search keeps its icon and the language switch its letter (both still work; the Menu has the language too) */
+/* (50 px tall in the 60 px bar, so the name on its frame stays inside the window's top edge) */
+.dic .tws{position:relative;flex:0 1 256px;min-width:0;max-width:256px;align-self:center;display:flex;flex-direction:column;align-items:stretch;gap:2px;
+  margin-left:12px;padding:6px 8px 3px;border-radius:12px;background:var(--accent-soft);border:1px solid var(--accent-line)}
+.dic .tws-k{position:absolute;left:9px;top:-5px;display:inline-flex;align-items:center;gap:4px;max-width:calc(100% - 18px);padding:0 5px;border-radius:6px;
+  background:var(--surface);color:var(--accent-2);font:700 9.5px/11px var(--font-ui);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dic .tws-k .ic{flex:none;width:10px;height:10px}
+.dic .tws-t{display:flex;align-items:baseline;gap:4px;min-width:0;font:600 11px/13px var(--font-ui);color:var(--text-3);white-space:nowrap}
+.dic .tws-t b{min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:750;color:var(--text)}
+.dic .tws-t .tws-l,.dic .tws-t time{flex:none}
+.dic .tws-t time{color:var(--text-2)}
+.dic .tws .tws-back{height:24px;padding:0 10px;gap:6px;justify-content:center;border-radius:8px;font:650 12px/1 var(--font-ui)}
+.dic .tws .tws-back .ic{width:14px;height:14px}
+.dic .tws .tws-back span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dic.ws-saved .tsub{display:none}
+.dic.ws-saved .ptabs{margin-left:14px}
+.dic.ws-saved.fit .cmdk{width:36px;padding:0;gap:0;justify-content:center}
+.dic.ws-saved.fit .cmdk span,.dic.ws-saved.fit .cmdk kbd{display:none}
+html[data-lang="ta"] .dic.ws-saved.fit .cmdk{width:36px}
+/* Tamil's page names are longer: the page tabs drop their icons while the box is there */
+html[data-lang="ta"] .dic.ws-saved.fit .ptab{gap:0}
+html[data-lang="ta"] .dic.ws-saved.fit .ptab .ic{display:none}
+/* a phone: the box is a line of its own under the top bar's icons, the button at its right */
+.dic:not(.fit) .tws{order:9;flex:1 0 100%;max-width:none;margin:8px 0 0;flex-direction:row;align-items:center;gap:8px;padding:8px 6px 6px 10px}
+.dic:not(.fit) .tws-t{flex:1}
+.dic:not(.fit) .tws .tws-back{flex:none;max-width:56%}
+
+/* the saved copy on the Briefing page says so beside the scope (BriefingBook SavedChip), and a version kept in the written format reads on the
+   page's own card */
+.dic .gl-saved{flex:0 1 auto;min-width:0;display:inline-flex;align-items:center;gap:5px;max-width:330px;height:24px;padding:0 10px;border-radius:var(--r-pill);
+  background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent-line);color:var(--accent-2);font:600 12px var(--font-ui);white-space:nowrap;overflow:hidden}
+.dic .gl-saved .ic{flex:none;width:13px;height:13px}
+.dic .gl-saved b{flex:none;font-weight:750}
+.dic .gl-saved span,.dic .gl-saved time{flex:none;color:var(--text-2)}
+.dic .gl-live{flex:none;height:24px;padding:0 8px;border-radius:var(--r-pill);font:650 12px var(--font-ui);white-space:nowrap}
+.dic .gl-live:hover{background:var(--accent-soft)}
+.dic .gl-text .bb-h{flex-wrap:wrap}
+.dic .gl-text .bb-note{flex:1 1 100%;font-size:12.5px;color:var(--text-3)}
+.dic .gl-md{padding:4px 18px 18px;font-size:14px;line-height:1.55;color:var(--text)}
+.dic:not(.fit) .gl-saved{max-width:100%}
+
+/* the Workspaces window, while a saved workspace is open: which one, and the way back */
+.dic .wview{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--accent-soft);border:1px solid var(--accent-line);font-size:13px;color:var(--text)}
+.dic .wview>.ic{flex:none;width:18px;height:18px;color:var(--accent-2)}
+.dic .wview>span{flex:1;min-width:0}
+.dic .wview .btn{flex:none}
+.dic .wv-i.open{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}

@@ -206,6 +206,11 @@ export function compose(plan: Plan, r: RunResult, w: World, ctx: Ctx): Answer {
     const word = count === 1 ? lw.one : lw.en;
     headline = !count ? (ta ? `${area.ta} ${lw.ta} எதுவும் இல்லை.` : tg ? `${area.en}-la ${lw.en} edhuvum illa.` : `No ${lw.en} ${inWord}${area.en} on the map.`)
       : ta ? `${area.ta} ${n(count)} ${count === 1 ? lw.ta_one : lw.ta}.` : tg ? `${area.en}-la ${n(count)} ${word} irukku.` : `${n(count)} ${word} ${inWord}${area.en}.`;
+    // 28 Nov 2026: the whole layer counts the places in the 3 km band around the district too ("nearest hospital" may be just outside): said
+    const outside = last.op === "take" ? show.items.filter((p) => !p.in_district).length : 0;
+    if (count && outside && outside < count) headline = ta ? `${n(count)} ${lw.ta}: சென்னை மாவட்டத்தில் ${n(count - outside)}, எல்லைக்குச் சற்று வெளியே ${n(outside)}.`
+      : tg ? `${n(count)} ${word}: Chennai district-la ${n(count - outside)}, ellai-ku konjam veliye ${n(outside)}.`
+        : `${n(count)} ${word}: ${n(count - outside)} in Chennai district and ${n(outside)} just outside it.`;
     const gov = show.items.filter((p) => p.government).length;
     const named = show.items.filter((p) => p.name).slice(0, 3).map((p) => (ta ? p.name_ta ?? p.name : p.name));
     if (count) meaning = ta ? `${gov ? `${n(gov)} அரசு. ` : ""}${named.length ? `எ.கா. ${named.join(", ")}.` : ""}`.trim() || null

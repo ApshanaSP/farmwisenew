@@ -7,7 +7,10 @@
 
 export type BaseKind = "map" | "satellite";
 export type Tone = "light" | "dark";
-/** liberty: the light street map; positron: a quieter grey one, for maps of figures; dark: the night map; labels: liberty's names alone, over the imagery */
+/**
+ * liberty: the light street map, every site map's default (in green and yellow since 28 Nov: greenYellow); positron: a quieter grey one, for
+ * maps of figures (the Data Studio's and the chatbot's maps); dark: the night map; labels: liberty's names alone, over the imagery
+ */
 export type VectorStyle = "liberty" | "positron" | "dark" | "labels";
 type Source = Exclude<VectorStyle, "labels">;
 
@@ -208,11 +211,29 @@ export function forChennai(style: StyleDoc): StyleDoc {
   };
 }
 
+/**
+ * The light street map's colours (28 Nov 2026). The owner: the map the site opened on was "light shaded"; they want "the one with green and
+ * yellow shadings" as the default. Liberty lays a light grey over every residential area up to zoom 12 (hsla(0,3%,85%,0.84) at zoom 9), and the
+ * console shows the whole district at about zoom 10, so Chennai opened as a pale grey sheet with faint parks. Here those areas are a soft yellow
+ * and parks, woods and grass a clearer green, as the Map button's own picture (Esri's street map) shows them. Roads keep Liberty's yellow and
+ * orange; water, names, buildings and the rest are unchanged. Layer ids are Liberty's (https://tiles.openfreemap.org/styles/liberty); a layer
+ * the style no longer has is skipped.
+ */
+export const GREEN_YELLOW: Record<string, Record<string, unknown>> = {
+  landuse_residential: { "fill-color": ["interpolate", ["linear"], ["zoom"], 9, "hsla(50,82%,78%,0.58)", 12, "hsla(46,78%,83%,0.48)"] },
+  park: { "fill-color": "#c3e2a6", "fill-opacity": 0.8 },
+  landcover_wood: { "fill-color": "hsla(100,52%,62%,0.8)", "fill-opacity": 0.55 },
+  landcover_grass: { "fill-color": "rgb(176,213,154)", "fill-opacity": 0.5 }
+};
+export function greenYellow(style: StyleDoc): StyleDoc {
+  return { ...style, layers: style.layers.map((l) => (GREEN_YELLOW[l.id] ? { ...l, paint: { ...(l.paint ?? {}), ...GREEN_YELLOW[l.id] } } : l)) };
+}
+
 /** which OpenFreeMap style a picture is made from */
 export const styleSource = (v: VectorStyle): Source => (v === "labels" ? "liberty" : v);
 
 /** The style a sharp map draws: the source style with the changes above. The source is never changed (it is cached). */
 export function prepareStyle(source: StyleDoc, v: VectorStyle, from = 0): StyleDoc {
-  const base = v === "labels" ? labelsOnly(source) : source;
+  const base = v === "labels" ? labelsOnly(source) : v === "liberty" ? greenYellow(source) : source;
   return namesFrom(englishNames(forChennai(base)), from);
 }

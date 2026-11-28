@@ -69,6 +69,21 @@ pipeline:
   hotspot_eps_m: 250
   hotspot_min_samples: 5
 
+dedup:
+  # Within-source duplicates (dintel/dedup.py + dintel/dedupml.py). model: pair features -> sign-constrained logistic
+  # regression -> average-linkage clustering, trained every build on the generators' duplicate truth and saved to
+  # output/models/dedup_model.json for builds without it; used only when its held-out B-cubed F1 beats the rule's.
+  # rule: the old fixed rule with union-find. PWD always uses the rule (no labels exist for it).
+  method: model
+  grievance:
+    window_h: 72          # pairs compared: same complaint type, sub type and department, within this many hours
+    radius_m: 300         # and this far apart (both with a map pin)
+    nopin_rule: true      # complaints without a pin: the rule's same ward + street join (no labelled example to learn from)
+  police:
+    window_h: 4           # same category, incident times this close
+    radius_m: 900
+    cannot_same_channel: true   # two reports from the same channel are never one group (the rule's veto)
+
 wording:
   # Natural wording for the simulated police and PWD records (dintel/realism.py); facts are never changed.
   enabled: true

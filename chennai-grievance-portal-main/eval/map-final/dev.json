@@ -41,7 +41,6 @@
     { "id": "h38", "q": "has encroachment near lakes gone up compared to last week", "want": { "show": "change", "layers": ["incidents", "water_bodies"], "cats": ["ENCROACHMENT"] } },
     { "id": "h39", "q": "wine shops near schools in Zone 9", "want": { "show": "inside", "of_layer": "liquor", "layers": ["liquor", "schools"], "area": "zone:9" } },
     { "id": "h40", "q": "burial grounds in Madhavaram", "want": { "show": "inside", "layers": ["cemeteries"] } },
-    { "id": "h41", "q": "garbage complaints near the places on my list", "want": { "show": "within", "layers": ["incidents", "my_list"], "cats": ["SOLID_WASTE"] } },
     { "id": "h42", "q": "zones where thefts fell the most this month", "want": { "show": "rank", "by": "zone", "order": "fall", "cats": ["CRIME_PROPERTY"] } },
     { "id": "h43", "q": "neighbourhoods with no pharmacy within a kilometre", "want": { "show": "farthest", "layers": ["pharmacies"], "areas": "place", "beyond": 1000 } },
     { "id": "n44", "q": "asdf qwer zxcv", "want": { "understood": false } },

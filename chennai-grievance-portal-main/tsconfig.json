@@ -29,23 +29,26 @@
     }
   },
   "include": [
-    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next-studio/types/**/*.ts",
-    ".next-local/types/**/*.ts",
-    ".next-finaltest/types/**/*.ts",
-    ".next-test/types/**/*.ts",
-    ".next-rehearsal/types/**/*.ts",
-    ".next-studio-hunt/types/**/*.ts",
-    ".next-thunai/types/**/*.ts",
-    ".next-thunai-build/types/**/*.ts",
     ".next-agentbuild/types/**/*.ts",
+    ".next-brain/types/**/*.ts",
+    ".next-finaltest/types/**/*.ts",
+    ".next-layout/types/**/*.ts",
+    ".next-local/types/**/*.ts",
+    ".next-manu/types/**/*.ts",
     ".next-prod/types/**/*.ts",
     ".next-r32/types/**/*.ts",
-    ".next-manu/types/**/*.ts",
-    ".next-ux/types/**/*.ts"
+    ".next-rehearsal/types/**/*.ts",
+    ".next-studio-hunt/types/**/*.ts",
+    ".next-studio/types/**/*.ts",
+    ".next-test/types/**/*.ts",
+    ".next-thunai-build/types/**/*.ts",
+    ".next-thunai/types/**/*.ts",
+    ".next-ux/types/**/*.ts",
+    ".next/types/**/*.ts",
+    "next-env.d.ts",
+    ".next-verify/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

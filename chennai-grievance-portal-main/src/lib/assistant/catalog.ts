@@ -242,12 +242,14 @@ export const POLICY: Record<string, TableSpec> = {
       flood_reports: ["measure", "flood reports", { test: true }], incidents_30d: ["measure", "incidents in 30 days", { test: true }],
       open_incidents: ["measure", "open incidents", { test: true }], open_past_deadline: ["measure", "open past deadline", { test: true }],
       low_lying_index: ["measure", "how low-lying (0-1)"], gi_star_z_30d: ["measure", "hot-spot statistic (Getis-Ord Gi*)", { test: true }],
-      hot_ward: ["flag", "statistically hot ward", { test: true }]
+      hot_ward: ["flag", "statistically hot ward", { test: true }],
+      taluk_share: ["measure", "share of the ward's area in its taluk (0-1), from the official revenue village overlay"],
+      taluk_method: ["label", "how the ward's taluk was found (official_village_overlay; a flagged method when coverage is low)"]
     }
   },
   ref_zones: { db: "intel", d: "The 15 GCC zones.", grain: "one row per zone", test: "0", cap: null, cols: { zone_no: ["id", "zone 1-15"], zone_name: ["label", "zone name"] } },
   ref_taluks: {
-    db: "intel", d: "Revenue taluks (17 in Chennai district, plus Tambaram outside it). Kolathur is an official taluk that the police and PWD sources do not code.",
+    db: "intel", d: "Revenue taluks (17 in Chennai district, plus Tambaram outside it). Kolathur is an official taluk (formed 2024); every ward's taluk comes from the official revenue village boundaries.",
     grain: "one row per taluk", test: "0", cap: null,
     cols: { taluk_code: ["id", "taluk code"], name: ["label", "name"], name_ta: ["label", "Tamil name"], in_district: ["flag", "inside Chennai district"],
       lat: ["geo", "latitude"], lon: ["geo", "longitude"], note: ["label", "note"] }
@@ -380,7 +382,7 @@ export const EXCLUDED_TABLES: Record<string, string> = {
 /** Columns deliberately left out of allowed tables (so the drift check can tell them from new, undescribed ones). */
 export const PRIVATE_COLUMNS: Record<string, string[]> = {
   incidents: ["summary", "officer", "vulnerable", "severity_reasons", "priority_reasons", "attention_reason", "review_reason", "channels", "depts_involved",
-    "support_depts", "occurred_at_est", "spread_m", "reliability", "sla_basis", "sla_ratio"],
+    "support_depts", "occurred_at_est", "spread_m", "reliability", "sla_basis", "sla_ratio", "score_why", "sla_source"],
   events: ["reporter_hash", "text", "title", "deep_link", "source_record_id", "snapshot_sha256", "simhash", "officer", "place_text", "lat", "lon",
     "loc_precision_m", "category_src", "subcategory_src", "dept_src", "taluk_src", "support_depts", "time_precision", "issue_age_claimed_days", "junk_flag",
     "category_conf", "category_method", "geo_level", "geo_method", "geo_conf", "affected_imputed", "vulnerable_flags", "hazard_flag", "access_blocked",
@@ -394,11 +396,11 @@ export const PRIVATE_COLUMNS: Record<string, string[]> = {
   review_queue: ["item_id", "evidence"],
   data_quality: ["examples"],
   world_calendar: ["reflected_by"],
-  ref_wards: ["geometry", "adjacent_wards", "taluk_vote_share"],
+  ref_wards: ["geometry", "adjacent_wards", "taluk_others"],
   ref_zones: ["outline"],
   ref_taluks: ["police_code", "pwd_code", "aliases"],
   ref_categories: ["support_depts", "link_window_h", "link_radius_m"],
-  ref_departments: ["source_names"],
+  ref_departments: ["source_names", "sla_source", "sla_related"],
   ref_facilities: ["address", "precision_m", "source", "same_as", "downstream_taluks"],
   ref_offices: ["officer_name", "phone", "email", "taluk_codes_covered"],
   mandi_market_prices: ["fetched_at"], mandi_prices: ["fetched_at"], mandi_weekly: ["fetched_at"],

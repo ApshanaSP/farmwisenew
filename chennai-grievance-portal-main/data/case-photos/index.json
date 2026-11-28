@@ -1,0 +1,201 @@
+{
+ "about": "Generated photos (not real photographs) used as the 'after' photo of the daily generated resolutions (src/lib/cases/synthetic.ts). Append only: a report folder names its photo by its place in `files`. Made by scripts/build-case-photos.cjs.",
+ "files": [
+  {
+   "file": "garbage-1.jpg",
+   "group": "garbage",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a clean dry street corner where a garbage heap was just cleared, swept tarmac, white lime powder sprinkled on the ground, an empty green municipal waste bin against a compound wall"
+  },
+  {
+   "file": "garbage-2.jpg",
+   "group": "garbage",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a cleared vacant plot beside a residential street, swept ground sprinkled with white bleaching powder, an empty blue municipal bin"
+  },
+  {
+   "file": "streetlight-1.jpg",
+   "group": "streetlight",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a new LED street light glowing on a concrete pole over a quiet residential street at dusk"
+  },
+  {
+   "file": "streetlight-2.jpg",
+   "group": "streetlight",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "LED street lights lit along a narrow residential lane in the early evening, houses with gates on both sides"
+  },
+  {
+   "file": "waterlogging-1.jpg",
+   "group": "waterlogging",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a dry city road after the flood water was drained, damp tarmac with no standing water, a cleaned storm-water drain grating at the kerb"
+  },
+  {
+   "file": "waterlogging-2.jpg",
+   "group": "waterlogging",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a dry sunny residential road after the rainwater was pumped out, no water on the road, a cleaned drain inlet grating at the kerb, a rolled hose at the roadside"
+  },
+  {
+   "file": "drain-2.jpg",
+   "group": "drain",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a cleaned roadside drain channel with new concrete slab covers placed over it"
+  },
+  {
+   "file": "drain-1.jpg",
+   "group": "drain",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "an open concrete storm-water drain cleaned of silt beside a road, water flowing, removed silt heaped neatly at the side"
+  },
+  {
+   "file": "road-1.jpg",
+   "group": "road",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a smooth city road with a fresh square patch of new black asphalt where a pothole was filled, the patch level with the road"
+  },
+  {
+   "file": "road-2.jpg",
+   "group": "road",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a resurfaced stretch of city road with fresh asphalt and a newly levelled footpath edge"
+  },
+  {
+   "file": "toilet-1.jpg",
+   "group": "toilet",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "the outside of a clean public toilet block with tiled walls and freshly washed floor, doors open, small building"
+  },
+  {
+   "file": "toilet-2.jpg",
+   "group": "toilet",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a clean washbasin area of a public toilet with tiled walls, floor washed, daylight from a window"
+  },
+  {
+   "file": "barricade-1.jpg",
+   "group": "barricade",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "orange and white striped plastic road barricades standing in a row around a rectangular excavated pit at the side of a city road, dry day"
+  },
+  {
+   "file": "barricade-2.jpg",
+   "group": "barricade",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a line of red and white metal barricades with reflective strips fencing off a roadside trench, a steel plate laid over the trench at a crossing"
+  },
+  {
+   "file": "tree-1.jpg",
+   "group": "tree",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a fallen tree cut into logs and stacked at the roadside, the road clear, the footpath swept"
+  },
+  {
+   "file": "tree-2.jpg",
+   "group": "tree",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a road shoulder where a fallen tree was cut up and removed, a few cut logs stacked neatly, sawdust on the ground, the road clear"
+  },
+  {
+   "file": "footpath-1.jpg",
+   "group": "footpath",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a clear tiled pedestrian footpath along a commercial street after encroachments were removed"
+  },
+  {
+   "file": "footpath-2.jpg",
+   "group": "footpath",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a clear road shoulder and footpath with a no parking signpost, no vehicles parked"
+  },
+  {
+   "file": "junction-2.jpg",
+   "group": "junction",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a clear city road junction with a median and traffic signal, the road clean"
+  },
+  {
+   "file": "junction-1.jpg",
+   "group": "junction",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a road junction cleared after an accident, the road swept, traffic cones stacked at the edge"
+  },
+  {
+   "file": "pipe-1.jpg",
+   "group": "pipe",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a repaired water pipeline in a small pit at the roadside, a new pipe joint visible, sand ready to refill the pit"
+  },
+  {
+   "file": "wall-2.jpg",
+   "group": "wall",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a section of brick wall brought down safely with the bricks stacked neatly beside it"
+  },
+  {
+   "file": "bund-1.jpg",
+   "group": "bund",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a lake bund strengthened with stacked sandbags along the water's edge"
+  },
+  {
+   "file": "pipe-2.jpg",
+   "group": "pipe",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a freshly refilled and levelled patch of dry earth beside a road where a water pipe was repaired, a new valve chamber cover in the ground"
+  },
+  {
+   "file": "bund-2.jpg",
+   "group": "bund",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a cleared sluice gate at a lake inlet, silt removed, water flowing through"
+  },
+  {
+   "file": "wall-1.jpg",
+   "group": "wall",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "an old damaged compound wall propped with wooden supports and fenced with red and white barricade tape"
+  },
+  {
+   "file": "street-1.jpg",
+   "group": "street",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a quiet clean residential street in the morning, swept road, houses with gates"
+  },
+  {
+   "file": "street-2.jpg",
+   "group": "street",
+   "source": "AI Horde (aihorde.net, anonymous), AlbedoBase XL (SDXL)",
+   "made": "2026-11-27",
+   "prompt": "a clean dry lane with concrete slabs covering the drains, the road swept, houses with gates, early morning light"
+  }
+ ]
+}

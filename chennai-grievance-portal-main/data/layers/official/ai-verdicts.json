@@ -1,0 +1,587 @@
+{
+ "model": "openai/gpt-oss-120b",
+ "at": "2026-11-28T01:20:27.548Z",
+ "verdicts": {
+  "colleges|osm:n10266829567": {
+   "name": "R Square Academy",
+   "v": "drop",
+   "why": "AI: Coaching centre, not degree-granting"
+  },
+  "colleges|osm:n10653634259": {
+   "name": "Indian Institute of Information Technology Design and Manufacturing Kancheepuram",
+   "v": "keep",
+   "why": "AI: Degree-granting IITDM institute"
+  },
+  "colleges|osm:n13348614701": {
+   "name": "Institute for Energy Studies (IES)",
+   "v": "drop",
+   "why": "AI: Research centre, no degrees"
+  },
+  "colleges|osm:n13378366146": {
+   "name": "Center of Advanced studies",
+   "v": "drop",
+   "why": "AI: Generic centre, not college"
+  },
+  "colleges|osm:n432468200": {
+   "name": "Mechatronics",
+   "v": "drop",
+   "why": "AI: Just a field name"
+  },
+  "colleges|osm:n5372361521": {
+   "name": "Loyola Institute of Business Administration",
+   "v": "keep",
+   "why": "AI: MBA college, degree programs"
+  },
+  "colleges|osm:w1444733268": {
+   "name": "Central Institute of Classical Tamil",
+   "v": "drop",
+   "why": "AI: Research institute, no degrees"
+  },
+  "colleges|osm:w29046944": {
+   "name": "Kalakshetra School of Fine Arts",
+   "v": "drop",
+   "why": "AI: Fine arts school, not college"
+  },
+  "colleges|osm:w29116127": {
+   "name": "School of Optometry",
+   "v": "drop",
+   "why": "AI: Optometry school, not independent college"
+  },
+  "colleges|osm:w30348389": {
+   "name": "Rani Meyammai School",
+   "v": "drop",
+   "why": "AI: Primary school"
+  },
+  "colleges|osm:w30749075": {
+   "name": "Madras Insitute of Technology - MIT Chromepet",
+   "v": "keep",
+   "why": "AI: Engineering college, degree-granting"
+  },
+  "colleges|osm:w30973303": {
+   "name": "Institute of Mental Health - Kilpauk",
+   "v": "drop",
+   "why": "AI: Mental health hospital"
+  },
+  "colleges|osm:w31240968": {
+   "name": "National Institute for Siddha",
+   "v": "drop",
+   "why": "AI: Research institute, not degree college"
+  },
+  "colleges|osm:w31276232": {
+   "name": "Rubber and Plastics Technology",
+   "v": "drop",
+   "why": "AI: Training institute, not college"
+  },
+  "colleges|osm:w326514371": {
+   "name": "St.Peter’s Institute of Higher Education and Research,Avadi,",
+   "v": "keep",
+   "why": "AI: Higher education institute, degree programs"
+  },
+  "schools|osm:n11848217940": {
+   "name": "Department of Computer science",
+   "v": "drop",
+   "why": "AI: university department"
+  },
+  "schools|osm:n11848217941": {
+   "name": "Department of Electronics",
+   "v": "drop",
+   "why": "AI: university department"
+  },
+  "schools|osm:n11848217942": {
+   "name": "Computer Science Laboratory",
+   "v": "drop",
+   "why": "AI: lab not school"
+  },
+  "schools|osm:n11848217943": {
+   "name": "Department of Electrical & Electronics Engg.",
+   "v": "drop",
+   "why": "AI: university department"
+  },
+  "schools|osm:n11848217944": {
+   "name": "Department of Mechanical Engg.",
+   "v": "drop",
+   "why": "AI: university department"
+  },
+  "schools|osm:n11848217946": {
+   "name": "Machine Shop & Drawing Hall",
+   "v": "drop",
+   "why": "AI: workshop facility"
+  },
+  "schools|osm:n11848217947": {
+   "name": "Bio Medical Laboratory",
+   "v": "drop",
+   "why": "AI: lab not school"
+  },
+  "schools|osm:n11917025570": {
+   "name": "The dance crew",
+   "v": "drop",
+   "why": "AI: dance group"
+  },
+  "schools|osm:n12407599025": {
+   "name": "Chemical department",
+   "v": "drop",
+   "why": "AI: department not school"
+  },
+  "schools|osm:n12894184501": {
+   "name": "Zemcode Medical Coding Training",
+   "v": "drop",
+   "why": "AI: training centre"
+  },
+  "schools|osm:n1596154407": {
+   "name": "Lets do Something - Activity center",
+   "v": "drop",
+   "why": "AI: activity centre"
+  },
+  "schools|osm:n1636171309": {
+   "name": "SAN Academy",
+   "v": "drop",
+   "why": "AI: likely coaching"
+  },
+  "schools|osm:n2117671390": {
+   "name": "National Institute of Management Studies",
+   "v": "drop",
+   "why": "AI: management institute"
+  },
+  "schools|osm:n2124854755": {
+   "name": "Global Institute Of Gaming And Animation",
+   "v": "drop",
+   "why": "AI: gaming institute"
+  },
+  "schools|osm:n3998858427": {
+   "name": "தென் இந்திய இந்தி பரப்புரை கூட்டமைப்பு",
+   "v": "drop",
+   "why": "AI: language association"
+  },
+  "schools|osm:n4377440092": {
+   "name": "Target soft solution",
+   "v": "drop",
+   "why": "AI: company"
+  },
+  "schools|osm:n4383204790": {
+   "name": "KYM",
+   "v": "drop",
+   "why": "AI: unknown, not school"
+  },
+  "schools|osm:n6356479646": {
+   "name": "Bala Mandir Kamaraj Trust",
+   "v": "drop",
+   "why": "AI: trust, unclear school"
+  },
+  "schools|osm:n747616456": {
+   "name": "Akshaya",
+   "v": "drop",
+   "why": "AI: ambiguous, not confirmed"
+  },
+  "schools|osm:n7723762942": {
+   "name": "Peace Academy Chennai",
+   "v": "keep",
+   "why": "AI: academy likely school"
+  },
+  "schools|osm:n934859077": {
+   "name": "La Chatlaine",
+   "v": "drop",
+   "why": "AI: restaurant name"
+  },
+  "schools|osm:n941467495": {
+   "name": "Kolla Perumal (KPVCSS)",
+   "v": "keep",
+   "why": "AI: KPVCSS indicates school"
+  },
+  "schools|osm:w237099388": {
+   "name": "HLC International",
+   "v": "drop",
+   "why": "AI: ambiguous, not school"
+  },
+  "schools|osm:w27643187": {
+   "name": "Saint Francis Xavier",
+   "v": "keep",
+   "why": "AI: named school"
+  },
+  "schools|osm:w28402586": {
+   "name": "Sir Sivasamy Kalyana",
+   "v": "drop",
+   "why": "AI: marriage hall"
+  },
+  "schools|osm:w28563210": {
+   "name": "Avvai Home",
+   "v": "drop",
+   "why": "AI: home care facility"
+  },
+  "schools|osm:w28563224": {
+   "name": "Sishya",
+   "v": "keep",
+   "why": "AI: known school"
+  },
+  "schools|osm:w30347107": {
+   "name": "Saint Michaels Academy",
+   "v": "keep",
+   "why": "AI: academy likely school"
+  },
+  "schools|osm:w33622438": {
+   "name": "Bhavans",
+   "v": "keep",
+   "why": "AI: Bhavan's school chain"
+  },
+  "schools|osm:w34230318": {
+   "name": "Hindi Prachar Sabha",
+   "v": "drop",
+   "why": "AI: language promotion org"
+  },
+  "schools|osm:w35572295": {
+   "name": "Spastic Society of india",
+   "v": "drop",
+   "why": "AI: disability society"
+  },
+  "schools|osm:w47497721": {
+   "name": "Bharat Scouts and Guides",
+   "v": "drop",
+   "why": "AI: scouting organization"
+  },
+  "hospitals|osm:n11468740371": {
+   "name": "SMF",
+   "v": "drop",
+   "why": "AI: Unclear, likely not medical"
+  },
+  "hospitals|osm:n12611351201": {
+   "name": "Just Kids Child Cliinc",
+   "v": "keep",
+   "why": "AI: Name indicates child clinic",
+   "kind": "clinic"
+  },
+  "hospitals|osm:n13738124430": {
+   "name": "Vee Kay",
+   "v": "drop",
+   "why": "AI: Vague, no medical indication"
+  },
+  "hospitals|osm:n248420920": {
+   "name": "Kalaignar Karunanidhi Nagar",
+   "v": "drop",
+   "why": "AI: Place name, not facility"
+  },
+  "hospitals|osm:n248559397": {
+   "name": "Koyambedu",
+   "v": "drop",
+   "why": "AI: Area name"
+  },
+  "hospitals|osm:n248560797": {
+   "name": "Kasimedu",
+   "v": "drop",
+   "why": "AI: Area name"
+  },
+  "hospitals|osm:n295552091": {
+   "name": "Sundaram Medical Foundation",
+   "v": "keep",
+   "why": "AI: Medical foundation suggests hospital",
+   "kind": "hospital"
+  },
+  "hospitals|osm:n320275824": {
+   "name": "Institute of Child Health",
+   "v": "keep",
+   "why": "AI: Institute of Child Health",
+   "kind": "hospital"
+  },
+  "hospitals|osm:n320275839": {
+   "name": "Institute of Obstetrics and Gynaecology dd",
+   "v": "keep",
+   "why": "AI: Obstetrics and Gynaecology institute",
+   "kind": "hospital"
+  },
+  "hospitals|osm:n4488082604": {
+   "name": "SRM Institutes For Medical Science",
+   "v": "keep",
+   "why": "AI: Medical science institute hospital",
+   "kind": "hospital"
+  },
+  "hospitals|osm:n4764302980": {
+   "name": "HEALTH",
+   "v": "drop",
+   "why": "AI: Too generic"
+  },
+  "hospitals|osm:n5525433061": {
+   "name": "King Institute of Preventive Medicine and Research",
+   "v": "drop",
+   "why": "AI: Research lab, not treatment"
+  },
+  "hospitals|osm:n6933833923": {
+   "name": "Life Medhospital",
+   "v": "keep",
+   "why": "AI: Medhospital indicates hospital",
+   "kind": "hospital"
+  },
+  "hospitals|osm:n6934325849": {
+   "name": "N.R. Medical Home Private Limited",
+   "v": "keep",
+   "why": "AI: Medical Home suggests clinic",
+   "kind": "clinic"
+  },
+  "hospitals|osm:n6936315219": {
+   "name": "Spandana Surgical Centre",
+   "v": "keep",
+   "why": "AI: Surgical Centre provides care",
+   "kind": "clinic"
+  },
+  "hospitals|osm:n6936359934": {
+   "name": "Lalitha Nurshing Home",
+   "v": "keep",
+   "why": "AI: Nursing home provides care",
+   "kind": "health_centre"
+  },
+  "hospitals|osm:n6936695178": {
+   "name": "Women and Children Foundation",
+   "v": "drop",
+   "why": "AI: Foundation, not treatment centre"
+  },
+  "hospitals|osm:n7252256149": {
+   "name": "UHP, Kodungaiyur 1",
+   "v": "keep",
+   "why": "AI: UHP = primary health centre",
+   "kind": "health_centre"
+  },
+  "hospitals|osm:n7252256189": {
+   "name": "UHPC, Ernavur",
+   "v": "keep",
+   "why": "AI: UHPC denotes health centre",
+   "kind": "health_centre"
+  },
+  "hospitals|osm:n7252256214": {
+   "name": "UHP, Kodungaiyur 2",
+   "v": "keep",
+   "why": "AI: UHP primary health centre",
+   "kind": "health_centre"
+  },
+  "hospitals|osm:n7252333312": {
+   "name": "Irch Uhp",
+   "v": "keep",
+   "why": "AI: UHP health centre",
+   "kind": "health_centre"
+  },
+  "hospitals|osm:n7252333346": {
+   "name": "Srisaihospital With Matrinity Facility",
+   "v": "keep",
+   "why": "AI: Hospital with maternity facility",
+   "kind": "hospital"
+  },
+  "hospitals|osm:n7252333365": {
+   "name": "Sanjeevirayanpet UHP",
+   "v": "keep",
+   "why": "AI: UHP health centre",
+   "kind": "health_centre"
+  },
+  "hospitals|osm:n7252333366": {
+   "name": "Padi UCHC",
+   "v": "keep",
+   "why": "AI: UCHC = community health centre",
+   "kind": "health_centre"
+  },
+  "hospitals|osm:n7252333369": {
+   "name": "Tanker Dialysis Foundation Unit",
+   "v": "keep",
+   "why": "AI: Dialysis unit provides treatment",
+   "kind": "health_centre"
+  },
+  "hospitals|osm:n7252333399": {
+   "name": "Dr.Rai Cbcc Centre",
+   "v": "keep",
+   "why": "AI: CBCC centre likely clinic",
+   "kind": "clinic"
+  },
+  "hospitals|osm:n7257289121": {
+   "name": "Vn Allergy & Asthma Research Centre",
+   "v": "drop",
+   "why": "AI: Research centre, not primary care"
+  },
+  "hospitals|osm:n7257421540": {
+   "name": "Sunrays Laproscopic Centre",
+   "v": "keep",
+   "why": "AI: Laparoscopic centre offers surgery",
+   "kind": "clinic"
+  },
+  "hospitals|osm:n7257421592": {
+   "name": "UCHC Perungudi",
+   "v": "keep",
+   "why": "AI: UCHC community health centre",
+   "kind": "health_centre"
+  },
+  "hospitals|osm:n7819840755": {
+   "name": "Sri Venkatesvara Physio and Obesity Centre",
+   "v": "drop",
+   "why": "AI: Physio only, not medical"
+  },
+  "hospitals|osm:n7822259992": {
+   "name": "Centre For Vision and Eye Surgery",
+   "v": "keep",
+   "why": "AI: Eye surgery clinic",
+   "kind": "clinic"
+  },
+  "hospitals|osm:n7822260007": {
+   "name": "Sai Babaji's Accupuncture Centre",
+   "v": "drop",
+   "why": "AI: Acupuncture alternative service"
+  },
+  "hospitals|osm:n7822260033": {
+   "name": "Dhanvantri Multi Speciality",
+   "v": "keep",
+   "why": "AI: Multi speciality hospital",
+   "kind": "hospital"
+  },
+  "hospitals|osm:n7822543448": {
+   "name": "Puthur Kattu",
+   "v": "drop",
+   "why": "AI: Place name"
+  },
+  "hospitals|osm:n7822543498": {
+   "name": "Venus Accupoint",
+   "v": "drop",
+   "why": "AI: Acupuncture centre"
+  },
+  "hospitals|osm:n7822543504": {
+   "name": "Thyrocare",
+   "v": "drop",
+   "why": "AI: Laboratory service"
+  },
+  "hospitals|osm:n7823212572": {
+   "name": "Turiya Care",
+   "v": "drop",
+   "why": "AI: Wellness name, unclear"
+  },
+  "hospitals|osm:n7823415042": {
+   "name": "Jeyam Gastro Clinc",
+   "v": "keep",
+   "why": "AI: Gastro clinic",
+   "kind": "clinic"
+  },
+  "hospitals|osm:n7823415063": {
+   "name": "Akshi Vision Therapy",
+   "v": "drop",
+   "why": "AI: Vision therapy, not medical"
+  },
+  "hospitals|osm:n7823776199": {
+   "name": "Pranic Health",
+   "v": "drop",
+   "why": "AI: Alternative health name"
+  },
+  "hospitals|osm:n7823776211": {
+   "name": "Pulmo Care",
+   "v": "keep",
+   "why": "AI: Name suggests medical clinic",
+   "kind": "clinic"
+  },
+  "hospitals|osm:n7823776220": {
+   "name": "Skin Doctor",
+   "v": "keep",
+   "why": "AI: Dermatology clinic",
+   "kind": "clinic"
+  },
+  "hospitals|osm:n7823776234": {
+   "name": "Cura Health Plus",
+   "v": "keep",
+   "why": "AI: General health centre wording",
+   "kind": "health_centre"
+  },
+  "hospitals|osm:n7824965218": {
+   "name": "Navakar I Care",
+   "v": "keep",
+   "why": "AI: Care centre implies clinic",
+   "kind": "clinic"
+  },
+  "hospitals|osm:n7824965225": {
+   "name": "Centre For Gastro Esophageal Disorders",
+   "v": "keep",
+   "why": "AI: Specialist centre for disorders",
+   "kind": "clinic"
+  },
+  "hospitals|osm:n7824965239": {
+   "name": "Vardhman Multispeciality",
+   "v": "keep",
+   "why": "AI: Multispeciality indicates hospital",
+   "kind": "hospital"
+  },
+  "hospitals|osm:n7824965255": {
+   "name": "Psy Hub, Brain and Behaviour",
+   "v": "keep",
+   "why": "AI: Psychology hub clinic",
+   "kind": "clinic"
+  },
+  "hospitals|osm:n7825002784": {
+   "name": "Obg Health Point",
+   "v": "keep",
+   "why": "AI: OBGYN point of care",
+   "kind": "clinic"
+  },
+  "hospitals|osm:n7825009785": {
+   "name": "Spectrum Pediatric Therapy",
+   "v": "keep",
+   "why": "AI: Pediatric therapy clinic",
+   "kind": "clinic"
+  },
+  "hospitals|osm:n7825009788": {
+   "name": "Hiran Eye Retina Centre",
+   "v": "keep",
+   "why": "AI: Eye retina clinic",
+   "kind": "clinic"
+  },
+  "hospitals|osm:n7825009798": {
+   "name": "Kolathur Multi Speciality and Research Centre",
+   "v": "keep",
+   "why": "AI: Multi‑speciality research centre",
+   "kind": "hospital"
+  },
+  "hospitals|osm:n7953367285": {
+   "name": "Nalam marithuvamanai",
+   "v": "keep",
+   "why": "AI: Tamil term for health centre",
+   "kind": "health_centre"
+  },
+  "hospitals|osm:n9404372922": {
+   "name": "Infirmary",
+   "v": "keep",
+   "why": "AI: Infirmary denotes hospital",
+   "kind": "hospital"
+  },
+  "hospitals|osm:n9444720904": {
+   "name": "4 Squares Dentistry",
+   "v": "drop",
+   "why": "AI: Dental clinic not medical"
+  },
+  "hospitals|osm:n9932743017": {
+   "name": "ESIC korattur",
+   "v": "keep",
+   "why": "AI: ESIC provides hospital services",
+   "kind": "hospital"
+  },
+  "hospitals|osm:w1373636356": {
+   "name": "Chennai Urology & Robotics Institute",
+   "v": "keep",
+   "why": "AI: Urology institute offers outpatient care",
+   "kind": "clinic"
+  },
+  "hospitals|osm:w1428318904": {
+   "name": "Gynmc PG Block",
+   "v": "keep",
+   "why": "AI: PG block of a teaching hospital",
+   "kind": "hospital"
+  },
+  "hospitals|osm:w28493363": {
+   "name": "Sri Ramachandra Institute of Higher Education and Research",
+   "v": "keep",
+   "why": "AI: Medical institute with hospital",
+   "kind": "hospital"
+  },
+  "hospitals|osm:w32686766": {
+   "name": "King's Institute of Preventive Medicine & Research",
+   "v": "drop",
+   "why": "AI: Research institute, no patient care"
+  },
+  "hospitals|osm:w343141649": {
+   "name": "Vasan",
+   "v": "drop",
+   "why": "AI: Name too vague, likely not medical"
+  },
+  "hospitals|osm:w765605778": {
+   "name": "Gleneagles Global Heath City",
+   "v": "keep",
+   "why": "AI: Gleneagles is a hospital chain",
+   "kind": "hospital"
+  }
+ }
+}

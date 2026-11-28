@@ -23,8 +23,6 @@ vi.mock("@/lib/collector/db", () => ({
 vi.mock("@/lib/collector/intel", () => ({ asOf: async () => "2026-11-23 10:00:00", exportMeta: async () => { h.meta++; return { build_id: "b1" }; } }));
 vi.mock("@/lib/collector/geo", () => ({ mapGeo: async () => ({ wards: [], zones: [], taluks: [] }) }));
 vi.mock("@/lib/collector/nlp", async (orig) => ({ ...(await orig<object>()), categories: () => [], gazetteerEntries: async () => [] }));
-vi.mock("./uploads", () => ({ myListPoints: () => LISTS }));
-const LISTS: never[] = [];
 
 import { bumpDataEpoch } from "@/lib/collector/epoch";
 import { OVERLAY_MS, world } from "./world";

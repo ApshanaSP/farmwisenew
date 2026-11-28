@@ -10,7 +10,7 @@ vi.mock("@/components/collector/app/askmap/AskOverlay", () => ({ default: () => 
 (globalThis as { React?: unknown }).React = React;
 
 const { PERIODS } = await import("@/lib/collector/intel");
-const { OverviewPage, ResolvedKpi } = await import("./Board");
+const { HeroKpis, ResolvedKpi } = await import("./Board");
 const { translate } = await import("@/components/i18n/Translator");
 
 type El = { type?: unknown; props?: { label?: string; children?: unknown } };
@@ -24,7 +24,8 @@ const tile = (period: keyof typeof PERIODS) => {
   const kpi = { severe: 1, ongoing: 2, complaints: 3, resolved: 4 };
   const c = { ov: { period, periodInfo: PERIODS[period], board: { kpi: { cur: kpi, prev: kpi, series: { severe: [], ongoing: [] } } }, counts: { new: 0, newSerious: 0 },
     resolved: { cur: 4, prev: 3, series: [] } }, openList: () => undefined };
-  return find(OverviewPage({ c: c as never, goGrievances: () => undefined, openContacts: () => undefined, openNews: () => undefined }), ResolvedKpi);
+  // 28 Nov: the count tiles are the band's (Board.tsx HeroKpis), on the one-page console
+  return find(HeroKpis({ c: c as never }), ResolvedKpi);
 };
 
 describe("fixall-board-resolved-01: the officer's Resolved tile says what it counts", () => {

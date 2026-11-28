@@ -84,7 +84,8 @@ describe("RC-46 source rules (copy of layout.pass4.test.ts)", () => {
   });
   it("the top bar, bottom bar and footer change at one width", () => {
     const h = read("components/Header.tsx"), f = read("components/Footer.tsx");
-    const top = h.match(/p-1 (\w+):flex"/)?.[1], bottom = h.match(/backdrop-blur-xl (\w+):hidden"/)?.[1], foot = f.match(/mb-16 (\w+):mb-0/)?.[1];
+    // 28 Nov: the consoles' top bar (citizen.css): the tabs are `cz-tabs hidden lg:flex`, the bottom bar `cz-bbar lg:hidden`
+    const top = h.match(/className="cz-tabs hidden (\w+):flex"/)?.[1], bottom = h.match(/className="cz-bbar (\w+):hidden"/)?.[1], foot = f.match(/mb-16 (\w+):mb-0/)?.[1];
     expect(top).toBeTruthy(); expect(bottom).toBe(top); expect(foot).toBe(top);
   });
   it("the alert details close on an outside press and on Escape", () => {

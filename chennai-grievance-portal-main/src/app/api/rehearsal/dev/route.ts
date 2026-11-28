@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
       case "reach": return NextResponse.json(await facilityReach(String(p.get("id")), o));
       case "tasks": return NextResponse.json({ dept: p.get("dept"), tasks: await readTasks({ dept: String(p.get("dept")) }) });
       case "geo": return NextResponse.json(await mapGeo());
-      case "rains": return NextResponse.json(await pastRains());
+      case "rains": return NextResponse.json((await import("@/lib/rehearsal/satflood")).withRainData(await pastRains()));
       case "impacts": {
         const lens = p.get("lens") as Lens;
         return LENSES.includes(lens) ? NextResponse.json(await impacts(lens)) : NextResponse.json({ error: "Ask for traffic, power or metro." }, { status: 400 });

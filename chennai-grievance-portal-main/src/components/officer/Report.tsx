@@ -66,7 +66,8 @@ export function SendReport({ row, c, onSent }: { row: Row; c: Ctx; onSent: (step
   const send = async (step: "send" | "close") => {
     const text = remarks.trim();
     if (text.length < OFFICER.minRemarks) { setErr("Write remarks describing the work done."); return; }
-    if (!photos.length) { setErr("Attach at least one photo of the completed work."); return; }
+    // the owner's rule (lib/cases/rules.ts, checked again on the server): a photo is required to send to the Collector, optional to close
+    if (!photos.length && step === "send") { setErr("Attach at least one photo of the completed work: the Collector approves the work from your photos."); return; }
     setBusy(true);
     setGoing(step);
     setErr("");
@@ -122,14 +123,17 @@ export function SendReport({ row, c, onSent }: { row: Row; c: Ctx; onSent: (step
       {err && <div className="oerr" role="alert">{err}</div>}
       <div className="osend-f">
         <button className="btn plain" onClick={c.closeAll} disabled={busy}>Cancel</button>
-        {!severe && <span className="hint" style={{ marginRight: "auto" }}>{sevLabel(row.sev)}: your department verifies and closes it, or sends it to the Collector for approval.</span>}
-        {!severe && (
+        {!severe && <span className="hint" style={{ marginRight: "auto" }}>{sevLabel(row.sev)}: your department verifies and closes it (a photo is optional), or sends it to the Collector for approval (with a photo).</span>}
+        {/* the drawer's choice (row.intent): only that button; opened from anywhere else, both */}
+        {!severe && row.intent !== "close" && (
           <button className="btn plain" onClick={() => send("send")} disabled={busy} title="The Collector checks your report and closes the case, or sends it back">
             {busy && going === "send" ? <><I n="refresh" className="spin" />Sending…</> : <><I n="send" />Send to Collector for approval</>}
           </button>
         )}
-        <button className="btn" onClick={() => send(severe ? "send" : "close")} disabled={busy}>{busy && (severe || going === "close") ? <><I n="refresh" className="spin" />{severe ? "Sending…" : "Closing…"}</>
-          : severe ? <><I n="send" />Send to Collector</> : <><I n="check" />Close as done</>}</button>
+        {(severe || row.intent !== "send") && (
+          <button className="btn" onClick={() => send(severe ? "send" : "close")} disabled={busy}>{busy && (severe || going === "close") ? <><I n="refresh" className="spin" />{severe ? "Sending…" : "Closing…"}</>
+            : severe ? <><I n="send" />Send to Collector</> : <><I n="check" />Close as done</>}</button>
+        )}
       </div>
     </div>
   );

@@ -18,13 +18,15 @@ const TOGGLE: { id: LayerId; en: string }[] = [
   { id: "schools", en: "Schools" }, { id: "colleges", en: "Colleges" }, { id: "hospitals", en: "Hospitals" }, { id: "fire_stations", en: "Fire stations" },
   { id: "police", en: "Police stations" }, { id: "rail_metro", en: "Rail and metro" }, { id: "water_bodies", en: "Lakes and ponds" }, { id: "waterways", en: "Rivers and canals" }
 ];
+/** the layers whose OpenStreetMap places are checked against official lists (scripts/build-official-places.mjs, 28 Nov 2026) */
+const CHECKED = new Set<LayerId>(["schools", "colleges", "hospitals", "fire_stations"]);
 /** the Collector's own layers (OpenStreetMap; `partial`: OSM lists only some of them, said on the map) */
 const COLLECTOR: { id: LayerId; en: string; partial?: true }[] = [
   { id: "banks", en: "Banks", partial: true }, { id: "atms", en: "ATMs", partial: true }, { id: "ration_shops", en: "Ration shops (by name)", partial: true },
   { id: "liquor", en: "Wine shops and bars", partial: true }, { id: "worship", en: "Places of worship" }, { id: "parks", en: "Parks and playgrounds" },
   { id: "water_tanks", en: "Water tanks", partial: true }, { id: "toilets", en: "Public toilets", partial: true }, { id: "bus_stations", en: "Bus stations" },
   { id: "gov_offices", en: "Government offices and courts" }, { id: "pharmacies", en: "Pharmacies" }, { id: "fuel", en: "Fuel stations" }, { id: "markets", en: "Markets" },
-  { id: "cemeteries", en: "Cemeteries and crematoriums" }, { id: "my_list", en: "Your approved lists" }
+  { id: "cemeteries", en: "Cemeteries and crematoriums" }
 ];
 /** live feeds with a place: the latest reading at each, drawn as a value on the map */
 const LIVE = [
@@ -104,12 +106,12 @@ export function useMapChrome(ask: MapAsk | null) {
       <h6>The Collector&apos;s layers</h6>
       {COLLECTOR.map((t) => (
         <label key={t.id}><input type="checkbox" checked={!!on[t.id] || loading.has(t.id)} onChange={() => toggle(t.id)} /><i className="amlayer-dot" style={{ background: LAYER_COL[t.id] ?? "#94A3B8" }} />{t.en}
-          <small style={{ marginLeft: "auto", color: "var(--text-3)" }} title={t.partial ? "OpenStreetMap lists only some of these: not the full list" : undefined}>{t.id === "my_list" ? "yours" : t.partial ? "OSM, part" : "OSM"}</small></label>
+          <small style={{ marginLeft: "auto", color: "var(--text-3)" }} title={t.partial ? "OpenStreetMap lists only some of these: not the full list" : undefined}>{t.partial ? "OSM, part" : "OSM"}</small></label>
       ))}
       <h6>Facilities and water</h6>
       {TOGGLE.map((t) => (
         <label key={t.id}><input type="checkbox" checked={!!on[t.id] || loading.has(t.id)} onChange={() => toggle(t.id)} />{t.en}
-          <small style={{ marginLeft: "auto", color: "var(--text-3)" }}>{t.id === "police" ? "store" : "OSM"}</small></label>
+          <small style={{ marginLeft: "auto", color: "var(--text-3)" }} title={CHECKED.has(t.id) ? "OpenStreetMap places checked against official lists: only real ones are drawn" : undefined}>{t.id === "police" ? "store" : t.id === "rail_metro" ? "timetables" : CHECKED.has(t.id) ? "OSM, checked" : "OSM"}</small></label>
       ))}
     </div>
   ) : null;

@@ -1,10 +1,11 @@
 """Put every event on the same keys: ward_no, zone_no, taluk_code, in_district.
 
-Also derives two reference assets from the data itself:
-  * ward -> taluk, by majority vote of police and PWD points that carry a taluk code
-  * street / locality / area -> (ward, lat, lon), from grievances that have a map pin
-    (GCC's street list has no coordinates of its own)
-and measures text-only geo-resolution on a held-out split of pinned grievances.
+The ward decides the revenue taluk, from the official table reference/ward_taluk.csv (TNGIS revenue village polygons
+overlaid on the ward polygons, taluks as the Chennai Collectorate lists them; scripts/build_ward_taluk.py).
+The old majority vote of police and PWD points (generated datasets) is kept only as a diagnostic: how often it agrees.
+
+Also derives street / locality / area -> (ward, lat, lon) from grievances that have a map pin (GCC's street list has
+no coordinates of its own) and measures text-only geo-resolution on a held-out split of pinned grievances.
 """
 from __future__ import annotations
 
@@ -15,7 +16,28 @@ from .geo import WardIndex
 from .util import log
 
 
+def official_ward_taluk(table: pd.DataFrame, wards: WardIndex) -> dict[int, tuple[str, float]]:
+    """ward_no -> (taluk_code, share of the ward's area in that taluk) from the official reference table.
+    A ward the table does not cover gets no taluk (logged); the generated vote never fills it."""
+    out = {int(r.ward_no): (str(r.taluk_code), float(r.share)) for r in table.itertuples() if pd.notna(r.taluk_code)}
+    missing = sorted(w.ward_no for w in wards.wards if w.ward_no not in out)
+    if missing:
+        log.warning("geo: %d wards have no official taluk in reference/ward_taluk.csv: %s", len(missing), missing[:20])
+    return out
+
+
+def taluk_agreement(official: dict[int, tuple[str, float]], vote: dict[int, tuple[str, float]]) -> dict:
+    """How the old police/PWD vote (generated data) compares with the official ward -> taluk table."""
+    both = sorted(set(official) & set(vote))
+    changed = [w for w in both if official[w][0] != vote[w][0]]
+    return {"wards_official": len(official), "wards_compared": len(both), "vote_agrees": len(both) - len(changed),
+            "agreement": round((len(both) - len(changed)) / len(both), 3) if both else None,
+            "vote_differs": [{"ward": w, "official": official[w][0], "vote": vote[w][0]} for w in changed],
+            "note": "taluks come from the official table; the vote of generated police/PWD points is a diagnostic only"}
+
+
 def ward_taluk_vote(events: pd.DataFrame, wards: WardIndex, taluks: pd.DataFrame) -> dict[int, tuple[str, float]]:
+    """DIAGNOSTIC ONLY: ward -> taluk by majority vote of police and PWD points (generated datasets)."""
     pts = events[events["source"].isin(["police", "pwd"]) & events["taluk_code"].notna() & events["lat"].notna()]
     w = wards.locate(pts["lat"].to_numpy(), pts["lon"].to_numpy())
     df = pd.DataFrame({"ward": w, "taluk": pts["taluk_code"].to_numpy()})
@@ -159,7 +181,7 @@ def resolve(events: pd.DataFrame, wards: WardIndex, ward_taluk: dict[int, tuple[
 
     # 3. zone and taluk
     e["zone_no"] = e["ward_no"].map(lambda w: zone_of.get(int(w)) if pd.notna(w) and int(w) in zone_of else np.nan)
-    # The ward decides the revenue taluk, so the map, the taluk filter and every list agree.
+    # The ward decides the revenue taluk (the official table), so the map, the taluk filter and every list agree.
     # A source's own taluk label (police station or PWD division) stays in taluk_src.
     has_w = e["ward_no"].notna()
     e.loc[has_w, "taluk_code"] = e.loc[has_w, "ward_no"].map(lambda w: ward_taluk.get(int(w), (None, 0))[0])

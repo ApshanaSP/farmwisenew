@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import OfficerApp from "@/components/officer/OfficerApp";
 import { deptProfile, officerOverview } from "@/lib/officer/data";
+import { officerWork } from "@/lib/officer/insights";
 import { OFFICER } from "@/lib/officer/departments";
 import type { Period } from "@/lib/collector/intel";
 
@@ -19,6 +20,7 @@ export default async function DevOfficerPage(props: { searchParams: Promise<{ de
   if (process.env.NODE_ENV === "production" || process.env.AWS_STORE_DRY_RUN !== "1" || !(host === "localhost" || host === "127.0.0.1")) notFound();
   const dept = await deptProfile(/^[A-Z0-9-]{2,20}$/.test(searchParams.dept ?? "") ? searchParams.dept! : "GCC-SWD");
   if (!dept) notFound();
-  const initial = await officerOverview(dept, { period: OFFICER.defaultPeriod as Period, zone: null, taluk: null });
-  return <OfficerApp initial={initial} user="dev-preview@localhost" />;
+  const scope = { period: OFFICER.defaultPeriod as Period, zone: null, taluk: null };
+  const [ov, work] = await Promise.all([officerOverview(dept, scope), officerWork(dept, scope)]);
+  return <OfficerApp initial={{ ...ov, work }} user="dev-preview@localhost" />;
 }

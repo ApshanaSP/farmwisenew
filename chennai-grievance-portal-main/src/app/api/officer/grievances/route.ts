@@ -32,7 +32,9 @@ export async function GET(req: NextRequest) {
       q: text.length >= 2 ? text : null,
       // the shared readers: refuseBadFilter refused a flag or severity they cannot read (hunt2-ops-04)
       flag: readFlag(p.get("flag")),
-      sev: readSev(p.get("sev"))
+      sev: readSev(p.get("sev")),
+      // 28 Nov: asked=1, the closed cases with a question from the Collector still to answer, whatever their date
+      asked: p.get("asked") === "1"
     }));
   } catch (err) {
     return failed(err, "grievances");

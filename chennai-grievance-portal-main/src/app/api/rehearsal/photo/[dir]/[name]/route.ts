@@ -8,7 +8,7 @@ import { decodeSummary } from "@/lib/rehearsal/tasks";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-/** A before-rain task's photo, for the Collector or an officer of the task's department. */
+/** A rain task's photo (a before-rain job done, or a fix's update or done), for the Collector or an officer of the task's department. */
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ dir: string; name: string }> }) {
   const params = await ctx.params;
   const sessions = await getActiveSessions();
@@ -16,7 +16,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ dir: strin
   if (!DIR_RE.test(params.dir) || !NAME_RE.test(params.name)) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const ref = `${params.dir}/${params.name}`;
   const [rows] = (await intelPool.query(`SELECT a.record_id, a.after_value, f.summary FROM ${ops("audit_log")} a JOIN ${ops("followups")} f ON f.followup_id = a.record_id
-     WHERE a.action = 'rehearsal:done'`)) as unknown as [Record<string, any>[]];
+     WHERE a.action IN ('rehearsal:done', 'rehearsal:progress')`)) as unknown as [Record<string, any>[]];
   const row = rows.find((r) => { try { return JSON.parse(String(r.after_value)).photo === ref; } catch { return false; } });
   const dept = row ? decodeSummary(String(row.summary))?.head.d ?? null : null;
   if (!dept) return NextResponse.json({ error: "Not found" }, { status: 404 });

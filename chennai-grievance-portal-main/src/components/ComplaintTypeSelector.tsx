@@ -167,7 +167,7 @@ export default function ComplaintTypeSelector({
                   return (
                     <motion.li key={c.id} layout initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }} transition={spring.snappy}>
                       <button type="button" id={c.id === categories[0]?.id ? "complaintCategory" : undefined} onClick={() => pickCategory(c.id)}
-                        className="group flex h-full min-h-[96px] w-full flex-col justify-between gap-3 rounded-[12px] border border-canvas-border bg-canvas-sunken/60 p-3.5 text-left transition duration-150 hover:-translate-y-0.5 hover:border-navy-300 hover:bg-canvas-raised active:scale-[.98]">
+                        className="group flex h-full min-h-[96px] w-full flex-col justify-between gap-3 rounded-[12px] border border-canvas-border bg-canvas-raised p-3.5 text-left shadow-xs transition duration-150 hover:-translate-y-0.5 hover:border-navy-300 hover:bg-navy-50/40 active:scale-[.98]">
                         <span className={`flex h-9 w-9 items-center justify-center rounded-[10px] ring-1 ring-inset transition group-hover:scale-105 ${other ? "bg-violet-50 text-violet-700 ring-violet-200" : "bg-navy-50 text-navy-700 ring-navy-200"}`}>
                           {other ? <Sparkles className="h-[18px] w-[18px]" aria-hidden="true" /> : <Icon className="h-[18px] w-[18px]" aria-hidden="true" />}
                         </span>
@@ -194,16 +194,17 @@ export default function ComplaintTypeSelector({
               {subtypes.length > 6 && (
                 <div className="relative w-full sm:w-64">
                   <span className="input-affix"><Search className="h-4 w-4" aria-hidden="true" /></span>
-                  <input id="complaintSubtypeSearch" type="search" className="form-input h-9 py-1.5 pl-9 text-[13.5px]" placeholder="Filter sub types" value={sq} onChange={(e) => setSq(e.target.value)} />
+                  <input id="complaintSubtypeSearch" type="search" aria-label="Filter sub types" className="form-input h-10 py-1.5 pl-9 sm:h-9 sm:text-[13.5px]" placeholder="Filter sub types" value={sq} onChange={(e) => setSq(e.target.value)} />
                 </div>
               )}
             </div>
-            <ul id="complaintSubtype" role="listbox" aria-label="Complaint sub type" className="max-h-[340px] space-y-1.5 overflow-y-auto pr-1">
+            {/* a plain list of toggle buttons: a button inside role="option" was a control inside a control (axe nested-interactive) */}
+            <ul id="complaintSubtype" aria-label="Complaint sub type" className="max-h-[340px] space-y-1.5 overflow-y-auto pr-1">
               {subShown.map((s) => {
                 const on = s.id === selectedId;
                 return (
-                  <li key={s.id} role="option" aria-selected={on}>
-                    <button type="button" onClick={() => onSelect(on ? null : s)}
+                  <li key={s.id}>
+                    <button type="button" onClick={() => onSelect(on ? null : s)} aria-pressed={on}
                       className={`flex w-full items-center gap-3 rounded-[10px] border px-3.5 py-2.5 text-left text-[14px] transition duration-150 ${
                         on ? "border-navy-400 bg-navy-50 text-ink shadow-glow" : "border-canvas-border bg-canvas-raised text-ink-muted hover:border-navy-200 hover:text-ink"}`}>
                       <span className={`flex h-5 w-5 flex-none items-center justify-center rounded-full border-2 transition ${on ? "border-navy-500 bg-navy-500" : "border-slate-300"}`}>

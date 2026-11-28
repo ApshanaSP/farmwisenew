@@ -29,7 +29,8 @@ describe("the Confirm box (SK2-10, SK2-11)", () => {
 
 describe("the queue notes print the Tamil text on a Tamil page (SK2-9, SK2-12)", () => {
   it("the officer's list and the citizen's filing screen read the language", () => {
-    expect(read("components/officer/Cards.tsx")).toMatch(/awaitingNote\.ta/);
+    // 28 Nov: the officer's New queue is My work's "To approve" list (OfficerAttention.tsx) on the one-page console
+    expect(read("components/officer/OfficerAttention.tsx")).toMatch(/awaitingNote\.ta/);
     expect(read("app/citizen/file-complaint/page.tsx")).toMatch(/queueNote\.ta/);
   });
 });

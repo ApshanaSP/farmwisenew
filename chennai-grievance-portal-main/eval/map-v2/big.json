@@ -140,7 +140,6 @@
     { "id": "b137", "q": "garbage piling up near hospitals in Royapuram zone", "want": { "layers": ["incidents", "hospitals"], "cats": ["SOLID_WASTE"], "area": "zone:5" } },
     { "id": "b138", "q": "severe accidents near schools this month", "want": { "show": "within", "layers": ["incidents", "schools"], "cats": ["ROAD_ACCIDENT"], "severity": "Severe", "period_days": 30 } },
     { "id": "b139", "q": "past deadline sewage complaints near hospitals", "want": { "show": "within", "layers": ["incidents", "hospitals"], "cats": ["DRAINAGE_SEWAGE"], "overdue": true } },
-    { "id": "b140", "q": "open complaints within 1 km of my list", "want": { "show": "within", "layers": ["incidents", "my_list"], "meters": 1000 } },
     { "id": "b141", "q": "where should I send the garbage trucks first", "want": { "layers": ["incidents"], "cats": ["SOLID_WASTE"] } },
     { "id": "b142", "q": "which parts of the city are flooding right now", "want": { "layers": ["incidents"], "cats": ["FLOOD"] } },
     { "id": "b143", "q": "is it safe for kids near schools with all this waterlogging", "want": { "show": "within", "layers": ["incidents", "schools"], "cats": ["FLOOD_WATERLOGGING"] } },

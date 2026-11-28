@@ -17,7 +17,7 @@ import StudioMap from "../studio/StudioMap";
 import { I, type IconName } from "../icons";
 import StageChart from "./StageChart";
 import { StudioActions, type StudioMsg } from "./StudioAnswer";
-import { chartHeight, chartSpecOf } from "./chartspec";
+import { chartHeight, chartSpecOf, compareGroups } from "./chartspec";
 import { UNIT_TA } from "@/lib/thunai/stagelocal";
 import { WHOLE_SAID } from "@/lib/thunai/v19/whole";
 import "leaflet/dist/leaflet.css";
@@ -148,6 +148,9 @@ function summarySpans(blocks: BlockT[]): number[] {
       // (two short sets of readings side by side; a long one, or one alone, across the page)
       case "Readings": { const rs = blocks.filter((x): x is Extract<BlockT, { kind: "Readings" }> => x.kind === "Readings"); return rs.length === 2 && rs.every((x) => x.items.length <= 4) ? 6 : 12; }
       case "Answer": return n("Answer") >= 2 || n("Readings") ? 6 : 12;
+      // (28 Nov: a comparison's sides, each side's cases and each side's news, two to a row)
+      case "CaseList": return /^top-/.test(b.id) && blocks.filter((x) => x.kind === "CaseList" && /^top-/.test(x.id)).length >= 2 ? 6 : 12;
+      case "NewsReader": return /^news-/.test(b.id) && blocks.filter((x) => x.kind === "NewsReader" && /^news-/.test(x.id)).length >= 2 ? 6 : 12;
       default: return 12;
     }
   });
@@ -242,7 +245,14 @@ function Stage(p: Props) {
     if (!root.current?.contains(document.activeElement) || document.activeElement === document.body) titleRef.current?.focus({ preventScroll: true });
   }, [doc.id]);
 
-  const sp = useMemo(() => (doc.recipe === "answer" && doc.id.startsWith("b-") ? brainSpans(doc.blocks) : doc.recipe === "summary" || doc.blocks.length > 6 ? summarySpans(doc.blocks) : spans(doc.blocks)), [doc.blocks, doc.recipe, doc.id]);
+  // (28 Nov: a dashboard's AI summary, id "ai", runs across the page above it; the rest are laid out as they were without it)
+  const sp = useMemo(() => {
+    const rest = doc.blocks.filter((b) => b.id !== "ai");
+    const board = doc.recipe === "compare" && rest.some((b) => b.kind === "Compare" && !!b.chart);
+    const s = doc.recipe === "answer" && doc.id.startsWith("b-") ? brainSpans(rest) : doc.recipe === "summary" || board || rest.length > 6 ? summarySpans(rest) : spans(rest);
+    let j = 0;
+    return doc.blocks.map((b) => (b.id === "ai" ? 12 : s[j++]));
+  }, [doc.blocks, doc.recipe, doc.id]);
   // v18 (24 Nov, the owner: "a small scrolling space, insights overlapping; I want a large scrolling space where I can see all the insights one
   // by one"): the screen always scrolls as one page, each part at its natural height; no part scrolls inside its own small box
   const fit = false;
@@ -418,7 +428,7 @@ function Stage(p: Props) {
 
         <main className={`st-grid${fit ? " fit" : ""}${bigMap ? " bigmap" : ""}`} key={doc.id} aria-busy={!!p.busy}>
           {doc.blocks.map((b, i) => (
-            <section key={`${doc.id}-${b.id}`} id={`st-sec-${b.id}`} className={`st-block k-${b.kind}`} style={{ ["--span" as string]: sp[i], ["--i" as string]: i }} aria-label={"title" in b ? (b as { title: string }).title : b.kind}>
+            <section key={`${doc.id}-${b.id}`} id={`st-sec-${b.id}`} className={`st-block k-${b.kind}${b.id === "ai" ? " st-ai" : ""}`} style={{ ["--span" as string]: sp[i], ["--i" as string]: i }} aria-label={"title" in b ? (b as { title: string }).title : b.kind}>
               <AboutCtx.Provider value={(b as { about?: string | null }).about ?? null}>
                 <Block b={b} doc={doc} lang={lang} reading={p.reading} view={p.views[b.id] ?? null} geo={p.geo} tray={p.tray} a={a}
                   big={bigMap} setBig={doc.blocks.length > 1 ? setBigMap : undefined} />
@@ -905,6 +915,9 @@ function Karaoke({ text, char, strip = "" }: { text: string; char: number | null
 function Compare({ b, lang, view, a }: BP & { b: Extract<BlockT, { kind: "Compare" }> }) {
   const v = view ?? "chart";
   const maxOf = (k: string) => Math.max(...b.sides.map((s) => s.values[k] ?? 0));
+  // (the measures that are counts go on the grouped bars; "the window before" and a reading stay in the table above)
+  const chartMetrics = b.chart ? b.metrics.filter((m) => b.chart!.includes(m.key)) : b.metrics;
+  const groups = useMemo(() => compareGroups(b, lang === "ta"), [b, lang]);
   return (
     <>
       <Head title={b.title} icon="compare"><ViewSwitch id={b.id} views={["chart", "table"]} cur={v} a={a} lang={lang} /></Head>
@@ -929,16 +942,29 @@ function Compare({ b, lang, view, a }: BP & { b: Extract<BlockT, { kind: "Compar
       )}
       {v === "chart" && (
         <div className="st-cmp-charts">
-          <StageChart spec={{ type: "group", categories: b.metrics.map((m) => m.label), series: b.sides.map((s) => ({ name: s.label, values: b.metrics.map((m) => s.values[m.key] ?? 0) })), unit: null }} height={240} title={b.title} />
+          {chartMetrics.length > 0 && <StageChart spec={{ type: "group", categories: chartMetrics.map((m) => m.label), series: b.sides.map((s) => ({ name: s.label, values: chartMetrics.map((m) => s.values[m.key] ?? 0) })), unit: null }} height={240} title={b.title} />}
           {b.sides.some((s) => s.series.length > 1) && <StageChart spec={{ type: "lines", labels: b.seriesLabels, series: b.sides.map((s) => ({ name: s.label, values: s.series })), unit: "incidents" }} height={220} title={T(lang, "Incidents reported over the period", "காலம் முழுவதும்")} />}
-          {b.sides.some((s) => s.cats.length) && (
+          {/* 28 Nov: the kinds, the departments and who reported them as grouped bars, every side on one scale (they were separate lists) */}
+          {groups.map((g) => (
+            <div key={g.key} className="st-cmp-group">
+              <h4>{g.title}</h4>
+              <StageChart spec={{ type: "group", categories: g.categories, series: g.series, unit: "incidents", horizontal: true }} height={Math.max(200, 44 + g.categories.length * (g.series.length * 14 + 12))} title={g.title} />
+            </div>
+          ))}
+          {!groups.some((g) => g.key === "cats") && b.sides.some((s) => s.cats.length) && (
             <div className="st-cmp-cats">
               {b.sides.map((s, i) => <div key={s.key}><h4 className={`c${i + 1}`}><i aria-hidden="true" />{s.label}</h4><ol>{s.cats.slice(0, 5).map((c) => <li key={c.code}><span>{c.label}</span><b>{fmt(c.n)}</b></li>)}</ol></div>)}
             </div>
           )}
+          {b.sides.some((s) => s.drill) && (
+            <div className="st-row st-cmp-open">
+              {b.sides.map((s) => s.drill ? <button key={s.key} className="st-btn sm" onClick={() => go(a, s.drill)}><I n="chevr" />{T(lang, `${s.label}: its own summary`, `${s.label}: முழுச் சுருக்கம்`)}</button> : null)}
+            </div>
+          )}
         </div>
       )}
-      {v === "table" && <Table cols={["", ...b.sides.map((s) => s.label)]} rows={b.metrics.map((m) => [m.label, ...b.sides.map((s) => fmt(s.values[m.key] ?? 0))])} />}
+      {v === "table" && <Table cols={["", ...b.sides.map((s) => s.label)]} rows={[...b.metrics.map((m) => [m.label, ...b.sides.map((s) => fmt(s.values[m.key] ?? 0))]),
+        ...groups.flatMap((g) => g.categories.map((c, j) => [`${g.title}: ${c}`, ...g.series.map((x) => fmt(x.values[j] ?? 0))]))]} />}
     </>
   );
 }

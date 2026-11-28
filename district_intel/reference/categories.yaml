@@ -1,6 +1,9 @@
 # Unified incident categories.
-#   base_severity   0-100 starting point for sources without their own severity (news, overlay)
-#   sla_h           hours to resolve, by severity (Severe, High, Medium, Low)
+#   base_severity   0-100 starting point for sources without their own severity (news, overlay). District IQ
+#                   defaults, except the crime categories, which take the points of their legal class
+#                   (reference/severity_rules.yaml: BNS offence, BNSS First Schedule class)
+#   sla_h           hours to resolve, by severity (Severe, High, Medium, Low). Where each number comes from (an
+#                   official service timeline or a District IQ default): reference/sla_sources.yaml
 #   sla_basis       resolution (default) or response: police cases stay under investigation for weeks,
 #                   so their deadline is on the first response, not on closure
 #   link_window_h   max hours between two reports of the same incident
@@ -103,7 +106,7 @@
   family: ROADS_TRAFFIC
   lead: POL-GCP
   support: [GCC-ENG, HLT-DMS]
-  base_severity: 40
+  base_severity: 20
   rain_sensitive: false
   sla_h: [2, 6, 24, 48]
   sla_basis: response
@@ -286,7 +289,7 @@
   family: CRIME
   lead: POL-GCP
   support: []
-  base_severity: 25
+  base_severity: 35
   rain_sensitive: false
   sla_h: [6, 24, 72, 168]
   sla_basis: response
@@ -301,7 +304,7 @@
   family: CRIME
   lead: POL-GCP
   support: []
-  base_severity: 55
+  base_severity: 50
   rain_sensitive: false
   sla_h: [2, 6, 24, 48]
   sla_basis: response
@@ -316,7 +319,7 @@
   family: CRIME
   lead: POL-GCP
   support: [GCC-HLT]
-  base_severity: 60
+  base_severity: 55
   rain_sensitive: false
   sla_h: [2, 6, 24, 48]
   sla_basis: response

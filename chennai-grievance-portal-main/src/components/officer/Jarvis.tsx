@@ -7,9 +7,16 @@
  *
  * It is the same engine as the Collector's chatbot, so the officer gets the same reading of a question (the top three, the least congested,
  * why each ranks where it does) over their own department's records; the Collector's full-screen Jarvis screens stay the Collector's.
+ *
+ * 28 Nov (the owner: "the Jarvis icon, the chatbot icon, everything is the old icon"): drawn as the Collector's Jarvis button in the dock
+ * (thunai/jarvisswitch.css, dock.css): the light-blue core and its name, with the "Hi Jarvis" switch in the round slot beside it where the
+ * Collector's clock of earlier questions sits. It is not the Collector's JarvisFab itself: that one runs the Collector's own Jarvis and
+ * lists the questions asked of it in this browser, which are not the officer's to see.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLang } from "@/lib/i18n/lang";
 import { I } from "@/components/collector/app/icons";
+import "@/components/collector/app/thunai/jarvisswitch.css";
 
 type Rec = { lang: string; continuous: boolean; interimResults: boolean; onresult: ((e: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void) | null;
   onend: (() => void) | null; onerror: ((e: { error: string }) => void) | null; start: () => void; stop: () => void; abort: () => void };
@@ -22,7 +29,10 @@ const recognizer = (): (new () => Rec) | null => {
 const WAKE = /\b(?:(?:hi|hey|hello|ok|okay)\s+)?(?:jarvis|jarvish|jarwis|javas|jarvas|javis)\b|ஜார்விஸ்|ஜார்வீஸ்/i;
 const KEY = "diq-officer-jarvis-wake";
 
-export default function OfficerJarvis({ deptShort, open }: { deptShort: string; open: () => void }) {
+/** `hidden`: the buttons step aside while the chat is open (the "Hi Jarvis" listener stays on). */
+export default function OfficerJarvis({ deptShort, open, hidden }: { deptShort: string; open: () => void; hidden?: boolean }) {
+  const [lang] = useLang();
+  const ta = lang === "ta";
   const [wake, setWake] = useState(false);
   const [heard, setHeard] = useState<string | null>(null);
   const rec = useRef<Rec | null>(null);
@@ -48,6 +58,13 @@ export default function OfficerJarvis({ deptShort, open }: { deptShort: string; 
     };
     setTimeout(send, 150);
   }, [open]);
+
+  // the search palette's "Jarvis" (and anything else that asks for Jarvis the Collector's way) starts it too
+  useEffect(() => {
+    const f = () => ask();
+    window.addEventListener("jarvis:mode", f);
+    return () => window.removeEventListener("jarvis:mode", f);
+  }, [ask]);
 
   // "Hi Jarvis": one quiet recognizer, started again whenever it ends, paused while the dialog's own mic is in use
   useEffect(() => {
@@ -93,17 +110,23 @@ export default function OfficerJarvis({ deptShort, open }: { deptShort: string; 
     return next;
   });
 
-  if (!ok) return null;
+  if (!ok || hidden) return null;
   return (
-    <div className="ojv" role="group" aria-label="Jarvis">
-      {heard && <div className="ojv-heard" role="status"><I n="mic" />{heard}</div>}
-      <button className={`ojv-wake${wake ? " on" : ""}`} onClick={toggleWake} aria-pressed={wake}
-        title={wake ? "Listening for “Hi Jarvis”. Click to stop." : "Let “Hi Jarvis” wake Jarvis (the microphone stays on in this tab)"}>
-        <I n={wake ? "mic" : "bell"} /><span>{wake ? "Hi Jarvis: on" : "Hi Jarvis: off"}</span>
-      </button>
-      <button className="ojv-fab" onClick={() => ask()} title={`Ask Jarvis by voice: answers about ${deptShort} only`} aria-label={`Ask Jarvis by voice (${deptShort})`}>
-        <I n="mic" /><span>Jarvis</span>
-      </button>
+    <div className="jvf-wrap ojv" data-no-i18n role="group" aria-label="Jarvis">
+      {heard && <span className="jvf-note ojv-heard" role="status"><I n="mic" />{heard}</span>}
+      <div className="jvf-pair">
+        <button className={`jvf-q ojv-wake${wake ? " on" : ""}`} onClick={toggleWake} aria-pressed={wake}
+          title={wake ? (ta ? "“ஹாய் ஜார்விஸ்” கேட்கிறது. நிறுத்த அழுத்துங்கள்." : "Listening for “Hi Jarvis”. Click to stop.")
+            : (ta ? "“ஹாய் ஜார்விஸ்” என்று சொன்னால் ஜார்விஸ் தொடங்கும் (இந்தத் தாவலில் மைக் இயங்கும்)" : "Let “Hi Jarvis” wake Jarvis (the microphone stays on in this tab)")}
+          aria-label={wake ? (ta ? "ஹாய் ஜார்விஸ்: இயக்கத்தில்" : "Hi Jarvis: on") : (ta ? "ஹாய் ஜார்விஸ்: நிறுத்தத்தில்" : "Hi Jarvis: off")}>
+          <I n="mic" />{wake && <em aria-hidden="true">on</em>}
+        </button>
+        <button className="jvf" onClick={() => ask()} title={ta ? `குரலில் கேளுங்கள்: ${deptShort} பற்றி மட்டும் பதில்` : `Ask Jarvis by voice: answers about ${deptShort} only`}
+          aria-label={ta ? `ஜார்விஸிடம் குரலில் கேளுங்கள் (${deptShort})` : `Ask Jarvis by voice (${deptShort})`}>
+          <i className="jvf-core" aria-hidden="true"><b /></i>
+          <span>{ta ? "ஜார்விஸ்" : "Jarvis"}</span>
+        </button>
+      </div>
     </div>
   );
 }

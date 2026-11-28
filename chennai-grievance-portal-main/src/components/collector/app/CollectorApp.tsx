@@ -20,7 +20,8 @@ import type { AskResponse } from "@/lib/map/ask";
 import type { Plan } from "@/lib/map/plan";
 import { BriefingPage, GapsBody, PatternBody, ReviewBody, TrendsPage, mdToHtml, type Pattern } from "./Insights";
 import { IncidentView } from "./Detail";
-import { BriefingBook } from "./BriefingBook";
+import { BriefingBook, freezeBook } from "./BriefingBook";
+import { readSavedBrief, type SavedBrief } from "@/lib/collector/workspacesnap";
 import { DeptSummaryBody } from "./DeptSummary";
 import { AlertBar } from "./AlertBar";
 import { RainBand, type RehearsalOpen } from "./rehearsal/RainBand";
@@ -39,6 +40,7 @@ import { SourcesBody } from "./Sources";
 import { AddedAllBody, ItemBody } from "./Added";
 import { StoriesBody } from "./Stories";
 import { NewsView } from "./NewsPreview";
+import { collectorHits } from "./SearchBox";
 import { NearbyEventBody, NextDoorAll } from "./Nearby";
 import { ConflictView } from "./Conflicts";
 import type { Story } from "./Overview";
@@ -115,6 +117,16 @@ type ModalState =
   | { kind: "conflict"; title: string; story: StoryConflicts };
 interface Toast { id: number; msg: string; kind: "ok" | "alert"; act?: { label: string; run: () => void } }
 export interface Archived { name: string; version: number; markdown: string; as_of: string; issued_at: string }
+/**
+ * A saved workspace being viewed (28 Nov 2026). Its Briefing is the copy kept when it was saved (BriefingBook `saved`); the other pages show
+ * live data with its filters. The top bar says so and has "Back to live dashboard"; changing a filter also goes back to live.
+ */
+export interface SavedOpen {
+  id: number; name: string; version: number;
+  /** when the version was saved */ savedAt: string;
+  /** its Briefing copy (null: the version kept none) */ brief: SavedBrief | null;
+  /** the filters it opened with */ filters: { period: Period; zone: number | null; dept: string | null; cat: string | null; taluk: string | null };
+}
 
 /** Everything the screens need from the shell: state, navigation and actions. */
 export interface Console {
@@ -219,6 +231,10 @@ export interface Console {
   openSavedWorkspace: (id: number) => Promise<void>;
   archived: Archived | null;
   closeArchived: () => void;
+  /** the saved workspace being viewed, or null on the live dashboard (28 Nov) */
+  saved?: SavedOpen | null;
+  /** leave the saved workspace: the live dashboard, with the filters it had before */
+  backToLive?: () => void;
   showText: (title: string, md: string) => void;
   /** Rain & flooding on the Overview's map (rehearsal/RainView.tsx): open on a rain or on all rains, or closed */
   rainView?: { open: RainStart | null; close: () => void; esc: React.MutableRefObject<(() => boolean) | null>; api: RainApi };
@@ -410,7 +426,11 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   /** the shell assembles once after sign-in: top bar, rail, then cards */
   const [boot, setBoot] = useState(true);
   useEffect(() => { const t = setTimeout(() => setBoot(false), 1400); return () => clearTimeout(t); }, []);
-  const [archived, setArchived] = useState<Archived | null>(null);
+  /** the saved workspace on screen (null: the live dashboard), and the live dashboard's filters from before it opened */
+  const [saved, setSaved] = useState<SavedOpen | null>(null);
+  const beforeSaved = useRef<{ period: Period; zone: number | null; dept: string | null; cat: string | null; taluk: string | null; layers: Record<string, boolean>; envSel: Record<string, string> } | null>(null);
+  const savedRef = useRef(saved);
+  savedRef.current = saved;
   const firstLoad = useRef(true);
   const lastExport = useRef(initial.exportedAt);
   const dirty = useRef(false);
@@ -579,10 +599,12 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
         // the first answer only sets where the console stands: what was live before it opened is already on screen
         const liveNew = live != null && lastLive.current != null && live !== lastLive.current;
         if (live != null) lastLive.current = live;
+        // (28 Nov) a saved workspace's Briefing is its saved copy: new data refreshes the live pages only, and the message says so
+        const keep = savedRef.current?.brief ? " The saved workspace's Briefing stays as it was saved." : "";
         if (m.exportedAt && m.exportedAt !== lastExport.current) {
           lastExport.current = m.exportedAt;
           setBellRead(false);
-          toast(`New data from the pipeline (as of ${fmtTime(m.now)}).`, "alert", busy() ? { label: "Refresh", run: () => setReloadKey((k) => k + 1) } : undefined);
+          toast(`New data from the pipeline (as of ${fmtTime(m.now)}).${keep}`, "alert", busy() ? { label: "Refresh", run: () => setReloadKey((k) => k + 1) } : undefined);
           if (busy()) dirty.current = true;
           else setReloadKey((k) => k + 1);
         } else if (liveNew) {
@@ -672,14 +694,18 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   };
 
   const saveWorkspace = async (name: string) => {
+    // a saved copy is on screen: saving now would store today's live briefing under its filters, not the copy being read
+    if (savedRef.current) { toast("You are viewing a saved workspace. Go back to the live dashboard to save a new version.", "alert"); return null; }
     try {
       // the frozen copy is the briefing of the dashboard's filters (the loaded part may be trends or prices)
-      const snap: Insights = ins?.book ? ins : await api(`/api/collector/insights?${qs}&part=briefing`);
+      const snap: Insights = ins?.book ? ins : await getIns(partKey("briefing"));
+      // 28 Nov: what the live Briefing page draws, so the version reopens in the same layout (workspacesnap.ts); the markdown stays for the archive
+      const view = freezeBook(snap, ov, c);
       const r = await api("/api/collector/workspaces", {
         name,
         filters: { period, zone, dept, cat, taluk, page, zoneName, deptName, catLabel, talukName: talukName(taluk), layers, envSel },
         layout,
-        briefing: { md: snap.briefing.md, facts: { headline: snap.briefing.headline, attention: snap.briefing.attention.map((a) => a.id), scope: snap.scope }, period, asOf: snap.now }
+        briefing: { md: snap.briefing.md, facts: { headline: snap.briefing.headline, attention: snap.briefing.attention.map((a) => a.id), scope: snap.scope, ...(view ? { view } : {}) }, period, asOf: snap.now }
       });
       setWorkspaceName(name);
       toast(`Saved "${name}" as version ${r.version}, with a frozen copy of the briefing.`);
@@ -690,13 +716,39 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     }
   };
 
+  /** the filters a saved workspace opened with were changed (a filter, a click on a zone, Jarvis): the dashboard is live again */
+  useEffect(() => {
+    if (!saved) return;
+    const s = saved.filters;
+    if (s.period === period && s.zone === zone && s.dept === dept && s.cat === cat && s.taluk === taluk) return;
+    beforeSaved.current = null;
+    setSaved(null);
+    setLayoutState(loadLayout());
+    toast("Left the saved workspace: the dashboard shows live data for the filters you chose.");
+  }, [saved, period, zone, dept, cat, taluk, toast]);
+
+  /** Back to live dashboard: the saved workspace closes and the dashboard's own filters, layers and layout come back */
+  const backToLive = useCallback(() => {
+    if (!savedRef.current) return;
+    const b = beforeSaved.current;
+    beforeSaved.current = null;
+    setSaved(null);
+    if (b) {
+      setPeriod(b.period); setZoneState(b.zone); setDeptState(b.dept); setCatState(b.cat); setTalukState(b.taluk);
+      setLayers(b.layers); setEnvSelState(b.envSel);
+    }
+    setLayoutState(loadLayout());
+    toast("Back to the live dashboard.");
+  }, [toast]);
+
   const openSavedWorkspace = async (id: number) => {
     try {
       const w = await api(`/api/collector/workspaces/${id}`);
       const f = w.filters ?? {};
-      // a saved map view (Ask the Map): its plan runs again on today's data, on the Overview's map
+      // a saved map view (Ask the Map): its plan runs again on today's data, on the Overview's map (a live view: a saved copy on screen closes)
       if (f.askMap?.plan) {
         closeAll();
+        if (savedRef.current) { beforeSaved.current = null; setSaved(null); setLayoutState(loadLayout()); }
         setWorkspaceName(w.name);
         setPage("overview");
         mapAsk.setGrown(true);
@@ -704,19 +756,26 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
         toast(`Opened the map view "${w.name}" on today's data (saved ${fmtShort(w.created_at)}).`);
         return;
       }
-      setPeriod(f.period ?? "daily");
-      setZoneState(f.zone ?? null);
-      setDeptState(f.dept ?? null);
-      setCatState(f.cat ?? null);
-      setTalukState(f.taluk ?? null);
+      // the live dashboard as it is, for "Back to live dashboard" (kept from the first saved workspace opened, not from one opened over another)
+      if (!savedRef.current) beforeSaved.current = { period, zone, dept, cat, taluk, layers, envSel };
+      const fl: SavedOpen["filters"] = { period: PERIOD_KEYS.includes(f.period) ? f.period : "daily", zone: f.zone ?? null, dept: f.dept ?? null, cat: f.cat ?? null, taluk: f.taluk ?? null };
+      setPeriod(fl.period);
+      setZoneState(fl.zone);
+      setDeptState(fl.dept);
+      setCatState(fl.cat);
+      setTalukState(fl.taluk);
       if (f.layers) setLayers(f.layers);
       if (f.envSel) setEnvSelState(f.envSel);
-      if (w.layout?.pages) setLayout(normalizeLayout(w.layout));
+      // its layout shows while it is open, without becoming this browser's own (Back to live dashboard reads that back)
+      if (w.layout?.pages) setLayoutState(normalizeLayout(w.layout));
       setWorkspaceName(w.name);
-      setArchived(w.briefing ? { name: w.name, version: w.version, markdown: w.briefing.markdown, as_of: w.briefing.as_of, issued_at: w.briefing.issued_at } : null);
+      const brief = readSavedBrief(w.briefing);
+      setSaved({ id: Number(w.id ?? id), name: String(w.name), version: Number(w.version), savedAt: String(w.created_at ?? w.briefing?.issued_at ?? ""), brief, filters: fl });
       closeAll();
-      setPage(w.briefing ? "briefing" : (f.page ?? "overview"));
-      toast(`Opened "${w.name}" v${w.version} from ${fmtShort(w.created_at)}. Panels show live data; the Briefing shows the saved copy.`);
+      setPage(brief ? "briefing" : (f.page ?? "overview"));
+      toast(brief
+        ? `Opened "${w.name}" v${w.version}, saved ${fmtShort(w.created_at)}. The Briefing is the saved copy; the other pages show live data.`
+        : `Opened "${w.name}" v${w.version}, saved ${fmtShort(w.created_at)}. It kept no copy of the Briefing: every page shows live data with its filters.`);
     } catch (e: any) {
       toast(e.message, "alert");
     }
@@ -786,7 +845,8 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     toast, closeAll,
     layout, setLayout, workspaceName,
     openWorkspace: () => setModal({ kind: "workspace", title: "Workspaces" }),
-    saveWorkspace, openSavedWorkspace, archived, closeArchived: () => setArchived(null),
+    // (28 Nov) a saved version's Briefing is drawn by BriefingBook from its copy; the old written view (Insights.tsx `archived`) is no longer used
+    saveWorkspace, openSavedWorkspace, archived: null, closeArchived: backToLive, saved, backToLive,
     showText: (title, md) => setModal({ kind: "text", title, md }),
     rainView: { open: rain, close: () => setRain(null), esc: rainEsc, api: dev ? DEV_RAIN_API : LIVE_RAIN_API },
     openRain: () => openRain({ replay: null, manual: false }),
@@ -882,6 +942,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   };
 
   const actions: Hit[] = [
+    ...(saved ? [{ g: "Actions", ic: "refresh" as IconName, l: "Back to live dashboard", s: `Leave the saved workspace "${saved.name}"`, run: backToLive }] : []),
     ...pages.map((p) => ({ g: "Go to", ic: PAGE_ICON[p], l: `Go to ${PAGE_TITLE[p]}`, s: `Page ${pages.indexOf(p) + 1}`, run: () => setPage(p) })),
     { g: "Actions", ic: "chat", l: "Ask District IQ", s: "The chatbot: type a question, in English or Tamil", kbd: "Ctrl K", run: () => { setAskTab("chat"); setAsk(true); } },
     { g: "Actions", ic: "mic", l: "Jarvis", s: "Talk to it, in English or Tamil. Or say \"Hi Jarvis\"", run: () => window.dispatchEvent(new CustomEvent("jarvis:mode", { detail: { toggle: true } })) },
@@ -899,32 +960,12 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
     { g: "Actions", ic: "refresh", l: "Reload data", s: "Fetch the latest from the store", run: () => setReloadKey((k) => k + 1) },
     ...(zone || dept || cat || taluk ? [{ g: "Actions", ic: "x" as IconName, l: "Clear all filters", s: scopeName, run: clearFilters }] : [])
   ];
-  const searchHits = async (q: string): Promise<Hit[]> => {
-    const r = await api(`/api/collector/search?q=${encodeURIComponent(q)}`);
-    const out: Hit[] = [];
-    r.zones.forEach((z: Row) => out.push({ g: "Zones", ic: "pin", l: z.name, s: `${z.open} open incidents`, run: () => c.setZone(z.zone) }));
-    r.depts.forEach((d: Row) => out.push({ g: "Departments", ic: deptIcon(d.code), l: d.name, s: d.org, run: () => c.setDept(d.code) }));
-    r.incidents.forEach((i: Row) => out.push({ g: "Incidents", ic: deptIcon(i.dept), l: fullTitle(i), s: `${i.zone_name ?? "Chennai"} · ${rel(i.t, ov.now)}`, run: () => c.openInc(i.id) }));
-    // more matches than shown: the full list with the same words (R-21)
-    if (Number(r.incidentsTotal) > r.incidents.length)
-      out.push({ g: "Incidents", ic: "table", l: `${Number(r.incidentsTotal) - r.incidents.length} more matching incidents`, s: "Open them all in the list",
-        run: () => c.openList({ q, anyZone: true }, `Incidents matching “${q}”`) });
-    // a citizen's complaint number opens the incident it was filed into
-    (r.complaints ?? []).forEach((x: Row) => out.push({ g: "Complaint number", ic: "chat", l: `${x.code}: ${x.title ?? "incident"}`, s: "The incident this complaint was filed into", run: () => c.openInc(x.id) }));
-    // a news report opens its incident when it has one, else the article itself
-    (r.news ?? []).forEach((n: Row) => out.push({ g: "News", ic: "news", l: String(n.title), s: `${n.publisher ?? "News"} · ${rel(n.t, ov.now)}`,
-      run: () => (n.incident ? c.openInc(n.incident) : n.url ? window.open(String(n.url), "_blank", "noopener") : c.openNewsAll()) }));
-    (r.sources ?? []).forEach((x: Row) => out.push({ g: "Data sources", ic: "sensor", l: String(x.name), s: String(x.kind ?? ""), run: c.openFeeds }));
-    // a Data Studio dataset opens on the Data Studio page (Studio remembers which dataset to show)
-    (r.datasets ?? []).forEach((d: Row) => out.push({ g: "Data Studio", ic: "spark", l: String(d.name), s: `${Number(d.rows).toLocaleString("en-IN")} rows`,
-      // the Studio reads the request when it opens; when it is open already, the event switches it at once
-      run: () => { try { localStorage.setItem("diq-studio-sel", String(d.id)); } catch { /* not saved */ } setPage("studio"); window.dispatchEvent(new CustomEvent("diq:studio-open", { detail: String(d.id) })); } }));
-    return out;
-  };
+  // the search box's rows, of any date the record holds (SearchBox.tsx, 28 Nov)
+  const searchHits = (q: string): Promise<Hit[]> => collectorHits(q, c, api);
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className={`dic${fit.on ? " fit" : ""}${boot ? " boot" : ""}${(mapAsk.grown || rain || traffic) && page === "overview" ? " map-grown" : ""}`} data-theme={theme ?? undefined}
+    <div className={`dic${fit.on ? " fit" : ""}${boot ? " boot" : ""}${(mapAsk.grown || rain || traffic) && page === "overview" ? " map-grown" : ""}${saved ? " ws-saved" : ""}`} data-theme={theme ?? undefined}
       onClick={(e) => { if (!(e.target as HTMLElement).closest(".pop") && !(e.target as HTMLElement).closest("[data-pop]")) setPop(null); }}
       onPointerMove={spotlight}>
       <ConfirmHost />
@@ -937,15 +978,18 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
         <header className="top">
           <div className="tbrand"><Wordmark className="twm" /><small className="tsub">Chennai · Collector</small></div>
           <PageTabs items={pages.map((p) => ({ key: p, label: TAB_LABEL[p], icon: PAGE_ICON[p] }))} active={page} onPick={(p) => setPage(p as PageKey)} />
+          {/* 28 Nov: a saved workspace on screen says so here, with the way back to the live dashboard (shell2.css .tws) */}
+          {saved && <SavedBar s={saved} onBack={backToLive} />}
           <span className="tspace" />
           <button className="cmdk" onClick={() => setPalette(true)} aria-label="Search and commands (/)" aria-haspopup="dialog">
             <I n="search" /><span>Search</span><kbd>/</kbd>
           </button>
-          <LangSwitch />
+          <LangSwitch compact={!!saved} />
           {/* the tools, each with its name (they were five bare icons) */}
           <TopMenu open={pop === "menu"} onToggle={() => setPop((p) => (p === "menu" ? null : "menu"))} items={[
+            ...(saved ? [{ key: "live", icon: "refresh" as IconName, label: "Back to live dashboard", sub: `Leave "${saved.name}", saved ${fmtShort(saved.savedAt)}`, on: true, run: backToLive }] : []),
             { key: "export", icon: "download", label: "Export report", sub: "PDF report or CSV action list", run: openExport },
-            { key: "ws", icon: "layers", label: "Workspaces", sub: workspaceName ? `Open: ${workspaceName}` : "Save or reopen a view", on: !!workspaceName, run: c.openWorkspace },
+            { key: "ws", icon: "layers", label: "Workspaces", sub: saved ? `Viewing: ${saved.name} v${saved.version}` : workspaceName ? `Last saved or opened: ${workspaceName}` : "Save or reopen a view", on: !!saved, run: c.openWorkspace },
             { key: "custom", icon: "sliders", label: "Customize the dashboard", sub: "Choose what the dashboard shows", run: openCustomize },
             { key: "theme", icon: theme === "dark" ? "sun" : "moon", label: theme === "dark" ? "Light mode" : "Dark mode", sub: theme === "dark" ? "Bright, for daylight" : "Easy on the eyes at night", run: toggleTheme },
             { key: "src", icon: "sensor", label: "Data sources", sub: "Feeds and audit log", run: c.openFeeds },
@@ -1041,13 +1085,14 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
           </section>
           <PageSwap k={page} dir={pageDir} className={`${anim ? "anim" : ""}${loading ? " busy" : ""}`}>
             {page === "overview" ? <Page1 d={ov} c={c} />
-              : needIns && !ins && insFailed === insQs ? (
+              : needIns && !ins && insFailed === insQs && !(page === "briefing" && saved?.brief) ? (
                 <section className="p3"><article className="card" role="alert" style={{ gridColumn: "1 / -1" }}>
                   <p>This page&apos;s figures could not be loaded.</p>
                   <button type="button" className="btn" style={{ marginTop: 10 }} onClick={() => setInsRetry((n) => n + 1)}>Try again</button>
                 </article></section>
               )
-              : page === "briefing" ? (archived || !ins?.book ? <BriefingPage ins={ins} d={ov} c={c} /> : <BriefingBook ins={ins} d={ov} c={c} />)
+              // a saved workspace's Briefing is its saved copy, in the live page's own layout (never the live data); else the live page
+              : page === "briefing" ? (saved?.brief ? <BriefingBook c={c} saved={saved.brief} /> : !ins?.book ? <BriefingPage ins={ins} d={ov} c={c} /> : <BriefingBook ins={ins} d={ov} c={c} />)
                 : page === "trends" ? <TrendsPage ins={ins} c={c} />
                   : page === "studio" ? <Studio c={c} />
                     : <EnvPage d={ov} ins={ins} c={c} />}
@@ -1120,6 +1165,28 @@ function FreshWarn({ ov, page, onClick }: { ov: OverviewData; page: PageKey; onC
       title={`${stale.map((f) => freshnessLine(f, view)).join("\n")}\nClick for the data sources.`}>
       <I n="alert" />{freshnessLine(stale[0], view)}{more}
     </button>
+  );
+}
+
+/**
+ * In the top bar while a saved workspace is open (28 Nov; the owner: "indicate in the menu bar that you are in the saved workspace" and "have
+ * an option clearly visible to go back to the live dashboard"): its name and when it was saved over the green "Back to live dashboard".
+ * The name and the time are kept out of the site's Tamil translation (they are a name and a date); the words around them are translated.
+ */
+function SavedBar({ s, onBack }: { s: SavedOpen; onBack: () => void }) {
+  const when = s.savedAt ? fmtShort(s.savedAt) : null;
+  const what = s.brief ? "Its Briefing is the copy saved then; the other pages show live data with its filters." : "It kept no copy of the Briefing: every page shows live data with its filters.";
+  return (
+    <div className="tws" role="status" aria-live="polite" title={`Saved workspace "${s.name}", version ${s.version}${when ? `, saved ${when}` : ""}. ${what}`}>
+      <span className="tws-k"><I n="layers" />Saved workspace</span>
+      <span className="tws-t">
+        <b data-no-i18n="" translate="no">{s.name}</b>
+        {when && <><span className="tws-l">· saved</span><time data-no-i18n="">{when}</time></>}
+      </span>
+      <button type="button" className="tbtn pri tws-back" onClick={onBack} title="Leave the saved workspace and show the live dashboard">
+        <I n="refresh" /><span>Back to live dashboard</span>
+      </button>
+    </div>
   );
 }
 

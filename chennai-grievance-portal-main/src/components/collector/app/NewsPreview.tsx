@@ -114,7 +114,7 @@ export function NewsView({ s, c }: { s: Story; c: Console }) {
 
       <div className="iv-b">
         <section className="iv-col">
-          <Explained a={ana.a} busy={ana.busy} rules={rules} open={false} deptName={dept?.name ?? "The department"} needLabel="Why it matters to you" />
+          <Explained a={ana.a} busy={ana.busy} rules={rules} open={false} deptName={dept?.name ?? "The department"} needLabel="Why it matters to you" noAi={ana.noAi} />
           {ana.a?.handled && !ana.a.why.length && <div className="iv-ok"><I n="checkc" /><span>{ana.a.handled}</span></div>}
           {diffs && <ConflictBox items={diffs} />}
           <div>

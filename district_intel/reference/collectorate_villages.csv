@@ -1,0 +1,147 @@
+# Chennai District Collectorate, Revenue Administration: taluk-wise, firka-wise villages (17 taluks, 49 firkas, 144 villages).
+# Source: https://chennai.nic.in/revenue-administration/ read 2026-11-28 (the table as published, spellings as given).
+taluk,firka,village
+Tondiarpet,Korukuppet,Tondiarpet Part I
+Tondiarpet,Tondiarpet,Tondiarpet Part II
+Tondiarpet,Old Washermanpet,Tondiarpet Part III
+Tondiarpet,Royapuram,Tondiarpet Part IV
+Purasaiwalkkam,Purasaiwalkkam (West),Purasaiwalkkam Part I
+Purasaiwalkkam,Purasaiwalkkam (East),Purasaiwalkkam Part II
+Purasaiwalkkam,Vepery,Vepery
+Purasaiwalkkam,VOC Nagar,VOC Nagar
+Perambur,Kodungaiyur,Jambuli
+Perambur,Kodungaiyur,Selavoyal
+Perambur,Kodungaiyur,Kodungaiyur
+Perambur,Erukancherry,Erukancherry
+Perambur,Erukancherry,Perambur (Part I)
+Perambur,Sebium,Sembium
+Perambur,Sebium,Perambur (Part II)
+Perambur,Perambur,Perambur (Part III)
+Tiruvotriyur,Tiruvotriyur,Kathivakkam
+Tiruvotriyur,Tiruvotriyur,Tiruvotriyur-1
+Tiruvotriyur,Tiruvotriyur,Tiruvotriyur-2
+Tiruvotriyur,Tiruvotriyur,Ernavoor
+Tiruvotriyur,Manali,Edayanchavadi-I
+Tiruvotriyur,Manali,Edayanchavadi-II
+Tiruvotriyur,Manali,Theyambakkam
+Tiruvotriyur,Manali,Aamullaivayal
+Tiruvotriyur,Manali,Vaikkadu
+Tiruvotriyur,Manali,Manali
+Tiruvotriyur,Manali,Sadayankuppam
+Tiruvotriyur,Manali,Chinna Sekkadu
+Tiruvotriyur,Manali,Kadapakkam
+Tiruvotriyur,Manali,Ariyalur
+Tiruvotriyur,Manali,Sathangadu
+Tiruvotriyur,Manali,Elandancherry
+Madhavaram,Madhavaram,Madhavaram-1
+Madhavaram,Madhavaram,Madhavaram-2
+Madhavaram,Madhavaram,Puzhal
+Madhavaram,Madhavaram,Vadaperumbakkam
+Madhavaram,Madhavaram,Surapet
+Madhavaram,Madhavaram,Kadhirvedu
+Madhavaram,Madhavaram,Puthagaram
+Madhavaram,Madhavaram,Mathur
+Madhavaram,Madhavaram,Chettimedu
+Madhavaram,Madhavaram,Villakupattu
+Madhavaram,Madhavaram,Kosapur
+Madhavaram,Madhavaram,Manchambakkam
+Mylapore,Chindadripet,Chindadripet
+Mylapore,Chindadripet,Triplicane (Part I)
+Mylapore,Triplicane,Triplicane (Part II)
+Mylapore,Mylapore (North),Mylapore (Part I)
+Mylapore,Mylapore (South),Mylapore (Part II)
+Guindy,Ekkatuthangal,Ekkatuthangal
+Guindy,Ekkatuthangal,Alandur
+Guindy,Ekkatuthangal,Adayar (Part I)
+Guindy,Thiyagaraya Nagar,Thiyagaraya Nagar
+Guindy,Adayar,Government Farm
+Guindy,Adayar,Venkatapuram
+Guindy,Adayar,Adayar (Part II)
+Guindy,Adayar,Guindy Park
+Guindy,Kottur,Kottur
+Velachery,Velachery,Velachery (Part I)
+Velachery,Taramani,Velachery (Part II)
+Velachery,Taramani,Taramani
+Velachery,Taramani,Kanagam
+Velachery,Besant Nagar,Pallipattu
+Velachery,Besant Nagar,Kalikundram
+Velachery,Besant Nagar,Urur
+Velachery,Tiruvanmiyur,Tiruvanmiyur
+Alandur,Alandur,Alandur
+Alandur,Alandur,Nandambakkam
+Alandur,Alandur,Meenambakkam
+Alandur,Alandur,Mugalivakkam
+Alandur,Alandur,Manapakkam
+Alandur,Alandur,Adambakkam
+Alandur,Alandur,Pazhavanthangal
+Alandur,Alandur,Nanganallur
+Alandur,Alandur,Thalakanacheri
+Alandur,Alandur,Madanandapuram
+Sholinganallur,Sholinganallur,Sholinganallur-I
+Sholinganallur,Sholinganallur,Sholinganallur-II
+Sholinganallur,Sholinganallur,Kottivakkam
+Sholinganallur,Sholinganallur,Palavakkam
+Sholinganallur,Sholinganallur,Neelangarai
+Sholinganallur,Sholinganallur,Enjambakkam
+Sholinganallur,Sholinganallur,Semmancheri
+Sholinganallur,Sholinganallur,Uthandi
+Sholinganallur,Pallikaranai,Ullagaram
+Sholinganallur,Pallikaranai,Perungudi
+Sholinganallur,Pallikaranai,Pallikaranai
+Sholinganallur,Pallikaranai,Karapakkam
+Sholinganallur,Pallikaranai,Okkiyam Thoraipakkam
+Sholinganallur,Pallikaranai,Madipakkam-I
+Sholinganallur,Pallikaranai,Madipakkam-II
+Sholinganallur,Pallikaranai,S.Kolathur
+Sholinganallur,Pallikaranai,Jaladampet
+Sholinganallur,Pallikaranai,Seevaram
+Ayanavaram,Konnur,Konnur
+Ayanavaram,Konnur,Malligaicherri
+Ayanavaram,Ayanavaram,Ayanavaram (Part-I)
+Ayanavaram,Ayanavaram,Ayanavaram (Part-II)
+Ayanavaram,Ayanavaram,Chinna Sembarambakkam
+Kolathur,Kolathur,Kolathur
+Kolathur,Peravallur,Peravallur
+Kolathur,Peravallur,Siruvallur
+Aminjikarai,Villivakkam,Villivakkam
+Aminjikarai,Villivakkam,Mullam
+Aminjikarai,Anna Nagar,Periakudal
+Aminjikarai,Anna Nagar,Chinnakudal
+Aminjikarai,Anna Nagar,Tirumangalam
+Aminjikarai,Anna Nagar,Naduvankarai
+Aminjikarai,Koyambedu,Koyambedu
+Aminjikarai,Koyambedu,Sencherri
+Aminjikarai,Aminjikarai,Aminjikarai
+Aminjikarai,Aminjikarai,Vada Agaram
+Aminjikarai,Aminjikarai,Arumbakkam
+Egmore,Egmore (North),Egmore (Part I)
+Egmore,Egmore (South),Egmore (Part II)
+Egmore,Vadapalani,Puliyur
+Egmore,Nungambakkam,Nungambakkam
+Mambalam,Saligramam,Saligramam
+Mambalam,Saligramam,Kodambakkam (Part I)
+Mambalam,Virugambakkam,Virugambakkam
+Mambalam,Virugambakkam,Nesapakkam
+Mambalam,Ashok Nagar,Kodambakkam (Part II)
+Mambalam,Mambalam,Mambalam
+Mambalam,Mambalam,Saidapet
+Maduravoyal,Maduravoyal,Maduravoyal
+Maduravoyal,Maduravoyal,Valasaravakkam
+Maduravoyal,Maduravoyal,Porur
+Maduravoyal,Maduravoyal,Nolambur
+Maduravoyal,Maduravoyal,Karambakkam
+Maduravoyal,Maduravoyal,Nerkundram
+Maduravoyal,Maduravoyal,Ramapuram
+Maduravoyal,Maduravoyal,Sivabootham
+Maduravoyal,Maduravoyal,Chettiyar Agaram
+Maduravoyal,Maduravoyal,Thundalam
+Ambattur,Ambattur,Ambattur
+Ambattur,Ambattur,Athipet
+Ambattur,Ambattur,Mannurpet
+Ambattur,Ambattur,Kakkapallam
+Ambattur,Ambattur,Mogappair
+Ambattur,Ambattur,Padi
+Ambattur,Korattur,Korattur
+Ambattur,Korattur,Oragadam
+Ambattur,Korattur,Menambedu
+Ambattur,Korattur,Patravakkam

@@ -1,0 +1,5533 @@
+{
+ "source": {
+  "id": "nhp",
+  "name": "National Hospital Directory with Geo Code (National Health Portal, MoHFW), on data.gov.in",
+  "url": "https://data.gov.in/resource/national-hospital-directory-geo-code-and-additional-parameters-updated-till-last-month",
+  "api": "https://api.data.gov.in/resource/98fa254e-c5f8-4910-a19b-4828939b477d",
+  "checked": "2026-11-28",
+  "filter": "State Tamil Nadu, District Chennai",
+  "checked_note": "read at 2026-11-28 04:46 IST"
+ },
+ "entries": [
+  {
+   "id": "nhp:23726",
+   "name": "Abhijay Hospital (P) Ltd",
+   "addr": "No.22/2, Esi Hospital Road",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23727",
+   "name": "Apollo City Center",
+   "addr": "Mint Street",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23728",
+   "name": "Dr D Mohamed Kizhar Irshath Nursing Home",
+   "addr": "57, Portuguese, Church St",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23729",
+   "name": "Dr.E.V.Kalyani Medical Foundation",
+   "addr": "No.4,2Nd Street",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23730",
+   "name": "Dr.Kamakshi National Hospital",
+   "addr": "12, Jaffer Serang St,Ii Line Beach Road,.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23731",
+   "name": "Dr.Manju Kulkarni Hospital",
+   "addr": "No,18,Nowroji Road",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23732",
+   "name": "K M Speciality Hospital",
+   "addr": "453 And 454, R.K. Shanmugam Salai, K.K. Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23733",
+   "name": "R.M. Hospital",
+   "addr": "A-1 Srinivasapuram Thiruvanmiyur",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23734",
+   "name": "Rotary Central Margaret Sidney Hospital",
+   "addr": "No. 13, 7Th Street,Nanganallur",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23735",
+   "name": "S S Eye Hospital",
+   "addr": "74, Thambu Chetty Street, Mannady",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23736",
+   "name": "Shri Saai Krs Hospitals",
+   "addr": "29, 7Th Avenue, Ashok Nagar, Next To Titan Showroom",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23737",
+   "name": "Sree Ramachandra Medical Center",
+   "addr": "Porur, Chennai-600116",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23738",
+   "name": "Sri Kalyan Hospital",
+   "addr": "12, First Main Road Kasturba Nagar Adyar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23739",
+   "name": "Sri Kamatchi Nursing Home",
+   "addr": "No.2, Jawaharlal Street, New Perungalathur",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23740",
+   "name": "Sri Meenakshi Nursing Home",
+   "addr": "No. 3A, Baroda Street, West Mambalam, T Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23741",
+   "name": "Sri Ramana Eye Center",
+   "addr": "11, Gopalakrishna Street, T Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23742",
+   "name": "The Arya Vysya Meternity Home and Child Welfare Centre",
+   "addr": "Old No 158 (New No 174) Govindappa Naick Street",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23743",
+   "name": "Apollo Speciality Hospital",
+   "addr": "320, Mount Road",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23744",
+   "name": "Lister Nursing Home",
+   "addr": "3/2,Appavood Street",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23745",
+   "name": "Mysaan Hospital",
+   "addr": "19/10, Thayar Street, Mount Road",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23746",
+   "name": "Ponraj Eye Clinic",
+   "addr": "138/2 L B Road,Thiruvanmiyur",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23747",
+   "name": "Sahishnatha Indtitute Of Maternal And Child Haelth",
+   "addr": "No.2/614\"A\",Philios Street,Neelangarai,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23748",
+   "name": "Aashirwad Maternity and Child Care Research Institut",
+   "addr": "Mudholkar Peth, Near Garden, Opp Potode Marvati",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23749",
+   "name": "Government General Hospital",
+   "addr": "Government General Hospital",
+   "category": "Public/ Government",
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23750",
+   "name": "Janani Nursing Home Pvt Ltd",
+   "addr": "22-23-24,Ranganathan Nagar,Selaiyur",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23751",
+   "name": "Ag Eye Care Hospital",
+   "addr": "No:106, R.K.Mutt Road, Mylapore",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23752",
+   "name": "Avm Medical Ent Research Foundation Pvt Ltd",
+   "addr": "3, P S Sivasami Salai Mylapore",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23753",
+   "name": "Chennai Meenakshi Multispeciality Hospital Ltd",
+   "addr": "148, Luz Church Road Mylapore",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23754",
+   "name": "Csi Kalyani General Hospital",
+   "addr": "15, Dr. Radhakrishnan Salai, Mylapore",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23755",
+   "name": "Devaki Hospital Ltd",
+   "addr": "148, Luz Church Road Mylapore",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23756",
+   "name": "Dr. K Ravi Eye Care",
+   "addr": "No. 03 2Nd Link Street. Cit Colony",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23757",
+   "name": "E V Kalyani Medical Centre",
+   "addr": "4Second Street Dr Radhakrishnan Road Mylapore",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23758",
+   "name": "Fathimah Eye Clinic",
+   "addr": "No. 23, Arulanandam Street, Santhome, Mylapore.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23759",
+   "name": "G K M Hospital Pvt Ltd",
+   "addr": "120/113, Perambur Barracks Road, Purasawalkam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23760",
+   "name": "Kasthuri Hospital",
+   "addr": "119, Shanmugam Road, West Tambaram,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23761",
+   "name": "Kauvery Hospital (Unit Of Sri Kavery Medical Care (Trichy) Ltd.)",
+   "addr": "No.199/90, Mbc Towers,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23762",
+   "name": "Madras Ent Research Foundation",
+   "addr": "15, P.S.Sivasamy Salai, Off Dr.Radhakrishnan Raod) Mylapore,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23763",
+   "name": "Rajan Dental Institute Pvt. Ltd.",
+   "addr": "56, Dr.Radha Krishnan Salai,Opposite Kalyani Hospital,Mylapore.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23764",
+   "name": "Ramana Clinic And Nursing Home",
+   "addr": "320-A(47-A),Velachery Main Road,Velachery",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23765",
+   "name": "Sampat Nursing Home",
+   "addr": "4, Nachiappa Street Mylapore",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23766",
+   "name": "Sinus And Nose Hospital - Mylapore, Chennai",
+   "addr": "35 A, Santhome High Road, Marina Beach",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23767",
+   "name": "Sri Sayee Poly Clinic",
+   "addr": "37,Oid#17Bheemasena Garden St., Mylapore",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23768",
+   "name": "St.Isabel's Hospital",
+   "addr": "49, Oliver Rd,Near Vivekananda College,Mylapore.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23769",
+   "name": "Sunder Eye Hospital",
+   "addr": "W - 98, Second Avenue West Madras Medical Centre",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23770",
+   "name": "Trinity Acute Care Hospital - Chennai",
+   "addr": "No. 33, Desikan Road, Mylapore",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23771",
+   "name": "Dr Agarwals Eye Hospital",
+   "addr": "No: 360, Triplicane High Road, Triplicane,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23772",
+   "name": "Fousiya Hospital",
+   "addr": "New119, Old No.56, Dr.Natesan Road, Triplicane,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23773",
+   "name": "Hiba Hospital",
+   "addr": "Old No-25 New No:53, Big Street, Near Hindu Higher Secondary School",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23774",
+   "name": "Mm Harshine Veda Health Centre",
+   "addr": "43, Irusappa St., Triplicane, Cheenai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23775",
+   "name": "R.R. Multispeciality Hospital",
+   "addr": "258, Triplicane High Road, Dist - Triplicane",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23776",
+   "name": "Rathna Nursing Home",
+   "addr": "No.241 Triplicane High Road Triplicane",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23777",
+   "name": "Siva E N T Hospital",
+   "addr": "136 (295), Triplicane High Road",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23778",
+   "name": "Star Bone Joint Center",
+   "addr": "2, Pillaiyar Koil Street, Triplicane",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23779",
+   "name": "Subam Nursing Home",
+   "addr": "Old 239, Triplicane Hig Road,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23780",
+   "name": "Vasan Eye Care Hospital",
+   "addr": "No.100/101, Triplicane High Road, Triplicane",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23781",
+   "name": "Apollo Hospitals",
+   "addr": "21, Greams Lane, Off. Greams Road,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23782",
+   "name": "Bharath Hospital",
+   "addr": "72, I Main Road,Naganallur.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23783",
+   "name": "Dr.Meenakshi Dhamija",
+   "addr": "Ehrlich Laboratory, Kothi Apartments 1-D, 46 (New 14), College Road,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23784",
+   "name": "Hillwoods Multidisciplinary Health Service",
+   "addr": "8, 3Rd Street, Subba Rao Avenue",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23785",
+   "name": "Indian Hospitals",
+   "addr": "No. 1051, P.H.Road, Arumbakkam,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23786",
+   "name": "Sankara Nethralaya",
+   "addr": "(A Unit Of Medical Research Foundation)41/18, College Road, Nungambakkam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23787",
+   "name": "Sono Diagnostics",
+   "addr": "N0.76(Old No.143) Greams Road(OppositeBsnlteleshoppe)",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23788",
+   "name": "Sri Sagara Durga Medicals",
+   "addr": "Rakeshdhamija M.B.B.S 1-D,Kothi Apartments, Ground Floor 14,College Road",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23789",
+   "name": "C.U.Shah Clinic And Diagnostic Center",
+   "addr": "4,Ritherdon Road,Pursaivakam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23790",
+   "name": "Joseph Eye Clinic",
+   "addr": "21.Ritherdon Road,Vepery,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23791",
+   "name": "Narayanaa Hospital",
+   "addr": "No.18, Tana Street, Purasawalkam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23792",
+   "name": "Ritherdon Nursing Home",
+   "addr": "21, Ritherdon Road, Vepery",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23793",
+   "name": "Sri Lakshmi Clinicandmaternity Center",
+   "addr": "No:20, Thana Street, Purasaiwakkam Purasawakam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23794",
+   "name": "St.Mary Of Leuca Hospital",
+   "addr": "Moondrumavadi,K.Pudur, Madurai-7",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23795",
+   "name": "The Private Hospital",
+   "addr": "230, Purswalkam High Road",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23796",
+   "name": "Dr Rai Memorial Medical Center",
+   "addr": "No. 562, Anna Salai Century Plaza, Opp To Ags Office.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23797",
+   "name": "Dr. A. Ramachandras Diabetes Hospit",
+   "addr": "28,Marshalls Road Egmore,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23798",
+   "name": "Prime Care Nursing Home",
+   "addr": "44, Sakthi Nagar, Adambakkam, Near Dev School",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23799",
+   "name": "Siva Kumar Hospitals",
+   "addr": "Opp Collecter Office Vellore",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23800",
+   "name": "Aditya Hospital",
+   "addr": "No:7, Barnaby Road Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23801",
+   "name": "Akn Nursing Home",
+   "addr": "20, Kellys Road Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23802",
+   "name": "Apollo First Medical Foundation",
+   "addr": "154, Poonta Nala High. Road,Kilpauk, Near, K.Mc. Hospital",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23803",
+   "name": "Ayesha Hospital",
+   "addr": "91-A Millers Road, Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23804",
+   "name": "Babus Dialysis Centre",
+   "addr": "91-A, Millers Road,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23805",
+   "name": "Chennai Cancer Care",
+   "addr": "55,New Avadi Road,Kilpauk,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23806",
+   "name": "Chennai Heart Centre",
+   "addr": "64, Medavakkam Tank Road, Kilpauk,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23807",
+   "name": "Davita Nephrolife",
+   "addr": "No.80, New Avadi Road,Alagappa Nagar,Opposite To Pachaiyappa's College For Men,Kilpauk,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23808",
+   "name": "Doctor Rexs Hospitals",
+   "addr": "(Old No.19), New No.37, Millers Road, Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23809",
+   "name": "Dr Rabindran;S Health Care Center",
+   "addr": "212 Mth Road, Ambattur",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23810",
+   "name": "Dr. A.G. Arumugam Nursing Home",
+   "addr": "Old No.764, New No.402, Poonamallee High Road, (Chathurpujadoss Road), Kilpauk, Madras",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23811",
+   "name": "Dr. Meera Nursing Home",
+   "addr": "142/9, Akshaya Building, Purasawalkam High Road, Kellys",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23812",
+   "name": "Halsted Surgical Clinic",
+   "addr": "815, Poonamalle High Road",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23813",
+   "name": "Hitech Diagnostic Centre",
+   "addr": "No.1, Millers Road, Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23814",
+   "name": "Jayadev Polyclinic Hospital",
+   "addr": "No : 814, Poonamallee High Rd., Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23815",
+   "name": "Jm Kerala Aayurveda Speciality Centre",
+   "addr": "214, Poonamallee High Road, Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23816",
+   "name": "Kensington Hospital",
+   "addr": "856,Poonamallee High Road, Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23817",
+   "name": "Km Hospitals",
+   "addr": "64, Medavakam Tank Road Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23818",
+   "name": "Lifeline Rigid Hospital",
+   "addr": "47/3, New Avadi Road,Near Kilpauk Post Office",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23819",
+   "name": "M.N.Orthopaedic Hospital",
+   "addr": "No. 14, Bank Street Off New Avadi Road, Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23820",
+   "name": "Mahak Clinic",
+   "addr": "New No.22(33) Harleys Road Air India Colony Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23821",
+   "name": "Marudhar Kesari Health Foundation Pvt Ltd",
+   "addr": "Kilpauk Garden Road, Dilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23822",
+   "name": "Mots Hospital",
+   "addr": "264/125, Kilpauk Garden Road, Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23823",
+   "name": "New Hope Medical Centre Pvt. Ltd",
+   "addr": "No. 814, Poonamallee High Road, Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23824",
+   "name": "Onelife Mots Hospital",
+   "addr": "264/125, Kilpauk Garden Road,,Kilpauk.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23825",
+   "name": "Padma Clinic And Nursing Home",
+   "addr": "753, Poonamallee High Road Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23826",
+   "name": "Precision Diagnostics",
+   "addr": "191 Poonamallee High Road",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23827",
+   "name": "R.K. Gynaec And Maternity Hospital",
+   "addr": "866, Poonamallee High Road, Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23828",
+   "name": "Ramarau Polyclinic",
+   "addr": "New.No.264 (Old No 829/2), Poonamallee High Road, Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23829",
+   "name": "Regina Nursing Home",
+   "addr": "3, Mandapam Road, Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23830",
+   "name": "Right Hospitals",
+   "addr": "1, Prof. Subramaniam Street (Behind Ega Theatre), Kllpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23831",
+   "name": "Sarala Neurology Hospital And Research Centre",
+   "addr": "752, Poonamallee High Road Kilpauk Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23832",
+   "name": "Satish Eye Hospital",
+   "addr": "No. 15, Ormes Road, Kilpauk,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23833",
+   "name": "Shanthi Hospital",
+   "addr": "/227-1 Opp K.T.C.Depot Thoothukudi Main Road, Tiruchendur-",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23834",
+   "name": "Sree Sai Krishna Poly Clinic Hospital",
+   "addr": "32/1, (Old No.463/1),Kilpauk Garden Rd,Kilpauk.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23835",
+   "name": "Sundaram Cancer Centre",
+   "addr": "Flat1/B,Ii Floor,OldNo191,New#297,Precision Diagnostics Complex,Periyar Evr Salai(P.H.Road)Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23836",
+   "name": "Sundaravadanan Nursing Home",
+   "addr": "136, Ponamallee High Road,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23837",
+   "name": "Surgical Nursing Home",
+   "addr": "Old 17, New 54, Harleys Road, Kilpauk,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23838",
+   "name": "The Arya Vaidya Chikitsalayam",
+   "addr": "18-A, Manickeswari Road, Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23839",
+   "name": "Tosh Hospitals Private Limited",
+   "addr": "No.34/72, Ormes Road, Kilpauk, Kilpauk",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23840",
+   "name": "Bharani Nursing Home",
+   "addr": "No.62,Foxen Street Perambur",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23841",
+   "name": "Dr. M. Mohamed Meeran Clinic",
+   "addr": "77, Paper Mills Road, Perambur,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23842",
+   "name": "Priya Nursing Home",
+   "addr": "10/84, Paddy Field Road, Perambur",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23843",
+   "name": "Sen Hospital",
+   "addr": "New No. 51, 18,Bunder Garden Street,Perambur,Opposite Lourdes Girls School",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23844",
+   "name": "Sree Narayana Nursing Home",
+   "addr": "No 7, Bharathi Road Perambur",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23845",
+   "name": "Srinivas Priya Hospital (P) Ltd",
+   "addr": "Old No.89,& New No.106 Pate Road Perambur, (Near Perambur Railway Station), Patel Road",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23846",
+   "name": "Subiksha Nursing Home",
+   "addr": "New.No.32,(Old No.45), Bunder Garden,2Nd Street, Perambur",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23847",
+   "name": "Deepam Muthu Hospital",
+   "addr": "105, Pulianthope High Road,,Pulianthope.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23848",
+   "name": "Julian Nursing Home",
+   "addr": "96, Perambur High Road, Near Jamalia Bus Stop Kamalia",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23849",
+   "name": "N.R.Medical Home Private Limited",
+   "addr": "No 1, Binny Colony, Perambur Barracks Road, Behind Binny Cloth Show Room,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23850",
+   "name": "Shri Balaji Hospital - Chennai",
+   "addr": "No-36, Brickkiln Road Near Abirani Theatre",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23851",
+   "name": "Sri Kumaran Multi Speciality Hospital",
+   "addr": "N0:532, Suriya Narayana Street, Royapuram, -",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23852",
+   "name": "Vasantha Nursing Home",
+   "addr": "119 Sanjeevarayan Koil Street Old Washerman Pet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23853",
+   "name": "Bhagwan Mahaveer Eye Hospital",
+   "addr": "No.142, M.S. Koil Street, Royapuram,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23854",
+   "name": "Dr.C.Satheesh",
+   "addr": "Clinic:185,Portuguese Church Street",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23855",
+   "name": "M V Hospital For Diabetes Pvt Ltd",
+   "addr": "No-4, West Mada Church Street, Royapuram,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23856",
+   "name": "Nichani Health Centre",
+   "addr": "10, Arthoon Road Royapuram",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23857",
+   "name": "Rathina Clinic",
+   "addr": "15, Thoppai Street, Royapuram,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23858",
+   "name": "Sakthis Hospital",
+   "addr": "45, Westkalmandapamroadroyapuram",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23859",
+   "name": "Subha Hospital",
+   "addr": "87/38, M.S. Koil Street, Royapuram",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23860",
+   "name": "Sudha Hospital",
+   "addr": "51/18, Adam Sahib Street, Pumping Station Road, Roya Puram",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23861",
+   "name": "Arasu Medicals",
+   "addr": "New141Old#84 Peters Road Royapettah Chennai, Opp Adarsh School",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23862",
+   "name": "Dr.Bala Subramanian",
+   "addr": "16,R.O.B Th Street",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23863",
+   "name": "Santhigiri Ayurveda and Siddha Hospital",
+   "addr": "No.159 Lloyds Road, Siva .Ent Hospital Building",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23864",
+   "name": "Seethapathy Nursing Home",
+   "addr": "241,Royupattak High Road,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23865",
+   "name": "Siva E.N.T. Hospital",
+   "addr": "No. 159(Old No.94) Lloyds Road Royapettah",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23866",
+   "name": "The Crescent Hospital",
+   "addr": "46, Dr.Besant Road,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23867",
+   "name": "Vinayagam Laser Hospital",
+   "addr": "194Old No 289), Lloyd's Road, Avvai Sanmugam Salai, Royapettah.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23868",
+   "name": "Balakrishna Eye Hospital",
+   "addr": "11, Sastri 1St Cross Street, Kaveri Nagar Saidapet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23869",
+   "name": "Chitra Maternity andSurgival Centre",
+   "addr": "No 35 Karaneeswarar Koil Street,Saidapet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23870",
+   "name": "R Nandukumar Nursing Home",
+   "addr": "No.-9, Sadayappan Mudali Street",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23871",
+   "name": "R.G. Stone Urological Research Institute",
+   "addr": "391/392, Anna Salai, 1St Floor, Miv Complex., Opposite New Bus Stand, Saidapet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23872",
+   "name": "Sri Balaji Ent And Maternity Clinic",
+   "addr": "No: 9, Sadayappan Street Saidapet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23873",
+   "name": "Add Value To Life",
+   "addr": "1, Rajambhal St.Rameshwar Apartments T-Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23874",
+   "name": "Anuradha Maternity Centre",
+   "addr": "31,Dhandapani Street,T.Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23875",
+   "name": "Appolo Clinic",
+   "addr": "No 56 Chetty Road T Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23876",
+   "name": "B R Speciality Hospital and Research Center",
+   "addr": "No 20, G N Chetty Road T Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23877",
+   "name": "Bagdi Nursing Home",
+   "addr": "2, New Giri Road, T. Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23878",
+   "name": "Bharathi Rajaa Specialty Hospital",
+   "addr": "No: 20, G N Chetty Road T Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23879",
+   "name": "Care Hospital",
+   "addr": "37, Myai Ranganthan Street, T. Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23880",
+   "name": "Centre For Blood Disorder",
+   "addr": "Old No.24, New 73, Habibullah Road, T.Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23881",
+   "name": "Dianostic Services",
+   "addr": "87,Burkit Road T-Nager",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23882",
+   "name": "Dr Gurusekaran Hospital Pvt Ltd",
+   "addr": "N0-01, Crescent Park Street, T Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23883",
+   "name": "Dr Iravathams Laboratory",
+   "addr": "20/3-4 Gopalkrishna Street, Indra Devi Complex, (Near Rohini International), T Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23884",
+   "name": "Dr V Rathna Frabhu",
+   "addr": "Old Number 21, New Number 3, Bharathi Nagar, 1St Street, 2Nd Lane, T. Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23885",
+   "name": "Dr Vas Dental Clinic",
+   "addr": "Old No.33,New No.10.Mannar Street,T.Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23886",
+   "name": "Dr. Udhaya Rajas Dental Centre",
+   "addr": "56,(Old No.105), G.N. Chetty Road, First Floor, T.Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23887",
+   "name": "Dr.Duraiswami Eye Hospital",
+   "addr": "No.10/11, Madley Road, T.Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23888",
+   "name": "Dr.Mehtas Clinic",
+   "addr": "Old No.65/1,New No 8A,Burkit Road,T.Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23889",
+   "name": "Dr.N.Nagajothi,M.D",
+   "addr": "New No 11,Old No 4 Saarngapani Street T.Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23890",
+   "name": "Endocrine Diagnostic And Research Centre",
+   "addr": "1,Moosa Street,T.Nager,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23891",
+   "name": "Ganga Nursing Home",
+   "addr": "8, Dr Nairs Road T Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23892",
+   "name": "Gunasekaran Hospitals Pvt. Ltd.",
+   "addr": "No.1 Crescent Park Street, T. Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23893",
+   "name": "Health Speciality Centre",
+   "addr": "157,(Old No.55) Habibullah Road, T.Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23894",
+   "name": "Kottakkal Arya Vaidya Sala",
+   "addr": "Mangesh Street, T Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23895",
+   "name": "Krishna Eye And Ent Hospitals",
+   "addr": "No.39, Burkit Road, T. Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23896",
+   "name": "Life Span",
+   "addr": "No.11/3, Dr.Sadasivam Road, T.Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23897",
+   "name": "M R D Nursing Home",
+   "addr": "13, Raghaviah Road, T Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23898",
+   "name": "New Balaji Hospital",
+   "addr": "49 Srinivasa Reddu Street,T Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23899",
+   "name": "Pdr Othopaedic Hospital",
+   "addr": "35, Rangan Street, Behind Grt, T.Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23900",
+   "name": "Poornima 24 Hours Hospital",
+   "addr": "44/2, New Boag Road, T Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23901",
+   "name": "R. K. Eye Centre",
+   "addr": "No. 14/20, Chari Street, T. Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23902",
+   "name": "R.M.D. Nursing Home",
+   "addr": "13, Raghaviah Road, T Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23903",
+   "name": "Radhatri Nethralaya",
+   "addr": "12, Hindi Prachara Sabha Street, T Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23904",
+   "name": "Rajan Eye Care Hospital Private Limited",
+   "addr": "5,Vidyodaya East Second Street, Behind Vidyodaya School",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23905",
+   "name": "Raju Hospital",
+   "addr": "43, South Usman Road, T Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23906",
+   "name": "Sai Ortho Care Hospital",
+   "addr": "55, Sadulla Street, T.Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23907",
+   "name": "Sathya Physiotherapy Centre",
+   "addr": "24,Coats Road, T.Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23908",
+   "name": "Shree Ayurvedic Health Center",
+   "addr": "155, Ground Floor, G N Chetty Road, T Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23909",
+   "name": "Shree Sai Krupa Dental Care",
+   "addr": "No 53/1 Burkit Road T.Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23910",
+   "name": "Sree Ramana Surgical Clinic",
+   "addr": "Flat No14, Dr No 18, Elegant Apartments, Hindi Prachar Sabha Road, T.Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23911",
+   "name": "Sri Visa Clinic",
+   "addr": "A Unit Of Sre Visa Clinic (P) Ltd, No.13,New Boag Road, T Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23912",
+   "name": "Sri Viveka Institute Of Dental Health",
+   "addr": "54, G.N. Chetty Road, T Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23913",
+   "name": "Subamathi Clinic",
+   "addr": "0",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23914",
+   "name": "The Dental Clinic",
+   "addr": "24, Gopalakrishna Iyer Street, T.Nagar(Near Ratna Electricals)",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23915",
+   "name": "Thulasi Krishna Nursing Home",
+   "addr": "24, Rameswaram Road, Devinarayan Apts., T.Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23916",
+   "name": "Vadapalani Multi Speciality Hospital",
+   "addr": "No. 33, Vadapalani Andavar Koil Street Vadapalani,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23917",
+   "name": "Women and Children Foundation",
+   "addr": "4 / 1 & 4/2, Porur Somasundaram, North Usman Road T Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23918",
+   "name": "Aarthi Scans",
+   "addr": "No 17 Cv Raman Road,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23919",
+   "name": "Apollo Cosmetic Clinic",
+   "addr": "No. 14, Jayammal Street Teynampat",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23920",
+   "name": "Apollo Day Surgery",
+   "addr": "12, C P Ramasamy Road, Alwarpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23921",
+   "name": "Aswene Soundra Hospital and Research Centre",
+   "addr": "24, Kasturi Rangan Road,Near Hotel Citola Sheraton, Teynampet,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23922",
+   "name": "Dr Rai Memrial Medical Centre",
+   "addr": "Century Plaza Anna Salai Teynampet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23923",
+   "name": "Frontline Eye Hospital",
+   "addr": "123 T.T.K. Rood Alwarpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23924",
+   "name": "Harvey Heart Hospital Ltd",
+   "addr": "542, Ttk Road, Alwarpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23925",
+   "name": "Jayakanthy Polyclinic And Vishnu Infertlilty Center",
+   "addr": "No 10 M S Road, Alwarpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23926",
+   "name": "Kauvery Hospital",
+   "addr": "81, Ttk Road,,Alwarpet.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23927",
+   "name": "Liberty High Scans",
+   "addr": "T.T.K.Road Alwarpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23928",
+   "name": "Nandalala Medical Foundation",
+   "addr": "Thoppu\" New No.2,(Old No.64),Dr.Ranga Road, Abiramapuram,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23929",
+   "name": "National Hospital, Chennai",
+   "addr": "No.12 Jaffer Serang St. Ii Line Beach",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23930",
+   "name": "Suraksha Ent Care Centre",
+   "addr": "Thoppu New No 2 (Old No 64) Dr. Ranga Road, Abhiramapuram",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23931",
+   "name": "Udhi Eye Hospitals",
+   "addr": "No. 9, Murrays Gate Road, Alwarpet,Next To Jevnampet Post Office,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23932",
+   "name": "Adyaar P.M. Hospital and Research Centr Pvt.Ltd",
+   "addr": "58, L.B. Road, Adyar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23933",
+   "name": "Gs Hospital",
+   "addr": "466, 3Rd Avenue Indira Nagar, Adyar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23934",
+   "name": "Lakshmi Maternity Hospital",
+   "addr": "New No.10, Old No.20, 3Rd Avenue, Indira Nagar, Adyar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23935",
+   "name": "Lifeline Cliniq , Adyar",
+   "addr": "37, 1St Avenue, Sastri Nagar, Adyar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23936",
+   "name": "M N Eye Hospital",
+   "addr": "33, Mahatma Gandhi Road, Sastri Nagar, 2Nd Avenue, Adyar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23937",
+   "name": "Menagudy Hospitals India Pvt Ltd",
+   "addr": "19/1, 1St Avenue, Shastari Nagar, Adyar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23938",
+   "name": "Padmapriya Hospital Pvt. Ltd.",
+   "addr": "No. -28, 1St Avenue, Indira Nagar, Adyar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23939",
+   "name": "Santosh Hospital Pvt Ltd",
+   "addr": "No. 1, 7Th Avenue, Besant Nagar. Near Velankanni Church",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23940",
+   "name": "Shivasunder Hospital",
+   "addr": "28, First Cross Street, Shastri Nagar Adya (Behind Of Adyas Depot)",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23941",
+   "name": "Sooriya Hospital",
+   "addr": "1-1, Arunachalam Road, Saligramam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23942",
+   "name": "Tt Ranganathan Clinical Research Foundation",
+   "addr": "17,Iv Main Road,Indira Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23943",
+   "name": "Urology Stone Center",
+   "addr": "No.67, 1St Main Road,Indira Nagar, Adayar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23944",
+   "name": "Vasan Eye Care Hospital",
+   "addr": "Old No 115/1,New No 22, Kamaraj Avenue 2Nd Street,Adyar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23945",
+   "name": "A.V. Hospital-Chennai",
+   "addr": "172, Solaiappan Stree, Near Maharani Theatre",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23946",
+   "name": "Angel Nursing Home",
+   "addr": "26 & 27/1, Telugu Street, Old Washermenpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23947",
+   "name": "Ishwarya Nursing Home",
+   "addr": "New 7, Kooresan Street, Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23948",
+   "name": "Jayam Nursing Home",
+   "addr": "53,Thandavaraya Mudali Street,Old Washermanpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23949",
+   "name": "M.K.Nursing Home",
+   "addr": "Old No.46(New No.24)Rathna Sabapathy Road, Chennai-",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23950",
+   "name": "Nagamani Hospitals Private Limited",
+   "addr": "116,118, Rajarathinam Saalai, (G.A. Road),",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23951",
+   "name": "Priya Nursing Home",
+   "addr": "82, Kappal Polu Street Old Washermenpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23952",
+   "name": "Ram Clinic",
+   "addr": "No 20 Venkatachelam Street",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23953",
+   "name": "Rathenam Nursing Home",
+   "addr": "No.1, Kaligarayan Street, Iii Lane, Old Washermenpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23954",
+   "name": "Roselin Gandhi Hospital",
+   "addr": "10/18, Arumugam Street, Old Washermenpet,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23955",
+   "name": "Sanjeevini Nursing Home",
+   "addr": "80, Kappal Polu Street Old Washermenpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23956",
+   "name": "Shyamala Nursing Home",
+   "addr": "32, Cemetry Road Old Washermenpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23957",
+   "name": "Snn Medicare Centre",
+   "addr": "Old No.3/New No. 9 Manikanda Ix Street Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23958",
+   "name": "Vasan Eye Care Hospital",
+   "addr": "New No 976, Old No 447, T H Road,Old Washermenpet, Opp To Nirmala Silks,Tondiarpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23959",
+   "name": "Medway Medical Centre",
+   "addr": "New No:8, Old No:22, 4 Th Cross Street, Trustpuram, Kodambakkam,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23960",
+   "name": "Shepherd Nursing Home",
+   "addr": "No. 19, Kumaran Nagar, Main Road, Peravallur Peravallur",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23961",
+   "name": "A.C. Hospital",
+   "addr": "8, Iii Main Road,Undited India Nagar, Joint Office,Ayanavaram.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23962",
+   "name": "Amruth Siddha and Ayurvedic Clinic",
+   "addr": "45/11,K.H Road,Ayanavaram,Opp T N S C Bank.Near Ayanavaram Signal",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23963",
+   "name": "Shreyas Health Centre",
+   "addr": "No.35, 36, S.S.Davar 6Th Street, Ayanavaram,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23964",
+   "name": "Sri Eshodha Hospital",
+   "addr": "No.46, Konnur High Road Ayanavaram",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23965",
+   "name": "The Base",
+   "addr": "New No26,Old No16,North Road,Mandavelipakkam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23966",
+   "name": "Trust Hospital",
+   "addr": "N0 122,Medavakkam Tank Road,Ayanavaram",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23967",
+   "name": "Bhatia Hospital",
+   "addr": "No 19/2 L&T Colony,Vijay Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23968",
+   "name": "J. V. Hospitals Llp",
+   "addr": "31, Railway Border Road, Kodambakkam,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23969",
+   "name": "Madras Institute Of Nephrology",
+   "addr": "Vijaya Health Centre, S K Salai Vadapalani",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23970",
+   "name": "Madras Poly Clinic and R.R.Scan",
+   "addr": "5 Kannadasan St.Ranga Rajapuram Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23971",
+   "name": "S.V. Bone And Joint Hospital",
+   "addr": "New No: 177, Old No:77, Rangarajapuram Road, Kodambakkam,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23972",
+   "name": "Spot Hospital",
+   "addr": "No.36, Dr. Ambedkar Road, Kodambakkam,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23973",
+   "name": "Srinivasa Hospital P P N",
+   "addr": "47, Railway Station Road, Near Post Office, Kodambakkam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23974",
+   "name": "The Best Hospital Private Limited",
+   "addr": "9, Vellala Street, Kodambakkam,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23975",
+   "name": "Thulasi Krishna Nursing Home",
+   "addr": "5, First Street, Taylors Estate, Kodambakkam,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23976",
+   "name": "Aakash Fertility Center and Hospital",
+   "addr": "N0O-10, Jawahar Lal Nehru Road",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23977",
+   "name": "Apollo Medical Center [Vadapalani]",
+   "addr": "47/1, Jawaharlal Nehru Road, 100Ft Road, Vadapalani",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23978",
+   "name": "PandG Nursing Home",
+   "addr": "Newno. 42, Oldno. 60, Jawaharlal Nehru 100Ft Road, Vadapalani",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23979",
+   "name": "Paterson Cancer Center / Vijaya Health Centre Premises",
+   "addr": "175, N.S.K. Salai, Vadapalani, Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23980",
+   "name": "S K Nursing Home Pvt Ltd",
+   "addr": "No. 1, Duraiswamy Road, Near Vadapalani Temple",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23981",
+   "name": "Smv Nursing Home",
+   "addr": "68, South Sivankoil Street, Saidapet Road, Vadapalani",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23982",
+   "name": "Sri Sai Joint and Bone Centre and Nursing Home",
+   "addr": "No. 23/3, 4Th Street, Thiru Nagar, Vdapalani",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23983",
+   "name": "Tamilnadu Urological Research Centre",
+   "addr": "No.76,Nelson Manickam Road, Aminjikaral,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23984",
+   "name": "Vasan Eye Care Hospital",
+   "addr": "D No 154/2, Aroot Road, Vadapalani Vadapalani",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23985",
+   "name": "Vijaya Heart Foundation - Vijaya Hospital",
+   "addr": "180, Nsk Salai, Vadapalani",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23986",
+   "name": "Vijaya Institute Of Trauma and Orthopadics",
+   "addr": "No.175, N.S.K.Salai, Vadapalani",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23987",
+   "name": "Anns Homoeo Clinic",
+   "addr": "170, R.K. Mutt Road, Mandaveli, Chennai.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23988",
+   "name": "Aswatha Eye Department",
+   "addr": "11, Durgabai Deshmukh Road, Raja Annamalai Puram",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23989",
+   "name": "B.S.S.Hospital",
+   "addr": "200, Ramakrishnan Mutt Road, Mandaveli,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23990",
+   "name": "Chennai Kaliappa Hospital",
+   "addr": "52, Raja Annamalai Puram, Chennai,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23991",
+   "name": "Chennai Skin Foundation and Yesudian Research Instit",
+   "addr": "No:12/2, Bagirathi Ammal Street, C P Ramasamy Road, R.A.Puram",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23992",
+   "name": "Durgabai Deshmukh General Hospital and Research Centre / Andhra Mahila Sabha",
+   "addr": "No 11, 12, Dr Durgabai Deshmukh Road,R. A .Puram",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23993",
+   "name": "Indira Eye Hospital",
+   "addr": "No 5 School View Road R K Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23994",
+   "name": "Ishwari Prasad Datthaireya Orthopedic Center",
+   "addr": "11, Durgabai Deshmukh Road, Raja Annamalai Puram",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23995",
+   "name": "Janamma Hospital",
+   "addr": "No. 38/56, Venkatakrishna Road, Mandavelli,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23996",
+   "name": "Jaya Eye Clinic",
+   "addr": "12, Norton 3Rd Lane Mandavelipakkam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23997",
+   "name": "Kaliappa Renal Center",
+   "addr": "No.43,Second Main Road,R A Puram.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23998",
+   "name": "Madras Ent Research Foundation Pvt Ltd",
+   "addr": "No. 1, 1 Cross Street, Off Ii Main Road, Raja Annamalaipuram,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:23999",
+   "name": "Navasuja Sankara Nethralaya",
+   "addr": "73 Venkatakrishna Road, Ra Puram,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24000",
+   "name": "Prakriti Ayurvedic Center",
+   "addr": "No.22,2Nd Main Road,R.A. Puram",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24001",
+   "name": "Rupa Clinic and Nursing Home",
+   "addr": "No:14, Bagirathiammal Street, R.A.Puram,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24002",
+   "name": "Sanjay E N T Hospital",
+   "addr": "12/2, Southcanalbankroad, Mandaveli.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24003",
+   "name": "Sri Durga Health Centre",
+   "addr": "D.No.2,Plo No 86 V.V.Giri Salai Vivekanand Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24004",
+   "name": "Sri Ranga Hospitals",
+   "addr": "No 4/30, Devanathan Road, Mandevalli,Near Mandaveli Bus Terminus",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24005",
+   "name": "The Surgical Clinic and Nursing Home",
+   "addr": "Old No -15 /New 26-28, Norton Road,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24006",
+   "name": "Y V K Hospital Enterprises Pvt Ltd",
+   "addr": "14/2, Devanandan Street, Mandavalli",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24007",
+   "name": "A.K. Hospital",
+   "addr": "360, P.H. Road,Jn Of P.H. Road And, Nelson Manickam Road, Aminjikarai,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24008",
+   "name": "Dr. Seshiah Diabetes Research Institute and Dr. Balaji Diabetes Care Centre",
+   "addr": "729, P.H. Road,Near Pachaiappa's College,Aminjikarai.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24009",
+   "name": "M.R. Hospital",
+   "addr": "New No. 12 Old No.20, Govindan Street Ayyavoo, Naidu Colony, Aminjikarai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24010",
+   "name": "Peoples Nursing Home",
+   "addr": "No.12/16, New Natarajapuram, Aminjikarai,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24011",
+   "name": "Billroth Hospitals Limited",
+   "addr": "43, Lakshmi Talkies Road,Shenoy Ngr., Opposite Poonamallee High Road,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24012",
+   "name": "Mu.Va. Hospital And Speciality Centre",
+   "addr": "No:6, Kanniamman Koil Street,Parllel To Billroth Hospital,Shenoy Nagar.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24013",
+   "name": "Bethany Health Care Centre",
+   "addr": "72, Spur Tank Road,Chetpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24014",
+   "name": "Dr. Mehta`S Hospitals Pvt Ltd",
+   "addr": "No.2 (E), Mcnichols Road, 3 Lane, Chetpet,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24015",
+   "name": "Josephs Nursing Home",
+   "addr": "10-A, Dr. Guruswamy Road, Chetpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24016",
+   "name": "Padmini Nursing Home",
+   "addr": "9, Pachaiyappa College Hostel Road Chetpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24017",
+   "name": "Prashanth Multispeciality Hospital",
+   "addr": "No.77 Harrington Road, Chetpet,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24018",
+   "name": "Psymed Hospiyal",
+   "addr": "49/2,Harrington Road,Chetput Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24019",
+   "name": "Sri Sainath Hospital and Research Institute",
+   "addr": "No. 11, M C. Nichols Road, 4Th Lane, Opposite To Chetpet Police Station Chetpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24020",
+   "name": "Vasantha Subramanian Hospitals Pvt Ltd",
+   "addr": "13, East Spurtank Road, Chetpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24021",
+   "name": "Zubeda Hospitals Ltd.",
+   "addr": "10, Dr. Guruswamy Road, Chetpet,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24022",
+   "name": "Balaji Hospital (P) Ltd.",
+   "addr": "No. 1, Lawyer Jaganathan Street, Guindy,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24023",
+   "name": "Bharat Specialities Lab",
+   "addr": "S7,Thiru Vi Ka Industrial Estate, Guindy, Chennai-32.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24024",
+   "name": "Concept Medicare India Pvt. Ltd.",
+   "addr": "Noble Marine Tower No.62, No.62 Mount Road Guindy",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24025",
+   "name": "Dr.Mu.Va.Hospital",
+   "addr": "6,Kanniamman,Koil Street,Shenoy Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24026",
+   "name": "Mina Nursing Home",
+   "addr": "22/12, G.S.T Road, Guindy, Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24027",
+   "name": "Mother and Child Care Clinic",
+   "addr": "No:5/4, 3Rd Cross Street, Balaji Nagar, Ekkattuthangal",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24028",
+   "name": "N.K Clinic",
+   "addr": "No.51/3 Cart Truck Road, Maduvankarai,Near Beta Matriculation School Guindy",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24029",
+   "name": "Sri Balaji Hospital P Ltd",
+   "addr": "No.1 Lawyer Jagnathan Street, Guindy",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24030",
+   "name": "Annamalai Hospital",
+   "addr": "27, Govindan Raod, West Mambalam, Near Srinivasa Theatre",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24031",
+   "name": "C.S.M.Nursing Home",
+   "addr": "18 Rukmani Street West Mambalam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24032",
+   "name": "Dr. Rm. Annamalai Clinic Family Health Care Centre",
+   "addr": "No. 27, Govindan Road, West Mambalam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24033",
+   "name": "Lakshmi Hospital",
+   "addr": "No. 47, Govindan Road, West Mambalam, Near Srinivasa Theatre,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24034",
+   "name": "Panacea Biotec Ltd.",
+   "addr": "No.62, Brindavan Street, West Mambalam, Espee Complex",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24035",
+   "name": "Public Health Centre",
+   "addr": "174, Lake View Road,West Mambalam,Near Ayodhya Mandapam.",
+   "category": "Public/ Government",
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24036",
+   "name": "S R M Hospital",
+   "addr": "No. 68, Thambiah Road West, Mambalam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24037",
+   "name": "Spectra Laboratories",
+   "addr": "No.49, Umapathy Street, Arya Gowda Road, West Mambalam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24038",
+   "name": "Sree Chakra Maternity Clinic",
+   "addr": "New 4, Old 108,Ellai Amman Koil Street,West Mambalam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24039",
+   "name": "Sulochana Dental Care Center",
+   "addr": "45 Jubilee Road, West Mambalam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24040",
+   "name": "Vasanthram Hospital (P) Ltd.,",
+   "addr": "No.7, Varadappan Street,West Mambalam.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24041",
+   "name": "Acharya Dental Clinic",
+   "addr": "No 5 Thirumurthy Nagar 6Th Street Nungambakkam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24042",
+   "name": "B.R.S. Hospital Pvt. Ltd.",
+   "addr": "28, Cathedral Garden Road, Nungambakkam,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24043",
+   "name": "Chitra's Ent Laser Hospital",
+   "addr": "No.30C, Cathedral Garden Road, Nungambakkam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24044",
+   "name": "Fertility Research Centre",
+   "addr": "6E, Nungambakkam High Road",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24045",
+   "name": "G.G.Hospital",
+   "addr": "6-E,Nungambakkam High Road,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24046",
+   "name": "Lister Metropolis LaboratoryandResearch Centre Pvt.Ltd.",
+   "addr": "No 3 Jagannathan Road,Nungambakkam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24047",
+   "name": "Medindia Hospitals",
+   "addr": "83, Valluvarkottam High Road ( Village Road)",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24048",
+   "name": "Sasthalaya Hospital",
+   "addr": "No.27, Pushpanagar, 1St Street, Nungabakkam,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24049",
+   "name": "The Child Trust Medical Research Foundation",
+   "addr": "12-A, Nageswara Road, Nungambakkam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24050",
+   "name": "The Kanchi Kamkoti Child Trust Hospital",
+   "addr": "No. 12A, Nageswara Road, Nungambakkam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24051",
+   "name": "The Kasturba Nurshing Home",
+   "addr": "7, Subbaraya Street, Nungambakkam, Chennai - 600 034",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24052",
+   "name": "R.S.P. Hospital",
+   "addr": "No.6, 9Th Street Nandaram Extn, OppositeTo Icici Bank,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24053",
+   "name": "Venkataeswara Hospitals",
+   "addr": "121-A(New No-36A), Chamiers Road, Nandanam,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24054",
+   "name": "Vijay's Nursing Home",
+   "addr": "39, West Road, West Cit Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24055",
+   "name": "Dr M.V.R. Health Centre and Child Care Hospital",
+   "addr": "No.38/40, Muthumudali Street, Vysarpadi",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24056",
+   "name": "Nalamm Hospital Pvt Ltd",
+   "addr": "10A/3 I Cross Street, M K B Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24057",
+   "name": "Apollo Hospitals",
+   "addr": "645&646, T H Road, Tondiarpet",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24058",
+   "name": "Dr. Agarwals Eye Hospital Ltd.",
+   "addr": "No. Ac-15, 2Nd Avenue,Anna Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24059",
+   "name": "Dr. V.K Sairam",
+   "addr": "G Block 10 Street Anna Nagar East, Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24060",
+   "name": "I K Hospital",
+   "addr": "2/1911, J-Block, 15 Th Main Road, Anna Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24061",
+   "name": "Krishna Dental Clinic",
+   "addr": "Krishna Dental Clinic W-120,Anna Nagar, Madras",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24062",
+   "name": "Neomed Hospital - Chennai",
+   "addr": "2181 L Block 12Th Main Road, Anna Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24063",
+   "name": "Rathi Med Speciality Hospital",
+   "addr": "63, Old No. 102, Q Block, 3Rd Avenue, Annanagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24064",
+   "name": "Reya-Z Laser Vision Centre",
+   "addr": "Kimbarley Towers, Y-222, Ist Flr 2Nd Avenue, Anna Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24065",
+   "name": "Robin and Robin Health Care",
+   "addr": "162/16 Mangalam Colony 7Th Avennue Anna Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24066",
+   "name": "S.M.V Medicals",
+   "addr": "Q-94,16\"Street,4\"Main Road Anna Nager Channai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24067",
+   "name": "Shivas Eye Care",
+   "addr": "Plot No:1824/1, 18Th Main Road, Anna Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24068",
+   "name": "Soundarapandian Bone and Joint Hospital Research Institute Pvt. Ltd.",
+   "addr": "Aa 16, 3Rd Main Road, Anna Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24069",
+   "name": "Sri Devi Speciality Hospial",
+   "addr": "New No.4, Old No.1620-A, 16Th Main Road, Anna Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24070",
+   "name": "Sundar Eye Hospital and West Madras Medical Centre",
+   "addr": "W-98, Second Avenue, Anna Nagar, Round Tana Bus Stand",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24071",
+   "name": "Sundaram Medical Foundation",
+   "addr": "9-C, Shanthi Colony Iv Avenue, Anna Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24072",
+   "name": "The Apollo Clinic",
+   "addr": "Celebrity, T-95.Iiird Avenue, Annanagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24073",
+   "name": "Titan Eye",
+   "addr": "Rds Enterprises Pvt Limited, Franchisee Of Titan Eye Rbn Tower,Ak-2,4Th Avenue,Shanthi Colony,Annanagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24074",
+   "name": "Uma Eye Clinic Pvt.Ltd",
+   "addr": "182,Plot No.995 `O` 2Nd, Anna Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24075",
+   "name": "Vasanthram Hospital",
+   "addr": "No. 63, Old No.102, Q Block 3Rd Avenue Annanagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24076",
+   "name": "Vee Care Hospital",
+   "addr": "No.106, Jawaharlal Nehru Salai, 100 Feet Road, Near Koyambedu Junction, Thirumangalal, Anna Nagar West",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24077",
+   "name": "West Madras Medical Centre / Sundar Eye Hospital Pvt Ltd",
+   "addr": "W-98, Second Avenue Anna Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24078",
+   "name": "Balaji Nursing Home - Chennai",
+   "addr": "No.3,Third Street Malavia Avenue, Thiruvanmiyur",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24079",
+   "name": "Jayam Polyclinc",
+   "addr": "No-58, M G Road, Thiruvanmiyur",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24080",
+   "name": "R. M. Hospital P. Ltd.",
+   "addr": "East Coast Road, A-1,Srinivasapuram, Thiruvanmiyur,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24081",
+   "name": "S.S Nursing Home",
+   "addr": "1/28, Vasudevan Street, East Coast Road, Kottivakkam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24082",
+   "name": "Santhi Hospital",
+   "addr": "18, East Coast Road,Near Neelangarai Bus Stop,Neelangarai.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24083",
+   "name": "Siva Subramaniam Nursing Home",
+   "addr": "1/28, Vasudevan Street East Coast Road",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24084",
+   "name": "Starlight Hospitals Pvt Ltd",
+   "addr": "Old No 3, New 11, North Mada Street, Near Marundeeswarar Temple, Near Thiruvanmiyur Bus Terminus",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24085",
+   "name": "Swaram Medicare And Research Centre Pvt Ltd",
+   "addr": "No: 7, 2Nd East Street, Thiruvanmiyur",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24086",
+   "name": "Vasan Eye Care Hospital",
+   "addr": "No 20, Thamirabarani Towers, Ecr Road, Kabaliswarer Nagar, Neelankarai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24087",
+   "name": "Aarthi Priyas Tooth Care Clinic",
+   "addr": "N0.5,C-Block, Paramount Park, Mega Mart(Upstair) Vijaya Nagar,Velachery",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24088",
+   "name": "Appasamy Krishna Hospital and Medical Research Centre",
+   "addr": "Plot No. 191, 100 Feet By-Pass Road, Velacherry",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24089",
+   "name": "Athipathi Hsopital and Research Centre",
+   "addr": "No.-4, 100 Feet Road, Tansi Nagar, Velachery",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24090",
+   "name": "Chennai Eye Care Hospital",
+   "addr": "No 6 12Th Cross Steet Dhandeeswaram Nagar Velachery",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24091",
+   "name": "Dr G Kirubakaran",
+   "addr": "No. 60, Gandhi Road Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24092",
+   "name": "Dr.Agarwals Eye Hospital- Velacherry",
+   "addr": "27, 100 Feet Road, Taramani Link Road, Velacherry",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24093",
+   "name": "Helios Hospital Pvt Ltd",
+   "addr": "No.39, Rajalakhsmi Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24094",
+   "name": "Kumaran Diagnostic Centre",
+   "addr": "Velachery Main Road Velachery",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24095",
+   "name": "Nandhini Hospital",
+   "addr": "40B, Tansi Nagar Vii St, Velachery,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24096",
+   "name": "Velachery K S Hospital",
+   "addr": "No.14, 10Th Cross Street, A.G.S.Colony, Velachery",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24097",
+   "name": "Xcellent Care Superspeciality Hospital",
+   "addr": "7/14, 7Th Cross Street, Rajalakshmi Nagar, Velachery",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24098",
+   "name": "Arokya Hospital",
+   "addr": "No:32, Pillaiyar Koil Street, Nesapakkam, West K.K.Nagar, Chennai-600078",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24099",
+   "name": "Cmc Hospital",
+   "addr": "51-52, Thiruvalluvar Salai,,Nesapakkam,.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24100",
+   "name": "S M Hospital",
+   "addr": "B-49B, Dr.Ramasamy Salai, Near Pillayar Koil Bus Stop, K.K Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24101",
+   "name": "Singhvi Health Center",
+   "addr": "127, Mint Street, Chennai 600079",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24102",
+   "name": "Sucha Eye Cure",
+   "addr": "Jothir Akshaya Flat-1 No-59, Munusamy Salai Kk Nagar West Near Pondy State Guest House",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24103",
+   "name": "Ezhil Hospital",
+   "addr": "583, Thiruvottriyur High Road, Tondiarpet,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24104",
+   "name": "J.K.Hospital",
+   "addr": "New No.303,Old No.99, T.H.Road, Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24105",
+   "name": "K.M.Multi Speciality Hospital",
+   "addr": "8 & 9 Annai Velakanni Nagar,Madhavaram Milk Colony,.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24106",
+   "name": "Malligai Hospital",
+   "addr": "No. 33, Kanakapillai Street,Tondiarpet,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24107",
+   "name": "Rudhra-Chella Clinicare`N`Cure Services",
+   "addr": "599,T.H.Road, Tondiarpet, Chennai-600081.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24108",
+   "name": "Sri Sai Medical Centre",
+   "addr": "12,Veeraragavan Road, New Washermanpet,Chennai.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24109",
+   "name": "Dr Agarwal Eye Hospital Ltd",
+   "addr": "B-63, Siva Elango Salai (70 Feet Road), Periyar Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24110",
+   "name": "Eswari Nursing Home",
+   "addr": "1/255, 10Th Street S R P Colony Chennai Chennai 600082",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24111",
+   "name": "N.R.Hospital",
+   "addr": "7(1/1A)1St Main Road Jawahar Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24112",
+   "name": "Raju Nursing Home",
+   "addr": "7/1, Laxmanan Nagar Paper Mills Road",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24113",
+   "name": "Sheeba Multi Speciality Clinic",
+   "addr": "No.25/17,70 Feet Road,Jawahar Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24114",
+   "name": "Sri Bala Nursing Home",
+   "addr": "46, S.R.P. Kil Street(North) T.V.K.Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24115",
+   "name": "Sri Sai Sankara Dental Clinic And Orthodontic Cent",
+   "addr": "80/2, 34 Srp Koil St., T.V.K.Nagar, Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24116",
+   "name": "Vasan Eye Care Hospital, Perambur",
+   "addr": "289/149, D.No.149,Paper Mills Road, Opp To 70 Feet Road,Perambur.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24117",
+   "name": "Ammayi Eye Care Centre",
+   "addr": "New No 80, 7Th Avenue Ashok Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24118",
+   "name": "Dr Lankeash Eye Hospital",
+   "addr": "New 2, Old  5, 41 St Street 6Th Avenue, Ashok Nargr",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24119",
+   "name": "Dr. Agarwal's Eye Hospital Ltd. - Ashok Nagar",
+   "addr": "Old No.20,New No:33, 7Th Avenue,(Near G.R.T School),Ashok Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24120",
+   "name": "Dr.V Jai Shankar",
+   "addr": "1,X Avenue,Ashok Nagar,Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24121",
+   "name": "Je Nesam Hospital",
+   "addr": "Door No-1, 40Th Street, Ashok Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24122",
+   "name": "M.G. Nursing Home",
+   "addr": "No. 11, Samiyar Garden Street, Ashok Nagar, Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24123",
+   "name": "Maya Nursing Home Pvt Ltd",
+   "addr": "B - 225, 15Th Avenue Ashok Nagar Chennai Chennai 600083",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24124",
+   "name": "Orthopedic and Specialities Hospital",
+   "addr": "No. 25, 10Th Avenue, Ashoknagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24125",
+   "name": "Pallava Hospital Ltd.",
+   "addr": "New No. 19-A, First Avenue, Ashok Nagar,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24126",
+   "name": "Sri Hari Clinic",
+   "addr": "61, 7Th Avenue, Ashok Kumar, Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24127",
+   "name": "Vaman Clinic Eye and Ent Care",
+   "addr": "Kala Flats, Ashok Nagar, Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24128",
+   "name": "Dr. U. Mohan Rau Memorial Hospital - Chennai",
+   "addr": "962, Poonamallee High Road, Near Egmore Over Bridge",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24129",
+   "name": "Kola Saraswathy Agarwal Samaj Health Centre",
+   "addr": "New No:25, Old No:6, Dr.Alagappa Road, Purasaiwakkam, Chennai-600084.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24130",
+   "name": "Noble Hospital",
+   "addr": "4 Adiappa Mudali Street,Purasaiwalkam Flowers Road",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24131",
+   "name": "V.K.Hospital",
+   "addr": "No.77, Dr. Alagappa Road, Purasawalkam,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24132",
+   "name": "Vasan Eye Care Hospital",
+   "addr": "Old No.880, New No.190, Poonamallee High Road, Kilpauk, (Near Sangam Theatre & Opp To Nehru Park) Chennai - 600 084,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24133",
+   "name": "Dr. Mohans Mv Diabetes Specialities Centre - Chennai",
+   "addr": "6B, Conran Smith Road, Gopalapuram",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24134",
+   "name": "Harvey Healthcare Limited",
+   "addr": "Old No 32, New No 12, Conran Smith Road, Gopalapuram, Chennai 600086",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24135",
+   "name": "Life Med Hospitals",
+   "addr": "Old No 32,New No 12,Conran Smith Road,Gopalapuram Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24136",
+   "name": "Maxivision Eye Care Medfort Hospitals Pvt Ltd",
+   "addr": "116, Chamiers Road,Nandanam, Chennai - 600086,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24137",
+   "name": "New Asian Hospital",
+   "addr": "E - 147 / A, Iind Avenue Besant Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24138",
+   "name": "M.L Dental Clinic",
+   "addr": "91/2,Arcot Road,Virugambakkam,Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24139",
+   "name": "S B S Hospital",
+   "addr": "No. 3, 5Th Main Road, Natesan Nagar, Virugambakkam, Near Annai Mahal, Sai Nagar Bus Stand",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24140",
+   "name": "Tirunagar Hospital",
+   "addr": "5-A, Parthasarathy St.Thirunagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24141",
+   "name": "Bharani Hospital",
+   "addr": "No 22, Arcot Road, Saligramam,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24142",
+   "name": "R.R. Eye Instutute and Laser Foundation",
+   "addr": "37, Arunachalam Road, Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24143",
+   "name": "The Specialities Health Care",
+   "addr": "No 22 Arcot Road Saligrammam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24144",
+   "name": "Siva Sakthi Nursing Home",
+   "addr": "No. 7, Venkateswara Lane, Anna Nednmpathai, Choolaimeda, Near Kodambakkam (Power House)",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24145",
+   "name": "Dhanvantari Eye Care",
+   "addr": "W-27, Old No.18, North Main Road,Anna Nagar West Extn.,.",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24146",
+   "name": "Dr.K.M.Cherian Heart Foundation",
+   "addr": "R-30-C, Ambattur Industrial Estate Road, Mogappair",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24147",
+   "name": "International Center For Cardio Thoracic and Vascular Diseases(Frontier Life Hosp)",
+   "addr": "No. R-30-C, Ambattur Industrial Estate Road, Mogappair",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24148",
+   "name": "Sks Hospital",
+   "addr": "959, Tvs Colony Annanagar West Extension Chennai Chennai 600101",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24149",
+   "name": "Medfort Eye Hospital Pvt Ltd Unit Of Maxvision Eye Care",
+   "addr": "No. 78/6 3Rd Avenue, Anna Nagar East",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24150",
+   "name": "Premier Health Center",
+   "addr": "B-Block,1/2 Second Avenue,Anna Nagar",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24151",
+   "name": "Rajalakshmi Nursing Home",
+   "addr": "D-93 (D-107), First Main Road, Anna Nagar, Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24152",
+   "name": "Selvarangam Hospital",
+   "addr": "C-54, 1 St Main Road, Anna Nagar East, Near Chinthamani Supermarket",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24153",
+   "name": "U.K. Hospitals Pvt. Ltd.",
+   "addr": "103/112, D- Block,1St Main Road, Annanagar East,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24154",
+   "name": "V.K. Medical Centre",
+   "addr": "A-45, 3Rd Avenue, Anna Nagar (E)",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24155",
+   "name": "Vasan Eye Care Hospital",
+   "addr": "M-77, 3Rd Avenue, Anna Nagar East Chennai 600102",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24156",
+   "name": "Vee Care Eye Hospital - Anna Nagar, Chennai",
+   "addr": "A-13, Ii Avenueroundtana Junctionanna Nagar Eastchennai Anna Nagar Eastchennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24157",
+   "name": "Vishnu Eye Clinic and Laser Foundation",
+   "addr": "No C 46, Near Chintamani, 2Nd Avenue, Anna Nagar East",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24158",
+   "name": "Navjivan Nature Cure Centre",
+   "addr": "34Km,Bhuj- Mandvi Road Near Punadi Patiya Ta Mandvi-Kutch",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24159",
+   "name": "Appasamy Medicare Centre (P) Ltd",
+   "addr": "23, Friends Avenue, Arumbakkam,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24160",
+   "name": "Ayur Kshetra ( A Unit Of Institute Of Ayurvedic Research Pvt Ltd)",
+   "addr": "No 5, Panchaliamman Koil Street, Arumbakkam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24161",
+   "name": "Mohan Hospital",
+   "addr": "Cp-50, Razack Garden Main Road, Arumbakkam,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24162",
+   "name": "New Hope Indian Specilaity Hospital",
+   "addr": "No 1051, Poonamallee High Road, Arumbakkam",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24163",
+   "name": "Speed Medical Centre",
+   "addr": "No.527, Poonamalle High Road, Arumbakkam, Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24164",
+   "name": "Vasanthi Orthopaedic Hospital",
+   "addr": "Cp-50, Razack Garden Main Road, Arumbakkam,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24165",
+   "name": "Sri Devi Speciality Hospital - Chennai",
+   "addr": "30, Poonamallee High Road, Koyambedu, Chennai Koyambedu",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24166",
+   "name": "Dr Ravishankars Eye Clinic and Nursing Home",
+   "addr": "No.11, Hunters Road, (Near Clock Tower) Vepery",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24167",
+   "name": "Dr.Achanta Lakshmipathi Neurosurgical Centre",
+   "addr": "T.T.T.I Post Taramani,Chennai",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24168",
+   "name": "Life Care Laboratory",
+   "addr": "No.88, Dr. Kalaingar Karunanithi Streetsholinganallur",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24169",
+   "name": "Tag-Vhs Diabeted Research Centre",
+   "addr": "T.T.T.I Post",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24170",
+   "name": "Voluntary Health Services Medical Centre",
+   "addr": "T.T.T.I. Post, Taraamani",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24171",
+   "name": "Fathima Nursing Home",
+   "addr": "No 6, A P Arasu Street Moolakadai Chennai 600118",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24172",
+   "name": "Noor`S Hospital",
+   "addr": "No.13, Seetharam Nagar, Vii Street, Munsif Garden,Chinnakodungaiyur,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24173",
+   "name": "Pavithra Hospitals Pvt Ltd",
+   "addr": "No.7, Ethiraiswami Salai, Erukkenchery,",
+   "category": null,
+   "care": null,
+   "system": null,
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24174",
+   "name": "Dr.Kamakshi Memorial Hospital",
+   "addr": "6/13, 3rd Cross Street, Kasthuribai Nagar, Adyar",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24175",
+   "name": "Vijaya Hospital",
+   "addr": "No.434, N.S.K.Salai, Vadapalani",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24176",
+   "name": "Fortis Malar Hospital",
+   "addr": "Gandhi Nagar, 52, First Main Road, Gandhi nagar, Adyar",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24177",
+   "name": "MIOT Hospitals",
+   "addr": "Manapakkam, 4/112, Mount Poonamalle Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24178",
+   "name": "Apollo Childrens Hospital",
+   "addr": "No.15, Thousand Lights, Shafee Mohammed Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24179",
+   "name": "Apollo Hospitals, Greams Lane",
+   "addr": "21, Off Greams Road, Greams Lane",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24180",
+   "name": "Apollo Specialty Hospital",
+   "addr": "320, Anna Salai",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24181",
+   "name": "Billroth Hospital",
+   "addr": "43, Lakshmi Talkies Road, Shenoy Nagar",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24182",
+   "name": "Prashanth Fertility Research Centre",
+   "addr": "Chetpet, No.77, Harrington Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24183",
+   "name": "Sri Ramachandra Medical Centre (SRMC)",
+   "addr": "No 1, Ramachandra Nagar, Porur",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24184",
+   "name": "Madras Medical Mission Hospital - Institute of Cardio Vascular Diseases",
+   "addr": "4 - A, Dr.J.Jayalalitha Nagar, Mogappair",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24185",
+   "name": "Aakash Hospital",
+   "addr": "Thiruvottriyur, No.393/1, T H Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24186",
+   "name": "Kanchi Kamakoti Childs Trust Hospital",
+   "addr": "12 - A, Nageswara Road, Nungambakkam",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24187",
+   "name": "Apollo Hospitals, Tondiarpet",
+   "addr": "No.645, TH Road, Tondiarpet",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24188",
+   "name": "CSI Kalyani Hospital",
+   "addr": "15, Dr.Radha Krishnan Salai, Mylapore",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24189",
+   "name": "Lifeline Multi Speciality Hospital",
+   "addr": "5/639, Old Mahabalipuram Road, Kandanchavadi, Perungudi",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24190",
+   "name": "Chennai Meenakshi Multispeciality Hospital",
+   "addr": "New No.72, Old No.148, Luz Church Road, Mylapore",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24191",
+   "name": "Aditya Hospital, Kilpauk",
+   "addr": "7, Barnaby Road, Kilpauk",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24192",
+   "name": "Parvathy Hospital",
+   "addr": "241, G.S.T.Road, Chromepet",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24193",
+   "name": "KKR Ent Hospital and Research Institute (P) Ltd",
+   "addr": "No: 827, Poonamallee High Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24194",
+   "name": "Adyar Dispensary",
+   "addr": "Block No l.122/169-170,\\nCPWD Quarters, Indira Nagar, Adyar\\n",
+   "category": "Public/ Government",
+   "care": "Dispensary",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24195",
+   "name": "Ana Nagar Dispensary and Polyclinic Central",
+   "addr": "Revenue Quarters, No.15, Ranganathan\\nGarden, Anna Nagar",
+   "category": "Public/ Government",
+   "care": "Dispensary/ Poly Clinic",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24196",
+   "name": "George Town Dispensary",
+   "addr": "No.64,\\nThathamuthiappan Street, George Town",
+   "category": "Public/ Government",
+   "care": "Dispensary",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24197",
+   "name": "Gopalapuram Dispensary",
+   "addr": "No.1, 1st Street,\\nGopalapuram",
+   "category": "Public/ Government",
+   "care": "Dispensary",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24198",
+   "name": "Guindy Dispensary",
+   "addr": "Block No.6/1-5, BCG\\nStaff Quarters, Guindy",
+   "category": "Public/ Government",
+   "care": "Dispensary",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24199",
+   "name": "K.K.Nagar Dispensary and Polyclinic",
+   "addr": "GPRA Complex, CPWD Quarters, K.K.Nagar",
+   "category": "Public/ Government",
+   "care": "Dispensary/ Poly Clinic",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24200",
+   "name": "Meenambakkam Dispensary",
+   "addr": "DGQA Complex,\\nMeenambakkam",
+   "category": "Public/ Government",
+   "care": "Dispensary",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24201",
+   "name": "Nandambakkam Dispensary",
+   "addr": "Quarter No.16-19\\n CDA Residential Complex, Nandambakkam",
+   "category": "Public/ Government",
+   "care": "Dispensary",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24202",
+   "name": "Nungambakkam Dispensary CandB Block",
+   "addr": "Nungambakkam Dispensary CandB Block, 1st\\nFloor, Shastri Bhavan, Haddows Road",
+   "category": "Public/ Government",
+   "care": "Dispensary",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24203",
+   "name": "Perambur Dispensary",
+   "addr": "No 28, Perambur High\\nRoad, Perambur",
+   "category": "Public/ Government",
+   "care": "Dispensary",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24204",
+   "name": "Raja Annamalai Puram Dispensary No.6",
+   "addr": "Kamaraj Saalai, R.A.Puram",
+   "category": "Public/ Government",
+   "care": "Dispensary",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24205",
+   "name": "Royapuram Dispensary, No.108 and 109",
+   "addr": "Mannar Swami Koil Street, Royapuram",
+   "category": "Public/ Government",
+   "care": "Dispensary",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24206",
+   "name": "Triplicane Dispensary",
+   "addr": "No.54, Akbar Sahib\\nStreet, Triplicane",
+   "category": "Public/ Government",
+   "care": "Dispensary",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24207",
+   "name": "Vepery Dispensary",
+   "addr": "No.143, Perambur\\nBarracks Road Vepery",
+   "category": "Public/ Government",
+   "care": "Dispensary",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24208",
+   "name": "A.N.N.Hospital",
+   "addr": "No.81-85, Annai Therasa Street, Indira Nagar",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24209",
+   "name": "Abhijay Hospital P.Ltd",
+   "addr": "No.22/2, E.S.I.Hospital Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24210",
+   "name": "Aditya Hospital",
+   "addr": "7, Barnaby Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24211",
+   "name": "Ammayi Eye Hospital",
+   "addr": "New No.80, 7th Avenue, Ashok Nagar",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24212",
+   "name": "Amrit Hospital",
+   "addr": "New No.310, Mint Street, Sowcarpet",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24213",
+   "name": "Apollo Hospital",
+   "addr": "21, Greams Road, Off.Greams Lane",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24214",
+   "name": "Apollo Specialty Hospitals Private Limited",
+   "addr": "No.41/42, 53/54, Sathyadev Avenue, Mrc Nagar",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24215",
+   "name": "Apollo Speciality Hospitals",
+   "addr": "320, Anna Salai, Teynampet, Nandanam",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24216",
+   "name": "Apollo Cancer Hospital",
+   "addr": "320, Anna Salai",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24217",
+   "name": "Apollo Hospitals",
+   "addr": "22, Greams Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24218",
+   "name": "Apollo Hospital Enterprises Ltd",
+   "addr": "21, Greams Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24219",
+   "name": "Apollo Medical Centre",
+   "addr": "105, C-In-C Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24220",
+   "name": "A.V.M.Medicals ENT Research Foundation Pvt Ltd",
+   "addr": "No.3, Behind Nilgiris Department Stores, Off Dr.Radhakrishnan Road, P S Sivaswamy Salai, CIT Colony",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24221",
+   "name": "Aashiana Hospital",
+   "addr": "No - 1201, 6th Avenue",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24222",
+   "name": "B.R.S.Hospitals Pvt.Ltd",
+   "addr": "No.28, Cathedral Gardens Road, Near Hotel Palmgrove",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24223",
+   "name": "B.S.S.Hospital",
+   "addr": "200, Ramakrishna Multi Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24224",
+   "name": "Bharathi Rajaa Hospitals (P) Ltd",
+   "addr": "No.20, Gopathi Narayanaswami Chetty Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24225",
+   "name": "Billroth Hospitals, R A Puram",
+   "addr": "52, 2nd Main Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24226",
+   "name": "Billroth Health Centre",
+   "addr": "43, Lakshmi Talkies Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24227",
+   "name": "Billroth Hospitals Ltd",
+   "addr": "No.52, II Main Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24228",
+   "name": "B.M.Hospital",
+   "addr": "36, 5th Main Road, Thillai Ganga Nagar",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24229",
+   "name": "SRI Balaji Hospital",
+   "addr": "1, Lawyer Janardhan Street",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24230",
+   "name": "Sree Balaji Medical College and Hospital",
+   "addr": "No.7, Works Road",
+   "category": "Public/ Government",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24231",
+   "name": "Chettinad Super Speciality Hospital",
+   "addr": "Rajiv Gandhi Salai, Old Mahabalipuram Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24232",
+   "name": "Christudas Orthopaedic Speciality Hospital",
+   "addr": "No.9, Duraiswamy Nagar, IAF Road, Near Madras Christian College",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24233",
+   "name": "C.M.Hospital",
+   "addr": "No.1, 47th Street, 5th Main Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24234",
+   "name": "C.S.I.Kalyani Multi Speciality Hospital",
+   "addr": "No.15, Dr.Radha Krishnan Salai",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24235",
+   "name": "C.S.I.Kalyani  Multi Speciality Hospital",
+   "addr": "15, Dr.Radha Krishnan Salai",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24236",
+   "name": "City Tower Hospitals",
+   "addr": "Old No AA-10, New No AA - 85, 2ND-Avenue, Near Roundtana Bus Stop",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24237",
+   "name": "C.S.I.Rainy Multi Speciality Hospital",
+   "addr": "NO 45, GA Road, Old Washermanpet",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24238",
+   "name": "Cancer Institute",
+   "addr": "No.-18, East Canal Bank Road, Gandhi Nagar",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24239",
+   "name": "Cancer Institute",
+   "addr": "No:38, Sardar Patel Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24240",
+   "name": "Darshan Eye Clinic",
+   "addr": "T-80 (New no.24) 5th Main Road",
+   "category": "Private",
+   "care": "Clinic",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24241",
+   "name": "Deepam Eye Hospital",
+   "addr": "72, Medavakkam Tank Road, Near Jamai Mosque",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24242",
+   "name": "Deepam Hospital (P) Ltd.",
+   "addr": "No.107A, G.S.T.Road, Chromepet",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24243",
+   "name": "Dr.Agarwal's Eye Hospital Ltd., Anna Nagar",
+   "addr": "No.107, A Block, 3rd Avenue, Anna Nagar Roundana",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24244",
+   "name": "Dr.Agarwal's Eye Hospital Ltd., Gopala Puram",
+   "addr": "No-19, Cathedral Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24245",
+   "name": "Diabetes Research Centre and M.V.Hospital For Diabetes",
+   "addr": "No.4, West Mada Church Street",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24246",
+   "name": "Dr.G.D.Boaz Memorial Hospital School (Psychiatric Hospital and Rehabilitation Centre)",
+   "addr": "2/234, Velachery Main Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24247",
+   "name": "Eswar Medical Foundation",
+   "addr": "No.1, Bharathi Nagar, Redhills Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24248",
+   "name": "Fortis Malar Hospital",
+   "addr": "No.52, First Main Road, Gandhi Nagar, Adyar",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24249",
+   "name": "Frontier Lifeline Hospital",
+   "addr": "R 30 C, Ambattur Industrial Estate Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24250",
+   "name": "Girishwari Hospital Pvt Ltd",
+   "addr": "19, K.B Dasan Road (SIET College Road), Alwarpet",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24251",
+   "name": "Global Hospitals and Health City",
+   "addr": "439, Cheran Nagar, Perumbakkam",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24252",
+   "name": "G.R.Fertility Centre",
+   "addr": "12/6, City Link Road, Near NGO Colony Bus Stand",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24253",
+   "name": "Guest Hospital",
+   "addr": "372, Poonamallee High Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24254",
+   "name": "Hande Hospital",
+   "addr": "45, Lakshmi Talkies Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24255",
+   "name": "Hande Medical Centre",
+   "addr": "65, Nungambakkam High Road (Opposite ICICI and SBI bank  where Haddows Road joins Nungambakkam High Road ), Opposite ICICI and SBI bank\\nPonnangipuram, Tirumurthy Nagar\\n",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24256",
+   "name": "Hari Haran Diabetes and Heart Care Hospitals Pvt Ltd",
+   "addr": "24 and 26, 'Swathi', 29 Th Street",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24257",
+   "name": "Hindu Mission Health Services",
+   "addr": "100 Feet Road, Hindu Colony, Near EB Office",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24258",
+   "name": "Hindu Mission Hospital",
+   "addr": "103 G.S.T.Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24259",
+   "name": "Hopkins ENT Hospitals",
+   "addr": "No 5/45, Shanmugam Road, Opposite to old SBI building",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24260",
+   "name": "Huma Specialists Hospital and Research Centre Pvt Ltd",
+   "addr": "786 Anna Salai, CIT Nagar West",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24261",
+   "name": "Impcops Hospital",
+   "addr": "34-37, Kalki Krishnamurthy Salai",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24262",
+   "name": "Jaya Hospital",
+   "addr": "No.3, Kothanda Nadar Nagar, Sriperumbudur, Nenmeli",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24263",
+   "name": "Janaki E.N.T.Nursing Home",
+   "addr": "29, Nagamani Garden Street, Seven Wells South, Near Govindappa Naicken Street end, George Town, Flower Bazar Police Station",
+   "category": "Private",
+   "care": "Nursing Home",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24264",
+   "name": "K.H.M.Hospital",
+   "addr": "AB-14/4907, Balasubramanian Building, Opposite Sri Ayyappa Temple, 6th Main Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24265",
+   "name": "K.J.Hospital",
+   "addr": "New-182, Old-927, Poonamalee High Road, Flower Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24266",
+   "name": "K.K.R.ENT Hospital and Research Institute(P) Ltd",
+   "addr": "No: 827, Poonamallee High Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24267",
+   "name": "K.S.Hospital",
+   "addr": "747, Poonamallee High Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24268",
+   "name": "Kummaran Eye Speciality Centre",
+   "addr": "67/79, Choolaimedu High Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24269",
+   "name": "Kumaran Hospital Pvt.Ltd.",
+   "addr": "214, E.V.R.Periyar Salai, Poonamalee High Road, Periyar Salai",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24270",
+   "name": "Laksha Hospital",
+   "addr": "No.15, P.S.Sivasamy Salai Road, P.S.Sivasamy Salai",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24271",
+   "name": "Laser and Laparascopic Hospital",
+   "addr": "No.121 G.N.Chetty Road",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24272",
+   "name": "Life Line Multi Speciality",
+   "addr": "47/3, New Avani Roan, Kilpavk",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24273",
+   "name": "M N Eye Hospital Private Limited, Adyar",
+   "addr": "No.33/18, M.G.Road; 2nd Avenue,\\nSasthri nagar",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24274",
+   "name": "M N Eye Hospital Private Limited, Tondiarpet",
+   "addr": "No.781, T H Road, Opposite Tondiarpet Police Station",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24275",
+   "name": "Chamadhi Nethralayam Eye Hospital",
+   "addr": "Ambattur Rotary Hospital, 1st Main Road, Ambattur Industrial Estate",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24276",
+   "name": "Chamadhi Nethralayam Eye Hospital",
+   "addr": "No.9, Kasi Viswanathan Street, Opposite To Ambika Theatre, Voc Nagar",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  },
+  {
+   "id": "nhp:24277",
+   "name": "Chamadhi Nethralayam Eye Hospital",
+   "addr": "No.878, Thiruvottiyur High Road, Theradi bus stop near",
+   "category": "Private",
+   "care": "Hospital",
+   "system": "Allopathic",
+   "lat": null,
+   "lon": null
+  }
+ ]
+}

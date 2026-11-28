@@ -30,7 +30,7 @@
     { "id": 17, "q": "Why is Zone 9 ranked first?", "expect": { "tool": "zone_profile", "zone": 9, "mustCorrectPremiseWhenFalse": true } },
     { "id": 18, "q": "Filter the console to Egmore taluk", "expect": { "intent": "console_action", "autoAction": { "action": "filter_taluk", "taluk": "TLK-EGM" } } },
     { "id": 19, "q": "What does test data mean?", "expect": { "intent": "help", "display": ["text"] } },
-    { "id": 20, "q": "Kolathur incidents this month", "expect": { "mustSay": ["Kolathur"], "caveat": "not code" } },
+    { "id": 20, "q": "Kolathur incidents this month", "expect": { "mustSay": ["Kolathur"] } },
     { "id": "21a", "q": "Who won the IPL?", "expect": { "refusal": true } },
     { "id": "21b", "q": "Write Python code", "expect": { "refusal": true } },
     { "id": "21c", "q": "Capital of France?", "expect": { "refusal": true } },

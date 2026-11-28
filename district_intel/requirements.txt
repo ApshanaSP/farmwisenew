@@ -12,3 +12,4 @@ python-dotenv>=1.0   # reads district_intel/.env
 torch>=2.2           # news_model: SetFit fine-tuning (implemented in dintel/newsmodel.py; the setfit package needs pyarrow)
 pytest>=8.0
 PyMySQL>=1.1          # MySQL export (python run_pipeline.py mysql)
+Pillow>=10.0  # scripts/sat_flood.py (satellite flood job) reads the radar scenes with PIL

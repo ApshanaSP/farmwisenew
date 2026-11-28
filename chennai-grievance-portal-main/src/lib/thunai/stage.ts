@@ -72,11 +72,18 @@ export const Block = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("MapView"), id: str(40), ...ABOUT, title: str(160), rule: str(240).nullable(),
     shade: z.object({ geo: z.enum(["zone", "taluk"]), label: str(80), values: z.array(z.object({ key: z.union([num, str(20)]), value: num })).max(60) }).nullable(),
     points: z.array(Point).max(200), outline: z.array(num).max(15) }),
-  z.object({ kind: z.literal("Compare"), id: str(40), ...ABOUT, title: str(160), metrics: z.array(z.object({ key: str(30), label: str(60) })).max(8),
-    sides: z.array(z.object({ key: str(40), label: str(80), zone: num.nullable(), values: z.record(num), cats: z.array(z.object({ code: str(40), label: str(80), n: num })).max(8),
-      series: z.array(num).max(60) })).min(2).max(4),
+  z.object({ kind: z.literal("Compare"), id: str(40), ...ABOUT, title: str(160), metrics: z.array(z.object({ key: str(30), label: str(60) })).max(10),
+    sides: z.array(z.object({ key: str(40), label: str(80), zone: num.nullable(), values: z.record(num), cats: z.array(z.object({ code: str(40), label: str(80), n: num })).max(12),
+      series: z.array(num).max(60),
+      /** 28 Nov (recipes/board.ts): the side's incidents by department, and by who reported them, drawn on one scale with the other sides */
+      depts: z.array(z.object({ code: str(40), label: str(80), n: num })).max(10).optional(),
+      from: z.array(z.object({ key: str(20), label: str(60), n: num })).max(6).optional(),
+      /** where the side's own summary opens */
+      drill })).min(2).max(4),
     seriesLabels: z.array(str(40)).max(60),
-    diffs: z.array(z.object({ metric: str(30), label: str(60), hi: str(80), lo: str(80), ratio: num.nullable(), gap: num })).max(8) }),
+    diffs: z.array(z.object({ metric: str(30), label: str(60), hi: str(80), lo: str(80), ratio: num.nullable(), gap: num })).max(8),
+    /** 28 Nov: the measures drawn as grouped bars (counts on one scale); absent: every measure */
+    chart: z.array(str(30)).max(10).optional() }),
   z.object({ kind: z.literal("Trend"), id: str(40), ...ABOUT, title: str(160), unit: str(30), labels: z.array(str(40)).max(120), values: z.array(num).max(120),
     marks: z.array(z.object({ i: num, why: str(160) })).max(12), normal: z.object({ lo: num, hi: num }).nullable(),
     /** v18: what each point leads to (that day's summary), in the labels' order */

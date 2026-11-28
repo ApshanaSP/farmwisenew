@@ -408,7 +408,7 @@ export default function MapPicker({ value, onChange, footer }: MapPickerProps) {
           type="button"
           onClick={useMyLocation}
           disabled={locating}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-navy-600 px-3 py-1.5 text-xs font-semibold text-navy-700 transition hover:bg-navy-50 disabled:opacity-60"
+          className="inline-flex min-h-[36px] items-center gap-1.5 rounded-[10px] border border-navy-200 bg-navy-50 px-3 py-1.5 text-xs font-semibold text-navy-700 transition hover:border-navy-300 hover:bg-navy-100 disabled:opacity-60"
         >
           {locating ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -423,10 +423,10 @@ export default function MapPicker({ value, onChange, footer }: MapPickerProps) {
         <div
           ref={containerRef}
           style={{ height: "340px" }}
-          className="overflow-hidden rounded-2xl border border-canvas-border bg-canvas"
+          className="overflow-hidden rounded-[12px] border border-canvas-border bg-canvas"
         />
         {provider === "loading" && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-canvas/80">
+          <div className="absolute inset-0 flex items-center justify-center rounded-[12px] bg-canvas/80">
             <Loader2 className="h-5 w-5 animate-spin text-navy-700" aria-hidden="true" />
           </div>
         )}

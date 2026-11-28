@@ -5,7 +5,9 @@
  * "In action" covers a grievance the officer approved and one where work has started (the pipeline's Assigned and In
  * progress, and the `action` step: "Work started", a progress update the citizen's tracker shows as In Progress).
  * Shared by the API (which enforces the transitions) and the console (labels, chips, buttons).
+ * The severe rule and the report's remarks / photo rule are in lib/cases/rules.ts (28 Nov).
  */
+import { SEVERE_CLOSE, isSevere } from "@/lib/cases/rules";
 
 export type Stage = "new" | "approved" | "action" | "sent" | "verified" | "closed";
 export type Tab = "new" | "action" | "sent" | "verified";
@@ -85,7 +87,7 @@ export function stepRefusal(step: RecordedStep, stage: string, severity: string 
   if (!(STEP_FROM[step] as string[]).includes(stage)) {
     return `This grievance is already at “${STAGE_LABEL[stage as Stage] ?? stage}”. Refresh to see its latest stage.`;
   }
-  if (step === "close" && severity === "Severe") return "A severe grievance is verified by the Collector: send it with your completion report.";
+  if (step === "close" && isSevere(severity)) return SEVERE_CLOSE;
   return null;
 }
 
@@ -99,7 +101,7 @@ export const NEXT_STEP: Partial<Record<Stage, "approve" | "send">> = { new: "app
  */
 export function nextStep(stage: string, severity: string | null | undefined): "approve" | "send" | "close" | null {
   if (stage === "new") return "approve";
-  const severe = severity === "Severe";
+  const severe = isSevere(severity);
   if (stage === "approved" || stage === "action") return severe ? "send" : "close";
   return null;
 }

@@ -11,6 +11,8 @@ import { SentNote, TakeAction } from "./TakeAction";
 import { ConflictBox, useStoryConflicts } from "./Conflicts";
 import PetitionOriginal from "@/components/manu/PetitionOriginal";
 import { sevLabel } from "@/lib/sev-label";
+import { CaseLifecycle } from "./CaseLifecycle";
+import { ScoreWhy } from "./ScoreWhy";
 
 /** The department officer's steps as the case page names them (officer_steps.step; the close is the "Closed by the department" tag). */
 const OFFICER_STEP_WORDS: Record<string, string> = {
@@ -41,23 +43,27 @@ export function NewsDetails({ ai }: { ai: Record<string, string | number> }) {
 export function useAnalysis(url: string | null, key: unknown) {
   const [a, setA] = useState<Analysis | null>(null);
   const [busy, setBusy] = useState(false);
+  // the server's one line when no AI answer could be had (every provider failed, or the figures did not check), else null
+  const [noAi, setNoAi] = useState<string | null>(null);
   useEffect(() => {
     if (!url) return;
     let live = true;
     setA(null);
+    setNoAi(null);
     setBusy(true);
-    fetch(url).then((r) => r.json()).then((j) => live && setA(j.analysis ?? null)).catch(() => undefined).finally(() => live && setBusy(false));
+    fetch(url).then((r) => r.json()).then((j) => { if (live) { setA(j.analysis ?? null); setNoAi(j.analysis ? null : typeof j.noAi === "string" ? j.noAi : null); } })
+      .catch(() => undefined).finally(() => live && setBusy(false));
     return () => { live = false; };
   }, [url, key]);
-  return { a, busy };
+  return { a, busy, noAi };
 }
 
 /**
  * "What happened" and "Why it needs you": the AI's analysis of every report when it is ready (checked against the
  * facts on the server), the rules' wording until then or when no model answered.
  */
-export function Explained({ a, busy, rules, open, deptName, needLabel = "Why it needs you" }: {
-  a: Analysis | null; busy: boolean; rules: Plain | null; open: boolean; deptName: string; needLabel?: string;
+export function Explained({ a, busy, rules, open, deptName, needLabel = "Why it needs you", noAi = null }: {
+  a: Analysis | null; busy: boolean; rules: Plain | null; open: boolean; deptName: string; needLabel?: string; noAi?: string | null;
 }) {
   const what = a?.what ?? rules?.summary ?? "";
   const reasons = a ? a.why : (rules?.needsYou ? rules.attention.map((t) => ({ title: t, detail: "" })) : []);
@@ -68,6 +74,7 @@ export function Explained({ a, busy, rules, open, deptName, needLabel = "Why it 
         <div className="iv-t"><I n="alert" />What happened{busy && !a ? <span className="ai-busy"><I n="spark" />Analysing the reports…</span> : null}</div>
         <p className="iv-sum iv-analysis">{what}</p>
         {!a && rules && rules.facts.length > 0 && <ul className="iv-facts">{rules.facts.map((f) => <li key={f}>{f}</li>)}</ul>}
+        {!a && !busy && noAi && <p className="iv-ai" role="status" style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-3)" }}>{noAi}</p>}
       </div>
       {reasons.length > 0 ? (
         <div className="iv-need">
@@ -191,7 +198,7 @@ export function IncidentView({ id, c, startAction }: { id: string; c: Console; s
 
       <div className="iv-b">
         <section className="iv-col">
-          <Explained a={ana.a} busy={ana.busy} rules={why} open={open} deptName={i.dept_name ?? "The department"} />
+          <Explained a={ana.a} busy={ana.busy} rules={why} open={open} deptName={i.dept_name ?? "The department"} noAi={ana.noAi} />
           {diffs && <ConflictBox items={diffs} />}
           {emails.length > 0 && <SentNote e={emails[0]} now={c.now} />}
           {deptReports.length > 0
@@ -199,6 +206,7 @@ export function IncidentView({ id, c, startAction }: { id: string; c: Console; s
             : severe && open && Number(i.awaiting_collector) === 1 && (
               <div className="iv2-nophoto"><I n="photo" /><span><b>No completion report from the department yet.</b> The records say the work is done, but no remarks or site photos were sent. Take action to ask for them.</span></div>
             )}
+          <CaseLifecycle id={id} c={c} />
           <div>
             <div className="iv-t"><I n="doc" />Key facts</div>
             <div className="facts">
@@ -211,6 +219,7 @@ export function IncidentView({ id, c, startAction }: { id: string; c: Console; s
                 {i.confidence == null ? "—" : `${Math.round(Number(i.confidence) * 100)}%`}{Number(i.needs_review) ? " · review" : ""}</b></div>
             </div>
           </div>
+          <ScoreWhy id={id} c={c} />
         </section>
 
         <section className="iv-col">

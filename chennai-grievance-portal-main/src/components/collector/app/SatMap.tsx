@@ -534,7 +534,9 @@ export default function SatMap(props: Props) {
     const s = st.current;
     if (!s || !resp) return;
     s.answer.focus.clearLayers();
-    const f = ask?.focus ? resp.features.find((x) => x.id === ask.focus) ?? resp.before.find((x) => x.id === ask.focus) : null;
+    // (askmap-places, 28 Nov: a row of the places list is a place, not a case: it flies the same way)
+    const place = ask?.focus ? resp.context.points.find((x) => x.id === ask.focus) : undefined;
+    const f = ask?.focus ? resp.features.find((x) => x.id === ask.focus) ?? resp.before.find((x) => x.id === ask.focus) ?? (place ? { ...place, pinnable: true } : null) : null;
     if (!f || !f.pinnable) return;
     s.L.marker([f.lat, f.lon], { pane: "askPins", icon: s.L.divIcon({ className: "", html: `<div class="mfocus"></div>`, iconSize: [44, 44], iconAnchor: [22, 22] }), interactive: false, zIndexOffset: 2000 }).addTo(s.answer.focus);
     s.prog = true;
@@ -711,6 +713,13 @@ export default function SatMap(props: Props) {
       L.polygon(a.rings, { pane: "rainLines", renderer: s.rainLines, color: on ? SEL[theme] : C[a.level], weight: on ? 3 : a.level >= 2 ? 1.5 : 1, opacity: on ? 1 : 0.8,
         fillColor: C[a.level], fillOpacity: on ? 0.5 : [0.04, 0.16, 0.28, 0.42][a.level] })
         .bindTooltip(a.tip, { sticky: true, className: "dtip" }).on("click", pick("area", a.key)).addTo(s.rain);
+    }
+    // flood water a satellite saw in the chosen rain (rainLayer.ts satWater): cyan boxes under the streets, one shared tooltip
+    if (r.satWater?.boxes.length) {
+      const sw = L.featureGroup();
+      for (const [s0, w0, n0, e0, c] of r.satWater.boxes)
+        L.rectangle([[s0, w0], [n0, e0]], { pane: "rainLines", renderer: s.rainLines, stroke: false, fillColor: c === 2 ? "#0891B2" : "#22D3EE", fillOpacity: c === 2 ? 0.6 : 0.42 }).addTo(sw);
+      sw.bindTooltip(r.satWater.tip, { sticky: true, className: "dtip" }).addTo(s.rain);
     }
     // rail lines; a line with a level is a place (Metro): grey when the chosen rain did not touch it, thicker the worse
     const rails = [...(r.rails ?? [])].sort((a, b) => (a.level ?? 1) - (b.level ?? 1) || Number(r.sel?.id === a.id) - Number(r.sel?.id === b.id));

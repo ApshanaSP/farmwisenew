@@ -93,7 +93,7 @@ function rankingOf(v: unknown): { learned: boolean; counted: number; needed: num
   }
   if (!m || typeof m !== "object" || !m.status || m.status === "off") return null;
   const counted = Number(m.counted ?? 0), needed = Number(m.needed ?? 30);
-  const text = m.status === "learned" ? `order learned from ${counted} of your decisions`
+  const text = m.status === "learned" ? `hand-set order, adjusted by at most 10 points from ${counted} of your decisions`
     : m.status === "kept_default" ? `hand-set order: ${counted} of your decisions checked, not yet a better order`
     : `hand-set order; learns from your decisions after ${needed} (${counted} so far)`;
   return { learned: m.status === "learned", counted, needed, text };
@@ -140,6 +140,65 @@ declare global {
 }
 // on globalThis: Jarvis's keep-warm (started at server start) and the routes load their own copies of this module
 const insightsCache = (globalThis.__diqInsights ??= new Map());
+/**
+ * v20 (28 Nov 2026, the owner: "'what needs you now', 'what happened': all use AI"): the Briefing's "Decisions for you" in the AI's words. The
+ * pipeline writes its checked text (ai_summary) for only one or two incidents a day now, so nearly every card showed the rules' one-line
+ * summary. A card without it takes the analysis the incident pop-up shows (analysis.ts: the same records, every figure checked), when one is
+ * written for the incident as it stands; the first AI_ACCOUNTS cards without one have it written in the background (the next look shows it).
+ * Whether a card is on the list at all is still the rules' decision. Applied after the kept copy (insights() is shared with other callers), by
+ * the Collector's own insights route only.
+ */
+const AI_ACCOUNTS = 3;
+const firstSentences = (t: string, max = 320) => {
+  if (t.length <= max) return t;
+  const s = t.match(/[^.!?]+[.!?]+(?=\s|$)/g) ?? [t];
+  return s.slice(0, 2).join("").trim() || t.slice(0, max);
+};
+/**
+ * Looking a card's analysis up reads the incident's records (about 110 ms a card: 0.7 s for six, measured 28 Nov), so each card's answer is
+ * kept a minute by its incident and status, refreshed behind the page, and a request waits at most CARD_WAIT_MS for it.
+ */
+const CARD_TTL_MS = 60_000, CARD_WAIT_MS = 150;
+type CardAi = import("@/lib/collector/analysis").Analysis | null;
+declare global {
+  // eslint-disable-next-line no-var
+  var __diqCardAi: Map<string, { at: number; a: CardAi; run?: Promise<void> }> | undefined;
+}
+async function cardAi(id: string, status: string, user: string, peek: boolean): Promise<CardAi> {
+  const memo = (globalThis.__diqCardAi ??= new Map());
+  const key = `${id}|${status}`, m = memo.get(key);
+  const fresh = !!m && Date.now() - m.at < CARD_TTL_MS;
+  if (!fresh && !m?.run) {
+    const { incidentAnalysis } = await import("@/lib/collector/analysis");
+    const run = incidentAnalysis(id, user, { background: true, waitMs: 0, peek })
+      // one still being written is looked at again in 10 s, not a minute
+      .then((o) => { memo.set(key, { at: o.pending ? Date.now() - CARD_TTL_MS + 10_000 : Date.now(), a: o.analysis }); }, () => { memo.set(key, { at: Date.now(), a: m?.a ?? null }); });
+    memo.set(key, { at: m?.at ?? 0, a: m?.a ?? null, run });
+    while (memo.size > 500) memo.delete(memo.keys().next().value!);
+  }
+  const cur = memo.get(key)!;
+  if (cur.run) await Promise.race([cur.run, new Promise((ok) => setTimeout(ok, CARD_WAIT_MS))]);
+  return memo.get(key)?.a ?? null;
+}
+
+export async function withAiAccounts<T extends { briefing?: { attention?: { id: string; status?: unknown; why: { summary: string; facts: string[]; attention: string[]; ai: boolean; next: string | null }; next: unknown }[] } | null }>(r: T, user = "briefing"): Promise<T> {
+  const list = r.briefing?.attention;
+  if (!list?.length) return r;
+  let started = 0;
+  await Promise.all(list.map(async (a) => {
+    if (a.why.ai) return;
+    const peek = started >= AI_ACCOUNTS;
+    if (!peek) started++;
+    const an = await cardAi(String(a.id), String(a.status ?? ""), user, peek).catch(() => null);
+    if (!an) return;
+    // the card stays short: the reasons' titles (at most 10 words each); the pop-up gives each one's evidence
+    const reasons = an.why.slice(0, 3).map((w) => w.title.replace(/[.\s]+$/, "")).filter(Boolean);
+    a.why = { ...a.why, summary: firstSentences(an.what), facts: [], attention: reasons.length ? reasons : a.why.attention, ai: true };
+    if (an.next && !/^no action needed\.?$/i.test(an.next)) a.next = { text: an.next, owner: null, due: null, from: `AI (${an.model}), from this incident's records` };
+  }));
+  return r;
+}
+
 /** `o.fresh`: wait for this minute's copy, never an earlier one (the keep-warm, whose next step must not start while this is worked out) */
 export async function insights(period: Period, zone: number | null, dept: string | null, focus: Focus = {}, part: InsightPart | null = null, o: { fresh?: boolean } = {}) {
   syncEpoch(insightsCache);

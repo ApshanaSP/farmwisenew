@@ -22,18 +22,19 @@ const LEVEL = ["none", "yellow", "orange", "red"];
  * compact: one small chip in the band's top line (the Collector's console), the details in a drop-down on a click, so
  * the alert no longer pushes every page's cards down.
  */
-export function AlertBar({ now, compact }: { now: string; compact?: boolean }) {
+export function AlertBar({ now, compact, src = "/api/collector/alerts" }: { now: string; compact?: boolean;
+  /** where the lane is read (28 Nov: the officer console reads its own route, /api/officer/insights?part=alerts) */ src?: string }) {
   const [d, setD] = useState<Payload | null>(null);
   const [open, setOpen] = useState(false);
   const [hidden, setHidden] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
-    const load = () => fetch("/api/collector/alerts").then((r) => (r.ok ? r.json() : null)).then((j) => { if (live && j?.lane) setD(j); }).catch(() => undefined);
+    const load = () => fetch(src).then((r) => (r.ok ? r.json() : null)).then((j) => { if (live && j?.lane) setD(j); }).catch(() => undefined);
     load();
     // every minute: the IMD warning is read live every 10 minutes (lib/live/imd.ts) and SACHET every 15
     const t = setInterval(load, 60_000);
     return () => { live = false; clearInterval(t); };
-  }, [now]);
+  }, [now, src]);
   if (!d) return null;
   const b = d.lane.banner;
   const admin = d.admin && hidden !== d.admin.line ? d.admin : null;

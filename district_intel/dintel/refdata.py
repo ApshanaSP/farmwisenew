@@ -1,4 +1,4 @@
-"""Reference masters: departments, categories, crosswalks, taluks, status scale."""
+"""Reference masters: departments, categories, crosswalks, taluks, ward -> taluk, status scale."""
 from __future__ import annotations
 
 import json
@@ -9,7 +9,13 @@ from typing import Any
 import pandas as pd
 import yaml
 
-from .util import Settings, load_ref, clean_str
+from .util import REF_DIR, Settings, load_ref, clean_str, log
+
+# reference/ward_taluk.csv: the official ward -> revenue taluk, built by scripts/build_ward_taluk.py from TNGIS revenue
+# village polygons and the Chennai Collectorate's taluk list (no generated police or PWD data)
+WARD_TALUK_FILE = "ward_taluk.csv"
+WARD_TALUK_META = "ward_taluk.meta.json"
+WARD_TALUK_COLUMNS = ["ward_no", "zone_no", "taluk_code", "share", "method", "source_url", "checked_on", "other_taluks", "split"]
 
 SEVERITIES = ["Severe", "High", "Medium", "Low"]
 SEV_RANK = {s: i for i, s in enumerate(SEVERITIES)}
@@ -34,6 +40,7 @@ class Reference:
     cmap: dict[str, Any] = field(init=False)
     status: dict[str, Any] = field(init=False)
     taluks: pd.DataFrame = field(init=False)
+    ward_taluk: pd.DataFrame = field(init=False)
     facilities_cfg: dict[str, Any] = field(init=False)
     publishers_cfg: dict[str, Any] = field(init=False)
 
@@ -58,6 +65,7 @@ class Reference:
         self.facilities_cfg = load_ref("facilities.yaml")
         self.publishers_cfg = load_ref("publishers.yaml")
         self._build_taluks()
+        self._build_ward_taluk()
 
     # ----------------------------------------------------------------- taluks --
     def _build_taluks(self) -> None:
@@ -66,12 +74,18 @@ class Reference:
         pol_c = {t["code"]: t["centroid"] for t in pol["taluks"]}
         news_cfg = yaml.safe_load(self.settings.src("news", "config").read_text(encoding="utf-8"))
         news_t = {t["name"]: t for t in news_cfg["gazetteer"]["taluks"]}
+        # a point inside each taluk's part of the GCC wards, from the official village overlay (the police config's
+        # centroids belong to a generated dataset); the old sources only when the overlay has not been built
+        meta_p = REF_DIR / WARD_TALUK_META
+        label = json.loads(meta_p.read_text(encoding="utf-8")).get("taluks", {}) if meta_p.exists() else {}
         out = []
         for r in rows:
             c = pol_c.get(r.get("police") or "")
             n = news_t.get(r["name"], {})
             lat = c["lat"] if c else n.get("latitude")
             lon = c["lng"] if c else n.get("longitude")
+            if r["code"] in label:
+                lat, lon = label[r["code"]]["label_lat"], label[r["code"]]["label_lon"]
             if r["code"] == "TLK-TBM":
                 lat, lon = 12.9249, 80.1000
             aliases = sorted({r["name"], *(n.get("aliases_en") or [])})
@@ -85,6 +99,38 @@ class Reference:
         for r in self.taluks.itertuples():
             for a in str(r.aliases).split("|"):
                 self.taluk_by_name[a.lower()] = r.taluk_code
+
+    # ---------------------------------------------------------- ward -> taluk --
+    def _build_ward_taluk(self) -> None:
+        """The official ward -> taluk table (one row per GCC ward). Empty when the file is missing: the pipeline then
+        leaves taluks unset rather than fall back to the generated police/PWD vote."""
+        p = REF_DIR / WARD_TALUK_FILE
+        if not p.exists():
+            log.warning("reference: %s missing; run scripts/build_ward_taluk.py", WARD_TALUK_FILE)
+            self.ward_taluk = pd.DataFrame(columns=WARD_TALUK_COLUMNS)
+            return
+        wt = pd.read_csv(p, encoding="utf-8", dtype={"other_taluks": str})
+        wt["ward_no"] = wt["ward_no"].astype(int)
+        known = set(self.taluks.loc[self.taluks["in_district"] == 1, "taluk_code"])
+        bad = sorted(set(wt["taluk_code"].dropna()) - known)
+        if bad or wt["ward_no"].duplicated().any():
+            raise ValueError(f"{WARD_TALUK_FILE}: unknown taluk codes {bad} or repeated wards")
+        wt["other_taluks"] = wt["other_taluks"].fillna("")
+        # the table was built from one ward polygon file: if that file has changed since, the old ward numbers would be applied
+        # silently to new shapes, so the mismatch is logged and recorded (self.ward_taluk_stale) for the build's metrics
+        self.ward_taluk_stale = False
+        meta_p = REF_DIR / WARD_TALUK_META
+        try:
+            want = json.loads(meta_p.read_text(encoding="utf-8")).get("ward_geometry_sha256") if meta_p.exists() else None
+            if want:
+                import hashlib
+                have = hashlib.sha256(self.settings.src("wards_geojson").read_bytes()).hexdigest()
+                if have != want:
+                    self.ward_taluk_stale = True
+                    log.warning("reference: %s was built from another ward polygon file; re-run scripts/build_ward_taluk.py", WARD_TALUK_FILE)
+        except Exception as e:  # noqa: BLE001 - a missing ward file is reported by the loaders that need it
+            log.warning("reference: could not check the ward polygons behind %s: %s", WARD_TALUK_FILE, e)
+        self.ward_taluk = wt
 
     # -------------------------------------------------------------- category --
     def grievance_category(self, ctype: str, sub: str) -> tuple[str, str]:

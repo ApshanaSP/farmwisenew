@@ -5,7 +5,14 @@
  * minutes and kept in memory; a station whose newest reading is older than 3 hours is shown as not reporting, never as
  * dry. Endpoints the site's firewall refuses to programs (bulletins, station forecasts) are not called from here: the
  * bulletin list comes from the CFM collector's hourly files (source.ts).
+ *
+ * v-gauges (28 Nov 2026): the automatic rain gauges (ARG) too, from GetARGStationData (the same 10-minute read, one request
+ * for every district): 63 active ARGs in Chennai district against 7 automatic weather stations, placed from the Flood
+ * Monitor's own gauge list (gauges.ts, data/aws-cache/cfm-rain.json). Only gauges in Chennai and within EDGE_KM of its wards
+ * are kept when that list is there; the four districts otherwise.
  */
+import { gaugeCache, trustedGauges } from "./gauges";
+
 export const CFM_BASE = "https://chennaifloodmonitor.tn.gov.in";
 const DISTRICTS = ["Chennai", "Tiruvallur", "Kancheepuram", "Chengalpattu"];
 const EVERY_MS = 10 * 60_000;
@@ -27,8 +34,16 @@ export interface LiveRain {
   todayMm: number | null;
   yesterdayMm: number | null;
   stale: boolean;
+  /** an automatic weather station or an automatic rain gauge; its place when the gauge list gives it */
+  kind?: "AWS" | "ARG";
+  lat?: number | null;
+  lon?: number | null;
 }
-export interface LiveRainState { fetchedAt: string | null; stations: LiveRain[]; error: string | null; source: string }
+export interface LiveRainState {
+  fetchedAt: string | null; stations: LiveRain[]; error: string | null; source: string;
+  /** stations read, and of them reporting in the last STALE_H hours */
+  count?: { aws: number; arg: number; reporting: number };
+}
 
 declare global {
   // eslint-disable-next-line no-var
@@ -56,6 +71,31 @@ async function readDistrict(d: string, now: string): Promise<LiveRain[]> {
   });
 }
 
+/** the automatic rain gauges (one request for all districts), kept to those near Chennai */
+async function readArgs(now: string): Promise<LiveRain[]> {
+  const url = `${CFM_BASE}/Master/GetARGStationData?district=ALL&agency=ALL&datetime=${encodeURIComponent(now)}`;
+  const r = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store", signal: AbortSignal.timeout(15_000) });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  let j: unknown = await r.json();
+  while (typeof j === "string") j = JSON.parse(j);
+  if (!Array.isArray(j)) return [];
+  const nowMs = Date.parse(now.replace(" ", "T") + "Z");
+  // only the trusted gauge list (gauges.ts trustedGauges: no mislocated Chengalpattu points). The ARG list has no district field and
+  // covers six districts (219 gauges), so without the gauge cache only Chennai's own ids (CHN...) are kept, never all of them.
+  const known = new Map(trustedGauges(gaugeCache()?.gauges ?? []).map((g) => [g.id, g]));
+  const out: LiveRain[] = [];
+  for (const x of j as Record<string, unknown>[]) {
+    const id = String(x.argid ?? "");
+    const g = known.get(id);
+    if (!id || (known.size ? !g : !/^CHN/i.test(id))) continue; // without the list, only ids that name Chennai
+    const at = x.datetime_val ? String(x.datetime_val).slice(0, 19).replace("T", " ") : null;
+    const stale = !at || nowMs - Date.parse(at.replace(" ", "T") + "Z") > STALE_H * 3_600_000;
+    out.push({ id, name: String(x.stationname ?? id).trim(), district: g?.district ?? (/^CHN/i.test(id) ? "Chennai" : ""), at, hour: x.datestringlasthour ? String(x.datestringlasthour) : null,
+      hourMm: num(x.rainfall), todayMm: num(x.progresiverain), yesterdayMm: num(x.previousdayrain), stale, kind: "ARG", lat: g?.lat ?? null, lon: g?.lon ?? null });
+  }
+  return out;
+}
+
 /** The newest live rain (cached for 10 minutes; a failed read keeps the last good one and says so). */
 export function liveRain(): Promise<LiveRainState> {
   const g = global.__cfmLiveRain;
@@ -65,9 +105,12 @@ export function liveRain(): Promise<LiveRainState> {
     const now = ist();
     const out: LiveRain[] = [];
     const errs: string[] = [];
-    for (const d of DISTRICTS) {
-      try { out.push(...await readDistrict(d, now)); } catch (e) { errs.push(`${d}: ${(e as Error).message}`); }
-    }
+    // the districts and the rain gauges are read at the same time (the engine waits 8 s for the whole read)
+    const reads = await Promise.allSettled([...DISTRICTS.map((d) => readDistrict(d, now).then((xs) => xs.map((x) => ({ ...x, kind: "AWS" as const })))), readArgs(now)]);
+    reads.forEach((r, k) => {
+      if (r.status === "fulfilled") out.push(...r.value);
+      else errs.push(`${k < DISTRICTS.length ? DISTRICTS[k] : "rain gauges"}: ${(r.reason as Error)?.message ?? r.reason}`);
+    });
     if (!out.length && prev) {
       const old = await prev.catch(() => null);
       if (old?.stations.length) return { ...old, error: `Could not reach the Chennai Flood Monitor (${errs.join("; ")}); showing the reading of ${old.fetchedAt}.` };
@@ -75,7 +118,8 @@ export function liveRain(): Promise<LiveRainState> {
     // one row per station (a station can be listed under two districts)
     const seen = new Set<string>();
     const stations = out.filter((s) => (seen.has(s.id) ? false : (seen.add(s.id), true)));
-    return { fetchedAt: now, stations, error: errs.length ? `Not read: ${errs.join("; ")}` : null, source: "Chennai Flood Monitor (TNDRRA automatic weather stations)" };
+    return { fetchedAt: now, stations, error: errs.length ? `Not read: ${errs.join("; ")}` : null, source: "Chennai Flood Monitor (TNDRRA automatic weather stations and rain gauges)",
+      count: { aws: stations.filter((x) => x.kind === "AWS").length, arg: stations.filter((x) => x.kind === "ARG").length, reporting: stations.filter((x) => !x.stale).length } };
   })();
   global.__cfmLiveRain = { at: Date.now(), p };
   return p;

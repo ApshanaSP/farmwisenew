@@ -1,0 +1,4968 @@
+{
+ "source": {
+  "id": "tn-tbc-udise",
+  "name": "Tamil Nadu Textbook and Educational Services Corporation: School List and Manpower Deployment (government and Corporation high and higher secondary schools, with UDISE codes)",
+  "url": "https://textbookcorp.tn.gov.in/assets/pdf/School%20List%20and%20Manpower%20Deployment.pdf",
+  "checked": "2026-11-28",
+  "published": "2023-02-07 (the PDF's own date)",
+  "note": "Only government, Corporation, municipal and Adi Dravidar welfare high and higher secondary schools are on this list. UDISE+ (udiseplus.gov.in), the full school directory, asks for a CAPTCHA on every search (Know Your School), so it was not read by program; other schools are kept on their names."
+ },
+ "entries": [
+  {
+   "id": "udise:33030403202",
+   "name": "GHS, KUNNAM",
+   "udise": "33030403202",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031201802",
+   "name": "GHS VADAKKUVAYALUR",
+   "udise": "33031201802",
+   "district": "Chengalpattu",
+   "block": "Lathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031002205",
+   "name": "GOVERNMENT HIGH SCHOOL, RAMAPURAM",
+   "udise": "33031002205",
+   "district": "Chengalpattu",
+   "block": "Acharapakkam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020801216",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL, WEST MAMBALAM",
+   "udise": "33020801216",
+   "district": "Chennai",
+   "block": "Kodambakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020400806",
+   "name": "GOVERNMENT MODEL HIGHER SECONDARY SCHOOL GKM COLONY",
+   "udise": "33020400806",
+   "district": "Chennai",
+   "block": "Thiru Vi Ka Nagar",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010608603",
+   "name": "GHS, A.REDDY PALAYAM",
+   "udise": "33010608603",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010507402",
+   "name": "AVADI MUNICIPAL HIGH SCHOOL PATTABIRAM CHATHRAM",
+   "udise": "33010507402",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "high",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33030104004",
+   "name": "GHSS, Avalur",
+   "udise": "33030104004",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030304502",
+   "name": "GHSS NEIYADUPAKKAM",
+   "udise": "33030304502",
+   "district": "Kancheepuram",
+   "block": "Uthiramerur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010307303",
+   "name": "GHSS MANAVALANAGAR",
+   "udise": "33010307303",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030305302",
+   "name": "GOVT ADW HR SEC SCHOOL RETTAMANGALAM",
+   "udise": "33030305302",
+   "district": "Kancheepuram",
+   "block": "Uthiramerur",
+   "level": "higher secondary",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33030403106",
+   "name": "GHS, SANTHAVELLORE",
+   "udise": "33030403106",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020600101",
+   "name": "CHS CHINTADRIPET",
+   "udise": "33020600101",
+   "district": "Chennai",
+   "block": "Royapuram",
+   "level": "high",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33020600405",
+   "name": "CHS GOYATHOPE",
+   "udise": "33020600405",
+   "district": "Chennai",
+   "block": "Royapuram",
+   "level": "high",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33031300702",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL- POLAMBAKKAM",
+   "udise": "33031300702",
+   "district": "Chengalpattu",
+   "block": "Chithamur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030105312",
+   "name": "GHS SEVILIMEDU",
+   "udise": "33030105312",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010803102",
+   "name": "GHS G R KANDIGAI",
+   "udise": "33010803102",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010408703",
+   "name": "GOVT HIGH SCHOOL, VADAMADURAI",
+   "udise": "33010408703",
+   "district": "Tiruvallur",
+   "block": "Ellapuram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030803104",
+   "name": "GHS VALLIPURAM",
+   "udise": "33030803104",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031107504",
+   "name": "GHSS( ADW ) IRUMBEDU",
+   "udise": "33031107504",
+   "district": "Chengalpattu",
+   "block": "Madurantagam",
+   "level": "higher secondary",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33030301303",
+   "name": "GOVT MODEL HR SEC SCHOOL, PERUNAGAR",
+   "udise": "33030301303",
+   "district": "Kancheepuram",
+   "block": "Uthiramerur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010101302",
+   "name": "GOVT.HIGH.SCH.KILAMBAKKAM",
+   "udise": "33010101302",
+   "district": "Tiruvallur",
+   "block": "Thiruvallur",
+   "level": "high",
+   "management": "Sch Edu Dept",
+   "alt": [
+    "government high school GOVT.HIGH.SCH.KILAMBAKKAM"
+   ]
+  },
+  {
+   "id": "udise:33011301903",
+   "name": "GOVT (G) HS, ATHIMANJERIPET",
+   "udise": "33011301903",
+   "district": "Tiruvallur",
+   "block": "Pallipat",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031105603",
+   "name": "GOVERNMENT HIGH SCHOOL ZAMIN ENDATHUR",
+   "udise": "33031105603",
+   "district": "Chengalpattu",
+   "block": "Madurantagam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030801103",
+   "name": "PP GHSS PON VILAINTHA KALATHUR",
+   "udise": "33030801103",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030405402",
+   "name": "GHS, KOLATHUR",
+   "udise": "33030405402",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020601203",
+   "name": "CHS IRUSAPPA STREET",
+   "udise": "33020601203",
+   "district": "Chennai",
+   "block": "Teynampet",
+   "level": "high",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33030309502",
+   "name": "GBHSS,UTHIRAMERUR",
+   "udise": "33030309502",
+   "district": "Kancheepuram",
+   "block": "Uthiramerur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030207201",
+   "name": "GHS, DEVERIAMPAKKAM",
+   "udise": "33030207201",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020601503",
+   "name": "CHSS LLOYDS ROAD",
+   "udise": "33020601503",
+   "district": "Chennai",
+   "block": "Teynampet",
+   "level": "higher secondary",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33030103804",
+   "name": "GHS THIRUKALIMEDU",
+   "udise": "33030103804",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031104303",
+   "name": "GHSS VEERANAKUNNAM",
+   "udise": "33031104303",
+   "district": "Chengalpattu",
+   "block": "Madurantagam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010104703",
+   "name": "GOVT. GIRLS HS VELLIYUR",
+   "udise": "33010104703",
+   "district": "Tiruvallur",
+   "block": "Thiruvallur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031001602",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL, L.ENDATHUR",
+   "udise": "33031001602",
+   "district": "Chengalpattu",
+   "block": "Acharapakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030303902",
+   "name": "GHSS THIRUPULIVANAM",
+   "udise": "33030303902",
+   "district": "Kancheepuram",
+   "block": "Uthiramerur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010104702",
+   "name": "GOVT.HR.SEC.SCHOOL,VELLIYUR",
+   "udise": "33010104702",
+   "district": "Tiruvallur",
+   "block": "Thiruvallur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010901010",
+   "name": "GOVT H.S, NERKUNDRAM",
+   "udise": "33010901010",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010408802",
+   "name": "GOVT HIGHER SECONDARY SCHOOL, VENGAL",
+   "udise": "33010408802",
+   "district": "Tiruvallur",
+   "block": "Ellapuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030402002",
+   "name": "GHSS, MADURAMANGALAM",
+   "udise": "33030402002",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030302503",
+   "name": "GHS,KATTUPAKKAM",
+   "udise": "33030302503",
+   "district": "Kancheepuram",
+   "block": "Uthiramerur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33021000101",
+   "name": "LADY WILLINGTON HIGHER SECONDARY SCHOOL",
+   "udise": "33021000101",
+   "district": "Chennai",
+   "block": "Teynampet",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030104802",
+   "name": "GHSS ARPAKKAM",
+   "udise": "33030104802",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030405102",
+   "name": "GOVERNMENT HIGH SCHOOL VENGADU",
+   "udise": "33030405102",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020601204",
+   "name": "GOVT. MODEL GHSS TRIPLICANE",
+   "udise": "33020601204",
+   "district": "Chennai",
+   "block": "Teynampet",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031001102",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL, VEDANTHANGAL",
+   "udise": "33031001102",
+   "district": "Chengalpattu",
+   "block": "Acharapakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020700702",
+   "name": "CHENNAI GIRLS HIGHER SECONDARY SCHOOL -ROTLER STREET",
+   "udise": "33020700702",
+   "district": "Chennai",
+   "block": "Royapuram",
+   "level": "higher secondary",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33030103105",
+   "name": "GHS., Periyanatham",
+   "udise": "33030103105",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020301704",
+   "name": "CHS WALLTAX ROAD",
+   "udise": "33020301704",
+   "district": "Chennai",
+   "block": "Royapuram",
+   "level": "high",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33031101204",
+   "name": "GOVERNMENT HIGH SCHOOL ONAMBAKKAM",
+   "udise": "33031101204",
+   "district": "Chengalpattu",
+   "block": "Madurantagam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010509106",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL , SUNDARASOZHAVARAM",
+   "udise": "33010509106",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010402002",
+   "name": "GOVT HIGHER SECONDARY SCHOOL, GURUVOYAL",
+   "udise": "33010402002",
+   "district": "Tiruvallur",
+   "block": "Ellapuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030804703",
+   "name": "GHS NATHAMKARIYACHERI",
+   "udise": "33030804703",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011303503",
+   "name": "GOVT HS, NEDIYAM",
+   "udise": "33011303503",
+   "district": "Tiruvallur",
+   "block": "Pallipat",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010706603",
+   "name": "GOVT (B) HSS, ARANI",
+   "udise": "33010706603",
+   "district": "Tiruvallur",
+   "block": "Sholavaram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010910903",
+   "name": "GHS, VELAPPANCHAVADI",
+   "udise": "33010910903",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030303002",
+   "name": "GHSS,KAMMALAMPOONDI",
+   "udise": "33030303002",
+   "district": "Kancheepuram",
+   "block": "Uthiramerur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030402202",
+   "name": "GOVERNMENT HIGH SCHOOL,KEERANALLUR",
+   "udise": "33030402202",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020701103",
+   "name": "CHENNAI BOYS HR.SEC.SCHOOL, NUNGAMBAKKAM",
+   "udise": "33020701103",
+   "district": "Chennai",
+   "block": "Teynampet",
+   "level": "higher secondary",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33031201702",
+   "name": "GHS ,Neelamangalam",
+   "udise": "33031201702",
+   "district": "Chengalpattu",
+   "block": "Lathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020701306",
+   "name": "CHS THOUSAND LIGHTS",
+   "udise": "33020701306",
+   "district": "Chennai",
+   "block": "Teynampet",
+   "level": "high",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33011206602",
+   "name": "GHSS, THIRUVALANGADU",
+   "udise": "33011206602",
+   "district": "Tiruvallur",
+   "block": "Thiruvalangadu",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011201902",
+   "name": "GHSS, KANAGAMMACHATRAM",
+   "udise": "33011201902",
+   "district": "Tiruvallur",
+   "block": "Thiruvalangadu",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030808501",
+   "name": "GHSS MAMALLAPURAM",
+   "udise": "33030808501",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030207002",
+   "name": "GHS, ULLAVUR",
+   "udise": "33030207002",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020501804",
+   "name": "CHSS CHOOLAIMEDU",
+   "udise": "33020501804",
+   "district": "Chennai",
+   "block": "Teynampet",
+   "level": "higher secondary",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33020800402",
+   "name": "JG GOVT GIRL'S HIGHER SECONDARY SCHOOL,CHOOLAIMEDU",
+   "udise": "33020800402",
+   "district": "Chennai",
+   "block": "Teynampet",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010902703",
+   "name": "GHS, KOLLUMEDU",
+   "udise": "33010902703",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010702102",
+   "name": "GHS, NEW ERUMAI VETTIPALAYAM",
+   "udise": "33010702102",
+   "district": "Tiruvallur",
+   "block": "Sholavaram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030103407",
+   "name": "ADWHS ORIKKAI",
+   "udise": "33030103407",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch",
+   "alt": [
+    "adi dravidar welfare government high school ADWHS ORIKKAI"
+   ]
+  },
+  {
+   "id": "udise:33031100202",
+   "name": "GHS, SITHANDIMANDAPAM",
+   "udise": "33031100202",
+   "district": "Chengalpattu",
+   "block": "Madurantagam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010704403",
+   "name": "GHS,ORAKKADU",
+   "udise": "33010704403",
+   "district": "Tiruvallur",
+   "block": "Sholavaram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011300803",
+   "name": "GHS, KARIMBEDU",
+   "udise": "33011300803",
+   "district": "Tiruvallur",
+   "block": "Pallipat",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010300803",
+   "name": "GOVTHSS KADAMBATHUR",
+   "udise": "33010300803",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept",
+   "alt": [
+    "government higher secondary school GOVTHSS KADAMBATHUR"
+   ]
+  },
+  {
+   "id": "udise:33011002701",
+   "name": "GOVT (B) HSS, NARAVARIKUPPAM",
+   "udise": "33011002701",
+   "district": "Tiruvallur",
+   "block": "Puzhal",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011004302",
+   "name": "MUN HSS, LAKSHMIPURAM",
+   "udise": "33011004302",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "higher secondary",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33031003802",
+   "name": "GOVERNMENT HIGH SCHOOL, VADAMANIPAKKAM",
+   "udise": "33031003802",
+   "district": "Chengalpattu",
+   "block": "Acharapakkam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030105206",
+   "name": "GHS NASARATHPETTAI",
+   "udise": "33030105206",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020600206",
+   "name": "Govt Madarasa - I - Asam HSS",
+   "udise": "33020600206",
+   "district": "Chennai",
+   "block": "Royapuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020600205",
+   "name": "GOVT. MUSLIM HIGHER SECONDARY SCHOOL",
+   "udise": "33020600205",
+   "district": "Chennai",
+   "block": "Royapuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031101402",
+   "name": "GHSS , KUNNANKULATHUR",
+   "udise": "33031101402",
+   "district": "Chengalpattu",
+   "block": "Madurantagam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020701403",
+   "name": "GOVT HOBART MUSLIM GIRLS HIGHER SECONDARY SCHOOL",
+   "udise": "33020701403",
+   "district": "Chennai",
+   "block": "Teynampet",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33021000701",
+   "name": "GOVT HSS NANDANAM",
+   "udise": "33021000701",
+   "district": "Chennai",
+   "block": "Teynampet",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011000605",
+   "name": "GOVERNMENT HIGH SCHOOL, KATHIRVEDU",
+   "udise": "33011000605",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010405202",
+   "name": "GOVT HSS, PERIYAPALAYAM",
+   "udise": "33010405202",
+   "district": "Tiruvallur",
+   "block": "Ellapuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030804903",
+   "name": "ADWHSS MANAMAI",
+   "udise": "33030804903",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "higher secondary",
+   "management": "Adi-Dravida Wel Sch",
+   "alt": [
+    "adi dravidar welfare government higher secondary school ADWHSS MANAMAI"
+   ]
+  },
+  {
+   "id": "udise:33020501303",
+   "name": "CHENNAI HIGH SCHOOL KILPAUK",
+   "udise": "33020501303",
+   "district": "Chennai",
+   "block": "Anna Nagar",
+   "level": "high",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33020500733",
+   "name": "ADW HIGH SCHOOL THIRUMANGALAM",
+   "udise": "33020500733",
+   "district": "Chennai",
+   "block": "Anna Nagar",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33030200902",
+   "name": "GHSS, NAICKENPETTAI",
+   "udise": "33030200902",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020901004",
+   "name": "SAIDAPET",
+   "udise": "33020901004",
+   "district": "Chennai",
+   "block": "Adyar",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept",
+   "alt": [
+    "government higher secondary school SAIDAPET"
+   ]
+  },
+  {
+   "id": "udise:33030104102",
+   "name": "GHS, Thammanur",
+   "udise": "33030104102",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020901003",
+   "name": "GHSS MODEL SAIDAPET",
+   "udise": "33020901003",
+   "district": "Chennai",
+   "block": "Adyar",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030404403",
+   "name": "GOVERNMENT HIGH SCHOOL, MEVALURKUPPAM",
+   "udise": "33030404403",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011002004",
+   "name": "ADW (G) HSS, VADAKARAI",
+   "udise": "33011002004",
+   "district": "Tiruvallur",
+   "block": "Puzhal",
+   "level": "higher secondary",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33030208601",
+   "name": "GGHSS, WALAJABAD",
+   "udise": "33030208601",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010701202",
+   "name": "GHS,ATHUR",
+   "udise": "33010701202",
+   "district": "Tiruvallur",
+   "block": "Sholavaram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010300802",
+   "name": "GOVTGHS KADAMBATHUR",
+   "udise": "33010300802",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030105307",
+   "name": "GHS COLLECTORATE COLONY",
+   "udise": "33030105307",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020700305",
+   "name": "CHS PADAVATTAMMAN KOIL ST",
+   "udise": "33020700305",
+   "district": "Chennai",
+   "block": "Thiru Vi Ka Nagar",
+   "level": "high",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33020400903",
+   "name": "CHSS PALAVAYAL ROAD",
+   "udise": "33020400903",
+   "district": "Chennai",
+   "block": "Anna Nagar",
+   "level": "higher secondary",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33010800802",
+   "name": "GOVT HIGH SCH N M KANDIGAI",
+   "udise": "33010800802",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "high",
+   "management": "Sch Edu Dept",
+   "alt": [
+    "government high school GOVT HIGH SCH N M KANDIGAI"
+   ]
+  },
+  {
+   "id": "udise:33011406703",
+   "name": "GOVT HSS,SRIKALIKAPURAM",
+   "udise": "33011406703",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010506202",
+   "name": "AVADI MUNICIPAL HIGH SCHOOL AVADI",
+   "udise": "33010506202",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "high",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33020701104",
+   "name": "CHENNAI GIRLS HR.SEC.SCHOOL - NUNGAMBAKKAM",
+   "udise": "33020701104",
+   "district": "Chennai",
+   "block": "Teynampet",
+   "level": "higher secondary",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33030301503",
+   "name": "GHSS,MANAMPATHY",
+   "udise": "33030301503",
+   "district": "Kancheepuram",
+   "block": "Uthiramerur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020801117",
+   "name": "CHENNAI HIGHER SECONDARY SCHOOL PULIYUR",
+   "udise": "33020801117",
+   "district": "Chennai",
+   "block": "Kodambakkam",
+   "level": "higher secondary",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33030100603",
+   "name": "GHS, Vishar",
+   "udise": "33030100603",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011401103",
+   "name": "GOVTHSS, BALAPURAM",
+   "udise": "33011401103",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept",
+   "alt": [
+    "government higher secondary school GOVTHSS, BALAPURAM"
+   ]
+  },
+  {
+   "id": "udise:33030807901",
+   "name": "GGHSS THIRUKAZHUKUNDRAM",
+   "udise": "33030807901",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030803101",
+   "name": "GHSS ( BOYS ), THIRUKALUKUNDRAM",
+   "udise": "33030803101",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030405502",
+   "name": "GHS, MAGANYAM",
+   "udise": "33030405502",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010303603",
+   "name": "GOVT.BOYS. HR.SEC.SCHOOL PERAMBAKKAM-631402",
+   "udise": "33010303603",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011004406",
+   "name": "GHS, KANNAPPASAMY NAGAR",
+   "udise": "33011004406",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020401405",
+   "name": "CHSS KOLATHUR",
+   "udise": "33020401405",
+   "district": "Chennai",
+   "block": "Thiru Vi Ka Nagar",
+   "level": "higher secondary",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33010911422",
+   "name": "ADW HS, VALASARA VAKKAM",
+   "udise": "33010911422",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33010706602",
+   "name": "GOVT (G) HSS, ARANI",
+   "udise": "33010706602",
+   "district": "Tiruvallur",
+   "block": "Sholavaram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030307602",
+   "name": "GHSS,ORAKKATTUPETTAI",
+   "udise": "33030307602",
+   "district": "Kancheepuram",
+   "block": "Uthiramerur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020401514",
+   "name": "GOVT GIRLS HSS VILLIWAKKAM",
+   "udise": "33020401514",
+   "district": "Chennai",
+   "block": "Anna Nagar",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030203103",
+   "name": "GHSS, THENNERI",
+   "udise": "33030203103",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011307701",
+   "name": "GOVT (G) HSS, POTHATURPET",
+   "udise": "33011307701",
+   "district": "Tiruvallur",
+   "block": "Pallipat",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030208501",
+   "name": "ARIGNAR ANNA GOVT BOYS HR SEC SCHOOL WALAJABAD",
+   "udise": "33030208501",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030805106",
+   "name": "GHSS VENGAMPAKKAM",
+   "udise": "33030805106",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010911303",
+   "name": "GOVT GIRLS HSS,PORUR",
+   "udise": "33010911303",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011000714",
+   "name": "GHS, MATHUR",
+   "udise": "33011000714",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030101702",
+   "name": "ADWHS, Melottivakkam",
+   "udise": "33030101702",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch",
+   "alt": [
+    "adi dravidar welfare government high school ADWHS, Melottivakkam"
+   ]
+  },
+  {
+   "id": "udise:33011308003",
+   "name": "GOVT (B) HSS, POTHATURPET",
+   "udise": "33011308003",
+   "district": "Tiruvallur",
+   "block": "Pallipat",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011302402",
+   "name": "GHS, KONASAMUDRAM",
+   "udise": "33011302402",
+   "district": "Tiruvallur",
+   "block": "Pallipat",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030404602",
+   "name": "GHS KATRAMBAKKAM",
+   "udise": "33030404602",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030403003",
+   "name": "GHSS, MOLACHUR",
+   "udise": "33030403003",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020801709",
+   "name": "GOVT GIRLS HIGH SCH TNAGAR",
+   "udise": "33020801709",
+   "district": "Chennai",
+   "block": "Kodambakkam",
+   "level": "high",
+   "management": "Sch Edu Dept",
+   "alt": [
+    "government high school GOVT GIRLS HIGH SCH TNAGAR"
+   ]
+  },
+  {
+   "id": "udise:33030808705",
+   "name": "GHSS PUDHUPATTINAM",
+   "udise": "33030808705",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030805302",
+   "name": "GHSS SADHURANGAPATTINAM",
+   "udise": "33030805302",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020801618",
+   "name": "CHS KANNAMMAPET",
+   "udise": "33020801618",
+   "district": "Chennai",
+   "block": "Kodambakkam",
+   "level": "high",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33010101402",
+   "name": "GOVT.HR.SEC.SCHOOL,KAKKALUR",
+   "udise": "33010101402",
+   "district": "Tiruvallur",
+   "block": "Thiruvallur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011002808",
+   "name": "GHS, CHINNA SEKKADU",
+   "udise": "33011002808",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020900803",
+   "name": "CHSS CIT NAGAR",
+   "udise": "33020900803",
+   "district": "Chennai",
+   "block": "Adyar",
+   "level": "higher secondary",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33030209002",
+   "name": "GHSS, IYYAMPETTAI",
+   "udise": "33030209002",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030105484",
+   "name": "A.K.T.MPL HS, KANCHIPURAM",
+   "udise": "33030105484",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "high",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33030204602",
+   "name": "GHSS, GOVINDAVADI",
+   "udise": "33030204602",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010103603",
+   "name": "GOVT. WEL (G) HSS, SEVVAPET",
+   "udise": "33010103603",
+   "district": "Tiruvallur",
+   "block": "Thiruvallur",
+   "level": "higher secondary",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33030205405",
+   "name": "GHSS, PARANDUR",
+   "udise": "33030205405",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031200107",
+   "name": "GIRL GHSS CHEYYUR",
+   "udise": "33031200107",
+   "district": "Chengalpattu",
+   "block": "Lathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030705127",
+   "name": "GHS, THIRUKATCHUR",
+   "udise": "33030705127",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031203303",
+   "name": "GHSS KUVATHUR",
+   "udise": "33031203303",
+   "district": "Chengalpattu",
+   "block": "Lathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030705306",
+   "name": "GHSS SINGAPERUMAL KOIL",
+   "udise": "33030705306",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030204102",
+   "name": "ADW HSS, INJAMBAKKAM",
+   "udise": "33030204102",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "higher secondary",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33030703502",
+   "name": "GHSS ANJUR",
+   "udise": "33030703502",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010103602",
+   "name": "GOVT. WEL (B) HSS, SEVVAPET",
+   "udise": "33010103602",
+   "district": "Tiruvallur",
+   "block": "Thiruvallur",
+   "level": "higher secondary",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33030406808",
+   "name": "J J GBHSS SRIPERUMBUDUR",
+   "udise": "33030406808",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030804503",
+   "name": "GHS VEERAPURAM",
+   "udise": "33030804503",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030806003",
+   "name": "GHSS VAYALUR",
+   "udise": "33030806003",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020700907",
+   "name": "PRESIDENCY GIRLS HSS -MODEL",
+   "udise": "33020700907",
+   "district": "Chennai",
+   "block": "Royapuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011400306",
+   "name": "A. M. K GOVT (G) HSS,AMMAYARKUPPAM",
+   "udise": "33011400306",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030100105",
+   "name": "GHSS DAMAL",
+   "udise": "33030100105",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030606107",
+   "name": "GHS PAIYANOOR",
+   "udise": "33030606107",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020900604",
+   "name": "CHSS GIRLS SAIDAPET",
+   "udise": "33020900604",
+   "district": "Chennai",
+   "block": "Kodambakkam",
+   "level": "higher secondary",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33020900502",
+   "name": "CHSS BOYS SAIDAPET",
+   "udise": "33020900502",
+   "district": "Chennai",
+   "block": "Kodambakkam",
+   "level": "higher secondary",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33030404504",
+   "name": "GHSS 101 ZAMIN THANDALAM",
+   "udise": "33030404504",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030406502",
+   "name": "TSK GOVERNMENT HIGHER SECONDARY SCHOOL MATHUR",
+   "udise": "33030406502",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010808802",
+   "name": "GBHSS PATHIRVEDU MADHARPAKKAM",
+   "udise": "33010808802",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011003101",
+   "name": "GOVT HSS, MANALI",
+   "udise": "33011003101",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010105102",
+   "name": "GHS VILAPAKKAM",
+   "udise": "33010105102",
+   "district": "Tiruvallur",
+   "block": "Thiruvallur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010911508",
+   "name": "GOVT HSS,RAMAPURAM",
+   "udise": "33010911508",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011302102",
+   "name": "GHS, SUNDARESAN NAGAR",
+   "udise": "33011302102",
+   "district": "Tiruvallur",
+   "block": "Pallipat",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010801102",
+   "name": "GOVT HS EGUVARPALAYAM",
+   "udise": "33010801102",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030103408",
+   "name": "GHS For the Hearing Impaired, ORIKKAI",
+   "udise": "33030103408",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "high",
+   "management": "Diff. Abled Welfare Dept"
+  },
+  {
+   "id": "udise:33010808302",
+   "name": "GHS POOVALAMBEDU",
+   "udise": "33010808302",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030105445",
+   "name": "Rani Annadurai Mpl.HSS(G),Kanchipuram",
+   "udise": "33030105445",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "higher secondary",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33020900403",
+   "name": "CHSS WEST MAMBALAM",
+   "udise": "33020900403",
+   "district": "Chennai",
+   "block": "Kodambakkam",
+   "level": "higher secondary",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33030105441",
+   "name": "Dr.PSS.Mpl.HSS., Kanchipuram",
+   "udise": "33030105441",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "higher secondary",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33030603804",
+   "name": "GOVERNMENT HIGH SCHOOL KARUMBAKKAM",
+   "udise": "33030603804",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030203302",
+   "name": "GHSS, SINGADIVAKKAM",
+   "udise": "33030203302",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020801214",
+   "name": "CHENNAI HIGH SCHOOL KANNIYAPPA NAGAR",
+   "udise": "33020801214",
+   "district": "Chennai",
+   "block": "Kodambakkam",
+   "level": "high",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33031300503",
+   "name": "GOVERNMENT HIGH SCHOOL - IRUMBULI",
+   "udise": "33031300503",
+   "district": "Chengalpattu",
+   "block": "Chithamur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020900209",
+   "name": "GHSS MGR NAGAR",
+   "udise": "33020900209",
+   "district": "Chennai",
+   "block": "Adyar",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011301904",
+   "name": "GOVT (B) HSS, ATHIMANJERIPET",
+   "udise": "33011301904",
+   "district": "Tiruvallur",
+   "block": "Pallipat",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010911223",
+   "name": "ADW HS, MADHURAVOYAL",
+   "udise": "33010911223",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33030406816",
+   "name": "GHSS (GIRLS) SRIPERUMBUDUR",
+   "udise": "33030406816",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030703204",
+   "name": "GHS, KARUNILAM",
+   "udise": "33030703204",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020900211",
+   "name": "CHSS MGR NAGAR",
+   "udise": "33020900211",
+   "district": "Chennai",
+   "block": "Kodambakkam",
+   "level": "higher secondary",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33030700103",
+   "name": "GHS, Mannivakkam",
+   "udise": "33030700103",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010102003",
+   "name": "GOVT.HIGH.SCHOOL,PAKKAM",
+   "udise": "33010102003",
+   "district": "Tiruvallur",
+   "block": "Thiruvallur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020501803",
+   "name": "CHS THIRUVALLUVARPURAM",
+   "udise": "33020501803",
+   "district": "Chennai",
+   "block": "Teynampet",
+   "level": "high",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33020801009",
+   "name": "CHS RANGARAJAPURAM",
+   "udise": "33020801009",
+   "district": "Chennai",
+   "block": "Kodambakkam",
+   "level": "high",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33010909903",
+   "name": "MUN HIGH SCH, PADI KUPPAM",
+   "udise": "33010909903",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "high",
+   "management": "Municipal School",
+   "alt": [
+    "municipal high school MUN HIGH SCH, PADI KUPPAM"
+   ]
+  },
+  {
+   "id": "udise:33031301402",
+   "name": "GOVT HIGH SCHOOL, INDALUR",
+   "udise": "33031301402",
+   "district": "Chengalpattu",
+   "block": "Chithamur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010101802",
+   "name": "GHS,MELAKONDAIYUR",
+   "udise": "33010101802",
+   "district": "Tiruvallur",
+   "block": "Thiruvallur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030105476",
+   "name": "CSMHSS,Pillayarpalayam, Kanchipuram",
+   "udise": "33030105476",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "higher secondary",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33020500804",
+   "name": "CHSS KOYAMBEDU",
+   "udise": "33020500804",
+   "district": "Chennai",
+   "block": "Kodambakkam",
+   "level": "higher secondary",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33010808801",
+   "name": "GGHSS PATHIRVEDU MADHARPAKKAM",
+   "udise": "33010808801",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010506702",
+   "name": "GOVERNMENT BOYS HIGHER SECONDARY SCHOOL KAMARAJ NAGAR",
+   "udise": "33010506702",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011005703",
+   "name": "GOVT HIGH SCHOOL, A.S.NAGAR",
+   "udise": "33011005703",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011007710",
+   "name": "MHS, ERNAVUR",
+   "udise": "33011007710",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "high",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33020501601",
+   "name": "CHS MMDA II",
+   "udise": "33020501601",
+   "district": "Chennai",
+   "block": "Anna Nagar",
+   "level": "high",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33030702103",
+   "name": "GHS, KAYARAMBEDU",
+   "udise": "33030702103",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030705117",
+   "name": "GHS, PERAMANUR",
+   "udise": "33030705117",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030702507",
+   "name": "ADWHSS Palur",
+   "udise": "33030702507",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "higher secondary",
+   "management": "Adi-Dravida Wel Sch",
+   "alt": [
+    "adi dravidar welfare government higher secondary school ADWHSS Palur"
+   ]
+  },
+  {
+   "id": "udise:33030705106",
+   "name": "GHSS MM NAGAR",
+   "udise": "33030705106",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011206503",
+   "name": "GHS, THUMBIKULAM",
+   "udise": "33011206503",
+   "district": "Tiruvallur",
+   "block": "Thiruvalangadu",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011204302",
+   "name": "GHS, NEMILI",
+   "udise": "33011204302",
+   "district": "Tiruvallur",
+   "block": "Thiruvalangadu",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030705135",
+   "name": "GOVT HIGH SCHOOL KATTANKOLATHUR",
+   "udise": "33030705135",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030700302",
+   "name": "GHS, Karanai Puducheri",
+   "udise": "33030700302",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030601709",
+   "name": "Govt Higher Secondary School,KOVALAM",
+   "udise": "33030601709",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030602503",
+   "name": "GHSS NELLIKUPPAM",
+   "udise": "33030602503",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030105483",
+   "name": "CMS GHSS, Kancheepuram",
+   "udise": "33030105483",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020500805",
+   "name": "CHSS VIRUGAMBAKKAM",
+   "udise": "33020500805",
+   "district": "Chennai",
+   "block": "Kodambakkam",
+   "level": "higher secondary",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33020802501",
+   "name": "JG GOVT GIRLS HSS VIRUGAMBAKKAM",
+   "udise": "33020802501",
+   "district": "Chennai",
+   "block": "Kodambakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010803702",
+   "name": "GOVT HSS A N KANDIGAI",
+   "udise": "33010803702",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030701102",
+   "name": "GHS ASTHINAPURAM",
+   "udise": "33030701102",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030606003",
+   "name": "Adi Dravida Welfare High School - PATTIPULAM",
+   "udise": "33030606003",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33010407502",
+   "name": "GOVT HIGH SCHOOL, THANDALAM",
+   "udise": "33010407502",
+   "district": "Tiruvallur",
+   "block": "Ellapuram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010911304",
+   "name": "GOVT BOYS HSS,PORUR",
+   "udise": "33010911304",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010409401",
+   "name": "GOVT B HSS, UTHUKOTTAI",
+   "udise": "33010409401",
+   "district": "Tiruvallur",
+   "block": "Ellapuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030602904",
+   "name": "Government Higher Secondary School - NEMMELI",
+   "udise": "33030602904",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010400102",
+   "name": "GOVT HIGH SCHOOL, ATHIVAKKAM",
+   "udise": "33010400102",
+   "district": "Tiruvallur",
+   "block": "Ellapuram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011006802",
+   "name": "MUN HIGH SCHOOL, KALADIPET",
+   "udise": "33011006802",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "high",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33011205302",
+   "name": "GOVT ADW HS, PERIYAKALAKATTUR",
+   "udise": "33011205302",
+   "district": "Tiruvallur",
+   "block": "Thiruvalangadu",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33030100702",
+   "name": "GHSS,THIRUPPUTKUZHI",
+   "udise": "33030100702",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030102602",
+   "name": "GHSS AYYANGARKULAM",
+   "udise": "33030102602",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030204802",
+   "name": "GHSS, PULLALUR",
+   "udise": "33030204802",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020801206",
+   "name": "PCKG GOVT HSS KODAMBAKKAM",
+   "udise": "33020801206",
+   "district": "Chennai",
+   "block": "Kodambakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031302304",
+   "name": "GOVERNMENT HIGH SCHOOL- SIRUMAILUR",
+   "udise": "33031302304",
+   "district": "Chengalpattu",
+   "block": "Chithamur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010911102",
+   "name": "GOVT HIGHER SECONDARY SCHOOL, ALAPAKKAM",
+   "udise": "33010911102",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030503702",
+   "name": "ADWHS Chennakuppam",
+   "udise": "33030503702",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch",
+   "alt": [
+    "adi dravidar welfare government high school ADWHS Chennakuppam"
+   ]
+  },
+  {
+   "id": "udise:33010409402",
+   "name": "GOVT G HSS, UTHUKOTTAI",
+   "udise": "33010409402",
+   "district": "Tiruvallur",
+   "block": "Ellapuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011407104",
+   "name": "GOVT HSS,VANGANOOR",
+   "udise": "33011407104",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030601503",
+   "name": "GHSS KELAMBAKKAM",
+   "udise": "33030601503",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030503602",
+   "name": "GOVERNMENT HIGH SCHOOL VADAKUPATTU",
+   "udise": "33030503602",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010603002",
+   "name": "GHS, MANGODU",
+   "udise": "33010603002",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030701303",
+   "name": "Government High School Kumizhi",
+   "udise": "33030701303",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030601510",
+   "name": "GHS(G), Kelambakkam",
+   "udise": "33030601510",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030600402",
+   "name": "GHSS MAMBAKKAM",
+   "udise": "33030600402",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011407106",
+   "name": "Govt Girls High school,Vanganoor",
+   "udise": "33011407106",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030205203",
+   "name": "GHS, PURISAI",
+   "udise": "33030205203",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020401103",
+   "name": "CHENNAI HIGH SCHOOL NAMMALWARPET CHENNAI-12",
+   "udise": "33020401103",
+   "district": "Chennai",
+   "block": "Thiru Vi Ka Nagar",
+   "level": "high",
+   "management": "Corporation School"
+  },
+  {
+   "id": "udise:33020501323",
+   "name": "KASTHURIBAI GANDHI HIGH SCHOOL",
+   "udise": "33020501323",
+   "district": "Chennai",
+   "block": "Thiru Vi Ka Nagar",
+   "level": "high",
+   "management": null
+  },
+  {
+   "id": "udise:33031302804",
+   "name": "GOVERNMENT HIGH SCHOOL- PONTHUR",
+   "udise": "33031302804",
+   "district": "Chengalpattu",
+   "block": "Chithamur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011006002",
+   "name": "JAI GOPAL CARODIA HSS THIRUVOTRIYUR",
+   "udise": "33011006002",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011200103",
+   "name": "GOVT HSS, ARCOT KUPPAM",
+   "udise": "33011200103",
+   "district": "Tiruvallur",
+   "block": "Thiruvalangadu",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011007401",
+   "name": "GOVT GIRLS HIGH SCHOOL, SATHANGADU",
+   "udise": "33011007401",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010609902",
+   "name": "GOVT HIGH SCHOOL ANNAMALAICHERRY",
+   "udise": "33010609902",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011308202",
+   "name": "GOVT BOYS HSS, PALLIPAT",
+   "udise": "33011308202",
+   "district": "Tiruvallur",
+   "block": "Pallipat",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010900403",
+   "name": "GOVERNMENT BOYS HIGHER SECONDARY SCHOOL, AYAPAKKAM",
+   "udise": "33010900403",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030701503",
+   "name": "GHS, KANDIGAI",
+   "udise": "33030701503",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030606502",
+   "name": "GBHSS THIRUPORUR",
+   "udise": "33030606502",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030105475",
+   "name": "BMS GGHSS",
+   "udise": "33030105475",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020500834",
+   "name": "ADW VIRUGAMBAKKAM HIGH SCHOOL",
+   "udise": "33020500834",
+   "district": "Chennai",
+   "block": "Kodambakkam",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33020800102",
+   "name": "GOVERNMENT MODEL HIGHER SECONDARY SCHOOL MMDA ARUMBAKKAM",
+   "udise": "33020800102",
+   "district": "Chennai",
+   "block": "Anna Nagar",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031303402",
+   "name": "GOVT HIGH SCHOOL - ANDARKUPPAM",
+   "udise": "33031303402",
+   "district": "Chengalpattu",
+   "block": "Chithamur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011005101",
+   "name": "GOVT HSS, KATHIVAKKAM",
+   "udise": "33011005101",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010602309",
+   "name": "GHS, MANALI NEW TOWN",
+   "udise": "33010602309",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010612909",
+   "name": "ADWHS,MINJUR",
+   "udise": "33010612909",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch",
+   "alt": [
+    "adi dravidar welfare government high school ADWHS,MINJUR"
+   ]
+  },
+  {
+   "id": "udise:33010500304",
+   "name": "GOVERNMENT HIGH SCHOOL BANAVEDU THOTTAM",
+   "udise": "33010500304",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010501602",
+   "name": "ADI DRAVIDAR WELFARE HIGHER SECONDARY SCHOOL KOLAPPANCHERI",
+   "udise": "33010501602",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "higher secondary",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33010612910",
+   "name": "GHS,MINJUR",
+   "udise": "33010612910",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010611303",
+   "name": "ADW HS, VALLUR",
+   "udise": "33010611303",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33020401513",
+   "name": "GOVT HS VILLIWAKKAM",
+   "udise": "33020401513",
+   "district": "Chennai",
+   "block": "Anna Nagar",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031004902",
+   "name": "GOVERNMENT HIGH SCHOOL, NEDUNGAL",
+   "udise": "33031004902",
+   "district": "Chengalpattu",
+   "block": "Acharapakkam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010602102",
+   "name": "GHS - PAZAYANAPPALAYAM",
+   "udise": "33010602102",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010402203",
+   "name": "GOVT HSS SCHOOL, KANNIGAIPAIR",
+   "udise": "33010402203",
+   "district": "Tiruvallur",
+   "block": "Ellapuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010401502",
+   "name": "GHS, BOOCHIATHIPATTU",
+   "udise": "33010401502",
+   "district": "Tiruvallur",
+   "block": "Ellapuram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010404002",
+   "name": "GOVT HIGH SCHOOL, MALANDUR",
+   "udise": "33010404002",
+   "district": "Tiruvallur",
+   "block": "Ellapuram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020901605",
+   "name": "ARIGNAR ANNA GOVT HSS",
+   "udise": "33020901605",
+   "district": "Chennai",
+   "block": "Adyar",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011407903",
+   "name": "GOVT HS,VEERAMANGALAM",
+   "udise": "33011407903",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010802202",
+   "name": "GOVT HSS ELAVOOR",
+   "udise": "33010802202",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011405703",
+   "name": "GOVT HS,RAJANAGARAM",
+   "udise": "33011405703",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030801802",
+   "name": "GHS SALUR",
+   "udise": "33030801802",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030803603",
+   "name": "GHS KUZHIPANTHANDALAM",
+   "udise": "33030803603",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030805603",
+   "name": "ADWHSS NERUMBUR",
+   "udise": "33030805603",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "higher secondary",
+   "management": "Adi-Dravida Wel Sch",
+   "alt": [
+    "adi dravidar welfare government higher secondary school ADWHSS NERUMBUR"
+   ]
+  },
+  {
+   "id": "udise:33031304904",
+   "name": "SRI P K GOVT BOYS HR SEC SCHOOL-KADAPAKKAM",
+   "udise": "33031304904",
+   "district": "Chengalpattu",
+   "block": "Chithamur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010502802",
+   "name": "GOVERNMENT HIGH SCHOOL NAZARATHPET",
+   "udise": "33010502802",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030200403",
+   "name": "GHS, VAIYAVOOR",
+   "udise": "33030200403",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030400803",
+   "name": "GHS, EDAYARPAKKAM",
+   "udise": "33030400803",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020100208",
+   "name": "GHS KODUNGAIYUR",
+   "udise": "33020100208",
+   "district": "Chennai",
+   "block": "Tondiarpet",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020300311",
+   "name": "GHSS MKB NAGAR",
+   "udise": "33020300311",
+   "district": "Chennai",
+   "block": "Tondiarpet",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031003603",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL, ORATHI",
+   "udise": "33031003603",
+   "district": "Chengalpattu",
+   "block": "Acharapakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030105440",
+   "name": "GHSS(Girls)., Big Kanchipuram",
+   "udise": "33030105440",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010305405",
+   "name": "GHS SENJI",
+   "udise": "33010305405",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010407202",
+   "name": "GOVT HIGH SCHOOL, THIRUKKANDALAM",
+   "udise": "33010407202",
+   "district": "Tiruvallur",
+   "block": "Ellapuram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010806402",
+   "name": "GHS OBASAMUTHRAM",
+   "udise": "33010806402",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010403402",
+   "name": "GOVT HIGH SCHOOL, KOMAKKAMBEDU",
+   "udise": "33010403402",
+   "district": "Tiruvallur",
+   "block": "Ellapuram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010405003",
+   "name": "GOVT HIGH SCHOOL, PALAVAKKAM",
+   "udise": "33010405003",
+   "district": "Tiruvallur",
+   "block": "Ellapuram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010508002",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL THIRUMAZHISAI",
+   "udise": "33010508002",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030805504",
+   "name": "GHS-SOORADIMANGALAM",
+   "udise": "33030805504",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010306702",
+   "name": "GHS VAYALUR",
+   "udise": "33010306702",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030305703",
+   "name": "GHS ANAMPAKKAM",
+   "udise": "33030305703",
+   "district": "Kancheepuram",
+   "block": "Uthiramerur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030400104",
+   "name": "GHS, PITCHIVAKKAM",
+   "udise": "33030400104",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031007103",
+   "name": "GOVERNMENT GIRLS HIGHER SECONDARY SCHOOL, ACHARAPAKKAM",
+   "udise": "33031007103",
+   "district": "Chengalpattu",
+   "block": "Acharapakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020400301",
+   "name": "GHS BV COLONY",
+   "udise": "33020400301",
+   "district": "Chennai",
+   "block": "Tondiarpet",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010307302",
+   "name": "GGHS MANAVALANAGAR",
+   "udise": "33010307302",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020300904",
+   "name": "ADW BHSS KANNIGAPURAM",
+   "udise": "33020300904",
+   "district": "Chennai",
+   "block": "Thiru Vi Ka Nagar",
+   "level": "higher secondary",
+   "management": "Adi-Dravida Wel Sch",
+   "alt": [
+    "adi dravidar welfare government higher secondary school ADW BHSS KANNIGAPURAM"
+   ]
+  },
+  {
+   "id": "udise:33031004102",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL, ANANDHAMANGALAM",
+   "udise": "33031004102",
+   "district": "Chengalpattu",
+   "block": "Acharapakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020300905",
+   "name": "ADW GHSS KANNIGAPURAM",
+   "udise": "33020300905",
+   "district": "Chennai",
+   "block": "Thiru Vi Ka Nagar",
+   "level": "higher secondary",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33011002702",
+   "name": "GOVT (G) HSS, NARAVARIKUPPAM",
+   "udise": "33011002702",
+   "district": "Tiruvallur",
+   "block": "Puzhal",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010902809",
+   "name": "GHS KARAMBAKKAM",
+   "udise": "33010902809",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010600505",
+   "name": "GHS,ATHIPATTU",
+   "udise": "33010600505",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031107810",
+   "name": "GHS MALAIPALAYAM",
+   "udise": "33031107810",
+   "district": "Chengalpattu",
+   "block": "Madurantagam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010606902",
+   "name": "GHS, NALUR",
+   "udise": "33010606902",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020201104",
+   "name": "GOVT MUSLIM HS",
+   "udise": "33020201104",
+   "district": "Chennai",
+   "block": "Royapuram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010306302",
+   "name": "GHS ULUNTHAI",
+   "udise": "33010306302",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030802602",
+   "name": "GOVT HR SEC SCHOOL PANDUR",
+   "udise": "33030802602",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010908502",
+   "name": "AMBATTUR MUNICIPAL HIGH SCHOOL KAMARAJAPURAM",
+   "udise": "33010908502",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "high",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33030405703",
+   "name": "GOVERNMENT HIGH SCHOOL GUNDUPERUMBEDU",
+   "udise": "33030405703",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030201002",
+   "name": "GGHSS,EKANAMPETTAI",
+   "udise": "33030201002",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030100302",
+   "name": "GHSS, Musaravakkam",
+   "udise": "33030100302",
+   "district": "Kancheepuram",
+   "block": "Kancheepuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011404102",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL,SENGATANUR",
+   "udise": "33011404102",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030306602",
+   "name": "GHS THIRUMUKKUDAL",
+   "udise": "33030306602",
+   "district": "Kancheepuram",
+   "block": "Uthiramerur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010600205",
+   "name": "GHS,ANUPPAMBATTU",
+   "udise": "33010600205",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010300403",
+   "name": "GHS EGATUR",
+   "udise": "33010300403",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020901603",
+   "name": "GHSS VELACHERY",
+   "udise": "33020901603",
+   "district": "Chennai",
+   "block": "Adyar",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020701702",
+   "name": "DR AMBEDKAR GOVT HR.SEC.SCHOOL",
+   "udise": "33020701702",
+   "district": "Chennai",
+   "block": "Royapuram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010300502",
+   "name": "GHS ERAYAMANGALAM",
+   "udise": "33010300502",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031103702",
+   "name": "GHS Thottanaval",
+   "udise": "33031103702",
+   "district": "Chengalpattu",
+   "block": "Madurantagam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010208302",
+   "name": "GHS , THOMUR",
+   "udise": "33010208302",
+   "district": "Tiruvallur",
+   "block": "Poondi",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031304302",
+   "name": "GOVERNMENT HIGH SCHOOL - KADUKALLUR",
+   "udise": "33031304302",
+   "district": "Chengalpattu",
+   "block": "Chithamur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010206802",
+   "name": "GHS, SENDRAYANPALAYAM",
+   "udise": "33010206802",
+   "district": "Tiruvallur",
+   "block": "Poondi",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010502002",
+   "name": "GOVERNMENT HIGH SCHOOL KOTTAMEDU",
+   "udise": "33010502002",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031003204",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL, ELAPAKKAM",
+   "udise": "33031003204",
+   "district": "Chengalpattu",
+   "block": "Acharapakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020301104",
+   "name": "ADW HS PULIANTHOPE",
+   "udise": "33020301104",
+   "district": "Chennai",
+   "block": "Thiru Vi Ka Nagar",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33020201309",
+   "name": "GOVT MUSLIM GIRLS HS",
+   "udise": "33020201309",
+   "district": "Chennai",
+   "block": "Royapuram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030406303",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL. PANRUTTI - 631 604",
+   "udise": "33030406303",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031103203",
+   "name": "GHS PAKKAM",
+   "udise": "33031103203",
+   "district": "Chengalpattu",
+   "block": "Madurantagam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010503102",
+   "name": "GOVERNMENT HIGH SCHOOL NEMILICHERY",
+   "udise": "33010503102",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010206502",
+   "name": "GHS,RAMATHANDALAM",
+   "udise": "33010206502",
+   "district": "Tiruvallur",
+   "block": "Poondi",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010202702",
+   "name": "GHS , MAMANDUR",
+   "udise": "33010202702",
+   "district": "Tiruvallur",
+   "block": "Poondi",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030602202",
+   "name": "GHS ANUMANTHAPURAM",
+   "udise": "33030602202",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030801002",
+   "name": "GHS SOGANDI",
+   "udise": "33030801002",
+   "district": "Chengalpattu",
+   "block": "Thirukalukundram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011003701",
+   "name": "J.G.CARODIA GOVT HSS, MADHAVARAM",
+   "udise": "33011003701",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030202106",
+   "name": "GHS, ENATHUR",
+   "udise": "33030202106",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030404005",
+   "name": "GOVERNMENT HIGH SCHOOL SENGADU",
+   "udise": "33030404005",
+   "district": "Kancheepuram",
+   "block": "Sriperumbudur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010302902",
+   "name": "GOVT HS MELNALATHUR",
+   "udise": "33010302902",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031006302",
+   "name": "GOVERNMENT HIGH SCHOOL, THIMMAPURAM",
+   "udise": "33031006302",
+   "district": "Chengalpattu",
+   "block": "Acharapakkam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010700108",
+   "name": "GHS, OLD ALAMATHY",
+   "udise": "33010700108",
+   "district": "Tiruvallur",
+   "block": "Sholavaram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010700103",
+   "name": "GOVT.HSS,NEW ALAMATHI - MODEL",
+   "udise": "33010700103",
+   "district": "Tiruvallur",
+   "block": "Sholavaram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030203903",
+   "name": "GHS KARAI",
+   "udise": "33030203903",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031302902",
+   "name": "GOVERNMENT HIGH SCHOOL - PUTHIRANKOTTAI",
+   "udise": "33031302902",
+   "district": "Chengalpattu",
+   "block": "Chithamur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031002902",
+   "name": "GOVERNMENT HIGH SCHOOL, KATTUKARANAI",
+   "udise": "33031002902",
+   "district": "Chengalpattu",
+   "block": "Acharapakkam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031007102",
+   "name": "MARVAR GOVERNMENT BOYS HIGHER SECONDARY SCHOOL, ACHARAPAKKAM",
+   "udise": "33031007102",
+   "district": "Chengalpattu",
+   "block": "Acharapakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010703303",
+   "name": "GHSS, GNAYERU",
+   "udise": "33010703303",
+   "district": "Tiruvallur",
+   "block": "Sholavaram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011202202",
+   "name": "GHS, KAVERIRAJAPURAM",
+   "udise": "33011202202",
+   "district": "Tiruvallur",
+   "block": "Thiruvalangadu",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010810502",
+   "name": "GHSS SUNNAMBUKULAM",
+   "udise": "33010810502",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030503002",
+   "name": "GHS, THUNDALKAZHANI",
+   "udise": "33030503002",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031107706",
+   "name": "GGHSS MADURANTHAKAM",
+   "udise": "33031107706",
+   "district": "Chengalpattu",
+   "block": "Madurantagam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33020801219",
+   "name": "GOVT GIRLS HR SEC SCHOOL ASHOK NAGAR",
+   "udise": "33020801219",
+   "district": "Chennai",
+   "block": "Kodambakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010903212",
+   "name": "AMHS KOVILPATHAGAI",
+   "udise": "33010903212",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "high",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33011004502",
+   "name": "POPPILIRAJA GOVT HSS, PUZHAL",
+   "udise": "33011004502",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010303502",
+   "name": "GHS PAPPARAMPAKKAM",
+   "udise": "33010303502",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031104102",
+   "name": "GHS 150 ESSUR",
+   "udise": "33031104102",
+   "district": "Chengalpattu",
+   "block": "Madurantagam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030502705",
+   "name": "GHS MANIMANGALAM",
+   "udise": "33030502705",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010701805",
+   "name": "GHS, CHINNAMBEDU",
+   "udise": "33010701805",
+   "district": "Tiruvallur",
+   "block": "Sholavaram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030505806",
+   "name": "Government High School,Madambakkam",
+   "udise": "33030505806",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010303602",
+   "name": "GOVT.GIRLS HR.SEC.SCHOOL PERAMBAKKAM-631402",
+   "udise": "33010303602",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030308804",
+   "name": "GHSS,SALAVAKKAM",
+   "udise": "33030308804",
+   "district": "Kancheepuram",
+   "block": "Uthiramerur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031007003",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL, MORAPAKKAM",
+   "udise": "33031007003",
+   "district": "Chengalpattu",
+   "block": "Acharapakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011002003",
+   "name": "ADW (B) HSS, VADAKARAI",
+   "udise": "33011002003",
+   "district": "Tiruvallur",
+   "block": "Puzhal",
+   "level": "higher secondary",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33030600104",
+   "name": "ADWHS MELAKOTTAIYUR",
+   "udise": "33030600104",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch",
+   "alt": [
+    "adi dravidar welfare government high school ADWHS MELAKOTTAIYUR"
+   ]
+  },
+  {
+   "id": "udise:33030601405",
+   "name": "ADWHS, Pudupakkam",
+   "udise": "33030601405",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch",
+   "alt": [
+    "adi dravidar welfare government high school ADWHS, Pudupakkam"
+   ]
+  },
+  {
+   "id": "udise:33010701602",
+   "name": "GOVT HSS,BUDUR",
+   "udise": "33010701602",
+   "district": "Tiruvallur",
+   "block": "Sholavaram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031104002",
+   "name": "GHS BOODUR",
+   "udise": "33031104002",
+   "district": "Chengalpattu",
+   "block": "Madurantagam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030504802",
+   "name": "Ghs, Umaiyalparanacheri",
+   "udise": "33030504802",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011400103",
+   "name": "GHS, ADHIVARAGAPURAM",
+   "udise": "33011400103",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010911802",
+   "name": "MUNICIPAL HIGHER SECONDARY SCHOOL,ATHIPET",
+   "udise": "33010911802",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "higher secondary",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33011400702",
+   "name": "GOVT HS ASWARANTHAPURAM",
+   "udise": "33011400702",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030500207",
+   "name": "GHS PERIAR NAGAR",
+   "udise": "33030500207",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031005603",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL, THOZHUPEDU",
+   "udise": "33031005603",
+   "district": "Chengalpattu",
+   "block": "Acharapakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030500306",
+   "name": "GHS SIRUKALATHUR",
+   "udise": "33030500306",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030201903",
+   "name": "VSA GHS, UTHUKKADU",
+   "udise": "33030201903",
+   "district": "Kancheepuram",
+   "block": "Walajabad",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030507702",
+   "name": "GHSS (Girls), Kundrathur",
+   "udise": "33030507702",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010200402",
+   "name": "GOVT HSS, SEETHANJERI",
+   "udise": "33010200402",
+   "district": "Tiruvallur",
+   "block": "Poondi",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010704702",
+   "name": "G.H.S.S,PADIANALLUR",
+   "udise": "33010704702",
+   "district": "Tiruvallur",
+   "block": "Sholavaram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010903203",
+   "name": "GHSS SATHIYAMURTHY NAGAR",
+   "udise": "33010903203",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011203203",
+   "name": "GHS, MANAVUR",
+   "udise": "33011203203",
+   "district": "Tiruvallur",
+   "block": "Thiruvalangadu",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011304102",
+   "name": "GOVT HS, NOCHILI",
+   "udise": "33011304102",
+   "district": "Tiruvallur",
+   "block": "Pallipat",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030502502",
+   "name": "GHS NALLUR",
+   "udise": "33030502502",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010203102",
+   "name": "GOVT HIGHER SEC SCH, MEYYUR",
+   "udise": "33010203102",
+   "district": "Tiruvallur",
+   "block": "Poondi",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept",
+   "alt": [
+    "government higher secondary school GOVT HIGHER SEC SCH, MEYYUR"
+   ]
+  },
+  {
+   "id": "udise:33030505002",
+   "name": "GHS,NATTARASANPATTU",
+   "udise": "33030505002",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030300603",
+   "name": "GHSS, Kaliyampoondi",
+   "udise": "33030300603",
+   "district": "Kancheepuram",
+   "block": "Uthiramerur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031102402",
+   "name": "GHS VALLUVAPAKKAM",
+   "udise": "33031102402",
+   "district": "Chengalpattu",
+   "block": "Madurantagam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031204206",
+   "name": "GHS KODUR",
+   "udise": "33031204206",
+   "district": "Chengalpattu",
+   "block": "Lathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030503310",
+   "name": "G(G)HSS, PADAPPAI",
+   "udise": "33030503310",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010706102",
+   "name": "GHS, VICHOOR",
+   "udise": "33010706102",
+   "district": "Tiruvallur",
+   "block": "Sholavaram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031203104",
+   "name": "GHS PARAMESWARAMANGALAM",
+   "udise": "33031203104",
+   "district": "Chengalpattu",
+   "block": "Lathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010301004",
+   "name": "GHS VENMANAMBUDUR",
+   "udise": "33010301004",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010901303",
+   "name": "GOVT HS, PALAVEDU",
+   "udise": "33010901303",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030306902",
+   "name": "GHS,SEETANANCHERI",
+   "udise": "33030306902",
+   "district": "Kancheepuram",
+   "block": "Uthiramerur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011306002",
+   "name": "GHS, BOMMARAJUPET",
+   "udise": "33011306002",
+   "district": "Tiruvallur",
+   "block": "Pallipat",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030507703",
+   "name": "GHSS (Boys), Kundrathur",
+   "udise": "33030507703",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010205802",
+   "name": "GOVT HR SEC SCH, POONDI VILLAG",
+   "udise": "33010205802",
+   "district": "Tiruvallur",
+   "block": "Poondi",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031204104",
+   "name": "GHSS, ANAICUT",
+   "udise": "33031204104",
+   "district": "Chengalpattu",
+   "block": "Lathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031100602",
+   "name": "GHS BUKKATHURAI",
+   "udise": "33031100602",
+   "district": "Chengalpattu",
+   "block": "Madurantagam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010502401",
+   "name": "GOVERNMENT GIRLS HIGHER SECONDARY SCHOOL KEELMANAMBEDU",
+   "udise": "33010502401",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010106403",
+   "name": "ADW HS PUNGATHUR",
+   "udise": "33010106403",
+   "district": "Tiruvallur",
+   "block": "Thiruvallur",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33030309801",
+   "name": "GGHSS,UTHIRAMERUR",
+   "udise": "33030309801",
+   "district": "Kancheepuram",
+   "block": "Uthiramerur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030506002",
+   "name": "GHS,MANGADU",
+   "udise": "33030506002",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010902603",
+   "name": "GHS, ARIKKAMPEDU",
+   "udise": "33010902603",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011307203",
+   "name": "GOVT HS, VELIAGARAM",
+   "udise": "33011307203",
+   "district": "Tiruvallur",
+   "block": "Pallipat",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030602704",
+   "name": "GHS ILLALUR",
+   "udise": "33030602704",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030503304",
+   "name": "G(B)HSS, Padappai",
+   "udise": "33030503304",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010203002",
+   "name": "GOVT HIGH SCH, MAMBAKKAM",
+   "udise": "33010203002",
+   "district": "Tiruvallur",
+   "block": "Poondi",
+   "level": "high",
+   "management": "Sch Edu Dept",
+   "alt": [
+    "government high school GOVT HIGH SCH, MAMBAKKAM"
+   ]
+  },
+  {
+   "id": "udise:33011200902",
+   "name": "GHS, CHIVADA",
+   "udise": "33011200902",
+   "district": "Tiruvallur",
+   "block": "Thiruvalangadu",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031101703",
+   "name": "MCSM GOVERNMENT HIGHER SECONDARY SCHOOL PADALAM",
+   "udise": "33031101703",
+   "district": "Chengalpattu",
+   "block": "Madurantagam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011305003",
+   "name": "GHS, NALLAVANAMPET",
+   "udise": "33011305003",
+   "district": "Tiruvallur",
+   "block": "Pallipat",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010205503",
+   "name": "GHS , PLACEPALAYAM",
+   "udise": "33010205503",
+   "district": "Tiruvallur",
+   "block": "Poondi",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010903002",
+   "name": "ADW HIGH SCH, MITTAMALLEE",
+   "udise": "33010903002",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch",
+   "alt": [
+    "adi dravidar welfare government high school ADW HIGH SCH, MITTAMALLEE"
+   ]
+  },
+  {
+   "id": "udise:33010705604",
+   "name": "GOVT HSS (Boys) ,SHOLAVARAM",
+   "udise": "33010705604",
+   "district": "Tiruvallur",
+   "block": "Sholavaram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011303402",
+   "name": "GOVTHSS, SORAIKKAIPET",
+   "udise": "33011303402",
+   "district": "Tiruvallur",
+   "block": "Pallipat",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept",
+   "alt": [
+    "government higher secondary school GOVTHSS, SORAIKKAIPET"
+   ]
+  },
+  {
+   "id": "udise:33030501802",
+   "name": "GBHSS KOVUR",
+   "udise": "33030501802",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031107801",
+   "name": "GHSS KARUNKUZHI",
+   "udise": "33031107801",
+   "district": "Chengalpattu",
+   "block": "Madurantagam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031303909",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL- CHUNAMBEDU",
+   "udise": "33031303909",
+   "district": "Chengalpattu",
+   "block": "Chithamur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010105902",
+   "name": "KMN BROS MUNICIPAL HIGHER SEC ,SATHYAMURTHY STREET",
+   "udise": "33010105902",
+   "district": "Tiruvallur",
+   "block": "Thiruvallur",
+   "level": "higher secondary",
+   "management": "Municipal School",
+   "alt": [
+    "municipal higher secondary school KMN BROS MUNICIPAL HIGHER SEC ,SATHYAMURTHY STREET"
+   ]
+  },
+  {
+   "id": "udise:33010811303",
+   "name": "GOVT WEL HSS THERVOY",
+   "udise": "33010811303",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "higher secondary",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33030601903",
+   "name": "ADWHSS THAIYUR",
+   "udise": "33030601903",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "higher secondary",
+   "management": "Adi-Dravida Wel Sch",
+   "alt": [
+    "adi dravidar welfare government higher secondary school ADWHSS THAIYUR"
+   ]
+  },
+  {
+   "id": "udise:33010106102",
+   "name": "MUN. HR . SEC SCHOOL, TRL",
+   "udise": "33010106102",
+   "district": "Tiruvallur",
+   "block": "Thiruvallur",
+   "level": "higher secondary",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33010604302",
+   "name": "GHS, GOONANKUPPAM",
+   "udise": "33010604302",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031305302",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL, VENNANGUPATTU",
+   "udise": "33031305302",
+   "district": "Chengalpattu",
+   "block": "Chithamur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010605804",
+   "name": "GHS, KANIYAMBAKKAM",
+   "udise": "33010605804",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010105004",
+   "name": "GHS,VEPPAMPATTU",
+   "udise": "33010105004",
+   "district": "Tiruvallur",
+   "block": "Thiruvallur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030603303",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL SEMBAKKAM",
+   "udise": "33030603303",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031304906",
+   "name": "GOVERNMENT GIRLS HIGHER SECONDARY SCHOOL - KADAPAKKAM",
+   "udise": "33031304906",
+   "district": "Chengalpattu",
+   "block": "Chithamur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010507803",
+   "name": "AVADI MUNICIPAL HIGH SCHOOL PATTABIRAM RAILWAY SIDING",
+   "udise": "33010507803",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "high",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33011301702",
+   "name": "GHS, KESAVARAJAKUPPAM",
+   "udise": "33011301702",
+   "district": "Tiruvallur",
+   "block": "Pallipat",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010901502",
+   "name": "GOVT HSS, PAMMADUKULAM",
+   "udise": "33010901502",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010901602",
+   "name": "GOVT HSS, LAKSHMIPURAM",
+   "udise": "33010901602",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030500902",
+   "name": "GHSS IYYAPANTHANGAL",
+   "udise": "33030500902",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030501308",
+   "name": "GHSS KOLAPPAKKAM",
+   "udise": "33030501308",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011301402",
+   "name": "GOVT HS, KEECHALAM",
+   "udise": "33011301402",
+   "district": "Tiruvallur",
+   "block": "Pallipat",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030606503",
+   "name": "GHSS(G) THIRUPORUR",
+   "udise": "33030606503",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030501806",
+   "name": "G(G)HSS, Kovur",
+   "udise": "33030501806",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030501202",
+   "name": "GHS MUGALIVAKKAM",
+   "udise": "33030501202",
+   "district": "Chennai",
+   "block": "Alandur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010606002",
+   "name": "GHSS, MEDUR",
+   "udise": "33010606002",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011200303",
+   "name": "GHSS, ARUNGULAM",
+   "udise": "33011200303",
+   "district": "Tiruvallur",
+   "block": "Thiruvalangadu",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030500606",
+   "name": "GHS Malayambakkam",
+   "udise": "33030500606",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030501408",
+   "name": "GHS GERUGAMBAKKAM",
+   "udise": "33030501408",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011308203",
+   "name": "GOVT (G) HSS, PALLIPAT",
+   "udise": "33011308203",
+   "district": "Tiruvallur",
+   "block": "Pallipat",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010205702",
+   "name": "GOVT HR SEC SCHOOL PONDAVAKKAM",
+   "udise": "33010205702",
+   "district": "Tiruvallur",
+   "block": "Poondi",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010200102",
+   "name": "GHS,ALLIKUZHI",
+   "udise": "33010200102",
+   "district": "Tiruvallur",
+   "block": "Poondi",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010204703",
+   "name": "GOVT HIGH SCH, PATTRAI P.PUDUR",
+   "udise": "33010204703",
+   "district": "Tiruvallur",
+   "block": "Poondi",
+   "level": "high",
+   "management": "Sch Edu Dept",
+   "alt": [
+    "government high school GOVT HIGH SCH, PATTRAI P.PUDUR"
+   ]
+  },
+  {
+   "id": "udise:33011401502",
+   "name": "GHS,CHANNURMALLAVARAM",
+   "udise": "33011401502",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010500702",
+   "name": "GOVERNMENT HIGH SCHOOL GUDAPAKKAM",
+   "udise": "33010500702",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030502602",
+   "name": "GHSS, Somangalam",
+   "udise": "33030502602",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010600103",
+   "name": "GHS - PAKKAM",
+   "udise": "33010600103",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010502205",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL KUTHAMBAKKAM THEN COLONY",
+   "udise": "33010502205",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031300202",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL, SOTHUPAKKAM",
+   "udise": "33031300202",
+   "district": "Chengalpattu",
+   "block": "Chithamur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030501703",
+   "name": "ADWHS THANDALAM",
+   "udise": "33030501703",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch",
+   "alt": [
+    "adi dravidar welfare government high school ADWHS THANDALAM"
+   ]
+  },
+  {
+   "id": "udise:33011103102",
+   "name": "GHS - MURUKKAMPATTU",
+   "udise": "33011103102",
+   "district": "Tiruvallur",
+   "block": "Tiruttani",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010106302",
+   "name": "GOVT(G)HR.SEC.SCHOOL,TRL",
+   "udise": "33010106302",
+   "district": "Tiruvallur",
+   "block": "Thiruvallur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010500405",
+   "name": "GOVERNMENT HIGH SCHOOL SEMBARAMBAKKAM",
+   "udise": "33010500405",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011105902",
+   "name": "GHS - ISLAM NAGAR",
+   "udise": "33011105902",
+   "district": "Tiruvallur",
+   "block": "Tiruttani",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010605302",
+   "name": "GOVERNMENT HIGH SCHOOL , JAMELAPATH",
+   "udise": "33010605302",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010902903",
+   "name": "GHSS, MITTAMALLEE",
+   "udise": "33010902903",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030506202",
+   "name": "GHS PATTUR MUSLIM",
+   "udise": "33030506202",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030501002",
+   "name": "GOVT.ADW.HSS.,MOULIVAKKAM",
+   "udise": "33030501002",
+   "district": "Chennai",
+   "block": "Alandur",
+   "level": "higher secondary",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33010910105",
+   "name": "GOVT (B) HIGH, MUGAPAIR EAST",
+   "udise": "33010910105",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "high",
+   "management": "Sch Edu Dept",
+   "alt": [
+    "government high school GOVT (B) HIGH, MUGAPAIR EAST"
+   ]
+  },
+  {
+   "id": "udise:33010911604",
+   "name": "GOVT HS VANAGARAM",
+   "udise": "33010911604",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010302102",
+   "name": "GOVT.HR.SEC.SCHOOL KOPPUR",
+   "udise": "33010302102",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010203702",
+   "name": "GHS,SATHURANGAPET",
+   "udise": "33010203702",
+   "district": "Tiruvallur",
+   "block": "Poondi",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031302504",
+   "name": "GOVERNMENT HR SEC SCHOOL, KAYAPAKKAM",
+   "udise": "33031302504",
+   "district": "Chengalpattu",
+   "block": "Chithamur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010608103",
+   "name": "GHSS,PULICAT",
+   "udise": "33010608103",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011102605",
+   "name": "GHSS -MADDUR",
+   "udise": "33011102605",
+   "district": "Tiruvallur",
+   "block": "Tiruttani",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011100702",
+   "name": "GHSS-BUCHIREDDIPALLI",
+   "udise": "33011100702",
+   "district": "Tiruvallur",
+   "block": "Tiruttani",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010503406",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL SENNEERKUPPAM",
+   "udise": "33010503406",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010201503",
+   "name": "GOVT HIGH SCH, GOONIPALAYAM",
+   "udise": "33010201503",
+   "district": "Tiruvallur",
+   "block": "Poondi",
+   "level": "high",
+   "management": "Sch Edu Dept",
+   "alt": [
+    "government high school GOVT HIGH SCH, GOONIPALAYAM"
+   ]
+  },
+  {
+   "id": "udise:33010911906",
+   "name": "AVADI MUNICIPAL HIGHER SECONDARY SCHOOL,THIRUMULLAVOYAL",
+   "udise": "33010911906",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "higher secondary",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33010306503",
+   "name": "GHSS VIDAIYUR",
+   "udise": "33010306503",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011104402",
+   "name": "GHS, V C R KANDIGAI",
+   "udise": "33011104402",
+   "district": "Tiruvallur",
+   "block": "Tiruttani",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010908905",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL, MUGAPAIR WEST - MODEL",
+   "udise": "33010908905",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011105402",
+   "name": "GHS, VELANCHERI",
+   "udise": "33011105402",
+   "district": "Tiruvallur",
+   "block": "Tiruttani",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011404903",
+   "name": "GOVT HS,PERIYANAGAPOONDI",
+   "udise": "33011404903",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010208002",
+   "name": "GHS , BANGARAMPET",
+   "udise": "33010208002",
+   "district": "Tiruvallur",
+   "block": "Poondi",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010910502",
+   "name": "GHS, KOLADI",
+   "udise": "33010910502",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030501903",
+   "name": "GHSS THIRUMUDIVAKKAM",
+   "udise": "33030501903",
+   "district": "Kancheepuram",
+   "block": "Kundrathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031304504",
+   "name": "GOVERNMENT HIGH SCHOOL - MUDHALIYARKUPPAM",
+   "udise": "33031304504",
+   "district": "Chengalpattu",
+   "block": "Chithamur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010602302",
+   "name": "GOVT HS,MANALI NEW TOWN PHASE 1",
+   "udise": "33010602302",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010910106",
+   "name": "GOVT (G) HSS, MUGAPAIR EAST",
+   "udise": "33010910106",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010602303",
+   "name": "GOVT HSS,MANALI NEW TOWN",
+   "udise": "33010602303",
+   "district": "Chennai",
+   "block": "Thiruvotriyur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010504302",
+   "name": "ADI DRIVIDA WELFARE HIGH SCHOOL MELMANAGAR",
+   "udise": "33010504302",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "high",
+   "management": "Adi-Dravida Wel Sch"
+  },
+  {
+   "id": "udise:33010302003",
+   "name": "GOVT HIGH SCHOOL KOOVAM",
+   "udise": "33010302003",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010207606",
+   "name": "GHS,THIRUPACHUR",
+   "udise": "33010207606",
+   "district": "Tiruvallur",
+   "block": "Poondi",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030705011",
+   "name": "GGHSS, NANDHIVARAM",
+   "udise": "33030705011",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010906505",
+   "name": "MHS,AGRAHARAM",
+   "udise": "33010906505",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "high",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33010906410",
+   "name": "MUNICIPAL HIGH SCHOOL, KALLIKUPPAM",
+   "udise": "33010906410",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "high",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33010900602",
+   "name": "GHS , KARLAPAKKAM",
+   "udise": "33010900602",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010907202",
+   "name": "GOVT (G) HSS AMBATTUR",
+   "udise": "33010907202",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010305802",
+   "name": "GHS THIRUPANTHIYUR",
+   "udise": "33010305802",
+   "district": "Tiruvallur",
+   "block": "Kadambathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031200109",
+   "name": "GBHSS CHEYYUR",
+   "udise": "33031200109",
+   "district": "Chengalpattu",
+   "block": "Lathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010205102",
+   "name": "GOVT HR SEC SCH, PENNALURPET",
+   "udise": "33010205102",
+   "district": "Tiruvallur",
+   "block": "Poondi",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011405303",
+   "name": "GOVT (G) HSS, R.K.PET",
+   "udise": "33011405303",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010900807",
+   "name": "GHS, VEERAPURAM",
+   "udise": "33010900807",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010607803",
+   "name": "GH GOVT HSS,PERUMBEDU",
+   "udise": "33010607803",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011407302",
+   "name": "GOVT HSS,VEDIYANGADU",
+   "udise": "33011407302",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030605308",
+   "name": "GGHS, Manampathy",
+   "udise": "33030605308",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011400903",
+   "name": "GOVT HS, AYYANERI",
+   "udise": "33011400903",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010605603",
+   "name": "GHSS, KATTUR",
+   "udise": "33010605603",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030604203",
+   "name": "GHS ORAGADAM",
+   "udise": "33030604203",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010610902",
+   "name": "GOVT HSS, THIRUVELLAVOYAL",
+   "udise": "33010610902",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010902002",
+   "name": "GHSS,PANDESWARAM",
+   "udise": "33010902002",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010900410",
+   "name": "GOVT GIRLS HIGHER SECONDARY SCHOOL, AYAPPAKKAM",
+   "udise": "33010900410",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010104002",
+   "name": "GOVT. MODEL SCHOOL, TIRUR",
+   "udise": "33010104002",
+   "district": "Tiruvallur",
+   "block": "Thiruvallur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010613403",
+   "name": "GOVT (B) HSS, PONNERI",
+   "udise": "33010613403",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011400305",
+   "name": "TMKV GOVT BOYS HIGHER SECONDARY SCHOOL, ,AMMAYARKUPPAM",
+   "udise": "33011400305",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030605303",
+   "name": "GHSS MANAMPATHI",
+   "udise": "33030605303",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010907409",
+   "name": "AMBT MUN.HIGH.SCH CHOLOPURAM",
+   "udise": "33010907409",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "high",
+   "management": "Municipal School",
+   "alt": [
+    "municipal high school AMBT MUN.HIGH.SCH CHOLOPURAM"
+   ]
+  },
+  {
+   "id": "udise:33010901104",
+   "name": "GHS METTUKUPPAM (N)",
+   "udise": "33010901104",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010911203",
+   "name": "GOVT HSS,MADHURAVOYAL",
+   "udise": "33010911203",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011205603",
+   "name": "GHSS, POONIMANGADU",
+   "udise": "33011205603",
+   "district": "Tiruvallur",
+   "block": "Thiruvalangadu",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030701602",
+   "name": "GHS, RATHINAMANGALAM",
+   "udise": "33030701602",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011400602",
+   "name": "GHS, KONDAPURAM",
+   "udise": "33011400602",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010806503",
+   "name": "GHSS NEW GUMMIDIPOONDI",
+   "udise": "33010806503",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010604702",
+   "name": "GHS, KOLUR",
+   "udise": "33010604702",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030700502",
+   "name": "GHS, KOLAPAKKAM",
+   "udise": "33030700502",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030700203",
+   "name": "ADWHSS, KILAMBAKKAM",
+   "udise": "33030700203",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "higher secondary",
+   "management": "Adi-Dravida Wel Sch",
+   "alt": [
+    "adi dravidar welfare government higher secondary school ADWHSS, KILAMBAKKAM"
+   ]
+  },
+  {
+   "id": "udise:33030705008",
+   "name": "GBHSS, NANDHIVARAM",
+   "udise": "33030705008",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011106304",
+   "name": "GHS - AMIRTHAPURAM",
+   "udise": "33011106304",
+   "district": "Tiruvallur",
+   "block": "Tiruttani",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030705504",
+   "name": "GHSS, Otteri Extension",
+   "udise": "33030705504",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010810002",
+   "name": "GHS S R KANDIGAI",
+   "udise": "33010810002",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010506401",
+   "name": "GOVERNMENT GIRLS HIGHER SECONDARY SCHOOL KAMARAJ NAGAR",
+   "udise": "33010506401",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010800403",
+   "name": "GHS ATHUPAKKAM",
+   "udise": "33010800403",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33031200804",
+   "name": "GHSS, THIRUVATHUR",
+   "udise": "33031200804",
+   "district": "Chengalpattu",
+   "block": "Lathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011101602",
+   "name": "GHSS - K.G.KANDIGAI",
+   "udise": "33011101602",
+   "district": "Tiruvallur",
+   "block": "Tiruttani",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010800503",
+   "name": "GOVT HSS ARAMBAKKAM",
+   "udise": "33010800503",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010507003",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL THANDURAI",
+   "udise": "33010507003",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010504904",
+   "name": "GOVERNMENT GIRLS HIGHER SECONDARY SCHOOL POONAMALLEE",
+   "udise": "33010504904",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011405304",
+   "name": "GOVT (B) HSS, R.K.PET",
+   "udise": "33011405304",
+   "district": "Tiruvallur",
+   "block": "R.K.Pet",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010812103",
+   "name": "KLK GBHSS GUMMIDIPOONDI",
+   "udise": "33010812103",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010508401",
+   "name": "GOVERNMENT HIGHER SECONDARY SCHOOL THIRUNINRAVUR",
+   "udise": "33010508401",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010812102",
+   "name": "GGHSS GUMMIDIPOONDI",
+   "udise": "33010812102",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011107801",
+   "name": "GOVT(G) HSS-TIRUTTANI",
+   "udise": "33011107801",
+   "district": "Tiruvallur",
+   "block": "Tiruttani",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010609302",
+   "name": "GHS, SUBBA REDDY PALAYAM",
+   "udise": "33010609302",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33011107501",
+   "name": "GOVT(B) HSS-TIRUTTANI",
+   "udise": "33011107501",
+   "district": "Tiruvallur",
+   "block": "Tiruttani",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010701002",
+   "name": "GOVT.HS ,ANDARKUPPAM",
+   "udise": "33010701002",
+   "district": "Tiruvallur",
+   "block": "Sholavaram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030705203",
+   "name": "Arignar Anna Municipal Boys Higher Secondary School Chengalpattu",
+   "udise": "33030705203",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "higher secondary",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33010613404",
+   "name": "GOVT (G) HSS, PONNERI",
+   "udise": "33010613404",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010702302",
+   "name": "GHS, JAGANATHAPURAM",
+   "udise": "33010702302",
+   "district": "Tiruvallur",
+   "block": "Sholavaram",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010910603",
+   "name": "GOVT HR.SEC.SCH,AYANAMBAKKAM",
+   "udise": "33010910603",
+   "district": "Tiruvallur",
+   "block": "Villivakkam",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010505902",
+   "name": "AVADI MUNICIPAL HIGH SCHOOL KONAMBEDU",
+   "udise": "33010505902",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "high",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33030705226",
+   "name": "GOVERNMENT GIRLS HIGHER SECONDARY SCHOOL, CHENGALPATTU",
+   "udise": "33030705226",
+   "district": "Chengalpattu",
+   "block": "Kattankolathur",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010908102",
+   "name": "MUN.HSS KORATTUR",
+   "udise": "33010908102",
+   "district": "Chennai",
+   "block": "Ambattur",
+   "level": "higher secondary",
+   "management": "Municipal School"
+  },
+  {
+   "id": "udise:33010504902",
+   "name": "ARIGNAR ANNA GOVERNMENT HIGHER SECONDARY SCHOOL POONAMALLEE",
+   "udise": "33010504902",
+   "district": "Tiruvallur",
+   "block": "Poonamallee",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010804002",
+   "name": "GHSS KAVARAIPETTAI",
+   "udise": "33010804002",
+   "district": "Tiruvallur",
+   "block": "Gummidipoondi",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010604403",
+   "name": "GHS, KATTUPALLI",
+   "udise": "33010604403",
+   "district": "Tiruvallur",
+   "block": "Minjur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33010705603",
+   "name": "GOVT HSS(G),SHOLAVARAM",
+   "udise": "33010705603",
+   "district": "Tiruvallur",
+   "block": "Sholavaram",
+   "level": "higher secondary",
+   "management": "Sch Edu Dept"
+  },
+  {
+   "id": "udise:33030605802",
+   "name": "GHS, Siruthavoor",
+   "udise": "33030605802",
+   "district": "Chengalpattu",
+   "block": "Thiruporur",
+   "level": "high",
+   "management": "Sch Edu Dept"
+  }
+ ]
+}

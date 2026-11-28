@@ -1,0 +1,442 @@
+{
+ "source": {
+  "id": "tnfrs",
+  "name": "Tamil Nadu Fire and Rescue Services: Fire and Rescue Stations, Northern Region (Chennai South, North and Central districts)",
+  "url": "https://www.tnfrs.tn.gov.in/subsubmenu_page_content.php?menu_id=NDM2&submenu_id=ODk5&thirdlvl_id=NDEx&dept_id=443&lang=MQ==",
+  "checked": "2026-11-28",
+  "note": "Station names only; the page gives no map points, so a station OpenStreetMap does not hold is counted, never drawn.",
+  "checked_note": "read at 2026-11-28 04:43 IST"
+ },
+ "entries": [
+  {
+   "id": "tnfrs:south-1",
+   "name": "Guindy Fire Station",
+   "place": "Guindy",
+   "district": "Chennai South District",
+   "alt": [
+    "Guindy Fire and Rescue Station",
+    "Guindy FS"
+   ]
+  },
+  {
+   "id": "tnfrs:south-2",
+   "name": "Ashok Nagar Fire Station",
+   "place": "Ashok Nagar",
+   "district": "Chennai South District",
+   "alt": [
+    "Ashok Nagar Fire and Rescue Station",
+    "Ashok Nagar FS"
+   ]
+  },
+  {
+   "id": "tnfrs:south-3",
+   "name": "Saidapet Fire Station",
+   "place": "Saidapet",
+   "district": "Chennai South District",
+   "alt": [
+    "Saidapet Fire and Rescue Station",
+    "Saidapet FS"
+   ]
+  },
+  {
+   "id": "tnfrs:south-4",
+   "name": "Teynampet Fire Station",
+   "place": "Teynampet",
+   "district": "Chennai South District",
+   "alt": [
+    "Teynampet Fire and Rescue Station",
+    "Teynampet FS"
+   ]
+  },
+  {
+   "id": "tnfrs:south-5",
+   "name": "Thiruvanmiyur Fire Station",
+   "place": "Thiruvanmiyur",
+   "district": "Chennai South District",
+   "alt": [
+    "Thiruvanmiyur Fire and Rescue Station",
+    "Thiruvanmiyur FS"
+   ]
+  },
+  {
+   "id": "tnfrs:south-6",
+   "name": "Velachery Fire Station",
+   "place": "Velachery",
+   "district": "Chennai South District",
+   "alt": [
+    "Velachery Fire and Rescue Station",
+    "Velachery FS"
+   ]
+  },
+  {
+   "id": "tnfrs:south-7",
+   "name": "Thuraipakkam Fire Station",
+   "place": "Thuraipakkam",
+   "district": "Chennai South District",
+   "alt": [
+    "Thuraipakkam Fire and Rescue Station",
+    "Thuraipakkam FS"
+   ]
+  },
+  {
+   "id": "tnfrs:south-8",
+   "name": "Rajbhavan Fire Station",
+   "place": "Rajbhavan",
+   "district": "Chennai South District",
+   "alt": [
+    "Rajbhavan Fire and Rescue Station",
+    "Rajbhavan FS"
+   ]
+  },
+  {
+   "id": "tnfrs:south-9",
+   "name": "Mylapore Fire Station",
+   "place": "Mylapore",
+   "district": "Chennai South District",
+   "alt": [
+    "Mylapore Fire and Rescue Station",
+    "Mylapore FS"
+   ]
+  },
+  {
+   "id": "tnfrs:south-10",
+   "name": "T.Nagar Fire Station",
+   "place": "T.Nagar",
+   "district": "Chennai South District",
+   "alt": [
+    "T.Nagar Fire and Rescue Station",
+    "T.Nagar FS"
+   ]
+  },
+  {
+   "id": "tnfrs:south-11",
+   "name": "Tambaram Fire Station",
+   "place": "Tambaram",
+   "district": "Chennai South District",
+   "alt": [
+    "Tambaram Fire and Rescue Station",
+    "Tambaram FS"
+   ]
+  },
+  {
+   "id": "tnfrs:south-12",
+   "name": "Tambaram STC Fire Station",
+   "place": "Tambaram STC",
+   "district": "Chennai South District",
+   "alt": [
+    "Tambaram STC Fire and Rescue Station",
+    "Tambaram STC FS"
+   ]
+  },
+  {
+   "id": "tnfrs:south-13",
+   "name": "Medavakkam Fire Station",
+   "place": "Medavakkam",
+   "district": "Chennai South District",
+   "alt": [
+    "Medavakkam Fire and Rescue Station",
+    "Medavakkam FS"
+   ]
+  },
+  {
+   "id": "tnfrs:north-1",
+   "name": "Esplanade Fire Station",
+   "place": "Esplanade",
+   "district": "Chennai North District",
+   "alt": [
+    "Esplanade Fire and Rescue Station",
+    "Esplanade FS"
+   ]
+  },
+  {
+   "id": "tnfrs:north-2",
+   "name": "Washermempet Fire Station",
+   "place": "Washermempet",
+   "district": "Chennai North District",
+   "alt": [
+    "Washermempet Fire and Rescue Station",
+    "Washermempet FS"
+   ]
+  },
+  {
+   "id": "tnfrs:north-3",
+   "name": "Royapuram Fire Station",
+   "place": "Royapuram",
+   "district": "Chennai North District",
+   "alt": [
+    "Royapuram Fire and Rescue Station",
+    "Royapuram FS"
+   ]
+  },
+  {
+   "id": "tnfrs:north-4",
+   "name": "Tondiarpet Fire Station",
+   "place": "Tondiarpet",
+   "district": "Chennai North District",
+   "alt": [
+    "Tondiarpet Fire and Rescue Station",
+    "Tondiarpet FS"
+   ]
+  },
+  {
+   "id": "tnfrs:north-5",
+   "name": "Korukkupet Fire Station",
+   "place": "Korukkupet",
+   "district": "Chennai North District",
+   "alt": [
+    "Korukkupet Fire and Rescue Station",
+    "Korukkupet FS"
+   ]
+  },
+  {
+   "id": "tnfrs:north-6",
+   "name": "Sembium Fire Station",
+   "place": "Sembium",
+   "district": "Chennai North District",
+   "alt": [
+    "Sembium Fire and Rescue Station",
+    "Sembium FS"
+   ]
+  },
+  {
+   "id": "tnfrs:north-7",
+   "name": "Vyasarpadi Fire Station",
+   "place": "Vyasarpadi",
+   "district": "Chennai North District",
+   "alt": [
+    "Vyasarpadi Fire and Rescue Station",
+    "Vyasarpadi FS"
+   ]
+  },
+  {
+   "id": "tnfrs:north-8",
+   "name": "Sectariate Fire Station",
+   "place": "Sectariate",
+   "district": "Chennai North District",
+   "alt": [
+    "Sectariate Fire and Rescue Station",
+    "Sectariate FS"
+   ]
+  },
+  {
+   "id": "tnfrs:north-9",
+   "name": "Voc Nagar Fire Station",
+   "place": "Voc Nagar",
+   "district": "Chennai North District",
+   "alt": [
+    "Voc Nagar Fire and Rescue Station",
+    "Voc Nagar FS"
+   ]
+  },
+  {
+   "id": "tnfrs:north-10",
+   "name": "Kolathur Fire Station",
+   "place": "Kolathur",
+   "district": "Chennai North District",
+   "alt": [
+    "Kolathur Fire and Rescue Station",
+    "Kolathur FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-1",
+   "name": "JJ Nagar Fire Station",
+   "place": "JJ Nagar",
+   "district": "Chennai Central District",
+   "alt": [
+    "JJ Nagar Fire and Rescue Station",
+    "JJ Nagar FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-2",
+   "name": "Egmore Fire Station",
+   "place": "Egmore",
+   "district": "Chennai Central District",
+   "alt": [
+    "Egmore Fire and Rescue Station",
+    "Egmore FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-3",
+   "name": "Villivakkam Fire Station",
+   "place": "Villivakkam",
+   "district": "Chennai Central District",
+   "alt": [
+    "Villivakkam Fire and Rescue Station",
+    "Villivakkam FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-4",
+   "name": "Maduravoyal Fire Station",
+   "place": "Maduravoyal",
+   "district": "Chennai Central District",
+   "alt": [
+    "Maduravoyal Fire and Rescue Station",
+    "Maduravoyal FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-5",
+   "name": "Virugambakkam Fire Station",
+   "place": "Virugambakkam",
+   "district": "Chennai Central District",
+   "alt": [
+    "Virugambakkam Fire and Rescue Station",
+    "Virugambakkam FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-6",
+   "name": "Koyambedu Fire Station",
+   "place": "Koyambedu",
+   "district": "Chennai Central District",
+   "alt": [
+    "Koyambedu Fire and Rescue Station",
+    "Koyambedu FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-7",
+   "name": "Kilpauk Fire Station",
+   "place": "Kilpauk",
+   "district": "Chennai Central District",
+   "alt": [
+    "Kilpauk Fire and Rescue Station",
+    "Kilpauk FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-8",
+   "name": "Triplicane Fire Station",
+   "place": "Triplicane",
+   "district": "Chennai Central District",
+   "alt": [
+    "Triplicane Fire and Rescue Station",
+    "Triplicane FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-9",
+   "name": "Vepery Fire Station",
+   "place": "Vepery",
+   "district": "Chennai Central District",
+   "alt": [
+    "Vepery Fire and Rescue Station",
+    "Vepery FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-10",
+   "name": "Anna Nagar Fire Station",
+   "place": "Anna Nagar",
+   "district": "Chennai Central District",
+   "alt": [
+    "Anna Nagar Fire and Rescue Station",
+    "Anna Nagar FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-1",
+   "name": "Ambattur Fire Station",
+   "place": "Ambattur",
+   "district": "Chennai Central District",
+   "alt": [
+    "Ambattur Fire and Rescue Station",
+    "Ambattur FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-2",
+   "name": "Manali Fire Station",
+   "place": "Manali",
+   "district": "Chennai Central District",
+   "alt": [
+    "Manali Fire and Rescue Station",
+    "Manali FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-3",
+   "name": "Ennore Fire Station",
+   "place": "Ennore",
+   "district": "Chennai Central District",
+   "alt": [
+    "Ennore Fire and Rescue Station",
+    "Ennore FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-4",
+   "name": "Athipattu - I Fire Station",
+   "place": "Athipattu - I",
+   "district": "Chennai Central District",
+   "alt": [
+    "Athipattu - I Fire and Rescue Station",
+    "Athipattu - I FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-5",
+   "name": "Thiruvottiyur Fire Station",
+   "place": "Thiruvottiyur",
+   "district": "Chennai Central District",
+   "alt": [
+    "Thiruvottiyur Fire and Rescue Station",
+    "Thiruvottiyur FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-6",
+   "name": "Avadi Fire Station",
+   "place": "Avadi",
+   "district": "Chennai Central District",
+   "alt": [
+    "Avadi Fire and Rescue Station",
+    "Avadi FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-7",
+   "name": "Poonamalli Fire Station",
+   "place": "Poonamalli",
+   "district": "Chennai Central District",
+   "alt": [
+    "Poonamalli Fire and Rescue Station",
+    "Poonamalli FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-8",
+   "name": "Redhills Fire Station",
+   "place": "Redhills",
+   "district": "Chennai Central District",
+   "alt": [
+    "Redhills Fire and Rescue Station",
+    "Redhills FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-9",
+   "name": "Madhavaram Fire Station",
+   "place": "Madhavaram",
+   "district": "Chennai Central District",
+   "alt": [
+    "Madhavaram Fire and Rescue Station",
+    "Madhavaram FS"
+   ]
+  },
+  {
+   "id": "tnfrs:central-10",
+   "name": "Athipattu - II Fire Station",
+   "place": "Athipattu - II",
+   "district": "Chennai Central District",
+   "alt": [
+    "Athipattu - II Fire and Rescue Station",
+    "Athipattu - II FS"
+   ]
+  }
+ ]
+}

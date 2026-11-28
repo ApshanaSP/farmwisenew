@@ -88,6 +88,8 @@ function add(c: C) {
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"], now: new Date(NOW_UTC) });
   h.db = fresh(); h.prompts = []; h.lane = 0;
+  // aibrief remembers a write-up no model gave for a few minutes (keyed by its facts): each test starts without that memory
+  (globalThis as { __aibrief?: { miss?: Map<string, number> } }).__aibrief?.miss?.clear();
   bumpDataEpoch();
   add({ id: "A", sev: "Severe", complaints: 2, dead: 1 });                          // today, open
   add({ id: "B", zone: 13, sev: "High", due: 1 });                                  // today, open, past its deadline

@@ -13,8 +13,8 @@
 .dic .bb2-row>.bb-card{min-height:0}
 .dic .bb2-row .bb-h{padding:9px 14px 7px}
 /* 26 Nov, evening: the page scrolls, so the three cards under the glance are full size (they had the 126 px left under it and cut rows in half).
-   On a tall screen they simply fill what is left; the edge room keeps the cards' shadows from being clipped by the scrolling box */
-.dic.fit .bb.bb2{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;margin:-4px -10px -4px -4px;padding:4px 6px 4px 4px}
+   On a tall screen they simply fill what is left. 28 Nov: every page scrolls this way, so it is the console's page area (#view, dock.css)
+   that scrolls, with the edge room for the cards' shadows; the Briefing itself grows with its content */
 .dic.fit .bb2-row{flex:1 0 440px}
 /* each card's head: the title and its count, what it lists on a line of its own under them (it was cut off beside them), See all at the right */
 .dic .bb2-row .bb-h{display:grid;grid-template-columns:30px auto minmax(0,1fr) auto;align-items:center;column-gap:10px;row-gap:1px;padding:12px 16px 10px}

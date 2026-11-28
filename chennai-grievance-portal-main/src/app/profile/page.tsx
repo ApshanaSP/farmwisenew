@@ -9,6 +9,7 @@ import { EASE_OUT } from "@/components/ui/motion";
 import { CITIZEN_NAV } from "@/lib/constants";
 import Footer from "@/components/Footer";
 import PasswordStrengthMeter from "@/components/PasswordStrengthMeter";
+import PasswordInput from "@/components/auth/PasswordInput";
 import { typedDigits } from "@/lib/typed-digits";
 
 interface Zone {
@@ -277,7 +278,8 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoError(null);
-    setPhotoPreview(URL.createObjectURL(file));
+    const preview = URL.createObjectURL(file);
+    setPhotoPreview(preview);
     setPhotoUploading(true);
     try {
       const formData = new FormData();
@@ -294,6 +296,10 @@ export default function ProfilePage() {
     } finally {
       setPhotoUploading(false);
       setPhotoPreview(null);
+      // the preview's memory is freed once the uploaded photo (or the old one) shows again
+      URL.revokeObjectURL(preview);
+      // the same file can be chosen again after a failed upload (the input kept its value, so a second pick fired no change)
+      e.target.value = "";
     }
   }
 
@@ -303,9 +309,12 @@ export default function ProfilePage() {
     return (
       <div className="flex min-h-screen flex-col diq-bg">
         <Header userName={user?.email} />
-        <main className="mx-auto grid grid-cols-[minmax(0,1fr)] w-full max-w-[1100px] flex-1 gap-6 px-4 py-10 sm:px-6 lg:grid-cols-[300px_minmax(0,1fr)]">
-          <div className="card flex flex-col items-center gap-3"><Skeleton w={96} h={96} r={48} /><Skeleton h={16} w={140} /><Skeleton h={12} w={100} /></div>
-          <div className="card space-y-4"><Skeleton h={30} w="70%" /><Skeleton h={14} /><Skeleton h={14} w="80%" /><Skeleton h={14} w="60%" /></div>
+        <main className="cz-body" aria-busy="true">
+          <div className="cz-band slim"><p className="cz-band-eb">Your account</p><h1>My profile</h1></div>
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
+            <div className="cz-card flex flex-col items-center gap-3 p-6"><Skeleton w={96} h={96} r={48} /><Skeleton h={16} w={140} /><Skeleton h={12} w={100} /></div>
+            <div className="cz-card space-y-4 p-6"><Skeleton h={30} w="70%" /><Skeleton h={14} /><Skeleton h={14} w="80%" /><Skeleton h={14} w="60%" /></div>
+          </div>
         </main>
         <Footer />
       </div>
@@ -316,9 +325,10 @@ export default function ProfilePage() {
     return (
       <div className="flex min-h-screen flex-col diq-bg">
         <Header userName={user?.email} />
-        <main className="mx-auto w-full max-w-[600px] flex-1 px-4 py-16 sm:px-6">
-          <div role="alert" className="alert-error mb-4"><AlertCircle className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" /><span>{loadError}</span></div>
-          <button type="button" className="btn-primary" onClick={() => loadProfile()}>Try again</button>
+        <main className="cz-body">
+          <div className="cz-band slim"><p className="cz-band-eb">Your account</p><h1>My profile</h1></div>
+          <div role="alert" className="alert-error"><AlertCircle className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" /><span>{loadError}</span></div>
+          <div><button type="button" className="btn-primary" onClick={() => loadProfile()}>Try again</button></div>
         </main>
         <Footer />
       </div>
@@ -344,14 +354,23 @@ export default function ProfilePage() {
   return (
     <MotionConfig reducedMotion="user">
     <div className="flex min-h-screen flex-col diq-bg">
-      <Header userName={user?.email || undefined} homeHref={user?.role === "citizen" ? "/citizen" : "/"} nav={user?.role === "citizen" ? CITIZEN_NAV : []} />
-      <main className="mx-auto w-full max-w-[1100px] flex-1 px-4 py-8 sm:px-6 sm:py-10">
-        <h1 className="mb-6 text-[28px] font-semibold tracking-[-0.03em] text-ink">My profile</h1>
+      {/* the name the citizen gave, as on the home page (the email only when there is none) */}
+      <Header userName={profile?.firstName || user?.email || undefined} homeHref={user?.role === "citizen" ? "/citizen" : "/"} nav={user?.role === "citizen" ? CITIZEN_NAV : []} />
+      <main className="cz-body">
+        {/* the green band, as on every console page: what this page is, and whose account */}
+        <section className="cz-band slim">
+          <div className="cz-band-row">
+            <div className="cz-band-t">
+              <p className="cz-band-eb"><span>Your account</span><i aria-hidden="true">·</i><span>{roleLabel}{user?.departmentName ? ` · ${user.departmentName}` : ""}</span></p>
+              <h1>My profile</h1>
+            </div>
+          </div>
+        </section>
 
-        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
           {/* ---- profile card ---- */}
           <motion.aside initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: EASE_OUT }}
-            className="card flex flex-col items-center p-6 text-center lg:sticky lg:top-[84px]">
+            className="cz-card flex flex-col items-center p-6 text-center lg:sticky lg:top-[76px]">
             <label className="group relative cursor-pointer rounded-full focus-within:ring-4 focus-within:ring-navy-600/25" title="Change photo">
               <span className="relative block h-28 w-28">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -387,7 +406,7 @@ export default function ProfilePage() {
           </motion.aside>
 
           {/* ---- tabbed sections ---- */}
-          <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.06, ease: EASE_OUT }} className="card min-w-0 p-0">
+          <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.06, ease: EASE_OUT }} className="cz-card min-w-0 p-0">
             <div className="overflow-x-auto px-4 pt-2">
               <Tabs label="Profile sections" items={TABS} value={tab} onChange={setTab} />
             </div>
@@ -495,7 +514,7 @@ export default function ProfilePage() {
                                 <Lock className="mr-1 inline h-3 w-3" aria-hidden="true" />Aadhaar number {profile?.aadhaarMasked && `(current: ${profile.aadhaarMasked})`}
                               </label>
                               {/* typed digits are hidden like a password: the full number is never shown */}
-                              <input id="aadhaar" type="password" autoComplete="off" maxLength={12} placeholder="12-digit Aadhaar (leave blank to keep unchanged)"
+                              <PasswordInput id="aadhaar" noun="Aadhaar number" autoComplete="off" inputMode="numeric" maxLength={12} placeholder="12-digit Aadhaar (leave blank to keep unchanged)"
                                 className="form-input font-mono" value={form.aadhaarNumber} onChange={(e) => setForm({ ...form, aadhaarNumber: typedDigits(e.target.value) })} />
                               <p className="form-hint">Stored encrypted. Only the last four digits are ever shown.</p>
                             </div>
@@ -555,16 +574,16 @@ export default function ProfilePage() {
                       <form onSubmit={handleChangePassword} noValidate className="max-w-md">
                         <div className="mb-4">
                           <label className="form-label" htmlFor="currentPassword">Current password</label>
-                          <input id="currentPassword" type="password" required className="form-input" value={pwForm.currentPassword} onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })} />
+                          <PasswordInput id="currentPassword" required autoComplete="current-password" className="form-input" value={pwForm.currentPassword} onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })} />
                         </div>
                         <div className="mb-4">
                           <label className="form-label" htmlFor="newPassword2">New password</label>
-                          <input id="newPassword2" type="password" required className="form-input" value={pwForm.newPassword} onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })} />
+                          <PasswordInput id="newPassword2" required autoComplete="new-password" className="form-input" value={pwForm.newPassword} onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })} />
                           <PasswordStrengthMeter password={pwForm.newPassword} />
                         </div>
                         <div className="mb-6">
                           <label className="form-label" htmlFor="confirmNewPassword">Confirm new password</label>
-                          <input id="confirmNewPassword" type="password" required className="form-input" value={pwForm.confirmPassword} onChange={(e) => setPwForm({ ...pwForm, confirmPassword: e.target.value })} />
+                          <PasswordInput id="confirmNewPassword" required autoComplete="new-password" className="form-input" value={pwForm.confirmPassword} onChange={(e) => setPwForm({ ...pwForm, confirmPassword: e.target.value })} />
                         </div>
                         <button type="submit" disabled={pwSubmitting} className="btn-primary">{pwSubmitting ? "Updating..." : "Change password"}</button>
                       </form>

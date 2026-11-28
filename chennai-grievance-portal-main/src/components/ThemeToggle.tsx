@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Moon, Sun } from "lucide-react";
+import "@/components/citizen/citizen.css";
 
 /** The page theme lives on <html data-theme>; the choice is shared with the Collector and Officer consoles ("diq-theme"). */
 export function readTheme(): "dark" | "light" {
@@ -31,7 +32,7 @@ export default function ThemeToggle({ className = "" }: { className?: string }) 
 
   const label = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
   return (
-    <button type="button" onClick={toggle} title={label} aria-label={label} className={`diq-tbtn w-9 overflow-hidden px-0 ${className}`}>
+    <button type="button" onClick={toggle} title={label} aria-label={label} className={`cz-tbtn icon ${className}`.trim()}>
       <AnimatePresence mode="popLayout" initial={false}>
         <motion.span key={theme} className="grid place-items-center" initial={{ rotate: -90, scale: 0.4, opacity: 0 }} animate={{ rotate: 0, scale: 1, opacity: 1 }}
           exit={{ rotate: 90, scale: 0.4, opacity: 0 }} transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}>

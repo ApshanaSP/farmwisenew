@@ -12,6 +12,10 @@ export const TA: Record<string, string> = {
   "Export report": "அறிக்கையைப் பதிவிறக்கு", "PDF report or CSV action list": "PDF அறிக்கை அல்லது CSV செயல் பட்டியல்",
   "Workspaces": "பணியிடங்கள்", "Save or reopen a view": "ஒரு பார்வையைச் சேமி அல்லது மீண்டும் திற",
   "Customize the dashboard": "டாஷ்போர்டைத் தனிப்பயனாக்கு", "Choose what the dashboard shows": "டாஷ்போர்டு என்ன காட்டும் என்று தேர்வு செய்",
+  // 28 Nov: a saved workspace on screen (the top bar's box, the Menu, the Briefing's saved copy)
+  "Saved workspace": "சேமித்த பணியிடம்", "· saved": "· சேமித்தது", "Back to live dashboard": "நேரலை டாஷ்போர்டுக்குத் திரும்பு",
+  "Saved copy": "சேமித்த நகல்", "data as of": "தரவு நிலவரம்", "Saved briefing": "சேமித்த சுருக்கம்",
+  "Back to the live dashboard.": "நேரலை டாஷ்போர்டுக்குத் திரும்பியது.",
   "Dark mode": "இருண்ட பயன்முறை", "Light mode": "ஒளி பயன்முறை", "Language": "மொழி", "English": "ஆங்கிலம்", "Tamil": "தமிழ்",
   "Data sources": "தரவு மூலங்கள்", "Audit log": "தணிக்கைப் பதிவு", "Reload data": "தரவை மீண்டும் ஏற்று", "Clear all filters": "எல்லா வடிப்பான்களையும் அழி",
   "Sign out": "வெளியேறு", "Collector's Office": "ஆட்சியர் அலுவலகம்", "District Collector, Chennai": "மாவட்ட ஆட்சியர், சென்னை",
@@ -218,6 +222,30 @@ export const TA: Record<string, string> = {
   "The Collector's office checked the work and closed the complaint.": "ஆட்சியர் அலுவலகம் பணியைச் சரிபார்த்து, புகாரை மூடியது.",
   "The Collector's office returned it to the department for more work.": "கூடுதல் பணிக்காக ஆட்சியர் அலுவலகம் இதைத் துறைக்குத் திருப்பி அனுப்பியது.",
   "Rejected by the Collector's office.": "ஆட்சியர் அலுவலகம் நிராகரித்தது.",
+  // 28 Nov: the case lifecycle (lib/cases): reopen, questions, the severe rule, the Resolved lists
+  "The Collector's office reopened the complaint and sent it back to the department to check the work again.":
+    "ஆட்சியர் அலுவலகம் புகாரை மீண்டும் திறந்து, பணியை மீண்டும் சரிபார்க்கத் துறைக்குத் திருப்பி அனுப்பியது.",
+  "Reopened – back with the department": "மீண்டும் திறக்கப்பட்டது – மீண்டும் துறையிடம் உள்ளது",
+  "Reopened by the Collector.": "ஆட்சியர் மீண்டும் திறந்தார்.", "Reopened by Collector": "ஆட்சியர் மீண்டும் திறந்தார்",
+  "Question from the Collector": "ஆட்சியரின் கேள்வி", "Answered the Collector": "ஆட்சியருக்குப் பதில் அளிக்கப்பட்டது",
+  "Send to Collector for approval": "ஒப்புதலுக்காக ஆட்சியருக்கு அனுப்பு",
+  "A severe grievance is verified by the Collector: send it to the Collector with your remarks and at least one photo of the completed work.":
+    "கடுமையான புகாரை ஆட்சியரே சரிபார்ப்பார்: உங்கள் குறிப்புகளுடன் முடிந்த பணியின் குறைந்தது ஒரு புகைப்படத்தையும் சேர்த்து ஆட்சியருக்கு அனுப்பவும்.",
+  "Severe: only the Collector can close it. Send your remarks and at least one photo of the completed work.":
+    "கடுமையானது: இதை ஆட்சியர் மட்டுமே மூட முடியும். உங்கள் குறிப்புகளுடன் முடிந்த பணியின் குறைந்தது ஒரு புகைப்படத்தையும் அனுப்பவும்.",
+  "Close it yourself with your remarks (a photo is optional), or send it to the Collector for approval with a photo.":
+    "உங்கள் குறிப்புகளுடன் நீங்களே இதை மூடலாம் (புகைப்படம் கட்டாயமில்லை), அல்லது புகைப்படத்துடன் ஒப்புதலுக்காக ஆட்சியருக்கு அனுப்பலாம்.",
+  "Attach at least one photo of the completed work: the Collector approves the work from your photos.":
+    "முடிந்த பணியின் ஒரு புகைப்படமாவது இணைக்கவும்: உங்கள் புகைப்படங்களைப் பார்த்தே ஆட்சியர் ஒப்புதல் அளிப்பார்.",
+  "The Collector asks": "ஆட்சியர் கேட்கிறார்", "Your answer to the Collector": "ஆட்சியருக்கான உங்கள் பதில்", "Send answer": "பதிலை அனுப்பு",
+  "You answered the Collector": "நீங்கள் ஆட்சியருக்குப் பதில் அளித்துள்ளீர்கள்",
+  "The case stays closed; your answer shows on the Collector's case page.": "வழக்கு மூடியபடியே இருக்கும்; உங்கள் பதில் ஆட்சியரின் வழக்குப் பக்கத்தில் தெரியும்.",
+  "How it was closed": "இது எப்படி மூடப்பட்டது", "Reopen": "மீண்டும் திற", "Ask the department": "துறையிடம் கேள்",
+  "Reopen and send back": "மீண்டும் திறந்து திருப்பி அனுப்பு", "Send question": "கேள்வியை அனுப்பு",
+  "Waiting for the department's answer": "துறையின் பதிலுக்குக் காத்திருக்கிறது", "You asked": "நீங்கள் கேட்டது",
+  "Approved by you": "நீங்கள் ஒப்புதல் அளித்தீர்கள்", "Approved by the Collector": "ஆட்சியர் ஒப்புதல் அளித்தார்",
+  "Closed by the department": "துறையால் மூடப்பட்டது", "Closed in the department's records": "துறையின் பதிவுகளில் மூடப்பட்டது",
+  "Open full size": "முழு அளவில் திற", "Show the photo large": "புகைப்படத்தைப் பெரிதாகக் காட்டு",
   // the "Confirm it's you" box and the actions it confirms
   "Confirm it's you": "இது நீங்கள்தான் என்பதை உறுதிசெய்யுங்கள்", "Your account password": "உங்கள் கணக்கின் கடவுச்சொல்",
   "The #-digit code from the email": "மின்னஞ்சலில் வந்த #-இலக்கக் குறியீடு", "Confirm": "உறுதிசெய்", "Checking…": "சரிபார்க்கிறது…",

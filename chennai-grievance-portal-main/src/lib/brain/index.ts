@@ -14,6 +14,7 @@ import { historyOf, keep, lastLangOf, pastOf, recall, type Turn } from "./memory
 import { brainOn, declined, deptName, owedLang, think, type BrainOut } from "./loop";
 import { sentences } from "./ground";
 import type { BrainUser, ConsoleNow, Lang } from "./types";
+import { answerForm, boardAsk, formLine, type BoardAsk } from "@/lib/thunai/board";
 
 export { brainOn, warmBrain } from "./loop";
 export type { BrainOut } from "./loop";
@@ -76,7 +77,12 @@ export async function askBrain(i: AskIn): Promise<BrainOut | null> {
   if (off) { keep(i.key, { at: Date.now(), user: i.text, answer: off.answer, evidence: [] }); return off; }
   const [kpi, files] = await Promise.all([tilesLine(i.console, i.user), Promise.resolve().then(() => (i.user.role === "collector" ? studioLines({ role: "collector", lockDept: null }) : null)).catch(() => null)]);
   const studio = i.console.page === "studio" || i.console.dataset || studioAsked(files ? (files.match(/"[^"]+"/g) ?? []).join(" ") : null, [i.text, ...history.slice(-2).map((h) => h.user)].join(" ")) ? files : null;
-  const out = await think({ text: i.text, channel: i.channel, user: i.user, world: i.world, now, console: i.console, history, past: pastOf(turns), kpi, studio, memory: i.memory, lastLang: lastLangOf(turns), signal: i.signal, until: i.until, progress: i.progress, sentence: i.sentence, deep: i.deep, lang: i.lang ?? null });
+  // 28 Nov (the owner: a comparative dashboard was answered as text): a dashboard asked for in so many words is built by code first, and the
+  // model writes its summary from the dashboard's figures; any other question carries the form its answer should take (board.ts)
+  const board = (() => { try { return boardAsk(i.text, i.world); } catch { return null; } })();
+  const pre = board ? [{ tool: "board", input: boardInput(board, i.world) }] : undefined;
+  const form = board ? null : (() => { try { return formLine(answerForm(i.text, i.world)); } catch { return null; } })();
+  const out = await think({ text: i.text, channel: i.channel, user: i.user, world: i.world, now, console: i.console, history, past: pastOf(turns), kpi, studio, memory: i.memory, lastLang: lastLangOf(turns), signal: i.signal, until: i.until, progress: i.progress, sentence: i.sentence, deep: i.deep, lang: i.lang ?? null, pre, form });
   if (out) keep(i.key, { at: Date.now(), user: i.text, answer: out.answer, evidence: out.evidence });
   return out;
 }
@@ -104,3 +110,12 @@ export async function precheck(i: Pick<AskIn, "text" | "channel" | "user" | "wor
 
 /** the console's own words for things it never does (asked in front of the brain, in code) */
 export const forbiddenOrder = (text: string): boolean => asksForbiddenOrder(text);
+
+/** code's reading of a dashboard request as the board tool's input (its window is read from the Collector's own words by the tool) */
+export function boardInput(a: BoardAsk, w: World): Record<string, unknown> {
+  return {
+    mode: a.recipe, places: [...a.zones.map((z) => w.zones.find((x) => x.n === z)?.name ?? String(z)), ...a.places], ...(a.depts.length ? { departments: a.depts } : {}),
+    ...(a.sev ? { severity: a.sev } : {}), ...(a.family ? { kind: a.family } : a.cat ? { kind: a.cat } : {}), ...(a.status ? { status: a.status } : {}), ...(a.parts.length ? { parts: a.parts } : {}),
+    ...(a.period ? { when: { named: { daily: "today", weekly: "last_7_days", monthly: "last_30_days", quarterly: "last_90_days" }[a.period] } } : {})
+  };
+}

@@ -147,6 +147,22 @@
 .dic .amp-row .nr{color:var(--accent-2);font-weight:600}
 .dic .amp-more{color:var(--text-3);font-size:12px;padding:4px 2px}
 .dic .amp-more button{all:unset;color:var(--accent-2);font-weight:700;cursor:pointer}
+/* 28 Nov 2026: the places list ("list the schools in Valasaravakkam"): numbered rows, the long list scrolls inside the panel, each row's glyph on the map */
+.dic .amp-placesw{display:flex;flex-direction:column;gap:4px;margin-top:6px;min-width:0}
+.dic .amp-plnote{margin:0 2px 2px;color:var(--text-3);font-size:11.5px;line-height:1.4}
+.dic .amp-places.long{max-height:min(46vh,340px);overflow-y:auto;overscroll-behavior:contain;padding:2px 3px 2px 2px;scrollbar-width:thin}
+.dic .amp-place{align-items:flex-start}
+.dic .amp-pn{flex:none;min-width:22px;height:20px;padding:0 4px;box-sizing:border-box;border-radius:999px;background:var(--surface-2);color:var(--text-2);font:700 11px/20px var(--font-num);text-align:center}
+.dic .amp-place.on .amp-pn{background:var(--accent);color:#fff}
+.dic .amp-place .s{overflow-wrap:anywhere}
+.dic .amp-off{display:inline-flex;align-items:center;gap:3px;margin-left:6px;color:var(--accent-2);font-weight:600;white-space:nowrap}
+.dic .amp-off svg{width:11px;height:11px}
+.dic .amp-unmapped{margin:2px 2px 0;font-size:12px;color:var(--text-2)}
+.dic .amp-unmapped>summary{cursor:pointer;font-weight:600;padding:3px 0}
+.dic .amp-unmapped ol{margin:4px 0 0;padding-left:22px;max-height:min(30vh,220px);overflow-y:auto;color:var(--text-2);font-size:11.5px;line-height:1.5}
+.dic .afac.lift{box-shadow:0 0 0 3px #fff,0 0 0 5px var(--accent),0 4px 14px rgba(0,0,0,.5)}
+.dic .afac.on{box-shadow:0 0 0 3px #FFD24A,0 0 0 5px #0F1B2D,0 4px 14px rgba(0,0,0,.5)}
+@media (max-width:767px){.dic .amp-places.long{max-height:38vh}.dic .amp-unmapped ol{max-height:26vh}}
 .dic .amp-acts{display:flex;gap:6px;padding:8px 12px 12px;border-top:1px solid var(--line)}
 .dic .amp-acts button{flex:1;height:32px;border-radius:9px;border:1px solid var(--line-3);background:var(--surface);color:var(--text);font:600 12px var(--font-ui);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .dic .amp-acts button.pri{background:var(--accent-3);border-color:var(--accent-3);color:#fff}
@@ -426,56 +442,23 @@
 /* the hotspot tour's captions are long ("1. 33 reports near Apparao Garden 3rd Lane ..."): one per line, wrapping */
 .dic .amp-tour button{height:auto;min-height:26px;padding:4px 10px;line-height:1.3;text-align:left;border-radius:12px}
 
-/* ---- Ask the Map final: the Collector's tools, the league table, the gap list, the rule check */
+/* ---- Ask the Map final: the league table, the gap list, the rule check (the tool panels went on 28 Nov 2026) */
 .dic .agroup.arank.up{background:rgba(224,54,74,.92)}
 .dic .agroup.arank.down{background:rgba(22,163,74,.92)}
 .dic .amlayer-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;flex:none}
-.dic .amt{margin:0 12px 6px;display:flex;flex-direction:column;gap:6px}
-.dic .amt-row{display:flex;flex-wrap:wrap;gap:5px}
-.dic .amt-row button{height:28px;padding:0 10px;border-radius:999px;border:1px solid var(--line-3);background:var(--surface);color:var(--text-2);font:600 12px var(--font-ui);cursor:pointer;display:inline-flex;align-items:center;gap:5px}
-.dic .amt-row button svg{width:14px;height:14px}
-.dic .amt-row button.on,.dic .amt-row button:hover,.dic .amt-row button:focus-visible{color:var(--text);border-color:var(--accent);outline:none}
-.dic .amt-card{padding:10px 11px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);display:flex;flex-direction:column;gap:7px;max-height:46vh;overflow:auto;font-size:12.5px}
-.dic .amt-card p{margin:0;color:var(--text-2)}
-.dic .amt-card label{display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:var(--text-2)}
-.dic .amt-card select,.dic .amt-card input[type=number],.dic .amt-card input[type=text]{height:28px;border-radius:8px;border:1px solid var(--line-3);background:var(--surface-2);color:var(--text);font:500 12.5px var(--font-ui);padding:0 7px;min-width:0}
-.dic .amt-card input[type=number]{width:78px}
-.dic .amt-card input[type=text]{flex:1;min-width:160px}
-.dic .amt-card fieldset{border:0;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:4px 12px}
-.dic .amt-card legend{color:var(--text-2);padding:0;margin-bottom:2px}
-.dic .amt-card .chk{gap:4px}
-.dic .amt-card button{height:30px;padding:0 12px;border-radius:9px;border:1px solid var(--line-3);background:var(--surface-2);color:var(--text);font:600 12px var(--font-ui);cursor:pointer;display:inline-flex;align-items:center;gap:6px;align-self:flex-start}
-.dic .amt-card button.pri{background:var(--accent);border-color:var(--accent);color:#fff}
-.dic .amt-card button:disabled{opacity:.55;cursor:default}
-.dic .amt-card button svg{width:14px;height:14px}
 .dic .amt-warn{display:flex;gap:6px;align-items:flex-start;padding:6px 8px;border-radius:8px;background:var(--surface-2);color:var(--text-2);font-size:12px}
 .dic .amt-warn svg{width:14px;height:14px;flex:none;margin-top:2px;color:var(--accent)}
 .dic .amt-muted{color:var(--text-3);font-size:12px;margin:4px 0}
-.dic .amt-packs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
-.dic .amt-packs a{display:grid;grid-template-columns:18px 1fr 14px;gap:2px 8px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--surface-2);color:var(--text);text-decoration:none;box-shadow:0 0 0 1px var(--line)}
-.dic .amt-packs a:hover,.dic .amt-packs a:focus-visible{box-shadow:0 0 0 2px var(--accent);outline:none}
-.dic .amt-packs small{grid-column:2;color:var(--text-3)}
-.dic .amt-packs svg{width:15px;height:15px}
-.dic .amt-up{display:flex;flex-direction:column;gap:6px}
-.dic .amt-lists{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.dic .amt-lists>li{padding:8px;border-radius:10px;box-shadow:0 0 0 1px var(--line)}
-.dic .amt-lh{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline}
-.dic .amt-lh small{width:100%;color:var(--text-3)}
-.dic .amt-st{font:700 10.5px var(--font-ui);padding:1px 7px;border-radius:999px;background:var(--surface-2);color:var(--text-2)}
-.dic .amt-st.approved{background:rgba(22,163,74,.18);color:#16A34A}
-.dic .amt-la{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .dic .amt-view{display:flex;flex-direction:column;gap:6px}
 .dic .amt-tbl{width:100%;border-collapse:collapse;font:12px/1.35 var(--font-ui);color:var(--text)}
 .dic .amt-tbl th{text-align:left;font-weight:700;color:var(--text-2);padding:4px 6px;border-bottom:1px solid var(--line-3);position:sticky;top:0;background:var(--surface)}
 .dic .amt-tbl td{padding:4px 6px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
-.dic .amt-tbl tr.none td{color:var(--critical)}
-.dic .amt-tbl tr.approximate td:nth-child(3){color:var(--text-2)}
 .dic .amt-tbl.league tbody tr{cursor:pointer;outline:none}
 .dic .amt-tbl.league tbody tr:hover,.dic .amt-tbl.league tbody tr:focus-visible,.dic .amt-tbl.league tbody tr.on{background:var(--surface-2)}
 .dic .amt-tbl td.up{color:#E0364A;font-weight:700}
 .dic .amt-tbl td.down{color:#16A34A;font-weight:700}
 .dic .amt-partial{display:flex;gap:6px;margin:6px 0 0;font-size:12px;color:var(--text-2)}
-@media (max-width:767px){.dic .amt-row{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-right:56px}.dic .amt-row button{height:32px;flex:none}.dic .amt-card{max-height:40vh}.dic .amt-tbl{font-size:11.5px}}
+@media (max-width:767px){.dic .amt-tbl{font-size:11.5px}}
 
 /* v2: what the speller read ("Read 'adayar' as Adyar.") under the question */
 .dic .amp-read{display:flex;gap:6px;align-items:center;margin:0 0 6px;padding:4px 9px;border-radius:8px;background:color-mix(in srgb,var(--accent) 9%,transparent);color:var(--text-2);font:500 12px/1.35 var(--font-ui);width:fit-content;max-width:100%}

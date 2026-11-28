@@ -1,0 +1,1959 @@
+{
+ "source": {
+  "id": "tndce",
+  "name": "Directorate of Collegiate Education, Government of Tamil Nadu: list of colleges (arts and science, education, social work, physical education)",
+  "url": "https://tndce.tn.gov.in/Colleges",
+  "checked": "2026-11-28",
+  "note": "Chennai, Chengalpattu, Kancheepuram and Tiruvallur districts as the Directorate lists them. No map points: a college OpenStreetMap does not hold is counted, never drawn."
+ },
+ "entries": [
+  {
+   "id": "tndce:7",
+   "name": "Velankanni Malathy Panicker College., Of Arts And Sci",
+   "alt": [
+    "Velankanni Malathy Panicker College., Of Arts And Sci Kovoor"
+   ],
+   "place": "Kovoor",
+   "address": "Velankanni Malathy Panicker College., Of Arts And Sci., , Kovoor, Mangadu, Chennai – 602 101.(Co-Ed)",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:19",
+   "name": "AA Arts And Sci., College",
+   "alt": [
+    "AA Arts And Sci., College Koyambedu"
+   ],
+   "place": "Koyambedu",
+   "address": "AA Arts And Sci., College, Koyambedu, Chennai.",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:33",
+   "name": "AGURCHAND MANMULL JAIN COLLEGE",
+   "alt": [
+    "AGURCHAND MANMULL JAIN COLLEGE COLLEGE ROAD"
+   ],
+   "place": "COLLEGE ROAD",
+   "address": "AGURCHAND MANMULL JAIN COLLEGE, COLLEGE ROAD, MEENAMBAKKAM, CHENNAI - 61",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:36",
+   "name": "Akshaya Arts and Science College",
+   "alt": [
+    "Akshaya Arts and Science College Puzhuthivakkam Village"
+   ],
+   "place": "Puzhuthivakkam Village",
+   "address": "Akshaya Arts and Science College (Co-ed), Puzhuthivakkam Village, Madhurandhagam Taluk, Chengalpattu District",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:43",
+   "name": "Alpha Arts & Sci., College",
+   "alt": [
+    "Alpha Arts & Sci., College Thandalam"
+   ],
+   "place": "Thandalam",
+   "address": "Alpha Arts & Sci., College.,, Thandalam, Porur, Chennai - 600 116.",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:48",
+   "name": "Amirtham College of Education",
+   "alt": [
+    "Amirtham College of Education Amirtham College Road"
+   ],
+   "place": "Amirtham College Road",
+   "address": "Amirtham College of Education, Amirtham College Road, Vengudi, Walajabad.",
+   "district": "Kancheepuram",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:55",
+   "name": "Anna Adarsh College For Women",
+   "alt": [
+    "Anna Adarsh College For Women AI"
+   ],
+   "place": "AI",
+   "address": "Anna Adarsh College For Women, AI, II Street, Plot.No.5042, 9th Main Road, Shanthi Colony, Anna Nagar, Chennai - 40.",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:76",
+   "name": "Annai Therasa Arts And Science., College",
+   "alt": [
+    "Annai Therasa Arts And Science., College Mangalam[Via]"
+   ],
+   "place": "Mangalam[Via]",
+   "address": "Annai Therasa Arts And Science., College, Mangalam[Via], Chengalpattu.",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:78",
+   "name": "Annai Veilankanni's College For Women",
+   "place": null,
+   "address": "Annai Veilankanni's College For Women, 81/33, VGP Salai, West Saidapet, Chennai - 600 015",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:79",
+   "name": "Annai Veilankannis College of Education",
+   "place": null,
+   "address": "Annai Veilankannis College of Education, 81/33, VGP Salai , Saidapet, Chennai - 600 015.",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:82",
+   "name": "Annai Violet Arts & Science College",
+   "place": null,
+   "address": "Annai Violet Arts & Science College.,, 53, Violet college Road, Menambedu, Ambattur, Chennai - 600053",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:89",
+   "name": "Apollo Arts and Science College",
+   "alt": [
+    "Apollo Arts and Science College Chennai"
+   ],
+   "place": "Chennai",
+   "address": "Apollo Arts and Science College (Co-Ed), Chennai, Chengalpet Taluk, Chengalpattu District",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:90",
+   "name": "Apollo Arts And Science College Chennai",
+   "alt": [
+    "Apollo Arts And Science College Chennai Nellikuppam Road"
+   ],
+   "place": "Nellikuppam Road",
+   "address": "Apollo Arts And Science College Chennai, Nellikuppam Road, Kalvoy village,",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:91",
+   "name": "Apollo Arts and Science College North Chennai",
+   "alt": [
+    "Apollo Arts and Science College North Chennai Senrambakkam"
+   ],
+   "place": "Senrambakkam",
+   "address": "Apollo Arts and Science College North Chennai, Senrambakkam, Ponneri Taluk, Thiruvallur District",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:92",
+   "name": "Apollo College of Education",
+   "alt": [
+    "Apollo College of Education Mevallor Kuppam village"
+   ],
+   "place": "Mevallor Kuppam village",
+   "address": "Apollo College of Education, Mevallor Kuppam village,Sriperumbudur Taluk,Kancheepuram District-602 105.",
+   "district": "Kancheepuram",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:116",
+   "name": "Arulmigu Meenakshi Amman College of Education",
+   "alt": [
+    "Arulmigu Meenakshi Amman College of Education MALLIANKARANAI X ROAD"
+   ],
+   "place": "MALLIANKARANAI X ROAD",
+   "address": "Arulmigu Meenakshi Amman College of Education, MALLIANKARANAI X ROAD, PERUNGOZHI VILLAGE, MALLIANKARANAI POST, UTHIRAMERUR TALUK, KANCHIPURAM DISTRICT",
+   "district": "Kancheepuram",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:120",
+   "name": "Arulmigu Subramaniaswamy Government Arts College",
+   "alt": [
+    "Arulmigu Subramaniaswamy Government Arts College Tiruttani"
+   ],
+   "place": "Tiruttani",
+   "address": "Arulmigu Subramaniaswamy Government Arts College, Tiruttani-631 209",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:133",
+   "name": "Asan Memorial College., Of Arts And Science",
+   "alt": [
+    "Asan Memorial College., Of Arts And Science Velachery-Tambaram Rd"
+   ],
+   "place": "Velachery-Tambaram Rd",
+   "address": "Asan Memorial College., Of Arts And Science, Velachery-Tambaram Rd, Jaladampet, Chennai - 610 302.",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:138",
+   "name": "Avichi Arts and Science College",
+   "alt": [
+    "Avichi Arts and Science College Virugambakkam"
+   ],
+   "place": "Virugambakkam",
+   "address": "Avichi Arts and Science College, Virugambakkam, Chennai",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:153",
+   "name": "Bhaktavatsalam Memorial College [W]",
+   "place": null,
+   "address": "Bhaktavatsalam Memorial College [W],, 14, 31st St., TNHB Colony, Korattur, Chennai - 600 050",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:168",
+   "name": "Bharathi Womens College",
+   "place": null,
+   "address": "Bharathi Womens College(Autonomous), No. 1,Prakasam Salai, Broadway, Chennai-600 108",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:190",
+   "name": "C M Annamalai College of Education",
+   "alt": [
+    "C M Annamalai College of Education Vellathur Village"
+   ],
+   "place": "Vellathur Village",
+   "address": "C M Annamalai College of Education, Vellathur Village, Adhivarapuram Post, Pallipet Taluk, R.K.Pet (Via), Thiruvallur District - 631 303",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:192",
+   "name": "C. Kandaswami Naidu College For Men",
+   "alt": [
+    "C. Kandaswami Naidu College For Men E 7 III avenue anna Nagar east chennai - 600 102."
+   ],
+   "place": "E 7 III avenue anna Nagar east chennai - 600 102.",
+   "address": "C. Kandaswami Naidu College For Men, E 7 III avenue anna Nagar east chennai - 600 102.",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:194",
+   "name": "C.M.Annamalai Arts and Science College",
+   "alt": [
+    "C.M.Annamalai Arts and Science College Velathur Village"
+   ],
+   "place": "Velathur Village",
+   "address": "C.M.Annamalai Arts and Science (Women) College, Velathur Village, Pallipattu Taluk, Tiruvallur",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:211",
+   "name": "Chellammal Women’s College., Of The Pachaiyappa’s Trust",
+   "alt": [
+    "Chellammal Women’s College., Of The Pachaiyappa’s Trust Guindy"
+   ],
+   "place": "Guindy",
+   "address": "Chellammal Women’s College., Of The Pachaiyappa’s Trust, Guindy, Chennai - 600 032.",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:212",
+   "name": "Chennai Arts and Science College",
+   "alt": [
+    "Chennai Arts and Science College karapakkam"
+   ],
+   "place": "karapakkam",
+   "address": "Chennai Arts and Science College, karapakkam , pallikaranai, Chozhinganallur.",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:213",
+   "name": "Chennai National College",
+   "alt": [
+    "Chennai National College Paruthipattu"
+   ],
+   "place": "Paruthipattu",
+   "address": "Chennai National College,, Paruthipattu, Sriperumbudur Tk, Tiruvallur District.",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:218",
+   "name": "CHEVALIER T THOMAS ELIZABETH COLLEGE FOR WOMEN",
+   "place": null,
+   "address": "CHEVALIER T THOMAS ELIZABETH COLLEGE FOR WOMEN, No: 16, St. Marys Road, Maryland, Sembiyan, Perambur, Chennai, Tamil Nadu 600011",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:224",
+   "name": "Cholan College of Education",
+   "alt": [
+    "Cholan College of Education Sembarambakkam village"
+   ],
+   "place": "Sembarambakkam village",
+   "address": "Cholan College of Education, Sembarambakkam village, Karai post, Kancheepuram District-631 552.",
+   "district": "Kancheepuram",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:235",
+   "name": "Cosmopolitan College of Education",
+   "alt": [
+    "Cosmopolitan College of Education Sengadu Post"
+   ],
+   "place": "Sengadu Post",
+   "address": "Cosmopolitan College of Education, Sengadu Post, Manavala Nagar (Via), Sriperumbadur Taluk, Kancheepuram District - 602 002",
+   "district": "Kancheepuram",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:238",
+   "name": "CSI Bishop Newbigin College of Education",
+   "alt": [
+    "CSI Bishop Newbigin College of Education CSI BISHOP NEWBIGIN COLLEGE OF EDUCATION 109"
+   ],
+   "place": "CSI BISHOP NEWBIGIN COLLEGE OF EDUCATION 109",
+   "address": "CSI Bishop Newbigin College of Education, CSI BISHOP NEWBIGIN COLLEGE OF EDUCATION 109, DR.RADHAKRISHNAN SALAI, MYLAPORE , CHENNAI - 600004",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:240",
+   "name": "CSI Ewart Women’S Christian College",
+   "alt": [
+    "CSI Ewart Women’S Christian College Melrosapuram."
+   ],
+   "place": "Melrosapuram.",
+   "address": "CSI Ewart Women’S Christian College., Melrosapuram.",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:245",
+   "name": "D.R.B.C.C.C. HINDU COLLEGE",
+   "alt": [
+    "D.R.B.C.C.C. HINDU COLLEGE DHARMAMURTHI NAGAR"
+   ],
+   "place": "DHARMAMURTHI NAGAR",
+   "address": "D.R.B.C.C.C. HINDU COLLEGE, DHARMAMURTHI NAGAR, PATTABIRAM, CHENNAI-600 072",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:250",
+   "name": "Dhanalakshmi Srinivasan Arts and Science College",
+   "alt": [
+    "Dhanalakshmi Srinivasan Arts and Science College Poonjeri Village"
+   ],
+   "place": "Poonjeri Village",
+   "address": "Dhanalakshmi Srinivasan Arts and Science College (Co-Ed), Poonjeri Village, Mamallapuram, Thirukazhukundram, Chengalpattu District",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:254",
+   "name": "Dhanraj Baid Jain College",
+   "alt": [
+    "Dhanraj Baid Jain College Jothi Nagar"
+   ],
+   "place": "Jothi Nagar",
+   "address": "Dhanraj Baid Jain College, Jothi Nagar, Oggiyam, Thoraipakkam, Chennai - 600 096.",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:264",
+   "name": "DMI College of Education",
+   "alt": [
+    "DMI College of Education Mevalurkuppam B Village"
+   ],
+   "place": "Mevalurkuppam B Village",
+   "address": "DMI College of Education, Mevalurkuppam B Village, Palanchur, Kancheepuram District-600 123",
+   "district": "Kancheepuram",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:265",
+   "name": "Don Bosco Arts and Science college",
+   "alt": [
+    "Don Bosco Arts and Science college Kilpauk"
+   ],
+   "place": "Kilpauk",
+   "address": "Don Bosco Arts and Science college (Co-Ed),, Kilpauk, Chennai",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:270",
+   "name": "Dr. Ambedkar Government Arts College",
+   "alt": [
+    "Dr. Ambedkar Government Arts College Vysarpadi"
+   ],
+   "place": "Vysarpadi",
+   "address": "Dr. Ambedkar Government Arts College(Autonomous), Vysarpadi, Chennai-600 039",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:278",
+   "name": "Dr. MGR Janaki College of Arts And Science For Women",
+   "alt": [
+    "Dr. MGR Janaki College of Arts And Science For Women Sathyabama MGR Maligai"
+   ],
+   "place": "Sathyabama MGR Maligai",
+   "address": "Dr. MGR Janaki College of Arts And Science For Women, Sathyabama MGR Maligai, 11 & 13,Durgabai Deshmuk Road, RajaAnnamalaipuram,Chennai -600028",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:294",
+   "name": "Dr.M.G.R Institute of Special Education and Research",
+   "alt": [
+    "Dr.M.G.R Institute of Special Education and Research Dr.M.G.R Home & Hr.Sec.School for the Speech & Hearing Impaired"
+   ],
+   "place": "Dr.M.G.R Home & Hr.Sec.School for the Speech & Hearing Impaired",
+   "address": "Dr.M.G.R Institute of Special Education and Research, Dr.M.G.R Home & Hr.Sec.School for the Speech & Hearing Impaired, M.G.R Garden Ramavaram, Chennai - 600 089",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:297",
+   "name": "Dr.Rajalakshmi College of Education",
+   "alt": [
+    "Dr.Rajalakshmi College of Education Palavedu Village"
+   ],
+   "place": "Palavedu Village",
+   "address": "Dr.Rajalakshmi College of Education, Palavedu Village, Mittanamalli Post, Avadi, Chennai- 600 055.",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:303",
+   "name": "Dwaraka Doss Goverdhan Doss Vaishnav College",
+   "place": null,
+   "address": "Dwaraka Doss Goverdhan Doss Vaishnav College, No 833, Periyar E.V.R. High Road, Arumbakkam, Chennai 600 106",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:304",
+   "name": "E. S. Subramaniyam Memorial Arts And Science College",
+   "alt": [
+    "E. S. Subramaniyam Memorial Arts And Science College Pothaturpettai"
+   ],
+   "place": "Pothaturpettai",
+   "address": "E. S. Subramaniyam Memorial Arts And Science College, , Pothaturpettai, Pallipat Taluk, Thiruvallur District.",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:308",
+   "name": "E.S.Subramaniam Memorial College of Education",
+   "alt": [
+    "E.S.Subramaniam Memorial College of Education E S SUBRAMANIAM MEMORIAL COLLEGE OF EDUCATION"
+   ],
+   "place": "E S SUBRAMANIAM MEMORIAL COLLEGE OF EDUCATION",
+   "address": "E.S.Subramaniam Memorial College of Education, E S SUBRAMANIAM MEMORIAL COLLEGE OF EDUCATION, HOSPITAL ROAD, PODATURPET, PALLIPET(TK), TIRUVALLUR(DT) - 631 208.",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:327",
+   "name": "G.R.D. College of Education",
+   "alt": [
+    "G.R.D. College of Education Padur"
+   ],
+   "place": "Padur",
+   "address": "G.R.D. College of Education, Padur, Ramancheri village, Thiruvallur Taluk & District-631 210.",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:328",
+   "name": "G.R.T. College of Education",
+   "alt": [
+    "G.R.T. College of Education GRT COLLEGE OF EDUCATION"
+   ],
+   "place": "GRT COLLEGE OF EDUCATION",
+   "address": "G.R.T. College of Education, GRT COLLEGE OF EDUCATION, GRT MAHALAKSHMI NAGAR. CHENNAI TIRUPATHI HIGHWAY , TIRUTTANI , 631209, THIRUVALLUR DISTRICT , TAMIL NADU",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:342",
+   "name": "Gojan College of Teacher Education",
+   "place": null,
+   "address": "Gojan College of Teacher Education, 80 Feet Road, Edappalayam, Nallur Village, Tiruvallur District",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:346",
+   "name": "Good Shepherd College of Education",
+   "alt": [
+    "Good Shepherd College of Education Periyapalayam High Road"
+   ],
+   "place": "Periyapalayam High Road",
+   "address": "Good Shepherd College of Education, Periyapalayam High Road, Kasuva, Pakkam,Tiruvallur District - 602024",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:348",
+   "name": "Government Arts and Science College",
+   "alt": [
+    "Government Arts and Science College R.K.Nagar"
+   ],
+   "place": "R.K.Nagar",
+   "address": "Government Arts and Science College, R.K.Nagar, Chennai-600 081",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:349",
+   "name": "Government Arts and Science College",
+   "alt": [
+    "Government Arts and Science College Perumbakkam"
+   ],
+   "place": "Perumbakkam",
+   "address": "Government Arts and Science College, Perumbakkam, Chennai-600 131",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:376",
+   "name": "Government Arts and Science College",
+   "alt": [
+    "Government Arts and Science College Sriperambatur"
+   ],
+   "place": "Sriperambatur",
+   "address": "Government Arts and Science College, Sriperambatur-602 105",
+   "district": "Kancheepuram",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:403",
+   "name": "Government Arts and Science College",
+   "alt": [
+    "Government Arts and Science College ECR"
+   ],
+   "place": "ECR",
+   "address": "Government Arts and Science College, ECR, Nemmeli-603 104",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:404",
+   "name": "Government Arts and Science College",
+   "alt": [
+    "Government Arts and Science College Thiruvottriyur"
+   ],
+   "place": "Thiruvottriyur",
+   "address": "Government Arts and Science College, Thiruvottriyur, Chennai-600 019",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:454",
+   "name": "Government Arts College",
+   "place": null,
+   "address": "Government Arts College(Autonomous), No. 329, Anna Salai, Nandanam, Chennai-600 035",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:471",
+   "name": "Grised Arts & Science College",
+   "alt": [
+    "Grised Arts & Science College Keelacheri"
+   ],
+   "place": "Keelacheri",
+   "address": "Grised Arts & Science College, , Keelacheri, Thiruvallur District.",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:473",
+   "name": "GURU NANAK COLLEGE",
+   "place": null,
+   "address": "GURU NANAK COLLEGE (AUTONOMOUS), No. 161, Guru Nanak Salai, Velachery, Chennai - 600 042",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:474",
+   "name": "Guru Shree Shanthi Vijai Jain College [W]",
+   "place": null,
+   "address": "Guru Shree Shanthi Vijai Jain College [W], 96, VEPERY HIGH ROAD, VEPERY",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:475",
+   "name": "Guru Shree Shanthivijai Jain Arts and Science College",
+   "alt": [
+    "Guru Shree Shanthivijai Jain Arts and Science College Nalloor Village"
+   ],
+   "place": "Nalloor Village",
+   "address": "Guru Shree Shanthivijai Jain Arts and Science College, Nalloor Village, Thirukazhukundram Taluk, Chengalpattu District",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:479",
+   "name": "Hindustan College of Arts And Science",
+   "alt": [
+    "Hindustan College of Arts And Science Padur"
+   ],
+   "place": "Padur",
+   "address": "Hindustan College of Arts And Science, Padur, Kelambakkam, Chennai - 603 103.",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:496",
+   "name": "Indhira College of Education",
+   "place": null,
+   "address": "Indhira College of Education, No.1, VGR Nagar, VGR Gardens, Pandur - 631 203 Thiruvallur Taluk & District.",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:500",
+   "name": "Indian Harvard Arts And Science., College",
+   "place": null,
+   "address": "Indian Harvard Arts And Science., College, 2, Manimegalai St, Pallikkaranai, Chennai - 601 302, Kancheepuram District.",
+   "district": "Kancheepuram",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:501",
+   "name": "Indira Gandhi College of Education",
+   "alt": [
+    "Indira Gandhi College of Education Nelveli"
+   ],
+   "place": "Nelveli",
+   "address": "Indira Gandhi College of Education, Nelveli, Uthiramerur Taluk, Kanchipuram District - 603 107",
+   "district": "Kancheepuram",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:509",
+   "name": "Institute Of Advanced Study In Education",
+   "alt": [
+    "Institute Of Advanced Study In Education Saidapet"
+   ],
+   "place": "Saidapet",
+   "address": "Institute Of Advanced Study In Education, Saidapet, Chennai -600 015",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:522",
+   "name": "JA Arts & Sci., College",
+   "alt": [
+    "JA Arts & Sci., College Mogappair"
+   ],
+   "place": "Mogappair",
+   "address": "JA Arts & Sci., College, , Mogappair, Chennai.",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:538",
+   "name": "Jaya Arts and Science College for Women",
+   "alt": [
+    "Jaya Arts and Science College for Women Parivakkam (Village)"
+   ],
+   "place": "Parivakkam (Village)",
+   "address": "Jaya Arts and Science College for Women, Parivakkam (Village), Poonthamalli (Tk), Tiruvallur - Dt.",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:539",
+   "name": "Jaya College Of Arts & Science",
+   "alt": [
+    "Jaya College Of Arts & Science Mth Rd."
+   ],
+   "place": "Mth Rd.",
+   "address": "Jaya College Of Arts & Science (Co-Ed), Mth Rd., Thiruninravur-602 024. Ph: College - 6390808 Trust - 6390682",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:540",
+   "name": "Jaya College of Education",
+   "place": null,
+   "address": "Jaya College of Education, No. 29, Annai Indira Nagar, Thiruninravur, Thiruvallur District - 602024",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:541",
+   "name": "JAYAGOVIND HARIGOPAL AGARWAL AGARSEN",
+   "alt": [
+    "JAYAGOVIND HARIGOPAL AGARWAL AGARSEN Madhavaram"
+   ],
+   "place": "Madhavaram",
+   "address": "JAYAGOVIND HARIGOPAL AGARWAL AGARSEN, Madhavaram, Chennai.",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:542",
+   "name": "Jayalakshmi Narayanaswami College of Education",
+   "place": null,
+   "address": "Jayalakshmi Narayanaswami College of Education, 74/48, Bajanai Kovil Street, Pallipattu, Tharamani, Chennai-113",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:550",
+   "name": "Jeppiaar College of Arts and Science",
+   "alt": [
+    "Jeppiaar College of Arts and Science padur"
+   ],
+   "place": "padur",
+   "address": "Jeppiaar College of Arts and Science, padur, Chengalpattu District",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:553",
+   "name": "JNN Arts and Science College",
+   "alt": [
+    "JNN Arts and Science College Kannigaiper Village"
+   ],
+   "place": "Kannigaiper Village",
+   "address": "JNN Arts and Science College (Women), Kannigaiper Village, Uthukottai Taluk, Tiruvallur District",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:554",
+   "name": "John Bosco Arts And Science College",
+   "alt": [
+    "John Bosco Arts And Science College P.B.No.12"
+   ],
+   "place": "P.B.No.12",
+   "address": "John Bosco Arts And Science College, , P.B.No.12, Thiruvallur R.S, Thiruvallur Tk And District.",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:558",
+   "name": "Justice Basheer Ahmed Sayeed College for Women",
+   "place": null,
+   "address": "Justice Basheer Ahmed Sayeed College for Women, 56 K.B. Dasan Road, Teynampet, Chennai-600 018",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:562",
+   "name": "K.C.S. Kasi Nadar College of Arts & Science",
+   "place": null,
+   "address": "K.C.S. Kasi Nadar College of Arts & Science, No.96, Ellaya Steet, R.K.Nagar, Chennai - 600 021. Ph: 044-25974499",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:564",
+   "name": "K.J.N. Educational College",
+   "place": null,
+   "address": "K.J.N. Educational College, 90 Ushaa Garden, Kannigaipair Post, Uthukottai Taluk, Thiruvallur Dist - 601 102",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:587",
+   "name": "Kalaibharathi B.Ed College",
+   "alt": [
+    "Kalaibharathi B.Ed College Padmapuram Village"
+   ],
+   "place": "Padmapuram Village",
+   "address": "Kalaibharathi B.Ed College, Padmapuram Village,Erumbi Post, Pallipet Taluk, Thiruvallur-631 302.",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:607",
+   "name": "Kanchi College of Education",
+   "alt": [
+    "Kanchi College of Education Karaipettai"
+   ],
+   "place": "Karaipettai",
+   "address": "Kanchi College of Education, Karaipettai, Kancheepuram District-631 552.",
+   "district": "Kancheepuram",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:608",
+   "name": "Kanchi Shri Krishna College., Of Arts And Science",
+   "alt": [
+    "Kanchi Shri Krishna College., Of Arts And Science Kilambi"
+   ],
+   "place": "Kilambi",
+   "address": "Kanchi Shri Krishna College., Of Arts And Science, Kilambi, Krishnapuram.",
+   "district": "Kancheepuram",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:609",
+   "name": "KANCHI SRI MAGALAKSHMI ARTS AND SCIENCE COLLEGE FOR WOMEN",
+   "alt": [
+    "KANCHI SRI MAGALAKSHMI ARTS AND SCIENCE COLLEGE FOR WOMEN Kanchipuram-Uthiramerur Road"
+   ],
+   "place": "Kanchipuram-Uthiramerur Road",
+   "address": "KANCHI SRI MAGALAKSHMI ARTS AND SCIENCE COLLEGE FOR WOMEN, Kanchipuram-Uthiramerur Road , Arpakkam , Walajabad Taluk, Kanchipuram District-631603",
+   "district": "Kancheepuram",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:659",
+   "name": "KUMARARANI MEENA MUTHIAH COLLEGE OF A&Sc",
+   "place": null,
+   "address": "KUMARARANI MEENA MUTHIAH COLLEGE OF A&Sc, 4 Crescent Avenue Road Gandhinagar Adyar Chennai 600020",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:665",
+   "name": "Lady Willington Institute Of Advanced Study In Education",
+   "alt": [
+    "Lady Willington Institute Of Advanced Study In Education Chennai"
+   ],
+   "place": "Chennai",
+   "address": "Lady Willington Institute Of Advanced Study In Education, Chennai-600 005",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:667",
+   "name": "Lakshmi Ammal College of Education",
+   "place": null,
+   "address": "Lakshmi Ammal College of Education, No.17-B, Vardhanar Street, Vedhachalam Nagar,Chengalpattu- 603 001, Chengalpattu District",
+   "district": "Chengalpattu",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:669",
+   "name": "Lakshmi Bangaru Arts and Science College",
+   "alt": [
+    "Lakshmi Bangaru Arts and Science College Pallipettai Village"
+   ],
+   "place": "Pallipettai Village",
+   "address": "Lakshmi Bangaru Arts and Science (Co-Ed) College, Pallipettai Village, Madhurandhagam Taluk, Chengalpattu District",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:676",
+   "name": "Loganatha Narayanaswamy Government Arts College",
+   "alt": [
+    "Loganatha Narayanaswamy Government Arts College Ponneri"
+   ],
+   "place": "Ponneri",
+   "address": "Loganatha Narayanaswamy Government Arts College(Autonomous), Ponneri-601 204",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:678",
+   "name": "Loyola College",
+   "alt": [
+    "Loyola College Nungambakkam"
+   ],
+   "place": "Nungambakkam",
+   "address": "Loyola College, Nungambakkam, Chennai – 600 034.",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:680",
+   "name": "Loyola College of Education",
+   "alt": [
+    "Loyola College of Education Loyola College of Education"
+   ],
+   "place": "Loyola College of Education",
+   "address": "Loyola College of Education, Loyola College of Education, Loyola College Campus, Sterling Road, Nungambakkam, Chennai - 600034",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:693",
+   "name": "Madha Arts And Science College",
+   "alt": [
+    "Madha Arts And Science College ERANDAMKATTLAI"
+   ],
+   "place": "ERANDAMKATTLAI",
+   "address": "Madha Arts And Science College, ERANDAMKATTLAI, SADHANANTHAPURM , THARAPAKKAM",
+   "district": "Kancheepuram",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:695",
+   "name": "Madras Christian College",
+   "alt": [
+    "Madras Christian College Tambaram East"
+   ],
+   "place": "Tambaram East",
+   "address": "Madras Christian College, Tambaram East, Chennai 600 059, Tamil Nadu, India",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:696",
+   "name": "Madras School Of Social Work",
+   "place": null,
+   "address": "Madras School Of Social Work, 32, CASA MAJOR ROAD, EGMORE, CHENNAI - 600 008",
+   "district": "Chennai",
+   "type": "Schools of Social Work"
+  },
+  {
+   "id": "tndce:701",
+   "name": "Mahalakshmi College., Of Arts & Sci",
+   "alt": [
+    "Mahalakshmi College., Of Arts & Sci Paruthipattu"
+   ],
+   "place": "Paruthipattu",
+   "address": "Mahalakshmi College., Of Arts & Sci.,, Paruthipattu, Tiruvallur District.",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:715",
+   "name": "Mangalam College of Education",
+   "alt": [
+    "Mangalam College of Education Thirumullaivoyal Village"
+   ],
+   "place": "Thirumullaivoyal Village",
+   "address": "Mangalam College of Education,, Thirumullaivoyal Village, Sathiyamurthy Nagar Post, Ambattur Taluk, Chennai City,Thiruvallur - 600 062.",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:721",
+   "name": "Mar Gregorios College of Arts & Science",
+   "alt": [
+    "Mar Gregorios College of Arts & Science Block 8"
+   ],
+   "place": "Block 8",
+   "address": "Mar Gregorios College of Arts & Science, Block 8, Mogappair West, Chennai - 600 037",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:734",
+   "name": "MEASI College of Education",
+   "place": null,
+   "address": "MEASI College of Education, No. 2, Demellows Road, Choolai, Chennai - 600 007.",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:735",
+   "name": "Meenakshi Ammal Arts and Science College",
+   "alt": [
+    "Meenakshi Ammal Arts and Science College Uthiramerur"
+   ],
+   "place": "Uthiramerur",
+   "address": "Meenakshi Ammal Arts and Science College, Uthiramerur - 603406, Kanchipuram District.",
+   "district": "Kancheepuram",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:740",
+   "name": "Meenakshi College For Women",
+   "place": null,
+   "address": "Meenakshi College For Women, No.363, Arcot Road, Kodambakkam, Chennai - 600024",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:753",
+   "name": "MESTON COLLEGE OF EDUCATION",
+   "alt": [
+    "MESTON COLLEGE OF EDUCATION New No. 10 (Old No. 33)"
+   ],
+   "place": "New No. 10 (Old No. 33)",
+   "address": "MESTON COLLEGE OF EDUCATION, New No. 10 (Old No. 33), West Cott Road, Royapettah, Chennai - 600 014",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:761",
+   "name": "Mohamed Sathak College Of Arts & Science",
+   "place": null,
+   "address": "Mohamed Sathak College Of Arts & Science, No-13 Medavakkam Main Road, Sholinganallur, Chennai, Tamilnadu, India Pincode- 600119.",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:763",
+   "name": "Mohamed Sathak Teacher Training College",
+   "alt": [
+    "Mohamed Sathak Teacher Training College Padur village"
+   ],
+   "place": "Padur village",
+   "address": "Mohamed Sathak Teacher Training College, Padur village, Old Mahabalipuram Road, Chengalpattu Taluk, Kancheepuram District-603 103.",
+   "district": "Kancheepuram",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:765",
+   "name": "MOP Vaishnav College For Women",
+   "place": null,
+   "address": "MOP Vaishnav College For Women, 20 IV Lane, Nungambakkam High Rd, Chennai-600 034.",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:786",
+   "name": "N.K.T. National College Of Education for women",
+   "place": null,
+   "address": "N.K.T. National College Of Education for women, No 41, Dr. Besant Road, Triplicane, Chennai 6000 05",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:810",
+   "name": "National Institute for Empowerment of Persons with Multiple Disabilities (NIEPMD), (Govt. of India) (Aided) (Spl. Edu) East Coast Road",
+   "alt": [
+    "National Institute for Empowerment of Persons with Multiple Disabilities (NIEPMD), (Govt. of India) (Aided) (Spl. Edu) East Coast Road Muthukadu"
+   ],
+   "place": "Muthukadu",
+   "address": "National Institute for Empowerment of Persons with Multiple Disabilities (NIEPMD), (Govt. of India) (Aided) (Spl. Edu) East Coast Road, Muthukadu, Kovalam Post, Chennai - 603 112.",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:811",
+   "name": "National Institute for the Visually Handicapped Regional Centre, (Govt. of India) (Aided) (Spl. Edu)",
+   "place": null,
+   "address": "National Institute for the Visually Handicapped Regional Centre, (Govt. of India) (Aided) (Spl. Edu), 522, Trunk Road, Poonamallee",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:815",
+   "name": "Nazarath College., Of Arts & Science",
+   "alt": [
+    "Nazarath College., Of Arts & Science Kovilpathagai main road"
+   ],
+   "place": "Kovilpathagai main road",
+   "address": "Nazarath College., Of Arts & Science (Co-Ed),, Kovilpathagai main road, Kannadapalayam, Avadi, Chennai - 600 062. Ph-9384080203, 9384080549, 6380056960,7338783002",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:816",
+   "name": "Nazareth College of Education for Women",
+   "alt": [
+    "Nazareth College of Education for Women Kovilpathagai"
+   ],
+   "place": "Kovilpathagai",
+   "address": "Nazareth College of Education for Women, Kovilpathagai, Avadi, Chennai - 600 062",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:823",
+   "name": "Netrodaya College of Special Education",
+   "alt": [
+    "Netrodaya College of Special Education Phase II"
+   ],
+   "place": "Phase II",
+   "address": "Netrodaya College of Special Education, Phase II, Nolambur, Magappair, Chennai - 600 037",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:826",
+   "name": "New Prince Shri Bhavani Arts And Science., College",
+   "alt": [
+    "New Prince Shri Bhavani Arts And Science., College PATEL ROAD SIVAGAMI NAGAR MEDAVAKKAM 600100"
+   ],
+   "place": "PATEL ROAD SIVAGAMI NAGAR MEDAVAKKAM 600100",
+   "address": "New Prince Shri Bhavani Arts And Science., College, PATEL ROAD SIVAGAMI NAGAR MEDAVAKKAM 600100",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:838",
+   "name": "Om College of Education",
+   "alt": [
+    "Om College of Education Nemili"
+   ],
+   "place": "Nemili",
+   "address": "Om College of Education, Nemili, AP Nagar Road, Valarpuram Post, Sriperumbudur Taluk, Kanchipuram District - 602 105",
+   "district": "Kancheepuram",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:840",
+   "name": "Om Shanthi arts and Science College",
+   "alt": [
+    "Om Shanthi arts and Science College Sriperumbudhu Taluk"
+   ],
+   "place": "Sriperumbudhu Taluk",
+   "address": "Om Shanthi arts and Science College,, Sriperumbudhu Taluk, Valasaravakkam, Nemili Village, Kancheepuram District",
+   "district": "Kancheepuram",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:841",
+   "name": "Om Shanti College of Education",
+   "place": null,
+   "address": "Om Shanti College of Education, 51, Nemili Village, Sriperumbudur, Kanchipuram Dt. Pin-602105.",
+   "district": "Kancheepuram",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:843",
+   "name": "Our Lady College of Education",
+   "alt": [
+    "Our Lady College of Education Our Lady Nagar"
+   ],
+   "place": "Our Lady Nagar",
+   "address": "Our Lady College of Education, Our Lady Nagar, Maduravoyal, Chennai- 600 095.",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:860",
+   "name": "Pachaiyappa’s College",
+   "place": null,
+   "address": "Pachaiyappa’s College, No.113, E V R Periyar Road, Shenoy Nagar, Chennai-600030",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:861",
+   "name": "Pachaiyappa’s College for Men",
+   "alt": [
+    "Pachaiyappa’s College for Men The Pricipal"
+   ],
+   "place": "The Pricipal",
+   "address": "Pachaiyappa’s College for Men, The Pricipal, Pachaiyappas College for Men, Nasarathpettai, Chengalpattu Main Road, Kancheepuram 631501.",
+   "district": "Kancheepuram",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:862",
+   "name": "Pachaiyappa’s College., For Women",
+   "alt": [
+    "Pachaiyappa’s College., For Women PACHAIYAPPAS COLLEGE FOR WOMEN VEGAVATHI NATHI ROAD KANCHEEPURAM"
+   ],
+   "place": "PACHAIYAPPAS COLLEGE FOR WOMEN VEGAVATHI NATHI ROAD KANCHEEPURAM",
+   "address": "Pachaiyappa’s College., For Women, PACHAIYAPPAS COLLEGE FOR WOMEN VEGAVATHI NATHI ROAD KANCHEEPURAM",
+   "district": "Kancheepuram",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:876",
+   "name": "Patrican College., Of Arts And Sci., [Co-Ed]",
+   "alt": [
+    "Patrican College., Of Arts And Sci., [Co-Ed] Canal Bank Road"
+   ],
+   "place": "Canal Bank Road",
+   "address": "Patrican College., Of Arts And Sci., [Co-Ed], Canal Bank Road, Gandhi Nagar, Adyar",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:877",
+   "name": "Pattammal Alagesan Arts And Science., College",
+   "alt": [
+    "Pattammal Alagesan Arts And Science., College Sannathi Street"
+   ],
+   "place": "Sannathi Street",
+   "address": "Pattammal Alagesan Arts And Science., College, Sannathi Street,Athur ,Chengalpattu",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:885",
+   "name": "PERI Arts and Science College",
+   "alt": [
+    "PERI Arts and Science College Mannivakkam Village"
+   ],
+   "place": "Mannivakkam Village",
+   "address": "PERI Arts and Science (Co-Ed) College, Mannivakkam Village, West Tambaram, Chengalpattu Taluk, Chengalpattu District",
+   "district": "Kancheepuram",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:900",
+   "name": "Ponnusamy Nadar Arts And Science College",
+   "alt": [
+    "Ponnusamy Nadar Arts And Science College Thozhuvur Village"
+   ],
+   "place": "Thozhuvur Village",
+   "address": "Ponnusamy Nadar Arts And Science College,, Thozhuvur Village, Thiruvallur District.",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:901",
+   "name": "Ponnusamy Nadar College of Education",
+   "alt": [
+    "Ponnusamy Nadar College of Education R 28 TNHB QUARTERS AYAPAKKAM CHENNAI"
+   ],
+   "place": "R 28 TNHB QUARTERS AYAPAKKAM CHENNAI",
+   "address": "Ponnusamy Nadar College of Education, R 28 TNHB QUARTERS AYAPAKKAM CHENNAI",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:904",
+   "name": "Poonga College., Of Arts And Science",
+   "place": null,
+   "address": "Poonga College., Of Arts And Science, 56-A, East West Rd, Uthandi, Chennai - 600 119.",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:908",
+   "name": "Presidency College",
+   "alt": [
+    "Presidency College Chennai"
+   ],
+   "place": "Chennai",
+   "address": "Presidency College, Chennai-600 005",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:910",
+   "name": "Prince Shri Balaji Arts and Science College",
+   "alt": [
+    "Prince Shri Balaji Arts and Science College Ponmar"
+   ],
+   "place": "Ponmar",
+   "address": "Prince Shri Balaji Arts and Science College, Ponmar, TiruporurTaluk, Chengalpattu District",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:911",
+   "name": "Prince Shri Venkateshwara Arts And Science College",
+   "alt": [
+    "Prince Shri Venkateshwara Arts And Science College Venkateshwara Nagar"
+   ],
+   "place": "Venkateshwara Nagar",
+   "address": "Prince Shri Venkateshwara Arts And Science College, Venkateshwara Nagar, Gowrivakkam, Chennai - 600073.",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:912",
+   "name": "Prof. S.A.College of Education",
+   "place": null,
+   "address": "Prof. S.A.College of Education, 1/145, sardar patel Road OMR Semmanchery,",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:913",
+   "name": "Professor Dhanabalan College., For Women",
+   "alt": [
+    "Professor Dhanabalan College., For Women Old Mahabalipuram Rd"
+   ],
+   "place": "Old Mahabalipuram Rd",
+   "address": "Professor Dhanabalan College., For Women, Old Mahabalipuram Rd, Kelambakkam.",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:927",
+   "name": "Puratchi Thalaivar Dr. M.G.R. Government Arts and Science College",
+   "alt": [
+    "Puratchi Thalaivar Dr. M.G.R. Government Arts and Science College Uthiramerur"
+   ],
+   "place": "Uthiramerur",
+   "address": "Puratchi Thalaivar Dr. M.G.R. Government Arts and Science College, Uthiramerur-603 406",
+   "district": "Kancheepuram",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:932",
+   "name": "Quaid-E-Millath Government College For Women",
+   "alt": [
+    "Quaid-E-Millath Government College For Women Anna Salai"
+   ],
+   "place": "Anna Salai",
+   "address": "Quaid-E-Millath Government College For Women(Autonomous), Anna Salai, Chennai-600 002",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:933",
+   "name": "Queen Marys College",
+   "alt": [
+    "Queen Marys College Chennai -600 004."
+   ],
+   "place": "Chennai -600 004.",
+   "address": "Queen Marys College(Autonomous), Chennai -600 004.",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:962",
+   "name": "Ramakrishna Mission Vivekananda College",
+   "place": null,
+   "address": "Ramakrishna Mission Vivekananda College, NO.70-72,P.S. SIVASWAMI SALAI, MYLAPORE, Chennai - 600 004",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:966",
+   "name": "Rangaswamy College of Education",
+   "alt": [
+    "Rangaswamy College of Education -"
+   ],
+   "place": "-",
+   "address": "Rangaswamy College of Education, -",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:971",
+   "name": "Rathan Kanvar Bhavarlal Gothi Jain College",
+   "place": null,
+   "address": "Rathan Kanvar Bhavarlal Gothi Jain College,, 13, Southupakkam Darkash Road, Pulliline Village, Redhills, Ambattur Tk, Tiruvallur District - 600 052.",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:994",
+   "name": "S.A. College of Arts and Science",
+   "alt": [
+    "S.A. College of Arts and Science Veeraraghavapuram"
+   ],
+   "place": "Veeraraghavapuram",
+   "address": "S.A. College of Arts and Science, Veeraraghavapuram, Poonamallee, Thiruverkadu, Chennai - 600 077",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:997",
+   "name": "S.I.V.E.T.COLLEGE",
+   "alt": [
+    "S.I.V.E.T.COLLEGE VELACHERY-TAMBARAM MAIN ROAD"
+   ],
+   "place": "VELACHERY-TAMBARAM MAIN ROAD",
+   "address": "S.I.V.E.T.COLLEGE, VELACHERY-TAMBARAM MAIN ROAD, GOWRIVAKKAM, CHENNAI-73.",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1002",
+   "name": "S.M.K Fomra Arts and Science College",
+   "alt": [
+    "S.M.K Fomra Arts and Science College Thaiyur"
+   ],
+   "place": "Thaiyur",
+   "address": "S.M.K Fomra Arts and Science College, Thaiyur, Tiruporur Taluk, Chengalpattu District",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1011",
+   "name": "S.S.K.V. College Of Arts And Science For Women",
+   "alt": [
+    "S.S.K.V. College Of Arts And Science For Women Kilambi Village"
+   ],
+   "place": "Kilambi Village",
+   "address": "S.S.K.V. College Of Arts And Science For Women, Kilambi Village, Kancheepuram, 631551",
+   "district": "Kancheepuram",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1045",
+   "name": "Sathyasai B.Ed College",
+   "alt": [
+    "Sathyasai B.Ed College Rajaji St"
+   ],
+   "place": "Rajaji St",
+   "address": "Sathyasai B.Ed College, Rajaji St, Kamarajar Nagar, Avadi, Chennai- 71.",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:1074",
+   "name": "Shree Chandraprabhu Jain College",
+   "alt": [
+    "Shree Chandraprabhu Jain College Minjur-Kattur Road"
+   ],
+   "place": "Minjur-Kattur Road",
+   "address": "Shree Chandraprabhu Jain College,, Minjur-Kattur Road, Minjur - 601 203. Ph: 044-27934353, 27935103, 27934981",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1079",
+   "name": "Shri Krishnaswamy College",
+   "alt": [
+    "Shri Krishnaswamy College Anna Nagar"
+   ],
+   "place": "Anna Nagar",
+   "address": "Shri Krishnaswamy (W) College, Anna Nagar, Chennai - 600 040.",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1082",
+   "name": "Shri Shankarlal Sundarbai Shasun Jain College for Women",
+   "alt": [
+    "Shri Shankarlal Sundarbai Shasun Jain College for Women T. Nagar"
+   ],
+   "place": "T. Nagar",
+   "address": "Shri Shankarlal Sundarbai Shasun Jain College for Women, T. Nagar, Chennai -17.",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1087",
+   "name": "Shrimathi Devkumar Nanalal Bhatt Vaishnav College for Women",
+   "place": null,
+   "address": "Shrimathi Devkumar Nanalal Bhatt Vaishnav College for Women, No.1 Vaishav College Road, Shanthi Nagar, Chromepet, Chennai 600044",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1095",
+   "name": "Sindhi College",
+   "place": null,
+   "address": "Sindhi College,, No.146, Poonamallee High Rd, Numbal, Chennai - 600 077 (Co-Ed)",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1100",
+   "name": "Sir Theagaraya College",
+   "place": null,
+   "address": "Sir Theagaraya College, 1047 / 345, T.H. Old Washermenpet, Chennai 600 021",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1107",
+   "name": "Sivanthi College of Education",
+   "alt": [
+    "Sivanthi College of Education Metha Nagar"
+   ],
+   "place": "Metha Nagar",
+   "address": "Sivanthi College of Education, Metha Nagar, Kundrathur, Chennai - 600069",
+   "district": "Kancheepuram",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:1111",
+   "name": "Soka Ikeda College for Women",
+   "alt": [
+    "Soka Ikeda College for Women Sethu Bhaskara Nagar"
+   ],
+   "place": "Sethu Bhaskara Nagar",
+   "address": "Soka Ikeda College for Women, Sethu Bhaskara Nagar, Madhanangkuppam, Chennai, Mugambigai Nagar, Korattur, Chennai 600 099.",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1130",
+   "name": "Sree MuthuKumaraswamy College",
+   "place": null,
+   "address": "Sree MuthuKumaraswamy College, PLOT NO 92/1 & 9, 8TH BLOCK, MUTHAMIZH NAGAR, KODUNGAIYUR, CHENNAI-118",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1134",
+   "name": "Sree Sastha Arts and Science College",
+   "alt": [
+    "Sree Sastha Arts and Science College Chembarambakkam Village"
+   ],
+   "place": "Chembarambakkam Village",
+   "address": "Sree Sastha Arts and Science (Co-Ed) College, Chembarambakkam Village, Poonamalle Taluk, Tiruvallur District",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1135",
+   "name": "Sree Sastha College of Education",
+   "alt": [
+    "Sree Sastha College of Education Chembarambakkam"
+   ],
+   "place": "Chembarambakkam",
+   "address": "Sree Sastha College of Education, Chembarambakkam, Poonamallee Taluk, Tiruvallur District-602 103.",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:1151",
+   "name": "Sri Balaji Arts and Science College",
+   "alt": [
+    "Sri Balaji Arts and Science College Nedunkundram"
+   ],
+   "place": "Nedunkundram",
+   "address": "Sri Balaji Arts and Science College (Co-ed), Nedunkundram, Kolapakkam, Chengalpattu District",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1162",
+   "name": "Sri Devi Arts & Sci., College",
+   "alt": [
+    "Sri Devi Arts & Sci., College Ponneri Town"
+   ],
+   "place": "Ponneri Town",
+   "address": "Sri Devi Arts & Sci., College.,, Ponneri Town, Tadaperumbakkam Village, Tiruvallur District.",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1163",
+   "name": "Sri Devi College of Education",
+   "alt": [
+    "Sri Devi College of Education Krishnapuram"
+   ],
+   "place": "Krishnapuram",
+   "address": "Sri Devi College of Education, Krishnapuram, Ponneri - 601 204",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:1176",
+   "name": "Sri Kanyaka Parameswari Arts And Science College For Women",
+   "place": null,
+   "address": "Sri Kanyaka Parameswari Arts And Science College For Women, No.1,Audiappa Street,Chennai-01.",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1181",
+   "name": "Sri Krishna College of Education",
+   "alt": [
+    "Sri Krishna College of Education Panapakkam"
+   ],
+   "place": "Panapakkam",
+   "address": "Sri Krishna College of Education, Panapakkam, Near Padappai, Via-Tambaram, Chennai - 601301",
+   "district": "Kancheepuram",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:1191",
+   "name": "Sri Maelolan Arts And Science College",
+   "alt": [
+    "Sri Maelolan Arts And Science College Pazhavery Village"
+   ],
+   "place": "Pazhavery Village",
+   "address": "Sri Maelolan Arts And Science College, Pazhavery Village, Madurandagam Taluk, Chengalpattu District.",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1199",
+   "name": "Sri Muthukumaran Arts And Science., College",
+   "alt": [
+    "Sri Muthukumaran Arts And Science., College Sikkarayapuram Village."
+   ],
+   "place": "Sikkarayapuram Village.",
+   "address": "Sri Muthukumaran Arts And Science., College, Sikkarayapuram Village.",
+   "district": "Kancheepuram",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1200",
+   "name": "Sri Muthukumaran College of Education",
+   "alt": [
+    "Sri Muthukumaran College of Education Chikkarayapuram"
+   ],
+   "place": "Chikkarayapuram",
+   "address": "Sri Muthukumaran College of Education, Chikkarayapuram, Near Mangadu, Kancheepuram Dist, Chennai 600069.",
+   "district": "Kancheepuram",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:1212",
+   "name": "Sri Ram College., Of Arts & Science,",
+   "alt": [
+    "Sri Ram College., Of Arts & Science, Veppampattu Rs."
+   ],
+   "place": "Veppampattu Rs.",
+   "address": "Sri Ram College., Of Arts & Science, (Co-Ed),, Veppampattu Rs., Perumalpattu - 602 024.",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1236",
+   "name": "Sri Sankara Arts And Science., College",
+   "alt": [
+    "Sri Sankara Arts And Science., College Enathur"
+   ],
+   "place": "Enathur",
+   "address": "Sri Sankara Arts And Science., College, Enathur, Kancheepuram – 631 552.",
+   "district": "Kancheepuram",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1238",
+   "name": "Sri Santhosi Arts & Science College",
+   "alt": [
+    "Sri Santhosi Arts & Science College Maduranthagam"
+   ],
+   "place": "Maduranthagam",
+   "address": "Sri Santhosi Arts & Science College (Co-Ed), Maduranthagam, Chengalpattu District.",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1300",
+   "name": "SRM Arts And Science., College",
+   "alt": [
+    "SRM Arts And Science., College SRM Nagar"
+   ],
+   "place": "SRM Nagar",
+   "address": "SRM Arts And Science., College, SRM Nagar, Kattankulathur - 603203",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1309",
+   "name": "St. Anne's Arts and Science College",
+   "alt": [
+    "St. Anne's Arts and Science College Ponniyamman Medu"
+   ],
+   "place": "Ponniyamman Medu",
+   "address": "St. Anne's Arts and Science College (W), Ponniyamman Medu, Madavaram, Chennai.",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1313",
+   "name": "St. Christopher’S College Of Education",
+   "place": null,
+   "address": "St. Christopher’S College Of Education, 63,E.V.K. Sampath Road, Vepery, Chennai-600007",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:1314",
+   "name": "St. George Arts and Science College",
+   "place": null,
+   "address": "St. George Arts and Science College, No. 738, EVR Salai, Shenoy Nagar, Chennai District",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1340",
+   "name": "St. Thomas College of Arts and Science",
+   "place": null,
+   "address": "St. Thomas College of Arts and Science, 140/6, St. Thomas Nagar, New Colony, AKR Road, Koyambedu, Chennai 600 107.",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1357",
+   "name": "St.Mary’s College of Education and Research Institute",
+   "alt": [
+    "St.Mary’s College of Education and Research Institute G.S.T. Road"
+   ],
+   "place": "G.S.T. Road",
+   "address": "St.Mary’s College of Education and Research Institute, G.S.T. Road, Chengalpattu, KancheepuramDistrict-603 002.",
+   "district": "Chengalpattu",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:1365",
+   "name": "Stella Maris College",
+   "place": null,
+   "address": "Stella Maris College, NO 17, Cathedral Road, chennai - 600086",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1367",
+   "name": "Stella Matutina College Of Education",
+   "alt": [
+    "Stella Matutina College Of Education -"
+   ],
+   "place": "-",
+   "address": "Stella Matutina College Of Education, -",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:1371",
+   "name": "Subham College of Education",
+   "alt": [
+    "Subham College of Education Sunampedu Road"
+   ],
+   "place": "Sunampedu Road",
+   "address": "Subham College of Education, Sunampedu Road, Thozupedu village, Vilvarayanallur, Maduranthagam Taluk, Kancheepuram District-603 306.",
+   "district": "Chengalpattu",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:1389",
+   "name": "Swamy Vivekanda Arts and Science College",
+   "alt": [
+    "Swamy Vivekanda Arts and Science College Adayalam pattu"
+   ],
+   "place": "Adayalam pattu",
+   "address": "Swamy Vivekanda Arts and Science College , Adayalam pattu, Poonamallae Taluk, Thiruvallur District",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1395",
+   "name": "TAGORE COLLEGE OF ARTS AND SCIENCE",
+   "alt": [
+    "TAGORE COLLEGE OF ARTS AND SCIENCE CLC Works Road"
+   ],
+   "place": "CLC Works Road",
+   "address": "TAGORE COLLEGE OF ARTS AND SCIENCE, CLC Works Road, New Colony, Chrompet, Chennai - 600 044.",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1398",
+   "name": "Tamilnadu College Of Arts And Science",
+   "alt": [
+    "Tamilnadu College Of Arts And Science Adayalampattu"
+   ],
+   "place": "Adayalampattu",
+   "address": "Tamilnadu College Of Arts And Science(Co-Ed), , Adayalampattu, Tiruvallur.",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1403",
+   "name": "Thalapathy K. Vinayakam women's Arts and Science College",
+   "alt": [
+    "Thalapathy K. Vinayakam women's Arts and Science College Sathiranjayapuram Village"
+   ],
+   "place": "Sathiranjayapuram Village",
+   "address": "Thalapathy K. Vinayakam women's Arts and Science College, Sathiranjayapuram Village, Tiruttani Taluk, Tiruvallur District.",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1413",
+   "name": "The Ethiraj College., For Women",
+   "place": null,
+   "address": "The Ethiraj College., For Women, 70 Ethiraj Salai Egmore Chennai 600 008",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1417",
+   "name": "The New College",
+   "alt": [
+    "The New College New No 147 Old No 87 Peters Road Royapettah Chennai 600 014"
+   ],
+   "place": "New No 147 Old No 87 Peters Road Royapettah Chennai 600 014",
+   "address": "The New College, New No 147 Old No 87 Peters Road Royapettah Chennai 600 014",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1418",
+   "name": "The Quaide Milleth College for Men",
+   "alt": [
+    "The Quaide Milleth College for Men Tambaram Velachery Main Road."
+   ],
+   "place": "Tambaram Velachery Main Road.",
+   "address": "The Quaide Milleth College for Men, Tambaram Velachery Main Road., Medavakkam, Chennai-600100",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1435",
+   "name": "Thirumurugan Arts and Science Women's College",
+   "alt": [
+    "Thirumurugan Arts and Science Women's College Kosavanpalayam"
+   ],
+   "place": "Kosavanpalayam",
+   "address": "Thirumurugan Arts and Science Women's College, Kosavanpalayam, Thirupassur, Thiruvallur-631 203",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1436",
+   "name": "Thiruthangal Nadar College",
+   "alt": [
+    "Thiruthangal Nadar College Near Kannadasan Nagar Bus Terminus"
+   ],
+   "place": "Near Kannadasan Nagar Bus Terminus",
+   "address": "Thiruthangal Nadar College,, Near Kannadasan Nagar Bus Terminus, Aiswarya Nagar, Sri Dhurghai Avenue, Selavayal, Chennai, Tamil Nadu 600051",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1452",
+   "name": "TMG College of Arts and Science",
+   "place": null,
+   "address": "TMG College of Arts and Science, No 85 Mudichur Road Manimangalam, Padappai, Kancheepuram",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1455",
+   "name": "TVM College of Education",
+   "alt": [
+    "TVM College of Education TVM Nagar"
+   ],
+   "place": "TVM Nagar",
+   "address": "TVM College of Education, TVM Nagar, Podaturpet- 631 208. Thiruvallur Dist",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:1480",
+   "name": "Vadaranyam College of Education",
+   "place": null,
+   "address": "Vadaranyam College of Education, 1/190, Adigathur Road, Kadambathur, Thiruvallur Taluk & District - 631 203",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:1483",
+   "name": "Vallal P.T.Lee Chengalvaraya Naicker Arts and Science College",
+   "alt": [
+    "Vallal P.T.Lee Chengalvaraya Naicker Arts and Science College Vepery"
+   ],
+   "place": "Vepery",
+   "address": "Vallal P.T.Lee Chengalvaraya Naicker Arts and Science College, Vepery, Purasaivakkam Taluk, Chennai District",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1488",
+   "name": "Valliammal College For Women",
+   "alt": [
+    "Valliammal College For Women E9"
+   ],
+   "place": "E9",
+   "address": "Valliammal College For Women, E9, Anna Nagar East, Chennai - 102.",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1496",
+   "name": "Vel Tech Ranga Sanku Arts College",
+   "place": null,
+   "address": "Vel Tech Ranga Sanku Arts College, NO 42 , Avadi Vel Tech Road , Avadi, Tiruvallur District.62",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1505",
+   "name": "Vel’s College., Of Science",
+   "alt": [
+    "Vel’s College., Of Science PV Vaithylingam Rd"
+   ],
+   "place": "PV Vaithylingam Rd",
+   "address": "Vel’s College., Of Science, PV Vaithylingam Rd, Mallika Nagar, Old Pallavaram, Chennai - 600 117.",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1514",
+   "name": "Vidhya Sagar Women's College of Education",
+   "alt": [
+    "Vidhya Sagar Women's College of Education G.S.T. Road"
+   ],
+   "place": "G.S.T. Road",
+   "address": "Vidhya Sagar Women's College of Education, G.S.T. Road, Vedanarayanapuram,Chengalpattu Taluk,Kancheepuram District-603 111.",
+   "district": "Kancheepuram",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:1515",
+   "name": "Vidhya Sagar Women’s College",
+   "alt": [
+    "Vidhya Sagar Women’s College G.S.T. Road"
+   ],
+   "place": "G.S.T. Road",
+   "address": "Vidhya Sagar Women’s College, G.S.T. Road, Vedanarayanapuram, ChengalputtU Taluk, Chengalpattu District - 603 111.",
+   "district": "Chengalpattu",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1518",
+   "name": "Vidya Sagar (formerly the Spastice of India)",
+   "place": null,
+   "address": "Vidya Sagar (formerly the Spastice of India), No.1, Ranjith Road, Kotturpuram, Chennai - 600085",
+   "district": "Chennai",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:1533",
+   "name": "Vishwaksena Arts and Science College",
+   "alt": [
+    "Vishwaksena Arts and Science College Polivakkam. Tiruvallur District"
+   ],
+   "place": "Polivakkam. Tiruvallur District",
+   "address": "Vishwaksena Arts and Science College (Women), Polivakkam. Tiruvallur District",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1534",
+   "name": "vishwaksena college of education",
+   "place": null,
+   "address": "vishwaksena college of education, 104SRIPERUMBUTHUR HIGHWAY ROAD POLLIVAKKAM CHATRAM",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:1544",
+   "name": "Vivekananda College of Education",
+   "place": null,
+   "address": "Vivekananda College of Education, No.82, Thiruvallur Road, Uthukottai(TK)- 602026.Thiruvallur(DT), Tamilnadu.",
+   "district": "Tiruvallur",
+   "type": "College of Education"
+  },
+  {
+   "id": "tndce:1546",
+   "name": "VIVEKANANDA VISION ARTS &SCIENCE COLLEGE",
+   "alt": [
+    "VIVEKANANDA VISION ARTS &SCIENCE COLLEGE KATCHUR VILLAGE"
+   ],
+   "place": "KATCHUR VILLAGE",
+   "address": "VIVEKANANDA VISION ARTS &SCIENCE COLLEGE, KATCHUR VILLAGE , SEETHANJERI POST, UTHUKOTTAI TALUK,TIRUVALLUR DISTRICT - 602026",
+   "district": "Tiruvallur",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1563",
+   "name": "Women’s Christian College",
+   "place": null,
+   "address": "Women’s Christian College, No.51, College Road, Nungambakkam",
+   "district": "Chennai",
+   "type": "Arts & Science Colleges"
+  },
+  {
+   "id": "tndce:1564",
+   "name": "Y.M.C.A. College of Physical Education",
+   "place": null,
+   "address": "Y.M.C.A. College of Physical Education, 497, Anna Salai, Nandanam, Chennai 600035.",
+   "district": "Chennai",
+   "type": "Physical Education"
+  }
+ ]
+}

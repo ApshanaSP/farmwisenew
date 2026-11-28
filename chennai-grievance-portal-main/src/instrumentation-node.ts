@@ -9,6 +9,8 @@ import { warmUp } from "@/lib/aws/store";
 import { assertSecrets } from "@/lib/secrets";
 import { startJobs } from "@/lib/scheduler";
 import "@/lib/collector/derive";
+// the search box's build step: its indexes, and every day of the reservoir figures kept for past-day searches (lib/search/hooks.ts)
+import "@/lib/search/hooks";
 
 // production stops here when JWT_SECRET (or the encryption key) is missing or weak, not on the first sign-in
 if (process.env.NEXT_PHASE !== "phase-production-build") assertSecrets();

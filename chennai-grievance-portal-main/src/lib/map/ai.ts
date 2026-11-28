@@ -175,7 +175,7 @@ const LAYER_HELP: Partial<Record<LayerId, string>> = {
   parks: "parks and playgrounds (children's play areas are playgrounds); kinds park, playground", water_tanks: "overhead water tanks", toilets: "public toilets", bus_stations: "bus stations and stands",
   gov_offices: "government offices, courts and town halls; kinds government_office, court, town_hall", pharmacies: "pharmacies and medical shops", fuel: "petrol bunks and fuel stations",
   markets: "markets", cemeteries: "cemeteries and crematoriums; kinds cemetery, crematorium", liquor: "TASMAC wine shops, bars and pubs (partial list); kinds wine_shop, bar, pub",
-  ration_shops: "ration (fair price, PDS) shops, found by name (partial list)", my_list: "the officer's own uploaded and approved list (\"my list\", \"the places on my list\", \"my places\"): take it like any facility layer"
+  ration_shops: "ration (fair price, PDS) shops, found by name (partial list)"
 };
 
 /**
@@ -230,7 +230,7 @@ function system(cats: string[], depts: string[], zones?: { zone: number; name: s
     "A question that measures licensed premises (wine shops, liquor shops, TASMAC, bars) from schools, colleges or places of worship is a rule check: take the premises, take the places, within of the premises near the places.",
     "Words for clustering (bunching up, piling up, concentrated, where most) ask for a hotspot; words for a rise by area (got worse, increased the most, jaasthi aagiruchu, adhigama aachu) ask for a change ranked by that area.",
     "language is en, ta (Tamil script) or tanglish (Tamil in Latin letters), as the question is written.",
-    "understood is false only when the text is not a question about incidents, places or facilities in Chennai (random letters, greetings, other topics); a loosely worded question that names a kind of incident, a layer, a place or the officer's list is understood.",
+    "understood is false only when the text is not a question about incidents, places or facilities in Chennai (random letters, greetings, other topics); a loosely worded question that names a kind of incident, a layer or a place is understood.",
     "intent says what kind of answer the question needs:",
     "- plan: a map answer from the steps (lists, counts, near, along, gaps, clusters, changes, rankings, speed). Most questions.",
     "- brief (only when the question names no kind of problem and asks for no list: accidents near Guindy, open complaints near Saidapet, complaints in Kilpauk this month, traffic problems in T Nagar, all complaints in ward 120 including closed, closed cases in zone 5 are plans: a list of the cases): what is happening in, at or near ONE area or named place (\"what is happening in Saidapet\", \"status of ward 120\", \"what happened near Marina Beach\", \"tell me about Adyar\"): the steps take incidents and one inside step with that area (a named place: its point, radius 1000 m).",

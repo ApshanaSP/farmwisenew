@@ -13,14 +13,14 @@ import fs from "fs";
 import path from "path";
 import { z } from "zod";
 import { RowDataPacket } from "mysql2";
-import { generateJson } from "@/lib/ai/gateway";
+import { generateJson, type ProviderName } from "@/lib/ai/gateway";
 import intelPool, { TITLE, ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
 import { OPEN_NOW, asOf, asOfNow, awaitingCheck, newsStories, periodWindow, type Period } from "@/lib/collector/intel";
 import { dayWords, periodLower } from "@/lib/period/day";
 import { isPastDeadline, pastDueSql, pctChange, unusualEnough } from "@/lib/reference/metrics";
 import { categories, tamilNames } from "@/lib/collector/nlp";
-import { numbersHold, when } from "@/lib/collector/analysis";
+import { numbersHold, strayNumbers, when } from "@/lib/collector/analysis";
 import type { PatternDetail } from "@/lib/collector/insights";
 import { orEmpty } from "@/lib/fallback";
 import { alertLane, type AlertLane } from "@/lib/collector/alerts";
@@ -42,23 +42,24 @@ const one = (s: unknown, max = 160) => String(s ?? "").replace(/\s+/g, " ").trim
 
 // ------------------------------------------------------------------- cache --
 
-const FILE = path.join(process.cwd(), "data", "aws-cache", "aibrief.json");
+// AIBRIEF_FILE moves it (a probe's own copy); under vitest it is memory only unless one is named, as storyai.ts does
+const FILE = process.env.AIBRIEF_FILE || (process.env.VITEST ? null : path.join(process.cwd(), "data", "aws-cache", "aibrief.json"));
 interface Stored { o: unknown; model: string; at: string }
 declare global {
   // eslint-disable-next-line no-var
-  var __aibrief: { cache: Map<string, Stored> | null; busy: Map<string, Promise<Stored | null>> } | undefined;
+  var __aibrief: { cache: Map<string, Stored> | null; busy: Map<string, Promise<Stored | null>>; /** v20: until when a write-up that failed rests */ miss?: Map<string, number> } | undefined;
 }
-const g = (global.__aibrief ??= { cache: null, busy: new Map() });
+const g: NonNullable<typeof global.__aibrief> = (global.__aibrief ??= { cache: null, busy: new Map() });
 function cache(): Map<string, Stored> {
   if (g.cache) return g.cache;
-  try { g.cache = new Map(Object.entries(JSON.parse(fs.readFileSync(FILE, "utf8")))); } catch { g.cache = new Map(); }
+  try { g.cache = new Map(FILE ? Object.entries(JSON.parse(fs.readFileSync(FILE, "utf8"))) : []); } catch { g.cache = new Map(); }
   return g.cache!;
 }
 function remember(key: string, s: Stored) {
   const c = cache();
   c.set(key, s);
   while (c.size > 1500) c.delete(c.keys().next().value!);
-  try { fs.mkdirSync(path.dirname(FILE), { recursive: true }); fs.writeFileSync(FILE, JSON.stringify(Object.fromEntries(c))); } catch { /* read-only disk */ }
+  if (FILE) try { fs.mkdirSync(path.dirname(FILE), { recursive: true }); fs.writeFileSync(FILE, JSON.stringify(Object.fromEntries(c))); } catch { /* read-only disk */ }
 }
 /** "02:04 PM", IST: when a write-up was made. */
 const stamp = () => new Date().toLocaleTimeString("en-US", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: true });
@@ -82,25 +83,38 @@ export async function aiJson<T>(c: {
   const key = keyOf(c.kind, c.facts);
   const hit = cache().get(key);
   if (hit) return hit as { o: T; model: string; at: string };
+  // v20: a write-up no model could give a moment ago is not asked for again on every poll of the page (minutes, not hours)
+  if ((g.miss?.get(key) ?? 0) > Date.now()) return null;
   if (g.busy.has(key)) return g.busy.get(key)! as Promise<{ o: T; model: string; at: string } | null>;
   const run = (async () => {
-    for (let k = 0; k < 2; k++) {
+    // v20: the second ask names the figures the first used that the facts do not give; when one provider got it wrong twice, the next writes the third
+    let prompt = c.facts, wrong = 0;
+    const skip: ProviderName[] = [];
+    const missed = (ms: number) => { (g.miss ??= new Map()).set(key, Date.now() + ms); while (g.miss.size > 500) g.miss.delete(g.miss.keys().next().value!); return null; };
+    for (let k = 0; k < 3; k++) {
       try {
         const r = await generateJson({ role: "fast", name: c.kind, schema: c.schema, system: c.system, temperature: k ? 0 : c.temperature ?? 0.2,
-          // background work: Gemini, never the chat's Groq allowance (pages show rule text until it is ready)
-          maxOutputTokens: c.maxOutputTokens ?? 1400, user: c.user, prefer: "gemini", background: true, timeoutMs: c.timeoutMs ?? 45_000,
-          prompt: k ? `${c.facts}\n\nYour last answer used a number that is not in these facts, or left out what was asked. Use only numbers from the facts.` : c.facts });
+          // background work: its own allowance, and the free models once Claude's share of the day is used (gateway.ts)
+          maxOutputTokens: c.maxOutputTokens ?? 1400, user: c.user, prefer: "gemini", background: true, timeoutMs: c.timeoutMs ?? 45_000, skip, prompt });
         const o = r.object as T;
-        if (!numbersHold(c.text(o), c.facts) || (c.ok && !c.ok(o))) continue;
+        const text = c.text(o);
+        const stray = numbersHold(text, c.facts) ? [] : strayNumbers(text, c.facts);
+        if (stray.length || (c.ok && !c.ok(o))) {
+          wrong++;
+          console.warn(`[aibrief] ${c.kind}: ${r.info.provider}/${r.info.model} ${stray.length ? `used figures the facts do not give (${stray.slice(0, 4).join(", ")})` : "left out what was asked"}; ${k < 2 ? "asking again" : "the page keeps its rules text"}`);
+          prompt = `${c.facts}\n\nYour last answer ${stray.length ? `used ${stray.slice(0, 6).join(", ")}, which the facts do not give` : "left out what was asked"}. Write it again using only numbers from the facts.`;
+          if (k === 1) skip.push(r.info.provider);
+          continue;
+        }
         const s: Stored = { o, model: r.info.model, at: stamp() };
         remember(key, s);
         return s;
       } catch (e) {
-        console.warn(`[aibrief] ${c.kind}: ${(e as Error).message.slice(0, 200)}`);
-        return null;
+        console.warn(`[aibrief] ${c.kind}: no AI answer (${(e as Error).message.slice(0, 200)}); the page keeps its rules text`);
+        return missed(wrong ? 10 * 60_000 : 2 * 60_000);
       }
     }
-    return null;
+    return missed(10 * 60_000);
   })().finally(() => g.busy.delete(key));
   g.busy.set(key, run);
   return run as Promise<{ o: T; model: string; at: string } | null>;

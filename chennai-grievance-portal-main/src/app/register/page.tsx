@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, FormEvent } from "react";
-import { AlertCircle, ArrowRight, Check, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
+import { AlertCircle, ArrowRight, Check, Loader2, ShieldCheck } from "lucide-react";
 import { motion } from "motion/react";
 import AuthShell from "@/components/AuthShell";
 import { authError, authLeave } from "@/components/auth/AuthCard";
+import PasswordInput from "@/components/auth/PasswordInput";
 import { checkPasswordRules, passwordStrengthScore } from "@/lib/validators";
 
 export default function RegisterPage() {
@@ -16,7 +17,6 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -73,7 +73,7 @@ export default function RegisterPage() {
         )}
 
         <form onSubmit={handleSubmit} noValidate className="mt-4 space-y-3.5">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-3 min-[400px]:grid-cols-2">
             <div>
               <label htmlFor="firstName" className="auth-label">First name</label>
               <input id="firstName" type="text" required autoComplete="given-name" className="auth-input" placeholder="Arjun"
@@ -92,30 +92,23 @@ export default function RegisterPage() {
               value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* each password field has one show / hide button of its own (Edge's eye is hidden for these: globals.css .pw-field) */}
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="password" className="auth-label">Password</label>
-              <div className="relative">
-                <input id="password" type={showPassword ? "text" : "password"} required autoComplete="new-password"
-                  className="auth-input pr-11" value={password} onChange={(e) => setPassword(e.target.value)} />
-                <button type="button" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-ink-subtle transition hover:text-navy-700">
-                  {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
-                </button>
-              </div>
+              <PasswordInput id="password" required autoComplete="new-password" className="auth-input"
+                value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             <div>
               <label htmlFor="confirmPassword" className="auth-label">Confirm password</label>
-              <div className="relative">
-                <input id="confirmPassword" type={showPassword ? "text" : "password"} required autoComplete="new-password"
-                  className={`auth-input pr-11 ${confirmPassword && !passwordsMatch ? "border-red-300" : ""}`}
-                  value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-                {passwordsMatch && (
-                  <span aria-hidden="true" className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-emerald-600">
-                    <Check className="h-[18px] w-[18px]" strokeWidth={3} />
-                  </span>
-                )}
-              </div>
+              <PasswordInput id="confirmPassword" required autoComplete="new-password" aria-describedby="confirm-note"
+                className={`auth-input ${confirmPassword && !passwordsMatch ? "border-red-300" : ""}`}
+                aria-invalid={confirmPassword && !passwordsMatch ? true : undefined}
+                value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+              {/* said in words under the field (it was a tick inside it, hidden from screen readers) */}
+              <p id="confirm-note" aria-live="polite" className={`mt-1 flex min-h-[18px] items-center gap-1 text-[12.5px] ${passwordsMatch ? "text-emerald-700" : "text-ink-subtle"}`}>
+                {passwordsMatch ? <><Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />Passwords match</> : confirmPassword ? "Passwords do not match yet" : ""}
+              </p>
             </div>
           </div>
 
@@ -157,6 +150,8 @@ function StrengthLine({ password }: { password: string }) {
   // four segments that fill as the rules pass and change colour: weak (red) -> fair (amber) -> strong (green)
   const filled = password ? Math.max(1, Math.round((rules.filter((r) => r.passed).length / rules.length) * 4)) : 0;
   const colour = score >= 100 ? "var(--ok)" : score >= 60 ? "var(--medium)" : "var(--critical)";
+  // the word in the text colours, which reach 4.5:1 (the fills are too light for small text: "Fair" was 2.9:1 on white)
+  const ink = score >= 100 ? "var(--ok-ink)" : score >= 60 ? "var(--medium-ink)" : "var(--critical-ink)";
   const word = !password ? "" : score >= 100 ? "Strong" : score >= 60 ? "Fair" : "Weak";
   const short: Record<string, string> = {
     "At least 8 characters": "8+ chars", "One uppercase letter": "A–Z", "One lowercase letter": "a–z",
@@ -173,11 +168,11 @@ function StrengthLine({ password }: { password: string }) {
             </span>
           ))}
         </div>
-        <span className="w-12 text-right text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: password ? colour : undefined }}>{word}</span>
+        <span className="w-12 text-right text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: password ? ink : undefined }}>{word}</span>
       </div>
       <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[12.5px]">
         {rules.map((r) => (
-          <span key={r.label} title={r.label} className={`inline-flex items-center gap-1 ${r.passed ? "text-emerald-600" : "text-ink-subtle"}`}>
+          <span key={r.label} title={r.label} className={`inline-flex items-center gap-1 ${r.passed ? "text-emerald-700" : "text-ink-subtle"}`}>
             <Check className={`h-3.5 w-3.5 ${r.passed ? "" : "opacity-30"}`} strokeWidth={3} aria-hidden="true" />
             {short[r.label] ?? r.label}
           </span>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  BASE_KEY, GIVE_UP_AFTER_MS, LAST_ZOOM, MAX_SHARP_MAPS, STYLE_URL, baseAsked, englishNames, forChennai, giveUpIn, imageryOptions, labelsOnly, namesFrom, planBasemap, prepareStyle, readBaseChoice,
-  saveBaseChoice, sharpRoom, styleSource, type PlanIn, type StyleDoc
+  BASE_KEY, GIVE_UP_AFTER_MS, GREEN_YELLOW, LAST_ZOOM, MAX_SHARP_MAPS, STYLE_URL, baseAsked, englishNames, forChennai, giveUpIn, greenYellow, imageryOptions, labelsOnly, namesFrom, planBasemap,
+  prepareStyle, readBaseChoice, saveBaseChoice, sharpRoom, styleSource, type PlanIn, type StyleDoc
 } from "./basemapPlan";
 
 const base: PlanIn = { kind: "map", theme: "light", webgl: true, failed: false, room: true, labels: false, quiet: false };
@@ -148,6 +148,38 @@ describe("the style changes", () => {
     prepareStyle(src, "labels", 13);
     prepareStyle(src, "liberty", 13);
     expect(JSON.stringify(src)).toBe(before);
+  });
+  it("(28 Nov) the default street map is green and yellow: residential areas soft yellow, parks, woods and grass clearer green", () => {
+    const s = style();
+    s.layers.push(
+      { id: "landuse_residential", type: "fill", source: "openmaptiles", maxzoom: 12, paint: { "fill-color": ["interpolate", ["linear"], ["zoom"], 9, "hsla(0,3%,85%,0.84)", 12, "hsla(35,57%,88%,0.49)"] } },
+      { id: "park", type: "fill", source: "openmaptiles", paint: { "fill-color": "#d8e8c8", "fill-opacity": 0.7 } },
+      { id: "landcover_wood", type: "fill", source: "openmaptiles", paint: { "fill-color": "hsla(98,61%,72%,0.7)", "fill-opacity": 0.4 } },
+      { id: "water", type: "fill", source: "openmaptiles", paint: { "fill-color": "rgb(158,189,255)" } });
+    const before = JSON.stringify(s);
+    const out = greenYellow(s);
+    const paint = (id: string) => out.layers.find((l) => l.id === id)!.paint!;
+    // no grey left over the district's homes: a yellow hue at every zoom it shows
+    const res = JSON.stringify(paint("landuse_residential")["fill-color"]);
+    expect(res).not.toContain("hsla(0,3%,85%");
+    for (const h of res.match(/hsla\((\d+),/g) ?? []) expect(Number(h.slice(5, -1))).toBeGreaterThanOrEqual(40);
+    expect(paint("park")).toEqual(GREEN_YELLOW.park);
+    expect(Number(paint("landcover_wood")["fill-opacity"])).toBeGreaterThan(0.4);
+    // water, roads and names are Liberty's own; the cached source is never changed
+    expect(paint("water")).toEqual({ "fill-color": "rgb(158,189,255)" });
+    expect(out.layers.find((l) => l.id === "road_minor")).toEqual(s.layers.find((l) => l.id === "road_minor"));
+    expect(JSON.stringify(s)).toBe(before);
+  });
+  it("(28 Nov) only the light street map takes those colours: the night map, the quiet grey map and the names over the imagery do not", () => {
+    const s = style();
+    s.layers.push({ id: "park", type: "fill", source: "openmaptiles", paint: { "fill-color": "#d8e8c8", "fill-opacity": 0.7 } });
+    const park = (v: Parameters<typeof prepareStyle>[1]) => prepareStyle(s, v).layers.find((l) => l.id === "park")?.paint;
+    expect(park("liberty")).toEqual(GREEN_YELLOW.park);
+    expect(park("positron")).toEqual({ "fill-color": "#d8e8c8", "fill-opacity": 0.7 });
+    expect(park("dark")).toEqual({ "fill-color": "#d8e8c8", "fill-opacity": 0.7 });
+    expect(park("labels")).toBeUndefined();
+    // and it is every map's first picture in the light theme (the Overview, Ask the Map, Rain & flooding, the officer's map, the citizen's pickers)
+    expect(planBasemap(base).vector).toBe("liberty");
   });
   it("makes the imagery names from the light street style, each other picture from its own", () => {
     expect(styleSource("labels")).toBe("liberty");

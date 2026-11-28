@@ -84,6 +84,8 @@ function closedWhere(s: WinScope, w: Pick<Win, "from" | "to" | "rolling" | "part
 
 export interface WinIncidents {
   n: number; prev: number; severe: number; prevSevere: number; open: number; overdue: number; resolved: number; dead: number; injured: number; complaints: number; rain: number;
+  /** 28 Nov: how many of them each kind of record holds (an incident joins several): citizen complaints, police reports, PWD and hospital records, the news */
+  from?: { citizens: number; police: number; pwd: number; hospital: number; news: number };
   kinds: { cat: string; label: string; n: number; prev: number; severe: number; open: number }[];
   zones: { zone: number; name: string; n: number; prev: number; severe: number; open: number; overdue: number }[];
   depts: { code: string; name: string; n: number; open: number; overdue: number; severe: number }[];
@@ -111,7 +113,10 @@ export async function winIncidents(w: Win, s: WinScope, nTop = 8): Promise<WinIn
     q(`SELECT COUNT(*) AS n, COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe, COALESCE(SUM(${OPEN}), 0) AS open,
          COALESCE(SUM(${OPEN} = 1 AND ${pastDueSql(now)}), 0) AS overdue,
          COALESCE(SUM(i.dead), 0) AS dead, COALESCE(SUM(i.injured), 0) AS injured, COALESCE(SUM(CASE WHEN ${OPEN} = 1 THEN COALESCE(i.citizen_complaints, 0) ELSE 0 END), 0) AS complaints,
-         COALESCE(SUM(i.rain_coupled = 1), 0) AS rain FROM incidents i WHERE ${cur.sql}`, cur.params),
+         COALESCE(SUM(i.rain_coupled = 1), 0) AS rain,
+         COALESCE(SUM(COALESCE(i.citizen_complaints, 0) > 0), 0) AS f_citizens, COALESCE(SUM(COALESCE(i.police_reports, 0) > 0), 0) AS f_police,
+         COALESCE(SUM(LOWER(COALESCE(i.sources, '')) LIKE '%pwd%'), 0) AS f_pwd, COALESCE(SUM(LOWER(COALESCE(i.sources, '')) LIKE '%hospital%'), 0) AS f_hospital,
+         COALESCE(SUM(COALESCE(i.outlet_count, 0) > 0), 0) AS f_news FROM incidents i WHERE ${cur.sql}`, cur.params),
     q(`SELECT COUNT(*) AS n, COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe FROM incidents i WHERE ${pre.sql}`, pre.params),
     q(`SELECT i.category_code AS cat, MIN(i.category_label) AS label, COUNT(*) AS n, COALESCE(SUM(i.severity_level = 'Severe'), 0) AS severe, COALESCE(SUM(${OPEN}), 0) AS open
        FROM incidents i WHERE ${cur.sql} GROUP BY i.category_code ORDER BY n DESC LIMIT 12`, cur.params),
@@ -144,6 +149,7 @@ export async function winIncidents(w: Win, s: WinScope, nTop = 8): Promise<WinIn
   return {
     n: n(t?.n), prev: n(tp?.n), severe: n(t?.severe), prevSevere: n(tp?.severe), open: n(t?.open), overdue: n(t?.overdue), resolved: n(closed?.resolved),
     dead: n(t?.dead), injured: n(t?.injured), complaints: n(t?.complaints), rain: n(t?.rain),
+    from: { citizens: n(t?.f_citizens), police: n(t?.f_police), pwd: n(t?.f_pwd), hospital: n(t?.f_hospital), news: n(t?.f_news) },
     kinds: kinds.map((r) => ({ cat: String(r.cat), label: String(r.label ?? r.cat), n: n(r.n), prev: kp.get(String(r.cat)) ?? 0, severe: n(r.severe), open: n(r.open) })),
     zones: zones.map((r) => ({ zone: n(r.zone), name: String(r.name ?? `Zone ${r.zone}`), n: n(r.n), prev: zp.get(n(r.zone)) ?? 0, severe: n(r.severe), open: n(r.open), overdue: n(r.overdue) })),
     depts: depts.map((r) => ({ code: String(r.code), name: String(r.name ?? r.code), n: n(r.n), open: n(r.open), overdue: n(r.overdue), severe: n(r.severe) })),

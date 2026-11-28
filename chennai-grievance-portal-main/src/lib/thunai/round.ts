@@ -92,6 +92,7 @@ import { cityAsk, lastCitySlotsOf, refersToMap } from "@/lib/city/intent";
 import type { BrainUser } from "@/lib/brain/types";
 import { figs as figuresOfLine } from "@/lib/brain/render";
 import type { BrainFn } from "./brainturn";
+import { boardAsk, boardSlots } from "./board";
 import { scopeOf, type ScopeTopic } from "@/lib/topicguard/scope";
 import { offTopicReply } from "@/lib/topicguard/reply";
 
@@ -1003,7 +1004,8 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
       let r: AgentResult = got.result;
       // one of the console's own live screens asked for by name: built as it always is, with the brain's words
       const sc = got.out.screen;
-      if (sc && (RECIPES as readonly string[]).includes(sc.recipe)) {
+      // (28 Nov: a dashboard the board tool built comes with its screen already, the brain's words on top: brainturn.ts withAiSummary)
+      if (sc && !sc.doc && (RECIPES as readonly string[]).includes(sc.recipe)) {
         const s = await screenFrom(sc.recipe as Recipe, sc.slots, lang === "ta" ? "திரையைத் திறக்கிறேன்" : "Opening the screen").catch(() => null);
         if (s?.kind === "do" && s.stage) { const said = r.say ?? r.reply ?? s.say ?? ""; r = { ...s, lang: r.lang, steps: r.steps, say: said, model: r.model, note: "brain", stage: { ...s.stage, voice: { by: "aide7", model: r.model, figures: figuresOfLine(said).slice(0, 200) } } }; }
       }
@@ -1039,6 +1041,16 @@ async function roundOnce(b: RoundBodyT, world: World, rawHands: Hands, user: str
   }
   if (route.lane === "refuse") return out(plainReply("refuse", lang, route.why === "privacy" ? PRIVACY_REPLY[lang] : NEVER_REPLY[lang], t0, route.why), "refuse");
   if (outOfScope) return out(declined(lang, t0, scope?.topic ?? null), "offtopic");
+  // 28 Nov (board.ts): a dashboard asked for in so many words ("compare Anna Nagar and Adyar", "a comparative dashboard of A and B for severe
+  // incidents", "the overall summary of Royapuram", "weekly report for Anna Nagar") is that dashboard, built by code with no model, when the
+  // brain did not answer (Claude off, busy or out of time); the lanes below read it as a smaller screen or a console move
+  if (b.round === 0 && hands.win && !b.direct) {
+    const ba = boardAsk(b.text, world);
+    if (ba) {
+      const r = await screenFrom(ba.recipe, boardSlots(ba), lang === "ta" ? "டாஷ்போர்டு தயாராகிறது" : "Building the dashboard").catch(() => null);
+      if (r?.kind === "do" && r.stage && !r.stage.blocks.some((x) => x.kind === "Note" && x.id === "err")) return out({ ...r, note: `board:${ba.why}` }, "board");
+    }
+  }
 
   // v12 (21 Nov): whether Claude can lead the planner's ladder, worked out once and before anything is read for it (report first-question RC3:
   // the v11 snapshot was read, and its 11 parts refreshed, on every planner turn while Claude was off and it could never be attached).

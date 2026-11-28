@@ -21,7 +21,8 @@ export type StageChartSpec =
   | { type: "bars"; labels: string[]; values: number[]; keys: string[]; unit: string | null; horizontal: boolean; highlight: string | null }
   | { type: "donut"; labels: string[]; values: number[]; unit: string | null }
   | { type: "trend"; labels: string[]; values: number[]; unit: string; marks: { i: number; why: string }[]; normal: { lo: number; hi: number } | null }
-  | { type: "group"; categories: string[]; series: { name: string; values: number[] }[]; unit: string | null }
+  /** `horizontal` (28 Nov): a comparison's kinds or departments, the names down the side so long ones stay readable at any width */
+  | { type: "group"; categories: string[]; series: { name: string; values: number[] }[]; unit: string | null; horizontal?: boolean }
   | { type: "lines"; labels: string[]; series: { name: string; values: number[] }[]; unit: string | null }
   /** one measure over its labels, drawn as a line (a Chart block's "line": it was drawn as bars, v4 defect 9) */
   | { type: "line"; labels: string[]; values: number[]; unit: string | null };
@@ -87,6 +88,15 @@ export function option(s: StageChartSpec, ink: Ink, title: string, reduce: boole
       series: [{ type: "line", data: s.values, smooth: false, symbol: "circle", symbolSize: 6, lineStyle: { width: 2, color: series[0] },
         itemStyle: { color: series[0], borderColor: ink.surface, borderWidth: 2 },
         label: { show: s.values.length <= 16, position: "top", color: ink.text, fontSize: 11, fontWeight: 600, formatter: (x: { value: number }) => fmt(x.value) } }] };
+  }
+  if (s.type === "group" && s.horizontal) {
+    const cat = { type: "category" as const, data: s.categories, inverse: true, axisTick: { show: false }, axisLine: { lineStyle: { color: ink.axis } }, axisLabel: { ...axisLabel, interval: 0, width: 130, overflow: "truncate" as const } };
+    return { ...base, tooltip: { ...tip, trigger: "axis", axisPointer: { type: "shadow" }, valueFormatter: (v: number) => `${fmt(v)}${s.unit ? ` ${s.unit}` : ""}` },
+      legend: { top: 0, left: 0, icon: "roundRect", itemWidth: 10, itemHeight: 10, textStyle: { color: ink.text2, fontSize: 11.5 } },
+      grid: { left: 4, right: 30, top: 28, bottom: 4, containLabel: true },
+      xAxis: { ...valAxis, axisLabel: { show: false } }, yAxis: cat,
+      series: s.series.map((x, i) => ({ type: "bar", name: x.name, data: x.values, barMaxWidth: 12, barGap: "15%", itemStyle: { color: series[i % series.length], borderRadius: [0, 4, 4, 0] },
+        label: { show: true, position: "right", color: ink.text, fontSize: 11, fontWeight: 600, formatter: (p: { value: number }) => (p.value ? fmt(p.value) : "") } })) };
   }
   if (s.type === "group") {
     return { ...base, tooltip: { ...tip, trigger: "axis", axisPointer: { type: "shadow" } },

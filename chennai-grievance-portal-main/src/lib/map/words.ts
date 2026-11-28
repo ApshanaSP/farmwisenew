@@ -78,15 +78,14 @@ export const LAYER_WORD: Record<LayerId, { en: string; one: string; ta: string; 
   markets: { en: "markets", one: "market", ta: "சந்தைகள்", ta_one: "சந்தை", letter: "Mk", shape: "square" },
   cemeteries: { en: "cemeteries and crematoriums", one: "cemetery or crematorium", ta: "இடுகாடுகள், மயானங்கள்", ta_one: "இடுகாடு / மயானம்", letter: "+", shape: "circle" },
   liquor: { en: "wine shops and bars", one: "wine shop or bar", ta: "மதுக்கடைகள்", ta_one: "மதுக்கடை", letter: "L", shape: "diamond" },
-  ration_shops: { en: "ration shops", one: "ration shop", ta: "நியாய விலைக் கடைகள்", ta_one: "நியாய விலைக் கடை", letter: "PD", shape: "square" },
-  my_list: { en: "places on your list", one: "place on your list", ta: "உங்கள் பட்டியலிலுள்ள இடங்கள்", ta_one: "உங்கள் பட்டியலிலுள்ள இடம்", letter: "★", shape: "circle" }
+  ration_shops: { en: "ration shops", one: "ration shop", ta: "நியாய விலைக் கடைகள்", ta_one: "நியாய விலைக் கடை", letter: "PD", shape: "square" }
 };
 
 /** Each layer's colour on the map (the Layers menu's dots, the legend, an overlay's points): one table for all three. */
 export const LAYER_COL: Partial<Record<LayerId, string>> = {
   schools: "#F59E0B", colleges: "#A855F7", hospitals: "#EF4444", fire_stations: "#F97316", police: "#3B82F6", rail_metro: "#14B8A6", lakes_store: "#60A5FA", gauges: "#22C55E",
   banks: "#0EA5E9", atms: "#38BDF8", worship: "#8B5CF6", parks: "#22C55E", water_tanks: "#06B6D4", toilets: "#94A3B8", bus_stations: "#F472B6", gov_offices: "#6366F1",
-  pharmacies: "#F43F5E", fuel: "#EAB308", markets: "#FB923C", cemeteries: "#64748B", liquor: "#DC2626", ration_shops: "#84CC16", my_list: "#FACC15"
+  pharmacies: "#F43F5E", fuel: "#EAB308", markets: "#FB923C", cemeteries: "#64748B", liquor: "#DC2626", ration_shops: "#84CC16"
 };
 
 /** What a layer's kinds are called ("courts", "playgrounds", "crematoriums"): the answer names the kind when a question asks for one. */

@@ -32,6 +32,7 @@ import { scorecard, scorecardWard, timelineOf, type Scorecard, type Timeline } f
 import { categoryWords } from "@/lib/collector/nlp";
 import { isTanglishWord } from "@/lib/assistant/lang";
 import { followUps } from "./followups";
+import { placeList, type PlacePoint, type PlacesExtra } from "./placelist";
 import { world } from "./world";
 import { NEWS_PIN_LEVEL, type LayerId, type NewsDoc, type World } from "./types";
 import { LAYER_WORD, periodWords, zoneTa, type Lang } from "./words";
@@ -94,7 +95,9 @@ export interface AskResponse {
   /** exact places beyond the 5,000 the map draws (counted in the headline and by ward, not drawn) */
   hidden: number;
   context: {
-    points: { id: string; layer: LayerId; name: string | null; name_ta: string | null; lat: number; lon: number; kind: string; government: boolean }[];
+    /** 28 Nov 2026: a list of places ("schools in Valasaravakkam") also carries each one's ward, neighbourhood, distance and official match (placelist.ts) */
+    points: ({ id: string; layer: LayerId; name: string | null; name_ta: string | null; lat: number; lon: number; kind: string; government: boolean }
+      & Partial<Pick<PlacePoint, "ward" | "place" | "place_ta" | "dist" | "official" | "in_district">>)[];
     lines: { id: string; name: string; name_ta: string | null; meters: number; path: Pair[][] }[];
     polys: { id: string; name: string | null; polys: Pair[][][] }[];
     areas: { key: string; ref: AreaRef; en: string; ta: string; circle: { lat: number; lon: number; r: number } | null }[];
@@ -123,6 +126,8 @@ export interface AskResponse {
     groupsBy?: "ward" | "zone" | "taluk" | "hex500" | "near" | "category" | "dept";
     rank?: { by: "ward" | "zone" | "taluk"; order: "rise" | "fall"; nowLabel: { en: string; ta: string }; beforeLabel: { en: string; ta: string };
       rows: { key: string; label: string; label_ta: string; lat: number; lon: number; now: number; before: number; delta: number; pct: number | null; ids: string[] }[] };
+    /** 28 Nov 2026: a list of places, every one named (context.points, in this order): how many, the order, the official lists (placelist.ts) */
+    places?: PlacesExtra;
     /** a rule check: each place kept and the place it is too close to */
     pairs?: { meters: number; items: { id: string; layer: LayerId; name: string | null; name_ta: string | null; kind: string; lat: number; lon: number;
       near: { id: string; layer: LayerId; name: string | null; name_ta: string | null; m: number; lat: number; lon: number } }[] };
@@ -903,7 +908,11 @@ function fill(out: AskResponse, plan: Plan, r: RunResult, answer: Answer, w: Wor
   if (plan.steps.some((s) => s.op === "take" && s.filter?.news)) out.news = newsFor(w, hits.map((h) => h.inc.id));
 
   // context layers: only the facilities that matter to the answer
-  out.context.points = r.context.points.slice(0, 400).map((p) => ({ id: p.id, layer: p.layer, name: p.name, name_ta: p.name_ta, lat: p.lat, lon: p.lon, kind: p.kind, government: !!p.government }));
+  // a list of places ("list the schools in Valasaravakkam"): every one of them, named, in order, up to PLACE_CAP; any other answer: the places it used
+  const listed = placeList(plan, r, w, ctx);
+  out.context.points = listed ? listed.points
+    : r.context.points.slice(0, 400).map((p) => ({ id: p.id, layer: p.layer, name: p.name, name_ta: p.name_ta, lat: p.lat, lon: p.lon, kind: p.kind, government: !!p.government }));
+  if (listed) out.extra.places = listed.extra;
   out.context.lines = r.context.lines.map((l) => ({ id: l.feat.id, name: l.feat.name, name_ta: l.feat.name_ta, meters: l.meters, path: l.feat.lines }));
   out.context.polys = r.context.polys.slice(0, 200).map((p) => ({ id: p.id, name: p.name, polys: p.polys }));
   out.context.areas = r.context.areas.map((a) => {

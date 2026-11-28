@@ -14,6 +14,9 @@ import type { ImpactData, ImpactItem, ImpactReport, Lens } from "@/lib/rehearsal
 import type { PastRain } from "@/lib/rehearsal/types";
 import type { RainApi, RainLayer } from "./rainLayer";
 import { fmtT, n0, plural, RainDots, range } from "./rainKit";
+// the action tracker: take action on a place a rain hit, follow it, and see whether it held in the next rain (FixTracker.tsx)
+import { BulkFix, FixBox, FixPill, FixSummary, type Fixes } from "./FixTracker";
+import { impactDefault } from "@/lib/rehearsal/tracker";
 
 export const LENS_WORD: Record<Lens, { title: string; icon: IconName; item: string; items: string; often: string; inRain: (n: number, of: number) => string }> = {
   traffic: { title: "Traffic", icon: "flow", item: "road", items: "Roads", often: "Traffic jammed here", inRain: (n) => `${plural(n, "road")} jammed` },
@@ -23,7 +26,7 @@ export const LENS_WORD: Record<Lens, { title: string; icon: IconName; item: stri
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string);
 const SOURCE_WORD: Record<ImpactReport["source"], string> = { police: "Police report", citizen: "Citizen complaint", news: "News", flood: "Flood record" };
 
-export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, onOpenIncident, escRef, data: given, onLive }: {
+export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, onOpenIncident, escRef, data: given, onLive, fx }: {
   lens: Lens;
   api: RainApi;
   /** the rains, newest first (the same as Flooding's) */
@@ -38,6 +41,8 @@ export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, 
   data: ImpactData | null;
   /** opens the live Traffic view (the Traffic tab's link) */
   onLive?: () => void;
+  /** the action tracker (RainView reads it once for all four tabs) */
+  fx?: Fixes;
 }) {
   const w = LENS_WORD[lens];
   const [d, setD] = useState<ImpactData | null>(given);
@@ -131,6 +136,10 @@ export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, 
   if (x) {
     const now = rain ? x.byRain[rain.id] : null;
     const reps = d.reports.filter((r) => r.item === x.key && (!rain || r.rain === rain.id)).sort((a, b) => b.at.localeCompare(a.at));
+    // the rain to act on: the chosen rain when it hit the place, else the latest one that did
+    const causeId = rain && x.byRain[rain.id] ? rain.id : [...x.rains].reverse().find((id) => rains.some((r) => r.id === id)) ?? null;
+    const causeR = causeId ? rains.find((r) => r.id === causeId) ?? null : null;
+    const fixDef = causeR ? impactDefault(lens, x, x.byRain[causeR.id]?.why ?? null, range(causeR)) : null;
     return (
       <>
         <button className="rv-back" onClick={() => setPick(null)}><I n="chevl" />Back to {rain ? `the ${range(rain)} rain` : "all rains"}</button>
@@ -160,6 +169,7 @@ export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, 
             </ul>
           )}
           <ul className="rv-facts">{x.facts.map((f) => <li key={f}>{f}</li>)}</ul>
+          <FixBox fx={fx} lens={lens} place={x.key} rainId={causeId} def={fixDef} />
           {x.jobs.length > 0 && <section className="rv-act"><h4><I n="tasks" />Before the next heavy rain</h4>
             <ul className="rv-jobs">{x.jobs.map((j) => <li key={j.en}><small>{j.who}</small>{j.en}</li>)}</ul></section>}
           {reps.length > 0 && <Sources lens={lens} list={reps} onOpenIncident={onOpenIncident} />}
@@ -191,7 +201,7 @@ export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, 
         <div className="rv-rh">
           <h3>{range(rain)} rain · {w.title}</h3>
           <div className="rv-chips">
-            {rain.maxMm != null && <span><I n="drop" />{Math.round(rain.maxMm)} mm at the wettest gauge</span>}
+            <RainChip r={rain} />
             <span><I n={w.icon} />{w.inRain(hit.length, items.length)}</span>
           </div>
         </div>
@@ -207,10 +217,13 @@ export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, 
             </ul>
           </>
         )}
+        <BulkFix fx={fx} lens={lens} rainId={rain.id} places={hit.map((y) => ({ place: y.key, label: y.label, ...impactDefault(lens, y, y.byRain[rain.id]?.why ?? null, range(rain)),
+          // the zone's name from the item's own line ("Ward 12 · Teynampet"); metro lines and places outside the wards keep their own word
+          area: y.sub?.includes(" · ") ? y.sub.split(" · ").slice(1).join(" · ") : lens === "metro" ? "Metro and rail lines" : (y.sub || "Outside the Corporation's wards") }))} />
         {hit.length > 0 && (
           <>
             <h4 className="rv-sec">{w.items} hit in this rain <small>{n0(hit.length)} · what happened at each</small></h4>
-            <ItemList list={shown} rains={oldestFirst} rainId={rain.id} onPick={setPick} />
+            <ItemList list={shown} rains={oldestFirst} rainId={rain.id} onPick={setPick} fx={fx} lens={lens} />
             {hit.length > 8 && <button className="rv-more" onClick={() => setAll((v) => !v)}>{all ? "Show fewer" : `Show all ${n0(hit.length)}`}</button>}
           </>
         )}
@@ -225,6 +238,7 @@ export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, 
     <>
       <section className="rv-kpis">{d.kpis.map((k) => <div key={k.label}><b>{k.n}</b><span>{k.label}</span></div>)}</section>
       {d.insights.length > 0 && <p className="rv-insight"><I n="bulb" /><span>{d.insights.map((s) => <span key={s} style={{ display: "block" }}>{s}</span>)}</span></p>}
+      <FixSummary fx={fx} lens={lens} onOpen={(f) => { if (itemBy.has(f.place)) setPick(f.place); }} />
       {lens === "traffic" && onLive && (
         <button className="rv-livelink" onClick={onLive}><span className="dot" /><span><b>Live traffic now</b><small>Jams, closed and flooded roads at this moment, and who to send them to</small></span><I n="chevr" /></button>
       )}
@@ -232,7 +246,7 @@ export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, 
       <ul className="rv-rains">
         {rains.map((r) => (
           <li key={r.id}><button onClick={() => onRain(r.id)}>
-            <span className="rv-date"><b>{range(r)}</b><small>{r.maxMm != null ? `${Math.round(r.maxMm)} mm` : "IMD heavy rain day"}</small></span>
+            <span className="rv-date"><b>{range(r)}</b><small>{rainWords(r)}</small></span>
             <span className="rv-mid"><span className="rv-bar"><i style={{ width: `${Math.max(3, (100 * hitOf(r.id)) / maxHit)}%` }} /></span>
               <small>{w.inRain(hitOf(r.id), items.length)}</small></span>
             <I n="chevr" />
@@ -242,7 +256,7 @@ export default function ImpactView({ lens, api, rains, rainId, onRain, onLayer, 
       {top.length > 0 && (
         <>
           <h4 className="rv-sec">{lens === "metro" ? "The lines" : `${w.items} hit in the most rains`} <small>click one for what happened there</small></h4>
-          <ItemList list={top} rains={oldestFirst} onPick={setPick} />
+          <ItemList list={top} rains={oldestFirst} onPick={setPick} fx={fx} lens={lens} />
         </>
       )}
       {lens === "traffic" && (
@@ -279,7 +293,7 @@ function rainSentence(lens: Lens, hit: ImpactItem[], id: string, zones: string[]
   return <>Trains ran late on <b>{hit.length} of {lines} lines</b>{mins.length ? <>, about <b>{Math.round(mins.reduce((a, b) => a + b, 0) / mins.length)} min</b> on average</> : null}{closed ? <>; <b>{plural(closed, "station")}</b> closed</> : null}.</>;
 }
 
-function ItemList({ list, rains, rainId = null, onPick }: { list: ImpactItem[]; rains: PastRain[]; rainId?: string | null; onPick: (key: string) => void }) {
+function ItemList({ list, rains, rainId = null, onPick, fx, lens }: { list: ImpactItem[]; rains: PastRain[]; rainId?: string | null; onPick: (key: string) => void; fx?: Fixes; lens: Lens }) {
   return (
     <ul className="rv-streets">
       {list.map((x) => (
@@ -288,7 +302,7 @@ function ItemList({ list, rains, rainId = null, onPick }: { list: ImpactItem[]; 
             <b>{x.color && <i className="rv-sw" style={{ background: x.color }} />}{x.label}</b>
             <small className={rainId ? `why lv-${x.byRain[rainId]?.level ?? 0}` : ""}>{rainId ? x.byRain[rainId]?.why : x.kind === "line" ? x.facts[0] ?? x.sub : x.sub}</small>
           </span>
-          <span className="rv-often-s"><RainDots rains={rains} on={(r) => !!x.byRain[r.id]} now={rainId} /><em>{x.rains.length} of {rains.length}</em></span>
+          <span className="rv-often-s"><RainDots rains={rains} on={(r) => !!x.byRain[r.id]} now={rainId} /><em>{x.rains.length} of {rains.length}</em><FixPill fx={fx} lens={lens} place={x.key} /></span>
         </button></li>
       ))}
     </ul>
@@ -317,4 +331,23 @@ function Sources({ lens, list, onOpenIncident }: { lens: Lens; list: ImpactRepor
       {list.length > 6 && <button className="rv-more" onClick={() => setMore((v) => !v)}>{more ? "Show fewer" : `Show all ${n0(list.length)}`}</button>}
     </details>
   );
+}
+
+/**
+ * The rain's amount as the Flooding tab gives it: the CFM-DSS gauges' district average (rains from the rains API carry it as `rain`),
+ * so every tab shows the same figure. IMD's figure is only a fallback, and then named as an IMD station's.
+ */
+type Gauged = PastRain & { rain?: { mean: number | null; few?: boolean; dry?: boolean; gauges: number; wettest: { name: string; mm: number } | null } | null };
+function rainWords(r: PastRain): string {
+  const g = (r as Gauged).rain;
+  if (g?.dry) return `Little rain at the gauges (${Math.round(g.mean ?? 0)} mm)`;
+  if (g?.mean != null) return `${Math.round(g.mean)} mm average`;
+  if (g?.few) return `Only ${g.gauges} gauges reported`;
+  return r.maxMm != null ? `${Math.round(r.maxMm)} mm (IMD station)` : "IMD heavy rain day";
+}
+function RainChip({ r }: { r: PastRain }) {
+  const g = (r as Gauged).rain;
+  if (g?.mean != null) return <><span title={`District average from ${g.gauges} CFM-DSS rain gauges`}><I n="drop" />{Math.round(g.mean)} mm average</span>
+    {g.wettest && <span><I n="drop" />{Math.round(g.wettest.mm)} mm at {g.wettest.name}</span>}</>;
+  return r.maxMm != null ? <span><I n="drop" />{Math.round(r.maxMm)} mm at the wettest IMD station</span> : null;
 }

@@ -8,7 +8,7 @@ import { figs, stageOf } from "@/lib/brain/render";
 import type { BrainUser } from "@/lib/brain/types";
 import type { AgentResult, StageOp } from "./agent";
 import type { RoundBodyT } from "./round";
-import type { StageDocT } from "./stage";
+import { MAX_BLOCKS, checkStage, type BlockT, type StageDocT } from "./stage";
 import type { Lang, Step, World } from "./types";
 
 export interface BrainTurnIn {
@@ -35,6 +35,27 @@ export const brainTurn: BrainFn = async (i) => {
   return { result: resultOf(o, b, i.world), out: o };
 };
 
+/**
+ * 28 Nov (the owner: "the dashboard should be created with the AI summary plus the visualization"): a dashboard built by code with the brain's
+ * checked words above it, its points under them for a comparison (a summary keeps its own key points), said in the turn's language. Null when
+ * the result does not fit a screen (the answer is then drawn the usual way).
+ */
+export function withAiSummary(doc: StageDocT, say: string, points: string[], lang: Lang, model: string | null): StageDocT | null {
+  if (!say.trim()) return null;
+  const L = (en: string, ta: string) => (lang === "ta" ? ta : en);
+  const clip = (t: string, n: number) => (t.length > n ? `${t.slice(0, n - 1)}…` : t);
+  const ai: BlockT = { kind: "Answer", id: "ai", title: L("AI summary", "AI சுருக்கம்"), text: clip(say, 2390), facts: [],
+    about: L("Written by AI from the figures on this dashboard; every figure in it was checked against them.", "இந்தத் திரையின் எண்களிலிருந்து AI எழுதியது; ஒவ்வொரு எண்ணும் சரிபார்க்கப்பட்டது.") };
+  const extra: BlockT[] = doc.recipe === "compare" && points.length ? [{ kind: "Brief", id: "ai-points", title: L("Key differences", "முக்கிய வேறுபாடுகள்"), points: points.slice(0, 8).map((t) => ({ text: clip(t, 395), ...(lang === "ta" ? { ta: clip(t, 395) } : {}), incidentId: null })) }] : [];
+  const rest = doc.blocks.filter((b) => b.id !== "ai" && b.id !== "ai-points");
+  // (the comparison's table first, then the differences; a summary's tiles stay right under the words)
+  const blocks = doc.recipe === "compare" ? [ai, ...rest.slice(0, 1), ...extra, ...rest.slice(1)] : [ai, ...rest];
+  const next: StageDocT = { ...doc, blocks: blocks.slice(0, MAX_BLOCKS), say: { ...doc.say, [lang]: clip(say, lang === "ta" ? 2390 : 1590) }, lang: doc.lang ?? lang,
+    voice: { by: "aide7", model, figures: [...new Set([...(doc.voice?.figures ?? []), ...figs(say), ...points.flatMap(figs)])].slice(0, 200) } };
+  const ok = checkStage(next);
+  return ok.ok ? ok.doc : null;
+}
+
 /** the answer in the console's own shape */
 export function resultOf(o: BrainOut, b: Pick<RoundBodyT, "text" | "state">, w: World): AgentResult {
   const a = o.answer, lang = a.lang, r = base(lang, o);
@@ -45,6 +66,12 @@ export function resultOf(o: BrainOut, b: Pick<RoundBodyT, "text" | "state">, w: 
   if (a.kind === "refuse") return { ...r, kind: "refuse", reply: a.say };
   const steps = o.steps as unknown as Step[];
   const stageOp = o.stageOp ? ({ op: o.stageOp.op, n: o.stageOp.n, text: o.stageOp.text } as StageOp) : null;
+  // 28 Nov: a dashboard (the board tool): the dashboard itself, with the brain's checked words on top as its AI summary
+  const board = o.screen?.doc;
+  if (board && a.kind === "answer") {
+    const stage = withAiSummary(board, say, a.points, lang, o.model);
+    if (stage) return { ...r, steps, stage, say, stageOp };
+  }
   const read = o.evidence.some((e) => !["console", "open_screen_action", "screen", "workspace"].includes(e.tool));
   if (!read && (steps.length || stageOp)) return { ...r, steps, stageOp, reply: say, say: null };
   if (a.kind === "chat" || (!read && !a.points.length && !a.show.length)) return { ...r, kind: "chat", reply: say };

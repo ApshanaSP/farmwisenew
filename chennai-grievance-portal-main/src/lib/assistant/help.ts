@@ -47,7 +47,7 @@ export const HELP_TOPICS: { id: string; match: RegExp; text: string }[] = [
   {
     id: "kolathur",
     match: /kolathur|கொளத்தூர்/i,
-    text: "Kolathur: an official revenue taluk that the police and PWD sources do not code; only one ward maps to it by majority vote, so taluk-level counts for Kolathur are incomplete. Kolathur is also a locality in Ayanavaram taluk (ward 64, Thiru-Vi-Ka Nagar zone)."
+    text: "Kolathur: an official revenue taluk formed in 2024 from Ayanavaram taluk (revenue villages Kolathur, Peravallur and Siruvallur, per the Chennai Collectorate). Each ward's taluk comes from the official revenue village boundaries (TNGIS, checked against the Collectorate's village list) laid over the console's ward map, so Kolathur taluk holds the wards that lie mainly in those three villages (wards 64, 66 and 67). The ward map itself is a community copy of the GCC wards, not an official file."
   }
 ];
 

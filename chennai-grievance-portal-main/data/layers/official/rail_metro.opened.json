@@ -1,0 +1,25 @@
+{
+ "about": "Rail and metro stations that opened after the operators' published timetables (data/layers/transit.json: CMRL's GTFS calendar ends in 2021), and stations where trains do not stop. Read by scripts/lib/official-places.mjs (railMetro). Each entry names the report it is taken from; add a station here only from such a report or from the operator's own notice.",
+ "checked": "2026-11-28",
+ "sources": [
+  { "id": "cmrl-c4-2026", "name": "CMRL Phase 2, Corridor 4: Poonamallee Bypass to Vadapalani, opened 11 October 2026 (DT Next, station list and timings)", "url": "https://www.dtnext.in/news/chennai/vadapalanipoonamallee-metro-10-key-features-station-list-and-train-timings", "checked": "2026-11-28" },
+  { "id": "cmrl-c4-2026", "name": "Opening of the Poonamallee to Vadapalani stretch (Deccan Chronicle)", "url": "https://www.deccanchronicle.com/amp/southern-states/tamil-nadu/modi-inaugurates-poonamallee-vadapalani-metro-stretch-rides-along-with-vijay-1994871", "checked": "2026-11-28" },
+  { "id": "sr-mrts-2026", "name": "Southern Railway MRTS: Velachery to St Thomas Mount extension, trains skip Adambakkam (DT Next, 24 March 2026)", "url": "https://www.dtnext.in/amp/story/news/chennai/adambakkam-still-without-mrts-halt-as-sr-remains-tight-lipped-about-reasons", "checked": "2026-11-28" }
+ ],
+ "stations": [
+  { "name": "Poonamallee Bypass", "kind": "metro", "src": "cmrl-c4-2026" },
+  { "name": "Poonamallee Bus Stand", "kind": "metro", "src": "cmrl-c4-2026" },
+  { "name": "Poonamallee Government Hospital", "kind": "metro", "src": "cmrl-c4-2026" },
+  { "name": "Karayanchavadi", "kind": "metro", "src": "cmrl-c4-2026" },
+  { "name": "Kumananchavadi", "kind": "metro", "src": "cmrl-c4-2026" },
+  { "name": "Kattupakkam", "kind": "metro", "src": "cmrl-c4-2026" },
+  { "name": "Iyappanthangal", "kind": "metro", "src": "cmrl-c4-2026" },
+  { "name": "Thelliyaragaram", "kind": "metro", "src": "cmrl-c4-2026" },
+  { "name": "Porur Bypass", "kind": "metro", "src": "cmrl-c4-2026" },
+  { "name": "Porur Junction", "kind": "metro", "src": "cmrl-c4-2026" },
+  { "name": "Vadapalani", "kind": "metro", "src": "cmrl-c4-2026" }
+ ],
+ "no_halt": [
+  { "name": "Adambakkam", "kind": "rail", "src": "sr-mrts-2026" }
+ ]
+}

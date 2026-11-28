@@ -3,17 +3,21 @@ import { readFormCapped } from "@/lib/body-cap";
 import { failed, fresh, officerSession } from "@/lib/officer/guard";
 import { newPhotoDir, removePhotoDir, savePhotos, sniff, type PhotoExt } from "@/lib/officer/photos";
 import { OFFICER } from "@/lib/officer/departments";
-import { markDone, readTasks } from "@/lib/rehearsal/tasks";
+import { officerStep, readTasks } from "@/lib/rehearsal/tasks";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-/** A department officer's before-rain tasks (their own department only, whatever the request says). */
+/**
+ * A department officer's rain tasks (their own department only, whatever the request says): the before-rain jobs, and the
+ * fixes after a rain (a `fix` field with the place, the Collector's note, the stage and the steps so far).
+ */
 export async function GET(req: NextRequest) {
   const ctx = await officerSession(req.nextUrl.searchParams);
   if (ctx instanceof NextResponse) return ctx;
   try {
-    const tasks = await readTasks({ dept: ctx.dept.code });
+    // a fix the Collector withdrew is no longer the department's work
+    const tasks = (await readTasks({ dept: ctx.dept.code })).filter((t) => t.fix?.stage !== "closed");
     // the newest rehearsal first; finished rehearsals fall away after a week
     const weekAgo = new Date(Date.now() + 330 * 60_000 - 7 * 86_400_000).toISOString().slice(0, 19).replace("T", " ");
     const open = tasks.filter((t) => t.status !== "done" || (t.doneAt ?? "") >= weekAgo);
@@ -23,7 +27,11 @@ export async function GET(req: NextRequest) {
   }
 }
 
-/** Mark one task done: multipart form with `id`, optional `photo`, optional `lat` / `lon` (where the photo was taken). */
+/**
+ * One step on a task: multipart form with `id`, `step` ("done", the default, or "progress": an update on a fix after a rain),
+ * `remarks` (what was done: needed for a fix, optional for a before-rain job), optional `photo`, optional `lat` / `lon` (where
+ * the photo was taken).
+ */
 export async function POST(req: NextRequest) {
   const ctx = await officerSession(req.nextUrl.searchParams, { write: true });
   if (ctx instanceof NextResponse) return ctx;
@@ -34,6 +42,12 @@ export async function POST(req: NextRequest) {
   if (!form) return NextResponse.json({ error: "Send the task as a form." }, { status: 400 });
   const id = Number(form.get("id"));
   if (!Number.isInteger(id) || id <= 0) return NextResponse.json({ error: "No such task." }, { status: 400 });
+  const stepIn = form.get("step");
+  const step = stepIn == null || stepIn === "" || stepIn === "done" ? "done" : stepIn === "progress" ? "progress" : null;
+  if (!step) return NextResponse.json({ error: "Send an update or mark the task done." }, { status: 400 });
+  const rIn = form.get("remarks");
+  const remarks = typeof rIn === "string" && rIn.trim() ? rIn.trim() : null;
+  if (remarks && remarks.length > OFFICER.maxRemarks) return NextResponse.json({ error: `Keep the remarks under ${OFFICER.maxRemarks} characters.` }, { status: 400 });
   const lat = Number(form.get("lat")), lon = Number(form.get("lon"));
   const at = Number.isFinite(lat) && Number.isFinite(lon) && lat > 12 && lat < 14 && lon > 79 && lon < 81 && form.get("lat") !== null ? { lat, lon } : null;
   const file = form.get("photo");
@@ -49,7 +63,7 @@ export async function POST(req: NextRequest) {
       const [name] = await savePhotos(dir, [{ buf, ext }]);
       photo = `${dir}/${name}`;
     }
-    const r = await markDone(id, ctx.dept.code, ctx.session.email, photo, at);
+    const r = await officerStep(id, ctx.dept.code, ctx.session.email, step, remarks, photo, at);
     if (r.status !== 200 && dir) await removePhotoDir(dir).catch(() => undefined);
     return NextResponse.json(r.body, { status: r.status });
   } catch (e) {

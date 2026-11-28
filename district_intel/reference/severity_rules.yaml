@@ -1,0 +1,100 @@
+# Severity points: how serious the event itself is (dintel/severity.py). Every factor is a named rule with points and a
+# reason the Collector reads; the total is capped at 100 and mapped to the levels the dashboards use
+# (refdata.severity_level): Severe 70 or more, High 50-69, Medium 30-49, Low under 30.
+#
+# basis says where each number comes from. "District IQ default" means the number is this project's own choice: no
+# official scale exists for it. Points that follow the law are marked with the section; the sources are listed below
+# with the date they were checked. Grievance points are not here: they stay in dintel/severity.py grievance()
+# because the website's Manu desk grades paper petitions with a copy of them (src/lib/manu/grade.ts, checked by
+# tests/qa/pass7/desk-and-accounts/grade.test.ts).
+
+sources:
+  bns_2023:
+    name: Bharatiya Nyaya Sanhita, 2023 (Act 45 of 2023)
+    url: https://www.indiacode.nic.in/bitstream/123456789/20062/1/a202345.pdf
+    checked: 2026-11-28
+  bnss_schedule_1:
+    name: Bharatiya Nagarik Suraksha Sanhita, 2023, First Schedule (Part I offences under the BNS; Part II offences against other laws)
+    url: https://www.advocatekhoj.com/library/bareacts/bharatiyanagarik2023/b1.php
+    also: https://www.advocatekhoj.com/library/bareacts/bharatiyanagarik2023/b2.php
+    note: bare-act copy of the schedule; the punishments and classes quoted here were read from it
+    checked: 2026-11-28
+
+# Legal seriousness: the punishment bands the BNSS First Schedule uses to class offences (Part II: death, life or more
+# than 7 years; 3 to 7 years; under 3 years or fine only). The bands are the law's own scale; the points given to each
+# band are a District IQ default, chosen so the bands land on the dashboard levels: fine-only and minor offences Low,
+# 3-7 year offences Medium, offences punishable with death or life High. Harm to people (deaths, injuries) is scored
+# separately below, so a death is Severe whatever the offence. `bnss`: the offence's own class in Part I.
+legal_classes:
+  A: {points: 50, words: "punishable with death, life or more than 7 years"}
+  B: {points: 35, words: "punishable with 3 to 7 years"}
+  C: {points: 20, words: "punishable with under 3 years or fine only"}
+
+# Police records: the dataset's category -> the offence it stands for. `points` alone = not an offence by itself
+# (District IQ default). `weapon_class`: a weapon raises the offence to that class (BNS 118(1)).
+police:
+  MURDER: {class: A, law: "BNS 103(1)", offence: "Murder", punishment: "death or imprisonment for life", bnss: "cognizable, non-bailable"}
+  CRIMES_AGAINST_WOMEN: {class: B, law: "BNS 74", offence: "Assault or criminal force to outrage a woman's modesty", punishment: "1 to 5 years", bnss: "cognizable, non-bailable",
+                         chapter_v: true, upgrade: {pattern: "\\brape\\b|sexual(?:ly)? assault|pocso|dowry death", class: A, law: "BNS 64(1), 80(2); POCSO Act, 2012 s.4 (a child)",
+                                                    offence: "Rape, sexual assault or dowry death", punishment: "10 years to life (rape); 7 years to life (dowry death)", bnss: "cognizable, non-bailable"}}
+  ASSAULT: {class: C, law: "BNS 115(2)", offence: "Voluntarily causing hurt", punishment: "up to 1 year or fine", bnss: "non-cognizable, bailable", weapon_class: B}
+  CHAIN_SNATCHING: {class: B, law: "BNS 304(2)", offence: "Snatching", punishment: "up to 3 years", bnss: "cognizable, non-bailable"}
+  THEFT_BURGLARY: {class: B, law: "BNS 303(2)", offence: "Theft", punishment: "up to 3 years (5 years on a repeat conviction)", bnss: "cognizable, non-bailable (property under Rs 5,000: non-cognizable, bailable)"}
+  CYBER_FRAUD: {class: B, law: "BNS 318(4)", offence: "Cheating and dishonestly inducing delivery of property", punishment: "up to 7 years", bnss: "cognizable, non-bailable"}
+  ROAD_ACCIDENT: {class: C, law: "BNS 281", offence: "Rash driving on a public way", punishment: "up to 6 months (a death: BNS 106(1), up to 5 years)", bnss: "cognizable, bailable"}
+  PROTEST_LAW_AND_ORDER: {class: C, law: "BNS 189(2), 191(2)", offence: "Unlawful assembly or rioting", punishment: "up to 6 months; rioting up to 2 years", bnss: "cognizable, bailable"}
+  TRAFFIC_OBSTRUCTION: {class: C, law: "BNS 285", offence: "Danger or obstruction in a public way", punishment: "fine up to Rs 5,000", bnss: "cognizable, bailable"}
+  PUBLIC_NUISANCE: {class: C, law: "BNS 292", offence: "Public nuisance", punishment: "fine up to Rs 1,000", bnss: "non-cognizable, bailable"}
+  DRUGS_ILLICIT_LIQUOR: {points: 30, why: "Special laws (NDPS Act, Tamil Nadu Prohibition Act): the punishment depends on the quantity, not known from the record"}
+  MISSING_PERSON: {points: 40, why: "Not an offence by itself"}
+  WEATHER_EMERGENCY: {points: 45, why: "Weather emergency handled by the police (not an offence)"}
+  OTHER: {points: 15, why: "Other police matter"}
+
+# News and other sources scored from the category (categories.yaml base_severity). The crime categories follow the
+# legal classes above; categories.yaml base_severity holds the same points (tests/test_scoring.py checks it).
+categories:
+  CRIME_VIOLENT: {class: A, law: "BNS 103(1), 109", offence: "Murder or attempt to murder", punishment: "death or life; attempt up to 10 years or life"}
+  CRIMES_AGAINST_WOMEN: {class: B, law: "BNS 74", offence: "Assault or criminal force to outrage a woman's modesty", punishment: "1 to 5 years", bnss: "cognizable, non-bailable", chapter_v: true,
+                         upgrade: {pattern: "\\brape\\b|sexual(?:ly)? assault|pocso|dowry death", class: A, law: "BNS 64(1), 80(2); POCSO Act, 2012 s.4 (a child)",
+                                   offence: "Rape, sexual assault or dowry death", punishment: "10 years to life (rape); 7 years to life (dowry death)", bnss: "cognizable, non-bailable"}}
+  CRIME_PROPERTY: {class: B, law: "BNS 303(2), 304(2), 318(4)", offence: "Theft, snatching or cheating", punishment: "up to 3 years; cheating up to 7 years"}
+  ROAD_ACCIDENT: {class: C, law: "BNS 281", offence: "Rash driving on a public way", punishment: "up to 6 months (a death: BNS 106(1), up to 5 years)", bnss: "cognizable, bailable"}
+  PUBLIC_ORDER: {class: C, law: "BNS 189(2), 191(2), 292", offence: "Unlawful assembly, rioting or public nuisance", punishment: "up to 6 months; rioting up to 2 years; nuisance fine up to Rs 1,000", bnss: "bailable (public nuisance is non-cognizable)"}
+  TRAFFIC_OBSTRUCTION: {class: C, law: "BNS 285", offence: "Danger or obstruction in a public way", punishment: "fine up to Rs 5,000", bnss: "cognizable, bailable"}
+
+# PWD incident types (District IQ default: no official engineering severity scale was found for these).
+pwd:
+  bund_breach: 60
+  wall_collapse: 55
+  canal_overflow: 45
+  lake_surplus: 45
+  bridge_damage: 40
+  waterlogging: 35
+  sluice_failure: 35
+  building_crack: 30
+  blocked_drain: 25
+  encroachment: 15
+  _other: 20
+
+# The factors added on top of the kind of event. All points are District IQ defaults except where a law is named.
+rules:
+  death:              {points: 30, floor: 70, words: "any death makes the event Severe"}
+  injured:            {each: 10, cap: 30, words: "10 points for each person hurt, up to 30"}
+  # PWD records carry only a casualty flag (no count, no death/injury split): a possible death, so the event is Severe
+  pwd_casualty:       {points: 30, floor: 70, words: "the PWD record flags a casualty without saying death or injury; treated as Severe until the record says more"}
+  # Chapter V already says the victim is a woman or child, so its offences do not also take vulnerable_victim (the police
+  # data flags every one of them: 572 of 572 records on 28 Nov). 20 points: a Chapter V offence of band A (rape, dowry
+  # death) is Severe (50 + 20), of band B High (35 + 20).
+  chapter_v:          {points: 20, law: "BNS Chapter V (sections 63-99)", words: "the law treats offences against a woman or child as a chapter of their own; replaces the vulnerable-victim points"}
+  vulnerable_victim:  {points: 10, words: "the victim is a woman, child or elderly person (not added to a Chapter V offence)"}
+  weapon:             {points: 10, law: "BNS 118(1)", words: "hurt with a dangerous weapon is cognizable and non-bailable (up to 3 years)"}
+  road_blocked:       {points: 10, minutes: 60, words: "the road was blocked for more than an hour"}
+  crowd:              {points: 10, people: 1000, words: "a crowd of more than 1,000"}
+  service_full:       {points: 15, words: "the service is fully cut off"}
+  service_partial:    {points: 5, words: "the service is partly cut off"}
+  access_blocked:     {points: 10, words: "access is blocked"}
+  people_500:         {points: 15, people: 500, words: "500 or more people affected"}
+  people_100:         {points: 10, people: 100, words: "100 or more people affected"}
+  vulnerable_place:   {each: 8, cap: 16, words: "8 points for each vulnerable group or place named (school, hospital, children, elderly...), up to 16"}
+  hazard_news:        {points: 10, words: "the report describes an immediate danger"}
+  unconfirmed_cap:    {cap: 69, words: "news alone stays at most High until a department or officer confirms it"}

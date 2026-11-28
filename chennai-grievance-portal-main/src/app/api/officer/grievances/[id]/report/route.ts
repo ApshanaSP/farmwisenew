@@ -7,14 +7,15 @@ import { WorkflowError, grievanceDetail, recordStep } from "@/lib/officer/data";
 import { OFFICER } from "@/lib/officer/departments";
 import { newPhotoDir, removePhotoDir, savePhotos, sniff, type PhotoExt } from "@/lib/officer/photos";
 import { stepRefusal } from "@/lib/officer/stages";
+import { isSevere, reportRefusal } from "@/lib/cases/rules";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Completion report: remarks plus at least one photo of the finished work (multipart form: `remarks`, `photos`
- * repeated, `step`). A severe grievance is sent to the Collector for verification (`step=send`, "Sent to
- * Collector"); any other is closed by the department itself (`step=close`, "Verified"), or sent to the Collector
- * when the officer wants the Collector's approval (`step=send`; the owner's decision of 27 Nov).
+ * Completion report (multipart form: `remarks`, `photos` repeated, `step`). A severe grievance is sent to the Collector for
+ * approval (`step=send`, "Sent to Collector") with remarks and at least one photo; the department can never close it itself. Any other
+ * is closed by the department itself (`step=close`, "Verified": remarks required, photos optional), or sent to the Collector when the
+ * officer wants the Collector's approval (`step=send`: remarks and at least one photo). The owner's rules of 27 and 28 Nov.
  */
 export async function POST(req: NextRequest, routeCtx: { params: Promise<{ id: string }> }) {
   const params = await routeCtx.params;
@@ -35,8 +36,12 @@ export async function POST(req: NextRequest, routeCtx: { params: Promise<{ id: s
   if (remarks.length < OFFICER.minRemarks) return NextResponse.json({ error: "Write remarks describing the work done." }, { status: 400 });
   if (remarks.length > OFFICER.maxRemarks) return NextResponse.json({ error: `Keep the remarks under ${OFFICER.maxRemarks} characters.` }, { status: 400 });
 
-  const files = form.getAll("photos").filter((f): f is File => typeof f === "object" && f !== null && "arrayBuffer" in f);
-  if (!files.length) return NextResponse.json({ error: "Attach at least one photo of the completed work." }, { status: 400 });
+  // the owner's rule (lib/cases/rules.ts): a severe case only goes to the Collector, with remarks and at least one photo; any other is
+  // closed by the department (photos optional) or sent for the Collector's approval (with a photo)
+  const step = form.get("step") === "close" ? "close" : "send";
+  const files = form.getAll("photos").filter((f): f is File => typeof f === "object" && f !== null && "arrayBuffer" in f && f.size > 0);
+  const content = reportRefusal(step, detail.grievance.sev, remarks, files.length);
+  if (content) return NextResponse.json({ error: content }, { status: step === "close" && isSevere(detail.grievance.sev) ? 409 : 400 });
   if (files.length > OFFICER.maxPhotos) return NextResponse.json({ error: `Attach at most ${OFFICER.maxPhotos} photos.` }, { status: 400 });
   const photos: { buf: Buffer; ext: PhotoExt }[] = [];
   for (const f of files) {
@@ -47,19 +52,19 @@ export async function POST(req: NextRequest, routeCtx: { params: Promise<{ id: s
     photos.push({ buf, ext });
   }
 
-  const step = form.get("step") === "close" ? "close" : "send";
   const refusal = stepRefusal(step, String(detail.grievance.stage), detail.grievance.sev as string | null);
   if (refusal) return NextResponse.json({ error: refusal }, { status: 409 });
   // closing a case, or sending it to the Collector, is confirmed for exactly these remarks and photos
   // a severe case goes for the Collector's verification; any other the officer chose to send goes for the Collector's approval (the words
   // the officer's button and toast use)
-  const purpose = detail.grievance.sev === "Severe" ? "verification" : "approval";
+  const purpose = isSevere(detail.grievance.sev) ? "verification" : "approval";
   const c = await requireConfirm(req, ctx.session, "officer_report", step === "close" ? `Close case ${params.id} with your report` : `Send case ${params.id} to the Collector for ${purpose}`,
     { id: params.id, step, remarks, photos: photos.map((x) => createHash("sha256").update(x.buf).digest("hex")) });
   if (!c.ok) return c.res;
   const dir = newPhotoDir();
   try {
-    const names = await savePhotos(dir, photos);
+    // a close without photos keeps its own folder name (photo_dir is unique) and writes no folder
+    const names = photos.length ? await savePhotos(dir, photos) : [];
     const r = await recordStep(ctx.dept, params.id, step, { email: ctx.session.email, userId: ctx.session.userId },
       { remarks, photoDir: dir, photos: names });
     return NextResponse.json(r, { status: 201 });

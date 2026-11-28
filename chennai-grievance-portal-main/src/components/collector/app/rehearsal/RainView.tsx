@@ -11,6 +11,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { I, type IconName } from "../icons";
 import type { MapGeo } from "@/lib/collector/geo";
 import type { PastRain, RehearsalState, RJob } from "@/lib/rehearsal/types";
+import type { RainWithData } from "@/lib/rehearsal/satflood";
 import type { RainApi, RainLayer, RainStart } from "./rainLayer";
 import { PlanSheet } from "./PlanSheet";
 import ImpactView, { LENS_WORD } from "./ImpactView";
@@ -18,6 +19,9 @@ import type { ImpactData, Lens } from "@/lib/rehearsal/impacts";
 import { days, fmtD, fmtT, n0, plural, RainDots, range } from "./rainKit";
 import { Grip, useDragPanel } from "../askmap/dragPanel";
 import { onMapCmd } from "../askmap/bridge";
+// the action tracker: assign every street a rain flooded, follow it, and see whether it held in the next rain (FixTracker.tsx)
+import { BulkFix, FixBox, FixPill, FixSummary, floodPlacesOf, satName, useFixes } from "./FixTracker";
+import { floodDefault, floodHit } from "@/lib/rehearsal/tracker";
 import "./rehearsal.css";
 import "./rainview.css";
 
@@ -46,7 +50,8 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
   onLive?: () => void;
 }) {
   const [d, setD] = useState<RehearsalState | null>(null);
-  const [past, setPast] = useState<PastRain[] | null>(null);
+  // each rain with its CFM-DSS gauge rain, its satellite water and its streets by source (satflood.ts withRainData)
+  const [past, setPast] = useState<RainWithData[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [view, setView] = useState<View>({ kind: "all", zone: null });
   const [pick, setPick] = useState<Pick>(null);
@@ -58,6 +63,7 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
   useEffect(() => { if (start.lens) setLens(start.lens); }, [start.seq]); // eslint-disable-line react-hooks/exhaustive-deps
   const [imp, setImp] = useState<Partial<Record<Lens, ImpactData>>>({});
   const childEsc = useRef<(() => boolean) | null>(null);
+  const [allWet, setAllWet] = useState(false);
   // the other tabs' records, read once in the background: their counts show on the tabs and as "also in this rain"
   useEffect(() => {
     let on = true;
@@ -90,6 +96,7 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
   /** newest first */
   const rains = useMemo(() => [...(past ?? [])].sort((a, b) => b.start.localeCompare(a.start)), [past]);
   const oldestFirst = useMemo(() => [...rains].reverse(), [rains]);
+  const fx = useFixes(api, toast, rains);
   const zoneOf = (r: Report) => (r.ward != null ? zoneOfWard.get(r.ward) ?? null : null);
   /** a report stood on a street that had already flooded in an earlier rain */
   const repeat = (r: Report, rain: PastRain) => { const s = r.street ? streetBy.get(r.street) : null; return !!s && s.rainDates.some((x) => x < rain.start); };
@@ -106,8 +113,12 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
       .sort((a, b) => b.n - a.n || b.s.rains - a.s.rains || a.s.key.localeCompare(b.s.key));
   };
   /** a street's ward and zone (0: outside the Corporation's wards) */
+  // the area (zone) of a job, for reviewing and sending area by area
+  const jobArea = (j: RJob) => (j.ward ? zoneLabel(zoneOfWard.get(j.ward) ?? null) : "Outside the Corporation's wards");
   const wardLine = (ward: number) => (ward ? `Ward ${ward} · ${zoneLabel(zoneOfWard.get(ward) ?? null)}` : "Outside the Corporation's wards");
   /** the open jobs of the plan for some flood streets (their drains, pumps, diversions and drain complaints) */
+  // streets that already have a sent before-rain job (street, pump or diversion): the existing action, counted as tracked
+  const jobStreets = new Set((d?.jobs ?? []).filter((j) => j.task && /^(street|pump|diversion):/.test(j.key)).map((j) => j.key.slice(j.key.indexOf(":") + 1)));
   const jobsFor = (keys: Set<string>) => (d?.jobs ?? []).filter((j) => {
     if (j.task) return false;
     const i = j.key.indexOf(":"), kind = j.key.slice(0, i), id = j.key.slice(i + 1);
@@ -125,7 +136,7 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
   }, [rains]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const rain = view.kind === "rain" ? rains.find((r) => r.id === view.id) ?? null : null;
-  const openRain = (id: string) => { setPick(null); setAllReports(false); setView({ kind: "rain", id, zone: null }); };
+  const openRain = (id: string) => { setPick(null); setAllReports(false); setAllWet(false); setView({ kind: "rain", id, zone: null }); };
   // v10: Jarvis's voice moves between the tabs and to a past rain while the view is open (askmap/bridge.ts "diq:map-cmd"); its sends stay the
   // Collector's own (PlanSheet)
   const live = useRef({ rains, lens });
@@ -146,6 +157,11 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
     return { ok: true, state: { lens: tab ?? s.lens, rains: s.rains.length } };
   }), []);
   const pickStreet = (key: string) => setPick({ kind: "street", id: key });
+  /** a tracked street's card (a street only the satellite saw opens in its rain) */
+  const openFix = (f: { place: string; rain: string }) => {
+    if (streetBy.has(f.place)) { pickStreet(f.place); return; }
+    if (rains.some((r) => r.id === f.rain)) { setAllReports(false); setView({ kind: "rain", id: f.rain, zone: null }); setPick({ kind: "street", id: f.place }); }
+  };
   const pickReport = (id: string) => setPick({ kind: "report", id });
 
   // Escape: the sheet, the card, the zone, the rain; then the console closes the view
@@ -182,7 +198,15 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
       pts = z.length ? z.map((s) => [s.lat, s.lon]) : null;
     }
     let maxZoom: number | undefined;
-    if (pick?.kind === "street") { const s = streetBy.get(pick.id); if (s) { pts = s.lines.flat(); maxZoom = 16.5; } }
+    if (pick?.kind === "street") {
+      const s = streetBy.get(pick.id);
+      if (s) { pts = s.lines.flat(); maxZoom = 16.5; }
+      else {
+        // a street only the satellite saw (the action tracker opens it): drawn on its own
+        const sat = rain?.streets?.find((x) => x.key === pick.id)?.sat;
+        if (sat) { streets.push({ key: pick.id, lines: sat.lines, at: [sat.lat, sat.lon], level: 3, tip: `${satName(sat)} · satellite water in this rain` }); pts = sat.lines.flat(); maxZoom = 16.5; }
+      }
+    }
     if (pick?.kind === "report") {
       const r = rains.flatMap((x) => x.reports).find((x) => x.id === pick.id);
       if (r) {
@@ -191,7 +215,9 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
         if (!dots.some((x) => x.id === r.id)) dots.push({ id: r.id, lat: r.lat, lon: r.lon, tone: "new", tip: r.place ?? "Flooding report" });
       }
     }
-    return { theme: "flood", streets, dots, sel: pick, fit: { seq: shot.current.seq, pts, maxZoom }, onPick: (kind, id) => { if (kind === "street" || kind === "report") setPick({ kind, id }); } };
+    // the water Sentinel-1 saw in this rain, under the streets
+    const sw = rain?.sat?.status === "pass" && rain.sat.boxes.length ? { boxes: rain.sat.boxes, tip: `Water seen by ${rain.sat.pass?.satellite ?? "satellite"} radar, ${fmtT(rain.sat.pass?.at ?? "")}` } : null;
+    return { theme: "flood", streets, dots, satWater: sw, sel: pick, fit: { seq: shot.current.seq, pts, maxZoom }, onPick: (kind, id) => { if (kind === "street" || kind === "report") setPick({ kind, id }); } };
   }, [d, past, view, pick, rain, streetBy, zoneOfWard]); // eslint-disable-line react-hooks/exhaustive-deps
   // the other tabs draw their own layer (ImpactView)
   useEffect(() => { if (lens === "flood") onLayer(layer); }, [layer, onLayer, lens]);
@@ -269,6 +295,9 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
       const chokes = d.chokes.filter((c) => c.street === s.key);
       const jobs = jobsFor(new Set([s.key]));
       const reports = rains.flatMap((r) => r.reports.filter((x) => x.street === s.key).map((x) => ({ ...x, rain: r })));
+      // the rain to act on: the chosen rain when it flooded the street, else the latest one that did
+      const cause = (rain && floodHit(rain, s.key, null) ? rain : rains.find((r) => floodHit(r, s.key, null))) ?? null;
+      const fixDef = cause ? floodDefault({ label: s.label, ward: s.ward, water_m: s.water_m, chokeDepts: chokes.map((c) => c.dept) }, range(cause)) : null;
       card = (
         <>
           <div className="rv-card-h"><span className="rv-cic st"><I n="drop" /></span><span><b>{s.label}</b><small>{wardLine(s.ward)}</small></span></div>
@@ -284,6 +313,7 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
             {s.lateWork && <li className="warn">Works behind schedule nearby: {s.lateWork}</li>}
             {s.main && <li>A main road: traffic needs a diversion when it floods</li>}
           </ul>
+          <FixBox fx={fx} lens="flood" place={s.key} rainId={cause?.id ?? null} def={fixDef} />
           <JobsBox title="Before the next heavy rain" jobs={jobs} onSend={() => setPlan({ only: jobs.map((j) => j.key) })} />
           {reports.length > 0 && (
             <>
@@ -297,6 +327,22 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
           )}
         </>
       );
+    } else {
+      // a street only the satellite saw water on in this rain (no complaint): its action and tracking
+      const sp = rain?.streets?.find((x) => x.key === pick.id && x.sat);
+      if (rain && sp?.sat) {
+        const name = satName(sp.sat);
+        card = (
+          <>
+            <div className="rv-card-h"><span className="rv-cic st"><I n="drop" /></span><span><b>{name}</b><small>{wardLine(sp.sat.ward)}</small></span></div>
+            <ul className="rv-facts">
+              <li>Satellite water {sp.sat.how === "on" ? "on" : "beside"} about <b>{n0(Math.round(sp.sat.floodedM))} m</b> of it in the {range(rain)} rain ({sp.sat.conf} confidence)</li>
+              <li>No flooding complaint on it in this rain: the radar picture is the only record</li>
+            </ul>
+            <FixBox fx={fx} lens="flood" place={sp.key} rainId={rain.id} def={floodDefault({ label: name, ward: sp.sat.ward }, range(rain))} />
+          </>
+        );
+      }
     }
   } else if (pick?.kind === "report") {
     const owner = rains.find((x) => x.reports.some((y) => y.id === pick.id));
@@ -341,13 +387,16 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
           </span></p>
         )}
         {also(null)}
+        <FixSummary fx={fx} lens="flood" onOpen={openFix} />
         <h4 className="rv-sec">Past heavy rains <small>newest first · click one to see where water stood</small></h4>
         <ul className="rv-rains">
           {rains.map((r) => {
             const z = zonesOf(r.reports).find((x) => x.zone != null);
             return (
               <li key={r.id}><button onClick={() => openRain(r.id)}>
-                <span className="rv-date"><b>{range(r)}</b><small>{r.maxMm != null ? `${Math.round(r.maxMm)} mm` : "IMD heavy rain day"}</small></span>
+                <span className="rv-date" title={r.rain ? `District average from ${r.rain.gauges} CFM-DSS rain gauges; ${Math.round(r.rain.wettest?.mm ?? 0)} mm at the wettest (${r.rain.wettest?.name ?? ""})` : undefined}>
+                  <b>{range(r)}</b><small>{r.rain?.dry ? `Little rain at the gauges (${Math.round(r.rain.mean ?? 0)} mm)` : r.rain?.mean != null ? `${Math.round(r.rain.mean)} mm average`
+                    : r.rain?.few ? `Only ${r.rain.gauges} gauges reported` : r.maxMm != null ? `${Math.round(r.maxMm)} mm (IMD station)` : "IMD heavy rain day"}</small></span>
                 <span className="rv-mid"><span className="rv-bar"><i style={{ width: `${Math.max(3, (100 * r.reports.length) / maxReports)}%` }} /></span>
                   <small>{plural(r.reports.length, "flooding report")}{z ? ` · most in ${zoneLabel(z.zone)}` : ""}</small></span>
                 <I n="chevr" />
@@ -376,7 +425,8 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
             </button></li>
           ))}
         </ul>
-        <JobsBox title="Before the next heavy rain" jobs={openJobs} sent={d.counts.tasks} done={d.counts.done} depts={d.depts.length} onSend={() => setPlan({ only: null })} big />
+        <JobsBox title="Before the next heavy rain" jobs={openJobs} sent={d.counts.tasks} done={d.counts.done} depts={d.depts.length} big areaOf={jobArea}
+          onSend={(keys) => setPlan({ only: keys ?? null })} />
       </>
     );
   } else {
@@ -390,6 +440,9 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
     const jobs = jobsFor(new Set(wet.map((x) => x.s.key)));
     const named = zones.filter((z) => z.zone != null);
     const list = [...rain.reports].filter((r) => view.zone == null || zoneOf(r) === view.zone).sort((a, b) => b.first.localeCompare(a.first));
+    // every street this rain flooded (reports, and satellite water when a satellite passed), each with its default department
+    const fixPlaces = floodPlacesOf(rain, streetBy, d.chokes, (ward) => (ward ? zoneLabel(zoneOfWard.get(ward) ?? null) : "Outside the Corporation's wards"));
+    const satOnly = fixPlaces.filter((p) => !p.street && p.sat);
     body = (
       <>
         <nav className="rv-nav">
@@ -401,7 +454,14 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
         <div className="rv-rh">
           <h3>{range(rain)} rain</h3>
           <div className="rv-chips">
-            {rain.maxMm != null && <span><I n="drop" />{Math.round(rain.maxMm)} mm at the wettest gauge</span>}
+            {rain.rain?.mean != null ? <>
+              <span title={`${rain.rain.method} ${plural(rain.rain.gauges, "gauge")} reported (${rain.rain.inChennai} inside the wards).${rain.rain.peak ? ` Wettest hour: ${rain.rain.peak.mm} mm at ${rain.rain.peak.name}, from ${fmtT(rain.rain.peak.at)}.` : ""}`}>
+                <I n="drop" />{Math.round(rain.rain.mean)} mm average · {plural(rain.rain.gauges, "CFM-DSS gauge")}</span>
+              {rain.rain.wettest && <span><I n="drop" />{Math.round(rain.rain.wettest.mm)} mm at {rain.rain.wettest.name}</span>}
+            </> : rain.rain?.few ? <span title="A district figure needs at least 20 of the about 75 CFM-DSS gauges to report."><I n="drop" />Only {plural(rain.rain.gauges, "CFM-DSS gauge")} reported: too few to tell the district&apos;s rain</span>
+              : rain.maxMm != null && <span><I n="drop" />{Math.round(rain.maxMm)} mm at the wettest IMD station</span>}
+            {rain.rain?.dry && <span className="rv-warn" title="This day is on the district pipeline's heavy-rain day list, but the CFM-DSS gauges that reported show no heavy rain (district average under 15 mm and no gauge at IMD's 64.5 mm heavy-rain mark).">
+              <I n="alert" />Not a heavy rain at the CFM-DSS gauges</span>}
             <span><I n="pin" />{plural(rain.reports.length, "flooding report")}</span>
             <span><I n="cal" />{plural(days(rain), "day")}</span>
           </div>
@@ -413,6 +473,7 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
               : "This is the first heavy rain in the record, so every place was new to it."}
           </>}
         </p>
+        <SatLine r={rain} />
         {also(rain.id)}
         {zones.length > 0 && (
           <>
@@ -426,20 +487,36 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
             </ul>
           </>
         )}
+        <BulkFix fx={fx} lens="flood" rainId={rain.id} places={fixPlaces} tracked={jobStreets} />
         {wet.length > 0 && (
           <>
             <h4 className="rv-sec">Flood streets with reports <small>{n0(wet.length)} · how often each has flooded</small></h4>
             <ul className="rv-streets">
-              {wet.slice(0, 6).map(({ s, n }) => (
+              {(allWet ? wet : wet.slice(0, 6)).map(({ s, n }) => (
                 <li key={s.key}><button onClick={() => pickStreet(s.key)}>
-                  <span className="rv-sn"><b>{s.label}</b><small>{s.ward ? `Ward ${s.ward}` : "Outside the Corporation's wards"} · {plural(n, "report")} in this rain</small></span>
-                  <span className="rv-often-s"><RainDots rains={oldestFirst} on={(r) => s.rainDates.includes(r.start)} now={rain.id} /><em>{s.rains} of {rains.length}</em></span>
+                  <span className="rv-sn"><b>{s.label}</b><small>{s.ward ? `Ward ${s.ward}` : "Outside the Corporation's wards"} · {plural(n, "report")} in this rain{rain.streets?.some((x) => x.key === s.key && x.source === "both") ? " · satellite water too" : ""}</small></span>
+                  <span className="rv-often-s"><RainDots rains={oldestFirst} on={(r) => s.rainDates.includes(r.start)} now={rain.id} /><em>{s.rains} of {rains.length}</em><FixPill fx={fx} lens="flood" place={s.key} /></span>
                 </button></li>
               ))}
             </ul>
+            {wet.length > 6 && <button className="rv-more" onClick={() => setAllWet((v) => !v)}>{allWet ? "Show fewer" : `Show all ${n0(wet.length)}`}</button>}
           </>
         )}
-        <JobsBox title="Before the next rain like this" jobs={jobs} onSend={() => setPlan({ only: jobs.map((j) => j.key) })}
+        {satOnly.length > 0 && (
+          <>
+            <h4 className="rv-sec">Satellite water, no complaint <small>{n0(satOnly.length)} · seen by radar only</small></h4>
+            <ul className="rv-streets">
+              {(allWet ? satOnly : satOnly.slice(0, 4)).map((p) => (
+                <li key={p.place}><button onClick={() => pickStreet(p.place)}>
+                  <span className="rv-sn"><b>{p.label}</b><small>{p.ward ? `Ward ${p.ward}` : "Outside the Corporation's wards"} · water {p.sat!.how === "on" ? "on" : "beside"} {n0(Math.round(p.sat!.floodedM))} m of it</small></span>
+                  <span className="rv-often-s"><FixPill fx={fx} lens="flood" place={p.place} /></span>
+                </button></li>
+              ))}
+            </ul>
+            {satOnly.length > 4 && <button className="rv-more" onClick={() => setAllWet((v) => !v)}>{allWet ? "Show fewer" : `Show all ${n0(satOnly.length)}`}</button>}
+          </>
+        )}
+        <JobsBox title="Before the next rain like this" jobs={jobs} areaOf={jobArea} onSend={(keys) => setPlan({ only: keys ?? jobs.map((j) => j.key) })}
           empty="No open job on this rain's streets: their drain complaints are closed or their jobs are sent." />
         {list.length > 0 && (
           <>
@@ -467,12 +544,12 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
         <NowStrip d={d} />
         <div className="rv-b">
           {lens !== "flood" ? (
-            <ImpactView lens={lens} api={api} rains={rains} rainId={rainNow} data={imp[lens] ?? null} escRef={childEsc} onLayer={onLayer} onOpenIncident={onOpenIncident} onLive={onLive}
+            <ImpactView lens={lens} api={api} rains={rains} rainId={rainNow} data={imp[lens] ?? null} escRef={childEsc} onLayer={onLayer} onOpenIncident={onOpenIncident} onLive={onLive} fx={fx}
               onRain={(id) => { setPick(null); setView(id ? { kind: "rain", id, zone: null } : { kind: "all", zone: null }); }} />
           ) : card ? <><button className="rv-back" onClick={() => setPick(null)}><I n="chevl" />Back to {backTo}</button><div className="rv-card">{card}</div></> : body}
         </div>
       </aside>
-      {lens === "flood" ? <Legend rain={!!rain} left={drag.right} /> : <ImpactLegend lens={lens} rain={!!rain} lines={imp.metro?.items ?? []} left={drag.right} />}
+      {lens === "flood" ? <Legend rain={!!rain} sat={rain?.sat?.status === "pass" && rain.sat.boxes.length > 0} left={drag.right} /> :<ImpactLegend lens={lens} rain={!!rain} lines={imp.metro?.items ?? []} left={drag.right} />}
       {plan && (
         <PlanSheet d={sheetJobs ? { ...d, jobs: d.jobs.filter((j) => j.task || sheetJobs.has(j.key)) } : d} lang="en" manual={false} planUrl={api.plan}
           onClose={() => setPlan(null)} onSent={(m) => { toast(m, "ok"); reloadState(); }}
@@ -481,6 +558,43 @@ export default function RainView({ geo, api, start, onClose, onLayer, onOpenInci
             if (st && streetBy.has(st)) pickStreet(st); }} />
       )}
     </>
+  );
+}
+
+/**
+ * What Sentinel-1 radar saw in this rain (satflood.ts), in plain words: the water, the roads under or beside it, and what
+ * radar cannot see; or why there is no picture (no pass within 2 days, or too little rain at the gauges to compare).
+ */
+function SatLine({ r }: { r: RainWithData }) {
+  const s = r.sat;
+  if (!s) return null;
+  if (s.status !== "pass") {
+    const near = [s.nearest?.before, s.nearest?.after].filter((x): x is string => !!x).map((x) => fmtD(x.slice(0, 10)));
+    return <p className="rv-muted rv-sat">{s.note ?? `No satellite picture within 5 days of this rain${near.length ? ` (radar passed on ${near.join(" and ")})` : ""}.`}</p>;
+  }
+  const on = r.streets.filter((x) => x.sat && x.sat.how === "on").map((x) => ({ name: x.sat!.name, ward: x.sat!.ward }));
+  const beside = s.beside ?? [];
+  const both = r.streets.filter((x) => x.source === "both").length;
+  const named = (xs: { name: string | null; ward: number }[]) => {
+    const n = xs.filter((x) => x.name).slice(0, 3).map((x) => `${x.name} (ward ${x.ward})`);
+    const rest = xs.length - n.length;
+    return [...n, ...(rest > 0 ? [plural(rest, n.length ? "other road" : "road")] : [])].join(", ");
+  };
+  const km2 = (v: number) => (v < 1 ? v.toFixed(2) : v.toFixed(1));
+  // every picture of the rain: radar sees through cloud, optical only where the sky was clear (its share of the wards is given)
+  const lookWords = (l: (typeof s.looks)[number]) =>
+    `${l.satellite} ${l.kind === "radar" ? "radar" : "optical"}, ${fmtD(l.at.slice(0, 10))} (${l.daysAfterEnd <= 0 ? "during the rain" : `${Math.round(l.daysAfterEnd * 10) / 10} day${l.daysAfterEnd === 1 ? "" : "s"} after`}${l.kind === "optical" ? `, ${Math.round(l.clearShare * 100)} % of the wards clear of cloud` : ""}): ${l.waterKm2 > 0 ? `${km2(l.waterKm2)} km² of new water` : "no new water"}`;
+  return (
+    <p className="rv-desc rv-sat">
+      {s.looks.length > 1 && <span className="rv-looks">{s.looks.length} satellite pictures: {s.looks.map(lookWords).join("; ")}. Together: </span>}
+      {s.looks.length <= 1 && <b>{s.pass?.satellite ?? "Satellite"} {s.looks[0]?.kind === "optical" ? "optical" : "radar"}, {fmtT(s.pass?.at ?? "")}:</b>}{" "}
+      {s.waterKm2 != null ? `about ${km2(s.waterKm2)} km² of possible new water${s.highKm2 != null ? ` (${km2(s.highKm2)} km² high confidence)` : ""}` : "no reading"} (cyan on the map).{" "}
+      {s.clamped ? "The radar picture had no clear split between water and land, so the area is uncertain. " : null}
+      {on.length ? <>Water on {(s.roadKm ?? 0).toFixed(1)} km of road: {named(on)}. </> : "No mapped road was under water. "}
+      {beside.length ? <>Water beside {named(beside)} (not counted as flooded streets). </> : null}
+      {both ? <>{plural(both, "street")} with complaints also had satellite water. </> : null}
+      Radar cannot see water between buildings, so streets without satellite water may still have flooded.
+    </p>
   );
 }
 
@@ -496,27 +610,47 @@ function NowStrip({ d }: { d: RehearsalState }) {
     <div className={`rv-now lv-${t.level}`} title={t.reasons.map((r) => `${r.en} (${r.source})`).join("\n") || undefined}>
       <I n={t.level === "none" ? "checkc" : "alert"} />
       <span>{t.level === "none" ? "No heavy-rain warning now" : r0 && r0.kind !== "manual" ? r0.en : "Heavy rain expected"}{t.hoursLeft != null && t.hoursLeft > 0 ? ` · rain in about ${t.hoursLeft} h` : ""}</span>
-      {top && <em title="Chennai Flood Monitor rain gauge, read every 10 minutes"><I n="drop" />{top.todayMm ?? 0} mm today · {top.name}</em>}
+      {top && <em title={`The wettest of ${on.length} Chennai Flood Monitor rain gauges reporting now (read every 10 minutes)`}><I n="drop" />{top.todayMm ?? 0} mm today · {top.name}</em>}
     </div>
   );
 }
 
 /** the jobs of the plan for what is shown: how many of each kind, and one button to read and send them */
-function JobsBox({ title, jobs, onSend, sent = 0, done = 0, depts, big, empty }: {
-  title: string; jobs: RJob[]; onSend: () => void; sent?: number; done?: number; depts?: number; big?: boolean; empty?: string;
+/**
+ * Jobs before the next rain. With `areaOf`, they are reviewed and sent AREA BY AREA (owner, 28 Nov): one row per zone with its
+ * jobs and departments, each with its own "Review and send" (the review sheet then holds only that zone's jobs). Without it (one
+ * street's jobs) one button sends them all.
+ */
+function JobsBox({ title, jobs, onSend, sent = 0, done = 0, depts, big, empty, areaOf }: {
+  title: string; jobs: RJob[]; onSend: (keys?: string[]) => void; sent?: number; done?: number; depts?: number; big?: boolean; empty?: string;
+  areaOf?: (j: RJob) => string;
 }) {
   const kinds = [...jobs.reduce((m, j) => m.set(j.kind, (m.get(j.kind) ?? 0) + 1), new Map<string, number>()).entries()].sort((a, b) => b[1] - a[1]);
   const nd = depts ?? new Set(jobs.map((j) => j.dept)).size;
   if (!jobs.length && !empty) return null;
+  const areas = areaOf ? [...jobs.reduce((m, j) => { const k = areaOf(j); return m.set(k, [...(m.get(k) ?? []), j]); }, new Map<string, RJob[]>()).entries()]
+    .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0])) : null;
   return (
     <section className={`rv-act${big ? " big" : ""}`}>
       <h4><I n="tasks" />{title}</h4>
       {jobs.length ? (
         <>
-          <p><b>{plural(jobs.length, "job")}</b> ready for {plural(nd, "department")}{sent > 0 ? ` · ${n0(done)} of ${n0(sent)} sent jobs done` : ""}</p>
+          <p><b>{plural(jobs.length, "job")}</b> ready for {plural(nd, "department")}{areas ? ` in ${plural(areas.length, "area")}` : ""}{sent > 0 ? ` · ${n0(done)} of ${n0(sent)} sent jobs done` : ""}</p>
           <ul className="rv-kinds">{kinds.slice(0, big ? 6 : 4).map(([k, n]) => <li key={k}><b>{n0(n)}</b>{KIND[k] ?? k}</li>)}</ul>
-          <button className="rv-go" onClick={onSend}><I n="send" />Review and send {jobs.length === 1 ? "the job" : `${n0(jobs.length)} jobs`}</button>
-          <small>You read and approve each department&apos;s email before it goes.</small>
+          {areas && areas.length > 1 ? (
+            <ul className="rv-areas">
+              {areas.map(([area, xs]) => {
+                const ds = new Set(xs.map((j) => j.deptName || j.dept));
+                return (
+                  <li key={area}>
+                    <span><b>{area}</b><small>{plural(xs.length, "job")} · {[...ds].slice(0, 3).join(", ")}{ds.size > 3 ? ` +${ds.size - 3}` : ""}</small></span>
+                    <button className="rv-go" onClick={() => onSend(xs.map((j) => j.key))}><I n="send" />Review and send</button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : <button className="rv-go" onClick={() => onSend()}><I n="send" />Review and send {jobs.length === 1 ? "the job" : `${n0(jobs.length)} jobs`}</button>}
+          <small>You read and approve each department&apos;s email before it goes{areas && areas.length > 1 ? ", one area at a time" : ""}.</small>
         </>
       ) : <p className="rv-muted">{empty}</p>}
     </section>
@@ -562,14 +696,16 @@ function ImpactLegend({ lens, rain, lines, left }: { lens: Lens; rain: boolean; 
 }
 
 /** Flooding's map key */
-function Legend({ rain, left }: { rain: boolean; left?: boolean }) {
+function Legend({ rain, left, sat }: { rain: boolean; left?: boolean; sat?: boolean }) {
   const rows: [string, string][] = rain
     ? [["d-rep", "Report on a street that flooded before"], ["d-new", "Report in a new place"], ["l-3", "Flood street with a report in this rain"], ["l-0", "Other flood streets"]]
     : [["l-3", "Flooded in 5 or more rains"], ["l-2", "Flooded in 3 or 4 rains"], ["l-1", "Flooded in 1 or 2 rains"]];
+  // the satellite's water (satflood.ts), when the chosen rain has a picture
+  if (sat) rows.push(["sat", "Water seen by satellite radar"]);
   const icon: IconName = rain ? "pin" : "drop";
   return (
     <MapKey left={left} foot="Zoom in to see the roads themselves" title={<><I n={icon} />{rain ? "This rain" : "Flood streets"}</>}>
-      <ul>{rows.map(([k, l]) => <li key={k}><i className={k} /><span>{l}</span></li>)}</ul>
+      <ul>{rows.map(([k, l]) => <li key={k}><i className={k} style={k === "sat" ? { width: 12, height: 10, margin: "0 4px", borderRadius: 2, background: "#22D3EE", boxShadow: "inset 0 0 0 1px #0891B2" } : undefined} /><span>{l}</span></li>)}</ul>
     </MapKey>
   );
 }

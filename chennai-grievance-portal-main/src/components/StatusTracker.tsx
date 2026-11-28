@@ -28,6 +28,8 @@ const LABEL: Record<string, string> = {
   "Completed - Pending Collector Verification": "Completed – pending Collector verification",
   "Resolved by Department": "Resolved – checked by the department"
 };
+/** the In Progress step after the Collector's office reopened the complaint */
+const REOPENED_TITLE = "Reopened – back with the department";
 
 /**
  * The stages of this complaint: work the department closes itself (not severe) ends there, without the Collector's
@@ -75,7 +77,9 @@ export default function StatusTracker({ status, rejectedStage, remarks, history 
   const items: TimelineItem[] = chain.slice(0, rejected ? cur + 1 : undefined).map((s, i) => {
     const h = last(s);
     const state: TimelineItem["state"] = rejected ? "done" : i < cur || (done && i === cur) ? "done" : i === cur ? "now" : "todo";
-    return { state, title: LABEL[s] ?? s, time: h ? when(h.created_at) : undefined, body: h?.remarks || undefined };
+    // 28 Nov: the Collector's office reopened a closed complaint (complaint-progress.ts REOPENED_WORDS): the step says so plainly
+    const reopened = s === "In Progress" && /\breopened\b/i.test(String(h?.remarks ?? ""));
+    return { state, title: reopened ? REOPENED_TITLE : LABEL[s] ?? s, time: h ? when(h.created_at) : undefined, body: h?.remarks || undefined };
   });
   if (rejected) {
     const h = last("Rejected");
@@ -86,7 +90,8 @@ export default function StatusTracker({ status, rejectedStage, remarks, history 
       body: remarks ? `Reason: ${remarks}` : h?.remarks || undefined
     });
   }
-  return <Timeline items={items} />;
+  // .cz-track (citizen.css): the journey's words a little larger, for reading on a phone
+  return <div className="cz-track"><Timeline items={items} /></div>;
 }
 
 /** Filed -> Approved -> In progress -> Verified, as four short segments (the list's mini progress bar). */
@@ -100,7 +105,7 @@ export function MiniProgress({ status }: { status: ComplaintStatus }) {
   return (
     <div className="flex items-center gap-1" aria-label={`Progress: ${at < 0 ? "rejected" : steps[at]}`} role="img">
       {steps.map((s, i) => (
-        <span key={s} title={s} className="h-1 flex-1 rounded-full transition-colors duration-500"
+        <span key={s} title={s} className="h-1.5 flex-1 rounded-full transition-colors duration-500"
           style={{ background: at < 0 ? (i === 0 ? "var(--critical)" : "var(--line)") : i <= at ? (at === 3 ? "var(--ok)" : "var(--accent)") : "var(--line)" }} />
       ))}
     </div>

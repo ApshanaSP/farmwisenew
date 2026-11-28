@@ -121,7 +121,9 @@ describe("officer-day-24 (reviewerD): the officer's drawer reads the same order 
     const d = (await grievanceDetail(SWM, "INC-S"))!;
     expect([d.grievance.stage, d.grievance.returned]).toEqual(["action", true]);
     expect(d.reports[0].returned).toMatchObject({ note: "Not done" });
-    expect(d.timeline[d.timeline.length - 1].label).toBe("Returned by Collector");
+    // 28 Nov (lib/cases/rules.ts wasReopened): a send-back of a case the department had closed is the Collector's Reopen, and says so
+    expect(d.timeline[d.timeline.length - 1].label).toBe("Reopened by Collector");
+    expect(d.grievance.reopened).toBe(true);
     expect(d.closedByDept).toBe(false);
   });
 });

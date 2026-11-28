@@ -109,7 +109,12 @@ def build(settings: Settings, only_steps: set[str] | None = None) -> dict:
                               "located_below_district": int((docs["geo_level"] != "district").sum())}
 
     # ------------------------------------------------------------------- geo --
-    ward_taluk = geolocate.ward_taluk_vote(events, wards, ref.taluks)
+    # the official ward -> taluk table (TNGIS revenue villages, Collectorate taluk list); the police/PWD vote is generated
+    # data, kept only to report how far it agrees
+    ward_taluk = geolocate.official_ward_taluk(ref.ward_taluk, wards)
+    metrics["ward_taluk"] = geolocate.taluk_agreement(ward_taluk, geolocate.ward_taluk_vote(events, wards, ref.taluks))
+    # the table was built from another ward polygon file than the one in use: its ward numbers may not fit (refdata)
+    metrics["ward_taluk"]["stale_ward_geometry"] = bool(getattr(ref, "ward_taluk_stale", False))
     gmask = events["source"] == "grievance"
     tables = geolocate.place_tables(events[gmask])
     metrics["geo_holdout"] = geolocate.geo_holdout(events[gmask])
@@ -144,18 +149,16 @@ def build(settings: Settings, only_steps: set[str] | None = None) -> dict:
     metrics["wording"] = realism.report(events)
 
     # ----------------------------------------------------------------- dedup --
-    gg, ginfo = dedup.grievances(events)
-    pg = dedup.police(events)
-    wg = dedup.pwd(events)
-    grp = {**gg, **pg, **wg}
-    events["dup_group_id"] = events["event_id"].map(grp).fillna(events["dup_group_id"]).fillna(events["event_id"])
-    metrics["dedup"] = {**dedup.evaluate(events, gg, pg, settings), **ginfo}
+    # learned for grievances and police when it beats the rule on held-out labels, the rule otherwise (dedup.run sets
+    # events["dup_group_id"]); D["pairs"] says why each report joined its group (link_pairs, decision "duplicate")
+    D = dedup.run(events, settings)
+    metrics["dedup"] = D["metrics"]
 
     # --------------------------------------------------------------- linking --
     has_en = docs["title_en"].notna() if "title_en" in docs else pd.Series(False, index=docs.index)
     english = dict(zip("NEWS-" + docs.loc[has_en, "doc_id"], docs.loc[has_en, "title_en"].astype(str)))
     L = linking.link(events, ref, truth, settings.pipe["link_merge_threshold"], settings.pipe["link_review_threshold"], english)
-    events, pairs = L["events"], L["pairs"]
+    events, pairs = L["events"], pd.concat([L["pairs"], D["pairs"]], ignore_index=True)
     metrics["linking"] = L["metrics"]
     docs["event_id"] = np.where(docs["doc_id"].isin(events.loc[events["source"] == "news", "source_record_id"]), "NEWS-" + docs["doc_id"], None)
     docs["linked_incident_id"] = docs["event_id"].map(dict(zip(events["event_id"], events["incident_id"])))
@@ -177,7 +180,7 @@ def build(settings: Settings, only_steps: set[str] | None = None) -> dict:
     obs["ward_no"] = pd.Series(ow).where(ow > 0).astype("Int64").values
     ward_zone = {x.ward_no: x.zone_no for x in wards.wards}
     obs["zone_no"] = pd.Series(obs["ward_no"]).map(lambda w: ward_zone.get(int(w)) if pd.notna(w) else None).astype("Int64").values
-    ws = analytics.ward_stats(wards, events, inc, ward_taluk, adj, as_of)
+    ws = analytics.ward_stats(wards, events, inc, ward_taluk, adj, as_of, ref.ward_taluk)
     sig = analytics.observation_signals(obs, as_of)
     kp = analytics.kpis(inc, events, as_of)
     dc = analytics.daily_counts(events)
@@ -254,7 +257,8 @@ def build(settings: Settings, only_steps: set[str] | None = None) -> dict:
 
 
 def _dashboard_extras(settings, wards, ws, inc, obs, sig, E, ref, zone_names, health, as_of, metrics) -> dict:
-    props = {int(r.ward_no): {"taluk": r.taluk_code, "lowLying": r.low_lying_index, "open": r.open_incidents,
+    props = {int(r.ward_no): {"taluk": r.taluk_code, "talukShare": r.taluk_share, "talukMethod": r.taluk_method,
+                              "lowLying": r.low_lying_index, "open": r.open_incidents,
                               "incidents30d": r.incidents_30d, "giZ": r.gi_star_z_30d, "hot": r.hot_ward} for r in ws.itertuples()}
     outlines = wards.zone_outlines()
     zo = {"type": "FeatureCollection", "features": [{"type": "Feature", "properties": {"zone_no": z, "zone_name": zone_names.get(z)},
@@ -311,6 +315,14 @@ def _reports(dir_, metrics, S, B, as_of) -> None:
             v = d[k]
             L.append(f"| {k.split('_')[0]} | {v['precision']} | {v['recall']} | {v['f1']} | {v['n']} |")
     L += ["", f"Officer duplicate decisions used: {d.get('officer_duplicate_decisions_used')}", ""]
+    for src in ("grievance", "police"):
+        h = d.get(f"{src}_held_out")
+        if h:  # learned method vs the old rule on the same labelled items (model figures are out-of-fold)
+            L.append(f"- {src} ({d.get(f'{src}_method')} in use): " + "; ".join(
+                f"{who}: B-cubed F1 {h[who]['bcubed_all']['f1']}, B-cubed F1 on items in a duplicate group {h[who]['bcubed_involved']['f1']}, "
+                f"pairwise P {h[who]['pairwise']['precision']} R {h[who]['pairwise']['recall']} F1 {h[who]['pairwise']['f1']}"
+                for who in ("model", "rule")))
+    L += [""]
     lk = metrics.get("linking", {})
     L += ["## Cross-source linking (held-out half of the world events)", f"- Scorer: {lk.get('scorer')}",
           f"- Pairwise: {json.dumps(lk.get('eval_cross_source_pairs'))}", f"- World events fully joined: {lk.get('eval_world_events_fully_joined')}",
@@ -339,6 +351,10 @@ def _reports(dir_, metrics, S, B, as_of) -> None:
           f"- Ranking of the decisions (AUC, held out): learned {pl.get('auc_learned_held_out')}, hand-set {pl.get('auc_default')}",
           f"- Weights in use: {json.dumps(pl.get('weights'))}", ""]
     L += ["## Geo resolution from text (20% of pinned grievances held out)", f"- {json.dumps(metrics.get('geo_holdout'))}", ""]
+    wt = metrics.get("ward_taluk") or {}
+    L += ["## Ward -> revenue taluk (official: TNGIS revenue villages + Chennai Collectorate taluk list)",
+          f"- Wards with an official taluk: {wt.get('wards_official')}; the old police/PWD vote (generated data) agrees on "
+          f"{wt.get('vote_agrees')} of {wt.get('wards_compared')} ({wt.get('agreement')})", ""]
     L += ["## Category classifier (multilingual, held-out 20%)", f"- {json.dumps(metrics.get('category_classifier'))}", ""]
     L += ["## One shared world", f"- Flood-day correlation before overlay: {json.dumps(metrics.get('flood_day_correlation_before_overlay'))}",
           f"- After overlay: {json.dumps(metrics.get('flood_day_correlation_after_overlay'))}", f"- Overlay: {json.dumps(metrics.get('overlay'), default=str)}", ""]

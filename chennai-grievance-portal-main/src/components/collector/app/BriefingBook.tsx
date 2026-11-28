@@ -4,11 +4,12 @@ import { useLang } from "@/lib/i18n/lang";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Insights } from "@/lib/collector/insights";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
-import { composeGlance, glanceNumbers, plain, type Glance, type GlanceIn, type GlanceOpen, type GlancePoint, type Seg } from "@/lib/collector/glance";
+import { composeGlance, glanceNumbers, type Glance, type GlanceIn, type GlanceOpen, type GlancePoint, type Seg } from "@/lib/collector/glance";
 import { checkOpening } from "@/lib/collector/opening";
-import { PERIODS, dayStart, labelLower } from "@/lib/period/day";
+import { PERIODS, dayStart, labelLower, type Period } from "@/lib/period/day";
+import { BRIEF_VIEW_V, capView, trimDept, trimGap, trimThread, type FrozenBook, type FrozenDept, type FrozenGap, type FrozenThread, type SavedBrief } from "@/lib/collector/workspacesnap";
 import { I, type IconName } from "./icons";
-import { SEV_HEX, deptIcon, fmtDate, ms, rel, useFit, type Row } from "./lib";
+import { SEV_HEX, deptIcon, fmtDate, fmtShort, ms, rel, useFit, type Row } from "./lib";
 import { STORY_STATUS, stepColour } from "./Stories";
 import { differView } from "./Conflicts";
 import { Sentence } from "./DeptSummary";
@@ -16,13 +17,35 @@ import { Legend } from "./MiniCharts";
 import { combine, type Story } from "./Overview";
 import type { Console } from "./CollectorApp";
 import { greeting } from "./Shell";
+import { mdToHtml } from "@/lib/markdown";
 import { canSpeak, speak, stopSpeaking } from "./assistant/speech";
 
 type Book = NonNullable<Insights["book"]>;
 type Lang = "en" | "ta";
+/** what the page reads of the Briefing part (an Insights answers it; so does a saved copy's) */
+type BookIns = Pick<Insights, "now" | "gaps"> & { book: Insights["book"]; briefing: Pick<Insights["briefing"], "emerging"> };
 
 const STATUS = { normal: "Normal", watchful: "Watchful", alert: "Alert" } as const;
 const num = (v: number) => v.toLocaleString("en-IN");
+
+/**
+ * Everything the page draws, from the live data or from a saved workspace's copy (lib/collector/workspacesnap.ts). 28 Nov (the owner: a
+ * saved workspace reopened its Briefing "in a different format"): both are drawn by the same cards below, so a saved version looks exactly
+ * like the live page did when it was saved.
+ */
+interface Model {
+  /** a saved copy: when its data was read and when it was saved (null: the live page) */
+  saved: { asOf: string; savedAt: string | null } | null;
+  now: string; period: Period; periodLabel: string; scopeName: string; whole: boolean;
+  status: FrozenBook["status"]; warned: string | null;
+  g: Glance; ai: { en: string; ta: string | null } | null;
+  days: FrozenBook["days"]; oldest: FrozenBook["oldest"];
+  departments: FrozenDept[];
+  /** null while the stories load (live) or when none were loaded (saved); `pending`: the AI is still joining them (live only) */
+  stories: { threads: FrozenThread[]; pending?: boolean } | null;
+  gaps: FrozenGap[];
+  open: (o: GlanceOpen) => void;
+}
 
 /**
  * Page 2, read top to bottom in half a minute. Across the top, "Today at a glance": one sentence, the figures (each its tile's), what is
@@ -31,21 +54,56 @@ const num = (v: number) => v.toLocaleString("en-IN");
  * 26 Nov, evening (the owner: the three cards under the glance were "very small, congested, not easily visible"): squeezed into the 126 px left
  * under the glance they cut rows in half. The page now scrolls: the glance stays as it was, and the three cards under it are full size,
  * in larger type, with how many more each holds at its foot. Until the page is scrolled, a cue at the bottom says they are there.
+ * `saved` (28 Nov): a saved workspace's Briefing, drawn from its copy only (the live data is not read).
  */
-export function BriefingBook({ ins, d, c }: { ins: Insights; d?: OverviewData; c: Console }) {
+export function BriefingBook({ ins, d, c, saved }: { ins?: Insights | null; d?: OverviewData; c: Console; saved?: SavedBrief | null }) {
+  if (saved?.kind === "view") return <SavedBook view={saved.view} asOf={saved.asOf} c={c} />;
+  if (saved?.kind === "text") return <SavedText s={saved} c={c} />;
+  return ins?.book ? <LiveBook ins={ins} d={d} c={c} /> : null;
+}
+
+function LiveBook({ ins, d, c }: { ins: Insights; d?: OverviewData; c: Console }) {
   const b = ins.book!;
+  const live = sameView(d, c);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const f = useMemo(() => glanceInput(ins, b, live, c), [ins, b, live, c.stories, c.conflicts, c.period, c.zone, c.dept, c.cat, c.taluk, c.scopeName]);
+  const g = useMemo(() => composeGlance(f), [f]);
+  const ai = useMemo(() => aiSentence(c, ins, g, f), [c.dayBrief, ins, g, f]); // eslint-disable-line react-hooks/exhaustive-deps
+  const m: Model = {
+    saved: null, now: ins.now, period: c.period, periodLabel: c.periodLabel, scopeName: c.scopeName, whole: b.today.whole,
+    status: b.status, warned: warnedOf(b), g, ai, days: b.today.days, oldest: b.citizens.oldest, departments: b.departments,
+    stories: c.stories ? { threads: c.stories.threads, pending: c.stories.pending } : null, gaps: ins.gaps as FrozenGap[],
+    open: (o) => openPoint(o, c, () => differOf(b, c)[0] ?? null, (key) => live?.allNews?.find((x) => x.id === key) ?? null)
+  };
+  return <Book m={m} c={c} />;
+}
+
+function SavedBook({ view: v, asOf, c }: { view: FrozenBook; asOf: string | null; c: Console }) {
+  const m: Model = {
+    saved: { asOf: asOf ?? v.now, savedAt: c.saved?.savedAt ?? null }, now: v.now, period: v.period, periodLabel: v.periodLabel, scopeName: v.scopeName,
+    whole: v.whole, status: v.status, warned: v.warned, g: v.glance, ai: v.ai, days: v.days, oldest: v.oldest, departments: v.departments,
+    stories: v.stories, gaps: v.gaps,
+    open: (o) => openPoint(o, c, () => v.differ, (key) => (v.news && v.news.id === key ? v.news : null))
+  };
+  return <Book m={m} c={c} />;
+}
+
+function Book({ m, c }: { m: Model; c: Console }) {
   const box = useRef<HTMLElement>(null);
-  const row = useRef<HTMLDivElement>(null);
   const below = useBelow(box);
-  const down = () => row.current?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "end" });
+  // the cue takes the page to its end, where the last cards clear Jarvis and the chatbot (dock.css)
+  const down = () => {
+    const sc = box.current?.closest<HTMLElement>("#view");
+    sc?.scrollTo({ top: sc.scrollHeight, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  };
   return (
-    <section className="bb bb2" ref={box}>
-      <Today ins={ins} b={b} d={d} c={c} />
-      <div className="bb2-row" ref={row}>
-        <Departments b={b} c={c} />
+    <section className={`bb bb2${m.saved ? " bb-saved" : ""}`} ref={box}>
+      <Today m={m} c={c} />
+      <div className="bb2-row">
+        <Departments m={m} c={c} />
         {/* the Collector's own datasets are on the Environment page now (pinned from the Data Studio), not here */}
-        <Developing ins={ins} c={c} />
-        <NewsOnly ins={ins} c={c} />
+        <Developing m={m} c={c} />
+        <NewsOnly m={m} c={c} />
       </div>
       {below && <button className="bb2-down" onClick={down} title="Scroll down to the departments, the developing stories and what is only in the news">
         <I n="chevd" />Departments, stories and news below</button>}
@@ -53,19 +111,24 @@ export function BriefingBook({ ins, d, c }: { ins: Insights; d?: OverviewData; c
   );
 }
 
-/** True while the page can scroll and is still at its top (the three cards are mostly below the fold); false on phones (the page scrolls anyway). */
+/**
+ * True while the page can scroll and is still at its top (the three cards are mostly below the fold); false on phones (the whole window
+ * scrolls there). 28 Nov: every page scrolls inside the console (#view, dock.css), so it is #view that is watched.
+ */
 function useBelow(box: React.RefObject<HTMLElement | null>) {
   const [below, setBelow] = useState(false);
   useEffect(() => {
     const el = box.current;
-    if (!el) return;
-    const f = () => setBelow(!!el.closest(".dic.fit") && el.scrollHeight - el.clientHeight > 60 && el.scrollTop < 24);
+    const sc = el?.closest<HTMLElement>("#view");
+    if (!el || !sc) return;
+    const f = () => setBelow(!!el.closest(".dic.fit") && sc.scrollHeight - sc.clientHeight > 60 && sc.scrollTop < 24);
     f();
-    el.addEventListener("scroll", f, { passive: true });
+    sc.addEventListener("scroll", f, { passive: true });
     const ro = new ResizeObserver(f);
+    ro.observe(sc);
     ro.observe(el);
     for (const k of Array.from(el.children)) ro.observe(k);
-    return () => { el.removeEventListener("scroll", f); ro.disconnect(); };
+    return () => { sc.removeEventListener("scroll", f); ro.disconnect(); };
   }, [box]);
   return below;
 }
@@ -102,7 +165,7 @@ const firstDay = (period: Console["period"], now: string) =>
   period === "daily" ? dayStart(now).slice(0, 10) : new Date(ms(now) + 330 * 60_000 - PERIODS[period].hours * 3600_000).toISOString().slice(0, 10);
 
 /** What the glance is made from: the tiles as the Overview shows them, the Briefing's lists, and the news and stories of these filters. */
-export function glanceInput(ins: Insights, b: Book, live: OverviewData | null, c: Console): GlanceIn {
+export function glanceInput(ins: BookIns, b: Book, live: OverviewData | null, c: Console): GlanceIn {
   const t = b.today, whole = t.whole;
   const k = live ? live.kpi : t.kpi;
   const acted = new Set((live?.severity.rows ?? []).filter((r) => r.acted).map((r) => String(r.id)));
@@ -149,11 +212,14 @@ function differOf(b: Book, c: Console) {
   return differView(c.conflicts).inside.filter((s) => s.items.some((x) => x.kind === "conflict"));
 }
 
+/** A district warning under a filter: named as the district's, never as the view's. */
+const warnedOf = (b: Book) => (!b.today.whole && b.alerts?.banner ? b.alerts.banner.title.split(" · ").slice(0, 2).join(" · ") : null);
+
 /**
  * The AI's one-line headline of the same view, only when every figure and every "more" or "fewer" in it is one the glance itself states
  * (opening.ts): otherwise the sentence the code wrote, which is always current.
  */
-function aiSentence(c: Console, ins: Insights, g: Glance, f: GlanceIn): { en: string; ta: string | null } | null {
+function aiSentence(c: Console, ins: BookIns, g: Glance, f: GlanceIn): { en: string; ta: string | null } | null {
   const b = c.dayBrief?.brief;
   if (!b?.headline || g.empty) return null;
   return checkOpening({ asOf: ins.now, en: b.headline, ta: b.headlineTa }, { now: ins.now, hours: PERIODS[c.period].hours,
@@ -161,18 +227,38 @@ function aiSentence(c: Console, ins: Insights, g: Glance, f: GlanceIn): { en: st
       newsOnly: f.newsOnly?.n ?? 0, deaths: f.deaths, injured: f.injured, awaiting: f.awaiting }, extra: glanceNumbers(g) }).opening;
 }
 
+/**
+ * The page as it is now, for a saved workspace (28 Nov): the key points as composed, the AI headline as checked, and the cards' lists,
+ * kept small enough to store (workspacesnap.ts capView). Null when the Briefing has no book (it could not be built).
+ */
+export function freezeBook(ins: BookIns, d: OverviewData | undefined, c: Console): FrozenBook | null {
+  const b = ins.book;
+  if (!b) return null;
+  const live = sameView(d, c);
+  const f = glanceInput(ins, b, live, c);
+  const g = composeGlance(f);
+  const key = f.news?.key ?? null;
+  const o = b.citizens.oldest;
+  return capView({
+    v: BRIEF_VIEW_V, now: ins.now, period: c.period, periodLabel: c.periodLabel, scopeName: c.scopeName, whole: b.today.whole,
+    status: { level: b.status.level, reasons: [...b.status.reasons] }, warned: warnedOf(b), glance: g, ai: aiSentence(c, ins, g, f),
+    days: b.today.days.map((x) => ({ day: x.day, reported: x.reported, resolved: x.resolved })),
+    oldest: o ? { id: o.id, title: o.title, t: o.t } : null,
+    departments: b.departments.map(trimDept),
+    stories: c.stories ? { threads: c.stories.threads.map(trimThread) } : null,
+    gaps: (ins.gaps as Row[]).map(trimGap),
+    news: key ? live?.allNews?.find((x) => x.id === key) ?? null : null,
+    differ: differOf(b, c)[0] ?? null
+  });
+}
+
 /** "Today at a glance": the Collector's key points for the filters in force. */
-function Today({ ins, b, d, c }: { ins: Insights; b: Book; d?: OverviewData; c: Console }) {
+function Today({ m, c }: { m: Model; c: Console }) {
   const [uiLang] = useLang();
   const [lang, setLang] = useState<Lang>("en");
   useEffect(() => { setLang(uiLang === "ta" ? "ta" : "en"); }, [uiLang]);
   const ta = lang === "ta";
-  const live = sameView(d, c);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const f = useMemo(() => glanceInput(ins, b, live, c), [ins, b, live, c.stories, c.conflicts, c.period, c.zone, c.dept, c.cat, c.taluk, c.scopeName]);
-  const g = useMemo(() => composeGlance(f), [f]);
-  const ai = useMemo(() => aiSentence(c, ins, g, f), [c.dayBrief, ins, g, f]); // eslint-disable-line react-hooks/exhaustive-deps
-  const open = useOpen(ins, b, live, c);
+  const { g, ai } = m;
   const aiText = ai ? (ta ? ai.ta : ai.en) : null;
 
   const box = useRef<HTMLDivElement>(null);
@@ -187,18 +273,20 @@ function Today({ ins, b, d, c }: { ins: Insights; b: Book; d?: OverviewData; c: 
   };
   const pick = (l: Lang) => { stopSpeaking(); setTalking(false); setLang(l); };
 
-  const level = b.status.level, why = b.status.reasons;
-  const name = c.period === "daily" ? "Today at a glance" : `${PERIODS[c.period].label} at a glance`;
-  const warned = !b.today.whole && b.alerts?.banner ? b.alerts.banner.title.split(" · ").slice(0, 2).join(" · ") : null;
+  const level = m.status.level, why = m.status.reasons;
+  const name = m.period === "daily" ? "Today at a glance" : `${PERIODS[m.period].label} at a glance`;
   return (
     <section className="bb-card bb-brief gl" ref={box}>
       <Head ic="scroll" title={name}>
-        <span className={`gl-scope${b.today.whole ? "" : " on"}`}><I n={b.today.whole ? "map" : "sliders"} />{b.today.whole ? "Whole district" : c.scopeName}</span>
-        <span className={`bb-status lv-${level}`} title={b.today.whole ? "District status, by fixed rules: deaths, severe incidents, and warnings from IMD, NDMA SACHET and the news" : "Status of this view, by fixed rules: its deaths and severe incidents"} data-tip={why.join(" · ") || undefined}>
+        <span className={`gl-scope${m.whole ? "" : " on"}`}><I n={m.whole ? "map" : "sliders"} />{m.whole ? "Whole district" : m.scopeName}</span>
+        {m.saved && <SavedChip asOf={m.saved.asOf} savedAt={m.saved.savedAt} />}
+        {/* (also Jarvis's "back to live": controls10 presses this page's button.lnk) */}
+        {m.saved && c.backToLive && <button className="lnk gl-live" onClick={c.backToLive} title="Leave the saved workspace and show the live dashboard">Back to live dashboard</button>}
+        <span className={`bb-status lv-${level}`} title={m.whole ? "District status, by fixed rules: deaths, severe incidents, and warnings from IMD, NDMA SACHET and the news" : "Status of this view, by fixed rules: its deaths and severe incidents"} data-tip={why.join(" · ") || undefined}>
           <i /><b>{STATUS[level]}</b>{why.length > 0 && <span>{why.join(" · ")}</span>}
         </span>
         {/* a warning is the whole district's: under a filter it is named as such, never as the view's */}
-        {warned && <button className="gl-wide" onClick={() => c.openRain?.()} title="Open Rain & flooding"><I n="cloud" /><b>District-wide</b><span>{warned}</span></button>}
+        {m.warned && <button className="gl-wide" onClick={() => c.openRain?.()} title="Open Rain & flooding"><I n="cloud" /><b>District-wide</b><span>{m.warned}</span></button>}
         <span className="bb-tools">
           <span className="bb-lang" role="group" aria-label="Language">
             <button className={ta ? "" : "on"} aria-pressed={!ta} onClick={() => pick("en")}>EN</button>
@@ -209,47 +297,54 @@ function Today({ ins, b, d, c }: { ins: Insights; b: Book; d?: OverviewData; c: 
         </span>
       </Head>
       <p className="gl-say" lang={ta ? "ta" : "en"}>
-        <span className="gl-hi" data-say="">{`${greeting(ins.now)}, Collector`}</span>
+        <span className="gl-hi" data-say="">{`${greeting(m.now)}, Collector`}</span>
         {aiText ? <><span data-no-i18n="" data-say="">{aiText}</span><em className="gl-ai" title="Worded by AI from this view's records; every figure checked against the ones below"><I n="ai" />AI</em></> : <span data-say=""><Sentence s={ta ? g.situation.ta : g.situation.en} /></span>}
       </p>
       <div className="gl-grid">
         <div className="gl-nums">
-          {g.figures.map((x) => <Fig key={x.key} x={x} open={open} />)}
-          <Week days={b.today.days} now={ins.now} />
+          {g.figures.map((x) => <Fig key={x.key} x={x} open={m.open} />)}
+          <Week days={m.days} now={m.now} />
         </div>
-        <Group title="What is happening" icon="pulse" points={g.happening} ta={ta} open={open}
+        <Group title="What is happening" icon="pulse" points={g.happening} ta={ta} open={m.open}
           none={g.empty ? "Nothing was reported or resolved in this view." : "Nothing stands out in this view."} />
-        <Group title="What needs you" icon="alert" points={g.needs} ta={ta} open={open} none="Nothing waits for you in this view.">
-          {g.needs.length < 4 && b.citizens.oldest && (
-            <button className="bb-fact" onClick={() => c.openInc(b.citizens.oldest!.id)} title="Open the oldest open complaint of this period">
-              <I n="clock" /><b>Oldest open complaint</b><span>{rel(b.citizens.oldest.t, ins.now)}</span><span className="ttl">{b.citizens.oldest.title}</span><I n="chevr" />
+        <Group title="What needs you" icon="alert" points={g.needs} ta={ta} open={m.open} none="Nothing waits for you in this view.">
+          {g.needs.length < 4 && m.oldest && (
+            <button className="bb-fact" onClick={() => c.openInc(m.oldest!.id)} title="Open the oldest open complaint of this period">
+              <I n="clock" /><b>Oldest open complaint</b><span>{rel(m.oldest.t, m.now)}</span><span className="ttl">{m.oldest.title}</span><I n="chevr" />
             </button>
           )}
         </Group>
-        <Group title="What to do next" icon="tasks" points={g.next} ta={ta} open={open} none="No step is needed from you in this view." />
+        <Group title="What to do next" icon="tasks" points={g.next} ta={ta} open={m.open} none="No step is needed from you in this view." />
       </div>
     </section>
   );
 }
 
-/** What a click on a figure or a point does: the list, the case, the story or the page its figure comes from. */
-function useOpen(ins: Insights, b: Book, live: OverviewData | null, c: Console) {
-  return (o: GlanceOpen) => {
-    switch (o.k) {
-      case "list": return c.openList(o.preset, o.title);
-      case "inc": return c.openInc(o.id);
-      case "act": return c.openAction(o.id);
-      case "zone": return c.setZone(o.zone);
-      case "dept": return c.openDept(o.code);
-      case "story": return c.openStories(o.id);
-      case "differ": { const s = differOf(b, c)[0]; return s ? c.openConflict(s) : undefined; }
-      case "gaps": return c.openGaps();
-      case "rain": return c.openRain?.();
-      case "page": return c.setPage(o.page);
-      case "rise": return c.openPattern({ kind: "spike", cat: o.cat, zone: o.zone, date: o.date });
-      case "news": { const s = live?.allNews?.find((x) => x.id === o.key); return s ? c.openStory(s as Story) : c.openInc(o.key); }
-    }
-  };
+/** A saved copy says so, and when its data was read; the way back to the live page is beside it (and in the top bar). */
+function SavedChip({ asOf, savedAt }: { asOf: string; savedAt: string | null }) {
+  return (
+    <span className="gl-saved" title={`A saved copy: its figures are those of ${fmtShort(asOf)}${savedAt ? `, saved ${fmtShort(savedAt)}` : ""}. New data does not change it.`}>
+      <I n="clock" /><b>Saved copy</b><span>data as of</span><time data-no-i18n="">{fmtShort(asOf)}</time>
+    </span>
+  );
+}
+
+/** What a click on a figure or a point does: the list, the case, the story or the page its figure comes from (each opens with today's records). */
+function openPoint(o: GlanceOpen, c: Console, differ: () => ReturnType<typeof differOf>[number] | null, news: (key: string) => Story | null) {
+  switch (o.k) {
+    case "list": return c.openList(o.preset, o.title);
+    case "inc": return c.openInc(o.id);
+    case "act": return c.openAction(o.id);
+    case "zone": return c.setZone(o.zone);
+    case "dept": return c.openDept(o.code);
+    case "story": return c.openStories(o.id);
+    case "differ": { const s = differ(); return s ? c.openConflict(s) : undefined; }
+    case "gaps": return c.openGaps();
+    case "rain": return c.openRain?.();
+    case "page": return c.setPage(o.page);
+    case "rise": return c.openPattern({ kind: "spike", cat: o.cat, zone: o.zone, date: o.date });
+    case "news": { const s = news(o.key); return s ? c.openStory(s) : c.openInc(o.key); }
+  }
 }
 
 function Fig({ x, open }: { x: Glance["figures"][number]; open: (o: GlanceOpen) => void }) {
@@ -267,7 +362,7 @@ function Fig({ x, open }: { x: Glance["figures"][number]; open: (o: GlanceOpen) 
 }
 
 /** The last 7 days at the size of a word: reported beside resolved, for the same zone, department and category. */
-function Week({ days, now }: { days: Book["today"]["days"]; now: string }) {
+export function Week({ days, now }: { days: Book["today"]["days"]; now: string }) {
   const max = Math.max(1, ...days.flatMap((x) => [x.reported, x.resolved]));
   const h = (v: number) => `${Math.max(v ? 6 : 0, (v / max) * 100).toFixed(0)}%`;
   const today = now.slice(0, 10);
@@ -303,7 +398,8 @@ function GlanceSentence({ s }: { s: Seg[] }) {
   return <>{out}</>;
 }
 
-function Group({ title, icon, points, ta, open, none, children }: { title: string; icon: IconName; points: GlancePoint[]; ta: boolean; open: (o: GlanceOpen) => void; none: string; children?: React.ReactNode }) {
+/** (exported 28 Nov: the officer console's briefing draws its key points with these, so both consoles' briefings look and work alike) */
+export function Group({ title, icon, points, ta, open, none, children }: { title: string; icon: IconName; points: GlancePoint[]; ta: boolean; open: (o: GlanceOpen) => void; none: string; children?: React.ReactNode }) {
   return (
     <div className="gl-g">
       <h4 data-say=""><I n={icon} />{title}</h4>
@@ -328,12 +424,12 @@ function Group({ title, icon, points, ta, open, none, children }: { title: strin
 // ------------------------------------------------------------------------------------------------ by department --
 
 /** Each department in one line: what it received, what is late, deaths and severe. A click opens its summary (DeptSummary.tsx). */
-function Departments({ b, c }: { b: Book; c: Console }) {
-  const rows = b.departments;
+function Departments({ m, c }: { m: Model; c: Console }) {
+  const rows = m.departments;
   const [ref, hidden] = useFit<HTMLUListElement>(rows.map((x) => `${x.code}:${x.n}:${x.dead}:${x.severe}:${x.overdue}`).join());
   return (
     <section className="bb-card bb-depts">
-      <Head ic="gov" title="Departments" n={rows.length || undefined} note={`what each received · ${labelLower(c.periodLabel)}`} more={rows.length ? () => c.openDepts() : undefined} />
+      <Head ic="gov" title="Departments" n={rows.length || undefined} note={`what each received · ${labelLower(m.periodLabel)}`} more={rows.length ? () => c.openDepts() : undefined} />
       {rows.length ? (
         <>
           <ul ref={ref} className="bb-fit bb-dl">
@@ -375,8 +471,8 @@ function More({ n, what, onClick }: { n: number; what: [string, string]; onClick
  * Stories that really developed (storyai.ts): each told as one short timeline, every event once, oldest first. The card shows how it began
  * and its last two events; the rest open in the story. Until the AI has read them the rules' own events are shown.
  */
-function Developing({ ins, c }: { ins: Insights; c: Console }) {
-  const data = c.stories;
+function Developing({ m, c }: { m: Model; c: Console }) {
+  const data = m.stories;
   const threads = data?.threads ?? [];
   const [ref, hidden] = useFit<HTMLUListElement>(threads.map((t) => `${t.id}:${t.events.length}`).join());
   return (
@@ -384,7 +480,8 @@ function Developing({ ins, c }: { ins: Insights; c: Console }) {
       <Head ic="pulse" title="Stories still developing" n={data ? threads.length : undefined} note={data?.pending ? "AI is reading…" : undefined}
         more={threads.length ? () => c.openStories(null) : undefined} />
       {!data ? (
-        <div className="bb-fit"><p className="dp-brief wait" style={{ margin: "2px 14px" }}><I n="ai" />Joining reports about the same event…</p></div>
+        <div className="bb-fit">{m.saved ? <Calm>The stories had not loaded when this version was saved.</Calm>
+          : <p className="dp-brief wait" style={{ margin: "2px 14px" }}><I n="ai" />Joining reports about the same event…</p>}</div>
       ) : threads.length ? (
         <ul ref={ref} className="bb-fit">
           {threads.map((s) => {
@@ -397,14 +494,14 @@ function Developing({ ins, c }: { ins: Insights; c: Console }) {
                 <button className="bb-story sl" onClick={() => c.openStories(s.id)} title={s.ai?.now ?? "Open the story's timeline"}>
                   <span className="sl-h"><b>{s.title}</b>{s.ai && <span className={`sl-st ${s.ai.status}`}>{STORY_STATUS[s.ai.status]}</span>}</span>
                   <span className="sl-line">
-                    {shown.map((m, k) => (
-                      <span key={k} className={`sl-ev${k === shown.length - 1 ? " last" : ""}`} style={{ "--c": stepColour(m.label) } as React.CSSProperties}
-                        title={`${fmtDate(m.t)}: ${m.what}`}>
-                        <time>{fmtDate(m.t)}</time><i /><span><em>{m.label}</em>{m.what}</span>
+                    {shown.map((x, k) => (
+                      <span key={k} className={`sl-ev${k === shown.length - 1 ? " last" : ""}`} style={{ "--c": stepColour(x.label) } as React.CSSProperties}
+                        title={`${fmtDate(x.t)}: ${x.what}`}>
+                        <time>{fmtDate(x.t)}</time><i /><span><em>{x.label}</em>{x.what}</span>
                       </span>
                     ))}
                   </span>
-                  <small>{earlier > 0 ? `latest ${shown.length} of ${ev.length} events` : `${ev.length} ${ev.length === 1 ? "event" : "events"}`} · {s.outlets.slice(0, 2).join(", ")}{s.outlets.length > 2 ? ` +${s.outlets.length - 2}` : ""} · updated {rel(s.last, ins.now)}</small>
+                  <small>{earlier > 0 ? `latest ${shown.length} of ${ev.length} events` : `${ev.length} ${ev.length === 1 ? "event" : "events"}`} · {s.outlets.slice(0, 2).join(", ")}{s.outlets.length > 2 ? ` +${s.outlets.length - 2}` : ""} · updated {rel(s.last, m.now)}</small>
                 </button>
               </li>
             );
@@ -416,8 +513,8 @@ function Developing({ ins, c }: { ins: Insights; c: Console }) {
   );
 }
 
-function NewsOnly({ ins, c }: { ins: Insights; c: Console }) {
-  const rows = ins.gaps as Row[];
+function NewsOnly({ m, c }: { m: Model; c: Console }) {
+  const rows = m.gaps;
   const [ref, hidden] = useFit<HTMLUListElement>(rows.map((g) => g.id).join());
   return (
     <section className="bb-card grow bb-gaps">
@@ -427,15 +524,38 @@ function NewsOnly({ ins, c }: { ins: Insights; c: Console }) {
           {rows.map((g) => (
             <li key={g.id}>
               <button className="bb-item" onClick={() => c.openInc(g.id)} title="Open the incident and its news reports">
-                <i style={{ background: SEV_HEX[g.sev] ?? "var(--text-4)" }} />
+                <i style={{ background: SEV_HEX[g.sev ?? ""] ?? "var(--text-4)" }} />
                 <b>{g.title || g.type}</b>
-                <small>{[g.zone_name ?? "Chennai", g.dept_name ? `for ${g.dept_name}` : null, g.t ? rel(g.t, ins.now) : null].filter(Boolean).join(" · ")}</small>
+                <small>{[g.zone_name ?? "Chennai", g.dept_name ? `for ${g.dept_name}` : null, g.t ? rel(g.t, m.now) : null].filter(Boolean).join(" · ")}</small>
               </button>
             </li>
           ))}
         </ul>
-      ) : <div className="bb-fit"><Calm>{ins.book?.today.whole ? "Every incident in the news has a department record." : "Nothing in this view is only in the news."}</Calm></div>}
+      ) : <div className="bb-fit"><Calm>{m.whole ? "Every incident in the news has a department record." : "Nothing in this view is only in the news."}</Calm></div>}
       <More n={hidden} what={["incident", "incidents"]} onClick={() => c.openGaps()} />
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------------------- a version saved before 28 Nov --
+
+/**
+ * A version that kept only the written briefing (saved before 28 Nov, or from a chat answer's "Save as workspace", which has no page to copy):
+ * shown on the Briefing page's own card, said to be in the written format, rather than as the old Briefing page. Its figures cannot be redrawn
+ * as key points (the data of that moment was not kept).
+ */
+function SavedText({ s, c }: { s: Extract<SavedBrief, { kind: "text" }>; c: Console }) {
+  const html = useMemo(() => mdToHtml(s.md), [s.md]);
+  return (
+    <section className="bb bb2 bb-saved">
+      <section className="bb-card bb-brief gl gl-text">
+        <Head ic="scroll" title="Saved briefing">
+          {s.asOf && <SavedChip asOf={s.asOf} savedAt={c.saved?.savedAt ?? s.issuedAt} />}
+          {c.backToLive && <button className="lnk gl-live" onClick={c.backToLive} title="Leave the saved workspace and show the live dashboard">Back to live dashboard</button>}
+          <span className="bb-note">This version kept only the written briefing. Versions saved from Workspaces in the Menu reopen with the key points, as the live page shows them.</span>
+        </Head>
+        <div className="gl-md md" dangerouslySetInnerHTML={{ __html: html }} />
+      </section>
     </section>
   );
 }

@@ -11,6 +11,7 @@ import { nearby } from "@/lib/collector/nearby";
 import { elsewhere } from "@/lib/collector/newsrel";
 import { offDeskIncidents } from "@/lib/collector/newsdesk";
 import { stories } from "@/lib/collector/storyai";
+import { scoreWhy, scoreWhyFacts } from "@/lib/collector/scorewhy";
 import { caseRows } from "../sql";
 import { agoWords, istWords, toPart } from "../format";
 import { heardAs, kindsOf, placeOf } from "../names";
@@ -232,6 +233,9 @@ async function openIncident(id: string, c: ToolCtx): Promise<ToolOut> {
   const docs = reports.filter((r) => r.source === "news");
   const papers = [...new Set(docs.map((r) => s(r.publisher)).filter(Boolean))];
   const [cs] = await caseRows("SELECT * FROM cases WHERE id = ?", [id]);
+  // every severity point with its rule, every priority term, the deadline's source (lib/collector/scorewhy.ts); older builds: the reasons text
+  const [scoreRow] = await caseRows("SELECT * FROM incidents WHERE incident_id = ?", [id]).catch(() => [] as Row[]);
+  const scored = scoreRow ? scoreWhyFacts(scoreWhy(scoreRow)) : [];
   return {
     about: `${id}: ${s(i.title)}`, asOf: c.now, ids: [id],
     facts: [
@@ -241,7 +245,7 @@ async function openIncident(id: string, c: ToolCtx): Promise<ToolOut> {
       `Reported by: ${sourceWords(i.sources)}; ${Number(i.complaints ?? 0)} citizen complaints, ${Number(i.police_reports ?? 0)} police reports, ${papers.length} newspapers${papers.length ? ` (${papers.join(", ")})` : ""}.`,
       `Deaths ${Number(i.dead ?? 0)}, injured ${Number(i.injured ?? 0)}${i.persons_affected ? `, people affected ${s(i.persons_affected)}` : ""}.`,
       ...((why.what as string[] | undefined) ?? []).map((t) => `What happened: ${t}`), ...((why.why as string[] | undefined) ?? []).map((t) => `Why it needs attention: ${t}`),
-      ...(s(i.severity_reasons) ? [`Severity worked out from: ${s(i.severity_reasons)}.`] : []), ...(s(i.priority_reasons) ? [`Priority ${s(i.priority)} from: ${s(i.priority_reasons)}.`] : []),
+      ...(scored.length ? scored : [...(s(i.severity_reasons) ? [`Severity worked out from: ${s(i.severity_reasons)}.`] : []), ...(s(i.priority_reasons) ? [`Priority ${s(i.priority)} from: ${s(i.priority_reasons)}.`] : [])]),
       ...(s(why.next) ? [`Suggested next step: ${s(why.next)}`] : []), ...(assigned?.officer_name ? [`Assigned to ${s(assigned.officer_name)}, ${s(assigned.officer_designation)}${assigned.officer_phone ? `, ${s(assigned.officer_phone)}` : ""}.`] : []),
       ...(Number(i.needs_review) ? [`Needs a check: ${s(i.review_reason)}.`] : [])
     ],

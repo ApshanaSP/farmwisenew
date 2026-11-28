@@ -22,7 +22,7 @@ import { Grip, useDragPanel } from "./dragPanel";
 import { istDate } from "@/lib/ist-dates";
 import { cueAct } from "./actions";
 import { onMapCmd } from "./bridge";
-import { GapList, GroupList, LeagueTable, RulePairs, SpeedTable, ToolsBar } from "./CollectorTools";
+import { GapList, GroupList, LeagueTable, RulePairs, SpeedTable } from "./CollectorTools";
 import { useWorkspace } from "./workspace";
 import { PlayPeriod, ScorecardCard, ShareActs } from "./V2Tools";
 import { TopBars, herePlan } from "./TopBars";
@@ -255,7 +255,7 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                       <Extras r={r} w={w} ask={ask} tour={tour} setTour={setTour} lang={lang} />
                       <Trace r={r} w={w} lang={lang} ask={ask} on={traceOn} setOn={setTraceOn} />
                       <List r={r} w={w} lang={lang} ask={ask} actions={actions} listRef={listRef} />
-                      <Places r={r} lang={lang} />
+                      <Places r={r} lang={lang} ask={ask} />
                     </details>
                   </>
                 ) : (
@@ -264,6 +264,8 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                     <FilterLine r={r} lang={lang} open={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} />
                     {filtersOpen && chipsView(r)}
                     <Answer r={r} w={w} lang={lang} ask={ask} />
+                    {/* 28 Nov: the names of the places asked for, up front (they waited under "More" before, so a list question showed only three) */}
+                    <Places r={r} lang={lang} ask={ask} />
                     <LeagueTable r={r} ask={ask} lang={lang} />
                     <SpeedTable r={r} ask={ask} lang={lang} />
                     <GroupList r={r} ask={ask} lang={lang} />
@@ -279,7 +281,6 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
                       <PlayPeriod r={r} ask={ask} lang={lang} />
                       <ShareActs r={r} question={typeof t.req?.text === "string" ? t.req.text : null} lang={lang} toast={actions.toast} />
                       <Trace r={r} w={w} lang={lang} ask={ask} on={traceOn} setOn={setTraceOn} />
-                      <Places r={r} lang={lang} />
                     </details>
                   </>
                 ))}
@@ -305,7 +306,6 @@ export default function AskMapPanel({ ask, actions, autoFocus }: { ask: MapAsk; 
           <div className="amp-tray-b">{trayQs(actions.suggestions, r, ta).map((q) => <button key={q} onClick={() => submit(q)} disabled={ask.busy}><I n="arrowUR" />{q}</button>)}</div>
         </div>
       )}
-      <ToolsBar ask={ask} lang={lang} />
       <div className="amp-ask">
         <button className={`amp-bulb${tray ? " on" : ""}`} onClick={() => setTray((v) => !v)} title={ta ? "பரிந்துரைக்கப்பட்ட கேள்விகள்" : "Suggested questions"} aria-label={ta ? "பரிந்துரைக்கப்பட்ட கேள்விகள்" : "Suggested questions"} aria-expanded={tray}><I n="bulb" /></button>
         <input ref={input} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={onKey} placeholder={ask.turns.length ? (ta ? "தொடர் கேள்வி அல்லது புதிய கேள்வி…" : "Ask a follow-up or a new question…") : w.placeholder} aria-label={w.title} maxLength={400} />
@@ -715,25 +715,65 @@ function List({ r, w, lang, ask, actions, listRef }: { r: AskResponse; w: Words;
   );
 }
 
-/** "Schools in Valasaravakkam": the places, by name (each is a marker on the map). */
-function Places({ r, lang }: { r: AskResponse; lang: "en" | "ta" }) {
+/**
+ * "List the schools in Valasaravakkam", "hospitals near Egmore", "all fire stations": every place of the answer, numbered, with its
+ * neighbourhood and ward (and the distance when the question named a point), nearest first or by name; each is a pin on the map: a row under
+ * the mouse lifts its pin, a click flies to it. A place matched to an official list says so; a district-wide answer also names the official
+ * places that have no map point. Owner, 28 Nov 2026: "make sure we can see the names ... return the list if I ask for it".
+ */
+function Places({ r, lang, ask }: { r: AskResponse; lang: "en" | "ta"; ask: MapAsk }) {
   const pts = r.context.points;
-  if (r.total || !pts.length || r.rows.length || r.extra.nearest || r.extra.areas || r.extra.pairs) return null;
-  const lw = LAYER_WORD[pts[0].layer];
+  const px = r.extra.places;
+  if (!px || !pts.length || r.total || r.rows.length || r.extra.nearest || r.extra.areas || r.extra.pairs) return null;
+  const ta = lang === "ta";
+  const lw = LAYER_WORD[px.layer];
+  const n = (x: number) => x.toLocaleString("en-IN");
+  const outside = px.total - px.inside;
+  const onKey = (e: React.KeyboardEvent<HTMLLIElement>, id: string) => {
+    const li = e.currentTarget;
+    if (e.key === "ArrowDown") { e.preventDefault(); (li.nextElementSibling as HTMLElement | null)?.focus(); }
+    if (e.key === "ArrowUp") { e.preventDefault(); (li.previousElementSibling as HTMLElement | null)?.focus(); }
+    if (e.key === "Enter") { e.preventDefault(); ask.setFocus(id); }
+  };
+  const src = px.sources.filter((s) => s.url).slice(0, 3);
   return (
-    <div>
-      <div className="amp-sec" style={{ cursor: "default" }}>{lang === "ta" ? lw.ta : lw.en[0].toUpperCase() + lw.en.slice(1)}<span className="n">{pts.length.toLocaleString("en-IN")}</span></div>
-      <ul className="amp-list amp-places">
-        {pts.map((p) => (
-          <li key={p.id} className="amp-row">
-            <span className="dot" style={{ background: "#2E7D5B" }} />
-            <div style={{ minWidth: 0 }}>
-              <div className="t">{(lang === "ta" ? p.name_ta ?? p.name : p.name) ?? (lang === "ta" ? lw.ta_one : `Unnamed ${lw.one}`)}</div>
-              {p.government && <div className="s">{lang === "ta" ? "அரசு" : "Government"}</div>}
-            </div>
-          </li>
-        ))}
-      </ul>
+    <div className="amp-placesw">
+      <div className="amp-sec" style={{ cursor: "default" }}>{ta ? `${lw.ta}: பெயர்கள்` : `${lw.en[0].toUpperCase()}${lw.en.slice(1)}: the names`}<span className="n">{n(px.total)}</span></div>
+      <p className="amp-plnote">
+        {px.order === "nearest" ? (ta ? "அருகில் உள்ளவை முதலில்." : "Nearest first.") : (ta ? "பெயர் வரிசையில்." : "In order of name.")}
+        {" "}{px.matched ? (ta ? `${n(px.matched)} அதிகாரப் பட்டியலுடன் பொருந்தின; மற்றவை பெயரால் சரிபார்க்கப்பட்டவை.` : `${n(px.matched)} matched to an official list; the others are checked by name.`) : ""}
+        {outside > 0 ? (ta ? ` ${n(outside)} மாவட்ட எல்லைக்குச் சற்று வெளியே.` : ` ${n(outside)} ${outside === 1 ? "is" : "are"} just outside the district.`) : ""}
+      </p>
+      <ol className={`amp-list amp-places${pts.length > 8 ? " long" : ""}`} aria-label={ta ? `${lw.ta} பட்டியல்` : `List of ${lw.en}`}>
+        {pts.map((p, i) => {
+          const name = (ta ? p.name_ta ?? p.name : p.name) ?? (ta ? `பெயரில்லா ${lw.ta_one}` : `Unnamed ${lw.one}`);
+          const where = [ta ? p.place_ta ?? p.place : p.place, p.ward != null ? `${ta ? "வார்டு" : "Ward"} ${p.ward}` : p.in_district === false ? (ta ? "மாவட்டத்திற்கு வெளியே" : "outside the district") : null,
+            p.dist != null ? fmtDistance(p.dist, lang) : null, p.government ? (ta ? "அரசு" : "government") : null].filter(Boolean).join(" · ");
+          return (
+            <li key={p.id} className={`amp-row amp-place${ask.focus === p.id ? " on" : ""}`} tabIndex={0} onKeyDown={(e) => onKey(e, p.id)}
+              onMouseEnter={() => ask.setHover(p.id)} onMouseLeave={() => ask.setHover(null)} onFocus={() => ask.setHover(p.id)} onBlur={() => ask.setHover(null)}
+              onClick={() => ask.setFocus(p.id)} aria-label={`${i + 1}. ${name}${where ? `, ${where}` : ""}`}>
+              <span className="amp-pn">{i + 1}</span>
+              <div style={{ minWidth: 0 }}>
+                <div className="t">{name}</div>
+                {(where || p.official) && <div className="s">{where}{p.official && <span className="amp-off" title={ta ? "அதிகாரப் பட்டியலில் உள்ளது" : "On an official list"}><I n="check" />{ta ? "அதிகாரப் பட்டியல்" : "official list"}</span>}</div>}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+      {px.shown < px.total && <p className="amp-plnote">{ta ? `முதல் ${n(px.shown)} மட்டும் காட்டப்படுகிறது; அனைத்தும் எண்ணப்பட்டுள்ளன.` : `The first ${n(px.shown)} are listed and pinned; all ${n(px.total)} are counted.`}</p>}
+      {px.unmapped && px.unmapped.length > 0 && (
+        <details className="amp-unmapped">
+          <summary>{ta ? `வரைபடத்தில் இடம் இல்லாத ${n(px.unmapped.length)} அதிகாரப் பட்டியல் பெயர்கள்` : `${n(px.unmapped.length)} more on the official list, with no map point`}</summary>
+          <ol>{px.unmapped.map((x) => <li key={x}>{x}</li>)}</ol>
+        </details>
+      )}
+      {src.length > 0 && (
+        <p className="amp-asof">{ta ? "சரிபார்த்த பட்டியல்கள்: " : "Checked against: "}
+          {src.map((s, i) => <span key={s.url}>{i > 0 && "; "}<a href={s.url!} target="_blank" rel="noopener noreferrer">{s.name.split(":")[0]}</a>{s.checked ? ` (${s.checked})` : ""}</span>)}
+        </p>
+      )}
     </div>
   );
 }

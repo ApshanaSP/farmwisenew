@@ -14,6 +14,8 @@ vi.mock("@/lib/officer/guard", () => ({
 }));
 vi.mock("@/lib/rehearsal/tasks", () => ({
   markDone: async () => { H.marked++; return { status: 200, body: { ok: true } }; },
+  // 28 Nov: the officer route marks a task done through officerStep (a before-rain job's done, or a fix's update or done)
+  officerStep: async () => { H.marked++; return { status: 200, body: { ok: true } }; },
   readTasks: async () => [], draftDept: async () => ({}), sendDept: async () => ({ status: 200, body: {} })
 }));
 vi.mock("@/lib/officer/photos", () => ({ newPhotoDir: () => "d", removePhotoDir: async () => {}, savePhotos: async () => ["p.jpg"], sniff: () => "jpg" }));

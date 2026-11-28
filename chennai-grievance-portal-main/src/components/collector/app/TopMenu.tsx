@@ -22,7 +22,11 @@ export function openMyDashboards(go?: () => void) {
   else document.querySelector<HTMLButtonElement>('.dic .ptabs button[data-key="studio"]')?.click();
 }
 
-export function TopMenu({ open, onToggle, items, onDashboards }: { open: boolean; onToggle: () => void; items: TopMenuItem[]; onDashboards?: () => void }) {
+export function TopMenu({ open, onToggle, items, onDashboards, dashboards = true, title = "My dashboards, export, workspaces, customize, theme and language" }: {
+  open: boolean; onToggle: () => void; items: TopMenuItem[]; onDashboards?: () => void;
+  /** the "My dashboards" row (the Data Studio): 28 Nov, the officer console has no Data Studio and leaves it out */ dashboards?: boolean;
+  /** the button's tooltip: what the menu holds */ title?: string;
+}) {
   const box = useRef<HTMLDivElement>(null);
   const [lang, setLang] = useLang();
   useEffect(() => {
@@ -35,14 +39,16 @@ export function TopMenu({ open, onToggle, items, onDashboards }: { open: boolean
   const on = items.filter((i) => i.on).length;
   return (
     <div className="rel" ref={box}>
-      <button className={`tbtn tm-btn${open ? " on" : ""}`} data-pop onClick={onToggle} aria-haspopup="menu" aria-expanded={open} title="My dashboards, export, workspaces, customize, theme and language">
+      <button className={`tbtn tm-btn${open ? " on" : ""}`} data-pop onClick={onToggle} aria-haspopup="menu" aria-expanded={open} title={title}>
         <I n="grid" /><span>Menu</span><I n="chevd" className="tm-chev" />{on > 0 && <em className="tm-dot" aria-hidden="true" />}
       </button>
       {open && (
         <div className="pop tm-pop" role="menu" data-pop>
-          <button role="menuitem" data-key="dashboards" className="pop-i tm-i" onClick={() => { onToggle(); openMyDashboards(onDashboards); }}>
-            <span className="tm-ic"><I n="grid" /></span><span><b>My dashboards</b><small>Your own dashboards, in the Data Studio</small></span>
-          </button>
+          {dashboards && (
+            <button role="menuitem" data-key="dashboards" className="pop-i tm-i" onClick={() => { onToggle(); openMyDashboards(onDashboards); }}>
+              <span className="tm-ic"><I n="grid" /></span><span><b>My dashboards</b><small>Your own dashboards, in the Data Studio</small></span>
+            </button>
+          )}
           {items.map((it) => (
             <button key={it.key} role="menuitem" data-key={it.key} className={`pop-i tm-i${it.on ? " on" : ""}`} onClick={() => { onToggle(); it.run(); }}>
               <span className="tm-ic"><I n={it.icon} /></span><span><b>{it.label}</b>{it.sub && <small>{it.sub}</small>}</span>

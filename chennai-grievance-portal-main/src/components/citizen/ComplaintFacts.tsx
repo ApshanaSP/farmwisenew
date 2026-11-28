@@ -32,11 +32,11 @@ export function ComplaintPlace({ street, specificLocation, ward, anonymous, desc
 }) {
   return (
     <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-[13px]">
-      <div className="col-span-2"><dt className={LABEL}>Street</dt><dd className="text-ink-muted">{street}</dd></div>
-      <div className="col-span-2"><dt className={LABEL}>Specific location</dt><dd className="text-ink-muted">{specificLocation || "—"}</dd></div>
+      <div className="col-span-2"><dt className={LABEL}>Street</dt><dd className="break-words text-ink-muted">{street || "—"}</dd></div>
+      <div className="col-span-2"><dt className={LABEL}>Specific location</dt><dd className="break-words text-ink-muted">{specificLocation || "—"}</dd></div>
       <div><dt className={LABEL}>Ward</dt><dd className="font-mono text-ink-muted">{ward}</dd></div>
       <div><dt className={LABEL}>Anonymous</dt><dd className="text-ink-muted">{anonymous ? "Yes" : "No"}</dd></div>
-      <div className="col-span-2"><dt className={LABEL}>Description</dt><dd className="leading-relaxed text-ink-muted">{description}</dd></div>
+      <div className="col-span-2"><dt className={LABEL}>Description</dt><dd className="whitespace-pre-line break-words leading-relaxed text-ink-muted">{description}</dd></div>
     </dl>
   );
 }

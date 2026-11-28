@@ -1,0 +1,215 @@
+{
+ "source": {
+  "id": "ugc",
+  "name": "University Grants Commission: consolidated lists of state universities (16 Nov 2022) and of institutions deemed to be universities (17 Jun 2020), Tamil Nadu entries in and around Chennai",
+  "url": "https://www.ugc.gov.in/oldpdf/State%20University/Consolidated%20State%20%20University%20List.pdf",
+  "urls": [
+   "https://www.ugc.gov.in/oldpdf/State%20University/Consolidated%20State%20%20University%20List.pdf",
+   "https://www.ugc.gov.in/oldpdf/Deemed%20University/Institute%20Deemed%20to%20be%20Univ%20List.pdf"
+  ],
+  "checked": "2026-11-28",
+  "note": "Universities only. Central universities and institutes of national importance (IIT Madras, Indian Maritime University) are not on these two lists; they are kept on their names."
+ },
+ "entries": [
+  {
+   "id": "ugc:state-326",
+   "name": "Anna University",
+   "kind": "state university",
+   "address": "Guindy, Chennai-600 025.#",
+   "district": null,
+   "alt": [
+    "University of Anna"
+   ]
+  },
+  {
+   "id": "ugc:state-330",
+   "name": "Madras University",
+   "kind": "state university",
+   "address": "Chennai-600 005. 1857",
+   "district": null,
+   "alt": [
+    "University of Madras"
+   ]
+  },
+  {
+   "id": "ugc:state-337",
+   "name": "Tamil Nadu Open University",
+   "kind": "state university",
+   "address": "Directorate of Technical Education Campus, Guindy, Chennai-600 025",
+   "district": null
+  },
+  {
+   "id": "ugc:state-338",
+   "name": "Tamilnadu Dr. Ambedkar Law University",
+   "kind": "state university",
+   "address": "Chennai-600 028.",
+   "district": null
+  },
+  {
+   "id": "ugc:state-339",
+   "name": "Tamilnadu Dr. M.G.R. Medical University",
+   "kind": "state university",
+   "address": "Anna Salai, Chennai-600 032.",
+   "district": null
+  },
+  {
+   "id": "ugc:state-342",
+   "name": "Tamilnadu Physical Education and Sports University",
+   "kind": "state university",
+   "address": "8 th Floor, EVA Sampat Maaligai, College Road, Chennai",
+   "district": null
+  },
+  {
+   "id": "ugc:state-343",
+   "name": "Tamilnadu Music and Fine Arts University",
+   "kind": "state university",
+   "address": "Dr. D.G.S. Dinakaran Salai, Chennai – 600028.",
+   "district": null
+  },
+  {
+   "id": "ugc:state-344",
+   "name": "Tamilnadu Veterinary & Animal Sciences University",
+   "kind": "state university",
+   "address": "Chennai -600 051.",
+   "district": null
+  },
+  {
+   "id": "ugc:state-346",
+   "name": "Tamil Nadu Teacher Education University",
+   "kind": "state university",
+   "address": "Kamarajar Salai, Chennai – 600 005.",
+   "district": null
+  },
+  {
+   "id": "ugc:deemed-80",
+   "name": "Academy of Maritime Education and Training",
+   "kind": "deemed university",
+   "address": "135, East Coast Road, Kanathur – 603112, Chennai, Tamil Nadu.",
+   "district": null
+  },
+  {
+   "id": "ugc:deemed-83",
+   "name": "Bharath Institute of Higher Education & Research",
+   "kind": "deemed university",
+   "address": "173, Agharam Road, Selaiyur, Chennai-600 073, Tamilnadu.",
+   "district": null
+  },
+  {
+   "id": "ugc:deemed-84",
+   "name": "B.S. Abdur Rahman Crescent Institute of Science & Technology",
+   "kind": "deemed university",
+   "address": "Seethakathi Estate, GST Road, Vandalur, Chennai - 600048, Tamil Nadu.",
+   "district": null
+  },
+  {
+   "id": "ugc:deemed-85",
+   "name": "Chennai Mathematical Institute",
+   "kind": "deemed university",
+   "address": "Plot H1, SIPCOT IT Park, Padur Post, Siruseri- 603 103, Chennai (Tamilnadu)",
+   "district": null
+  },
+  {
+   "id": "ugc:deemed-86",
+   "name": "Chettinad Academy of Research and Education (CARE)",
+   "kind": "deemed university",
+   "address": "Padur, Kelambakkam, Kancheepuram District, Tamil Nadu.",
+   "district": null,
+   "alt": [
+    "CARE"
+   ]
+  },
+  {
+   "id": "ugc:deemed-87",
+   "name": "Dr. M.G.R. Educational and Research Institute",
+   "kind": "deemed university",
+   "address": "Periyar EVR Salai (NH 4 Highway), Maduravoyal, Chennai-600 095, Tamilnadu.",
+   "district": null
+  },
+  {
+   "id": "ugc:deemed-89",
+   "name": "Hindustan Institute of Technology and Science (HITS)",
+   "kind": "deemed university",
+   "address": "No. 1, Rajiv Gandhi Salai (OMR), Padur (via), Kelambakkam, Chennai – 603016, Tamil Nadu.",
+   "district": null,
+   "alt": [
+    "HITS"
+   ]
+  },
+  {
+   "id": "ugc:deemed-93",
+   "name": "Meenakshi Academy of Higher Education and Research",
+   "kind": "deemed university",
+   "address": "No. 12, Vembuli Amman Koil Street, West K.K. Nagar, Chennai-600 078, Tamilnadu. 31.03.2004 6",
+   "district": null
+  },
+  {
+   "id": "ugc:deemed-96",
+   "name": "Ponnaiyah Ramajayam Institute of Science & Technology (PRIST)",
+   "kind": "deemed university",
+   "address": "Yagappa Chavadi, Thanjavur – 614 904, Tamilnadu.",
+   "district": null,
+   "alt": [
+    "PRIST"
+   ]
+  },
+  {
+   "id": "ugc:deemed-97",
+   "name": "S.R.M Institute of Science and Technology",
+   "kind": "deemed university",
+   "address": "SRM Nagar, Kattankulathur – 603203, Kancheepuram District, Tamil Nadu.",
+   "district": null
+  },
+  {
+   "id": "ugc:deemed-98",
+   "name": "Sathyabama Institute of Science and Technology",
+   "kind": "deemed university",
+   "address": "Jappiaar Nagar, Old Mamallpuram Road, Chennai – 600119,(T.N).",
+   "district": null
+  },
+  {
+   "id": "ugc:deemed-99",
+   "name": "Saveetha Institute of Medical and Technical Sciences",
+   "kind": "deemed university",
+   "address": "162, Poonamalle High Road, Velappanchavadi, Chennai-600 077, Tamil Nadu.",
+   "district": null
+  },
+  {
+   "id": "ugc:deemed-101",
+   "name": "Sri Chandrasekharendra Saraswathi Vishwa Mahavidyalaya",
+   "kind": "deemed university",
+   "address": "Sri Jayendra Saraswathi Street, Enathur, Kancheepuram-631 561, Tamilnadu.",
+   "district": null
+  },
+  {
+   "id": "ugc:deemed-102",
+   "name": "Sri Ramachandra Institute of Higher Education and Research",
+   "kind": "deemed university",
+   "address": "1, Ramachandra Nagar, Porur, Chennai-600 116, Tamil Nadu.",
+   "district": null
+  },
+  {
+   "id": "ugc:deemed-103",
+   "name": "St. Peter’s Institute of Higher Education and Research",
+   "kind": "deemed university",
+   "address": "Avadi, Chennai - 600054, Tamilnadu.",
+   "district": null
+  },
+  {
+   "id": "ugc:deemed-104",
+   "name": "Vel’s Institute of Science, Technology & Advanced Studies (VISTAS)",
+   "kind": "deemed university",
+   "address": "Pallavaram, Chennai, Tamilnadu",
+   "district": null,
+   "alt": [
+    "VISTAS"
+   ]
+  },
+  {
+   "id": "ugc:deemed-107",
+   "name": "Vel Tech Rangarajan Dr. Sagunthala R & D Institute of Science and Technology",
+   "kind": "deemed university",
+   "address": "No. 42, Avadi -Vel Tech Road, Avadi, Chennai - 600062, Tamilnadu.",
+   "district": null
+  }
+ ]
+}

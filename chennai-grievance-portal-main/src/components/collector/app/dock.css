@@ -1,7 +1,9 @@
-/* The dock (26 Nov 2026): Jarvis, its clock and Ask District IQ, side by side in one small row at the bottom right. Every page keeps a
-   strip of --dock-h free for it along the bottom, so nothing on any page lies under it: the fixed pages end above it, the grown map and its
-   key end above it, and on a phone it is a bar of its own above the page tabs. Windows (80 and up), the chat (90) and the search (130) open
-   over it. Loaded last. */
+/* The dock (26 Nov 2026): Jarvis, its clock and Ask District IQ, side by side in one small row at the bottom right. On a phone it is a bar
+   of its own above the page tabs. Windows (80 and up), the chat (90) and the search (130) open over it. Loaded last.
+   28 Nov (the owner: keeping a strip free along the bottom of every page "shrank all the tiles" and left "a big gap at the bottom"; the
+   Briefing, which scrolls, was the model): no strip. Every page scrolls inside the console as the Briefing does, its cards at their own
+   size, and the end of the scroll leaves the dock its room, so the last cards can always be brought up clear of it. The Overview keeps the
+   whole height without scrolling: only its right-hand card ends above the dock (.p1-end), so the two buttons sit under that card. */
 .dic{--dock-h:46px}
 .dic .cdock{position:fixed;right:16px;bottom:6px;z-index:70;display:flex;align-items:center;justify-content:flex-end;gap:8px;height:34px;max-width:calc(100vw / var(--z,1) - 32px)}
 .dic .cdock .jvf-wrap{position:static;z-index:auto;flex:none;flex-direction:row;align-items:center;gap:8px}
@@ -20,15 +22,40 @@
 .dic .cdock .ask-fab.ask-fab-v2 .ask-label kbd{padding:3px 5px;font-size:10.5px}
 .dic .cdock .ask-fab.ask-fab-v2 .ask-badge{top:-5px;right:-4px;min-width:18px;height:18px;padding:0 5px}
 
-/* the strip every page leaves free (a page scaled to the window: its grid ends above it) */
-.dic.fit .app:has(>.cdock) .body{padding-bottom:var(--dock-h)}
-/* Jarvis's bar takes the same strip while it is open, its own button gives way to the bar's "Close Jarvis", and Ask District IQ stays at the
-   right of the bar (hud.css). 26 Nov, evening (the owner: opening Jarvis or its type box pushed every page up and shrank it): the page keeps its size
-   and the bar lies low in the strip; only what grows over the bar for a moment (a card, a long caption) rises over the page's foot */
+/* ---- every page scrolls inside the console (28 Nov). The page area (#view) reaches the bottom of the window; a page is at least as tall
+   as it (no gap under a short page) and never shorter than its cards' own sizes (--pg-min: they are not squeezed into 680 px; the page
+   scrolls instead). After the page, --end-room: the dock's room at the end of the scroll. The edge room keeps the cards' shadows unclipped. */
+.dic.fit .app:has(>.cdock) .body{padding-bottom:0}
+.dic.fit #view{--end-room:calc(var(--dock-h) + 8px);gap:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-gutter:stable;
+  margin:-4px -12px 0 -4px;padding:4px 4px 0 4px}
+.dic.fit #view>*{flex:none;min-height:0;height:max(100%,var(--pg-min,0px))}
+.dic.fit #view::after{content:"";flex:none;display:block;height:var(--end-room)}
+/* the Overview: the whole height, no scroll at 680 px; its right-hand card ends above the dock, the map and the cards beside it go down to
+   12 px from the bottom. Grown (Ask the Map, Rain & flooding, Live traffic) the map ends above the dock, so its credit line and tools stay
+   in sight. Its least height is the map's and the lists' comfortable one */
+.dic.fit #view:has(>.p1){--end-room:0px}
+.dic.fit #view>.p1{height:max(calc(100% - 12px),440px)}
+.dic.fit #view>.p1>.p1-end{margin-bottom:calc(var(--dock-h) - 6px)}
+.dic.fit.map-grown #view>.p1{height:max(calc(100% - var(--dock-h) - 6px),440px)}
+/* the Briefing: the glance at its own height, the three cards under it at least 440 px (briefing.css); it grows with its content */
+.dic.fit #view>.bb.bb2{height:auto;min-height:100%}
+/* Trends: the rising table and the taluks over the three lists, each at a size its rows read at */
+.dic.fit #view>.p3.trends{--pg-min:604px;grid-template-rows:minmax(334px,1.75fr) minmax(258px,1fr)}
+/* Environment: the three readings with their charts, the prices table under them */
+.dic.fit #view>.p2.env3{--pg-min:574px;grid-template-rows:minmax(250px,1fr) minmax(312px,1.12fr)}
+/* the Briefing when its book could not be built (the written briefing and its lists) */
+.dic.fit #view>.p3.bpage{--pg-min:532px;grid-template-rows:minmax(260px,1fr) minmax(260px,1fr)}
+/* the Data Studio keeps its own columns that scroll; the page under them is at least this tall */
+.dic.fit #view>.ds-page{--pg-min:540px}
+/* Jarvis's bar lies over the foot of the page while it is open (26 Nov, evening: opening it must not shrink the pages): the end of every
+   page's scroll, the Overview's too, leaves the bar's room, so what is under it can be scrolled up */
+html.jv-hud .dic.fit #view,html.jv-hud .dic.fit #view:has(>.p1){--end-room:calc(var(--hud-room,92px) / var(--z,1))}
+/* Jarvis's bar takes the dock's place while it is open, its own button gives way to the bar's "Close Jarvis", and Ask District IQ stays at
+   the right of the bar (hud.css) */
 html.jv-hud .dic .cdock .jvf-pair{display:none}
 html.jv-hud .dic.fit .cdock{bottom:calc(7px / var(--z,1))}
 
-/* messages sit in the same strip, at its left: they never cover the top bar or the filters */
+/* messages sit at the bottom left, over the page's foot for a few seconds: they never cover the top bar or the filters */
 .dic .toasts{left:16px;right:auto;top:auto;bottom:6px;width:max-content;max-width:min(calc(38vw / var(--z,1)),calc(100vw / var(--z,1) - 400px));align-items:flex-start}
 .dic .toast{max-width:100%;min-height:34px;padding:7px 12px;border-radius:12px;font-size:13px}
 .dic .toasts{pointer-events:none}

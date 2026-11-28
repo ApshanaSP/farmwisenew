@@ -1295,8 +1295,8 @@ export const TOOLS = [
       const byNumber = await numberedPlace(text, names);
       const p = byNumber ?? await resolvePlace(text);
       const taluk = p?.taluk ? names.taluks.get(p.taluk) : null;
-      // The resolver prefers the most specific place, so "Kolathur" becomes the locality in Ayanavaram taluk;
-      // a taluk named in the text is reported as well, with its note (Kolathur taluk is not coded by the sources).
+      // The resolver prefers the most specific place, so "Kolathur" becomes the locality;
+      // a taluk named in the text is reported as well, with its note when it has one.
       const lower = text.toLowerCase();
       const hit = [...names.taluks.entries()].find(([, t]) => new RegExp(`\\b${t.name.toLowerCase()}\\b`).test(lower) ||
         (!!t.nameTa && text.includes(t.nameTa.replace(/்$/, ""))));

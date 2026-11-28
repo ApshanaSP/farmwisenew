@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { collectorSession, failed } from "@/lib/collector/guard";
-import { WorkspaceError, deleteWorkspace, listWorkspaces, renameWorkspace, saveWorkspace } from "@/lib/collector/workspaces";
+import { BRIEFING_MAX_BYTES, WorkspaceError, briefingBytes, deleteWorkspace, listWorkspaces, renameWorkspace, saveWorkspace } from "@/lib/collector/workspaces";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +28,9 @@ export async function POST(req: NextRequest) {
   if (s instanceof NextResponse) return s;
   const b = Body.safeParse(await req.json().catch(() => ({})));
   if (!b.success) return NextResponse.json({ error: b.error.issues[0]?.message ?? "Invalid workspace." }, { status: 400 });
+  // (28 Nov) the briefing copy is one stored row: one too large for the store would never save, and would hold up the saves behind it
+  if (b.data.briefing && briefingBytes(b.data.briefing) > BRIEFING_MAX_BYTES)
+    return NextResponse.json({ error: "This view's briefing is too large to save. Narrow the filters and save again." }, { status: 413 });
   try {
     return NextResponse.json(await saveWorkspace(s.email, b.data));
   } catch (err) {

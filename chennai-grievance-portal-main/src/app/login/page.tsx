@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, FormEvent } from "react";
-import { AlertCircle, ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from "lucide-react";
+import { AlertCircle, ArrowRight, CheckCircle2, Loader2, Lock, Mail, ShieldCheck } from "lucide-react";
 import AuthShell from "@/components/AuthShell";
 import ConsoleLoader from "@/components/ConsoleLoader";
 import { authError, authLeave } from "@/components/auth/AuthCard";
+import PasswordInput from "@/components/auth/PasswordInput";
 
 /**
  * Where to go after signing in: back to the page that sent the user here (?redirect=, set by the middleware when a
@@ -27,7 +28,6 @@ function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   /** signed in: the console is on its way */
@@ -107,17 +107,9 @@ function LoginForm() {
               Forgot password?
             </Link>
           </div>
-          <div className="relative">
-            <span className="input-affix group-focus-within:text-navy-500">
-              <Lock className="h-[18px] w-[18px]" aria-hidden="true" />
-            </span>
-            <input id="password" type={showPassword ? "text" : "password"} required autoComplete="current-password"
-              className="auth-input pl-11 pr-12" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
-            <button type="button" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-ink-subtle transition hover:text-navy-700">
-              {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
-            </button>
-          </div>
+          {/* one show / hide button (Edge's own eye is hidden for this field: globals.css .pw-field) */}
+          <PasswordInput id="password" required autoComplete="current-password" className="auth-input pl-11" placeholder="••••••••"
+            value={password} onChange={(e) => setPassword(e.target.value)} affix={<Lock className="h-[18px] w-[18px]" />} />
         </div>
 
         <button type="submit" disabled={submitting} className="auth-submit group">

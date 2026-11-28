@@ -1,23 +1,23 @@
 import Logo from "@/components/Logo";
 import { IST } from "@/lib/ist-dates";
+import "@/components/citizen/citizen.css";
 
-/** District IQ · Chennai Intelligent District Governance Platform · Helpline 1913 */
+/**
+ * District IQ · Chennai Intelligent District Governance Platform · Helpline 1913: one quiet line on the page's white, as the
+ * consoles keep their own chrome to the top bar. Under 1024 px it keeps clear of the bottom bar (mb-16, the bar's 60 px).
+ */
 export default function Footer({ compact = false }: { compact?: boolean }) {
   return (
-    <footer className={`mt-auto border-t border-canvas-border bg-canvas/70 backdrop-blur ${compact ? "" : "mb-16 lg:mb-0"}`}>
-      <div
-        className={`mx-auto flex max-w-[1200px] flex-col items-center gap-2 px-4 text-center sm:flex-row sm:justify-between sm:px-6 sm:text-left ${
-          compact ? "py-2.5" : "py-6"
-        }`}
-      >
+    <footer className={`cz-foot${compact ? " compact" : " mb-16 lg:mb-0"}`}>
+      <div className="cz-foot-in">
         <div className="flex items-center gap-2.5">
-          <Logo className={compact ? "h-5 w-5" : "h-7 w-7"} />
-          <p className="text-[13px] text-ink-muted">
-            <span className="font-semibold text-ink">District IQ</span> &middot; Chennai Intelligent District Governance Platform &middot; Helpline{" "}
-            <a href="tel:1913" className="font-mono font-semibold text-ink hover:text-navy-500">1913</a>
+          <Logo className={compact ? "h-5 w-5" : "h-6 w-6"} />
+          <p>
+            <b>District IQ</b> &middot; Chennai Intelligent District Governance Platform &middot; Helpline{" "}
+            <a href="tel:1913">1913</a>
           </p>
         </div>
-        <p className="text-[12.5px] text-ink-subtle">
+        <p>
           24&times;7 &middot; &copy; {new Date().toLocaleDateString("en-IN", { ...IST, year: "numeric" })} District Administration, Chennai
         </p>
       </div>

@@ -49,7 +49,8 @@ describe("RC-46: the citizen top bar, the bottom bar and the footer change at on
   const h = read("components/Header.tsx"), f = read("components/Footer.tsx");
   const bp = (s: string, re: RegExp) => s.match(re)?.[1];
   it("the pages show in the top bar from the same width the bottom bar goes and the footer stops clearing it", () => {
-    const top = bp(h, /p-1 (\w+):flex"/), bottom = bp(h, /backdrop-blur-xl (\w+):hidden"/), foot = bp(f, /mb-16 (\w+):mb-0/);
+    // 28 Nov: the consoles' top bar (citizen.css): the tabs are `cz-tabs hidden lg:flex`, the bottom bar `cz-bbar lg:hidden`
+    const top = bp(h, /className="cz-tabs hidden (\w+):flex"/), bottom = bp(h, /className="cz-bbar (\w+):hidden"/), foot = bp(f, /mb-16 (\w+):mb-0/);
     expect(top).toBeTruthy();
     expect(bottom).toBe(top);
     expect(foot).toBe(top);

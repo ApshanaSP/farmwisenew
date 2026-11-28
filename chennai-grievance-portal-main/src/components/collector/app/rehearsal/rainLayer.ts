@@ -36,6 +36,9 @@ export interface RainLayer {
    *  the jam), coloured by level; a clickable one picks "point" with its id */
   tiles?: string | null;
   live?: { id: string; path: [number, number][]; tip: string; flooding: boolean; level?: "very" | "congested" | "slow" | "flood" | "accident" | "closed" | "works"; pick?: boolean; faint?: boolean }[];
+  /** flood water a satellite saw in the chosen rain (satflood.ts): small boxes [south, west, north, east, 1 medium | 2 high
+   *  confidence], drawn in cyan under the streets; `tip` names the pass */
+  satWater?: { boxes: [number, number, number, number, 1 | 2][]; tip: string } | null;
   /** what is chosen: drawn on top */
   sel: { kind: RainPickKind; id: string } | null;
   /** the camera: each new seq frames these points (null: the whole district) */

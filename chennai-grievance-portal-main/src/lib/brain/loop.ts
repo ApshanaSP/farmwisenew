@@ -73,12 +73,19 @@ export interface BrainIn {
   deep?: boolean;
   /** the language chosen for the chat; null: the words' own */
   lang?: Lang | null;
+  /**
+   * 28 Nov: tools code runs for the request before the model's first round (a dashboard asked for in so many words: board.ts boardAsk), so
+   * the dashboard is there however the model would have read it, and the model writes its summary from the dashboard's own figures in one round
+   */
+  pre?: { tool: string; input: Record<string, unknown> }[];
+  /** 28 Nov: the form the answer should take, said beside the question (board.ts formLine) */
+  form?: string | null;
 }
 export interface BrainOut {
   /** the words asked */
   question?: string;
   answer: FinalAnswer; evidence: Evidence[]; model: string; rounds: number; ms: number; firstMs: number | null; tokens: { input: number; output: number; cacheRead: number; cacheWrite: number };
-  steps: Record<string, unknown>[]; screen: { recipe: string; slots: Record<string, unknown> } | null; stageOp: { op: string; n: number | null; text: string | null } | null;
+  steps: Record<string, unknown>[]; screen: ToolOut["screen"]; stageOp: { op: string; n: number | null; text: string | null } | null;
   /** why an answer was sent back, for the record */
   repaired: string[]; spoken: string[]; escalated: string | null;
   /** each model call's time and size, and each round's tools */
@@ -203,17 +210,39 @@ export async function think(i: BrainIn): Promise<BrainOut | null> {
     messages.push({ role: "user", content: h.user });
     messages.push({ role: "assistant", content: `${h.assistant}${h.digest && k >= hist.length - 3 ? `\n\n<read_then>\n${h.digest}\n</read_then>` : ""}` });
   });
-  messages.push({ role: "user", content: [{ type: "text", text: contextText({ now: i.now, channel: i.channel, user: i.user, con: i.console, kpi: i.kpi, studio: i.studio, memory: i.memory, lang: i.lang ?? null }) }, { type: "text", text: `${justBefore(hist)}The Collector says: ${i.text}`, cache_control: { type: "ephemeral" } }] });
   const evidence: Evidence[] = [];
-  const ctx: ToolCtx = { user: i.user, world: i.world, now: i.now, signal: i.signal, turn: evidence, past: i.past, console: i.console, channel: i.channel };
   const want = i.lang ?? owedLang(i.text, i.lastLang);
+  const ctx: ToolCtx = { user: i.user, world: i.world, now: i.now, signal: i.signal, turn: evidence, past: i.past, console: i.console, channel: i.channel, text: i.text, lang: want };
+  let seq = 0;
+  // 28 Nov: what code read for the request before the model (a dashboard asked for in so many words), put beside the question as read already
+  const already: string[] = [];
+  for (const p of i.pre ?? []) {
+    const t = byName.get(p.tool);
+    if (!t) continue;
+    const s0 = Date.now();
+    i.progress?.(t.doing);
+    try {
+      const input = fitInput(t, p.input);
+      const out = await runTool(t, input, ctx);
+      const id = `r${++seq}`;
+      out.parts = out.parts.map((x) => ({ ...x, key: x.key.startsWith(`${id}.`) ? x.key : `${id}.${x.key}` }));
+      evidence.push({ id, tool: t.name, input, out, ms: Date.now() - s0 });
+      already.push(outText(id, out, 40).slice(0, 14_000));
+    } catch (e) {
+      if (i.signal?.aborted) throw e;
+      already.push(`(code tried ${p.tool} ${JSON.stringify(p.input).slice(0, 200)} first and it said: ${e instanceof ToolProblem ? e.message.slice(0, 400) : "it failed"}. Read what the request needs yourself.)`);
+    }
+  }
+  const preRead = evidence.length > 0;
+  const pre = already.length ? `READ ALREADY for this request (code ran the dashboard it asks for; the screen shows it with your answer): ${already.join("\n")}\nWrite say as the dashboard's short AI summary: 2 to 4 sentences with the figures that matter (for a comparison, how the sides differ; for a summary, what stands out), points 3 to 5 lines, show []. Call another tool only for something asked that this does not hold.\n` : "";
+  messages.push({ role: "user", content: [{ type: "text", text: contextText({ now: i.now, channel: i.channel, user: i.user, con: i.console, kpi: i.kpi, studio: i.studio, memory: i.memory, lang: i.lang ?? null }) }, { type: "text", text: `${pre}${justBefore(hist)}${i.form && !pre ? `${i.form}\n` : ""}The Collector says: ${i.text}`, cache_control: { type: "ephemeral" } }] });
   // the topic guard's code verdict (topicguard/scope.ts): small talk from memory on a question it calls off-topic is never said
   const codeOut = (() => { try { return scopeOf(i.text, { world: i.world, follows: i.history.length > 0 }).verdict === "out"; } catch { return false; } })();
   const said =[i.text, ...i.history.flatMap((h) => [h.user, h.assistant, h.digest ?? ""]), i.kpi ?? "", i.console.screen ?? "", i.console.screenTitle ?? "", i.studio ?? "", i.now, contextText({ now: i.now, channel: i.channel, user: i.user, con: i.console })];
   const tokens = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
   const repaired: string[] = [], spoken: string[] = [];
   const trace: BrainOut["trace"] = [];
-  let firstMs: number | null = null, rounds = 0, bad = 0, seq = 0, toolErrors = 0, badJson = 0;
+  let firstMs: number | null = null, rounds = 0, bad = 0, toolErrors = 0, badJson = 0;
   const speak = (line: string, lang: Lang) => { if (spoken.includes(line)) return; spoken.push(line); firstMs ??= Date.now() - t0; try { i.sentence?.(line, lang); } catch { /* the listener is gone */ } };
   let best: FinalAnswer | null = null;
   let window: WhenIn | null = null;
@@ -230,7 +259,8 @@ export async function think(i: BrainIn): Promise<BrainOut | null> {
     let r: Awaited<ReturnType<typeof claudeTools>>;
     try {
       r = await claudeTools({
-        name: "brain", model, system, tools: wireTools(ts, model === FAST() && deepLeft && !escalated), messages, maxTokens: 4096, effort: model === FAST() && rounds <= 2 ? ((process.env.JARVIS_BRAIN_EFFORT as "low" | "medium") || "medium") : "low", think: (process.env.JARVIS_BRAIN_THINK ?? "1") !== "0",
+        // (28 Nov: a dashboard code already read is summed up, not worked out: low effort, so its summary starts in seconds, live probe 28 Nov)
+        name: "brain", model, system, tools: wireTools(ts, model === FAST() && deepLeft && !escalated), messages, maxTokens: 4096, effort: model === FAST() && rounds <= 2 && !preRead ?((process.env.JARVIS_BRAIN_EFFORT as "low" | "medium") || "medium") : "low", think: (process.env.JARVIS_BRAIN_THINK ?? "1") !== "0",
         timeoutMs: Math.max(4000, Math.min(25_000, i.until - Date.now())), hedgeMs: HEDGE_MS, signal: i.signal,
         // the last round must answer (Haiku takes a forced choice; the newer models do not)
         ...(last && model === FAST() ? { toolChoice: { type: "tool" as const, name: "answer" } } : {}),
@@ -368,6 +398,18 @@ export function validShow(show: Show[], evidence: Evidence[]): Show[] {
   if (b && evidence.at(-1) === b) for (const [k, as] of BRIEF_SECTIONS) {
     const key = `${b.id}.${k}`, p = parts.get(key);
     if (p?.rows.length && !out.some((x) => x.from === key) && out.length < 13) out.push({ as, from: key });
+  }
+  // 28 Nov: a dashboard's answer that names nothing to draw draws the dashboard's own figures (the chat's table and chart; by voice the
+  // dashboard itself is the screen, brainturn.ts)
+  const bd = [...evidence].reverse().find((e) => e.tool === "board");
+  if (bd && !out.length) {
+    const sides = parts.get(`${bd.id}.sides`), figs = parts.get(`${bd.id}.figures`);
+    if (sides?.rows.length) {
+      out.push({ as: "table", from: sides.key });
+      const v = sides.cols.find((c) => c.key !== "side");
+      if (v) out.push({ as: "bars", from: sides.key, label: "side", value: v.key });
+    } else if (figs?.rows.length) out.push({ as: "kpis", from: figs.key });
+    for (const [k, as] of [["kinds", "bars"], ["news", "news"], ["top", "cases"]] as [string, Show["as"]][]) { const p = parts.get(`${bd.id}.${k}`); if (p?.rows.length) out.push({ as, from: p.key }); }
   }
   return out;
 }

@@ -33,6 +33,8 @@ export function startJobs(): void {
       // the Collector's follow-ups the department has answered (a report, a send, its own close) are closed, every 5 minutes; what stays
       // pending past its due date is what the Collector's department pop-up lists as late (lib/officer/followups.ts)
       void import("@/lib/officer/followups").then((m) => m.followupsTick()).catch((e) => console.warn(`[jobs] follow-ups skipped: ${(e as Error).message}`));
+      // the day's generated resolutions of generated cases, each at its time (lib/cases/synthetic.ts; every 10 minutes, the saving copy only)
+      void import("@/lib/cases/synthetic").then((m) => m.syntheticTick()).catch((e) => console.warn(`[jobs] generated resolutions skipped: ${(e as Error).message}`));
       // an SMS to a petitioner that failed gets another try
       void (await import("@/lib/manu/sms")).retryFailedSms();
     } catch (e) {

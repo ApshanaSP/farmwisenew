@@ -149,6 +149,10 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
   const r0 = ["map"], r1 = ["map"];
   if (stack.length) { r0.push(stack[0]); r1.push(stack[1] ?? stack[0]); }
   if (cols.includes("brief")) { r0.push("brief"); r1.push("brief"); }
+  // 28 Nov: the card in the right-hand column ends above Jarvis and Ask District IQ (dock.css .p1-end), so they sit under it and over no card,
+  // while the map and the other cards keep the whole height (the owner: no strip along the bottom of every page, no tiles shrunk for them)
+  const endKey = cols.length < 2 ? null : cols.includes("map") ? r0[r0.length - 1] : cols[cols.length - 1];
+  const end = (k: string) => (k === endKey ? " p1-end" : "");
   const grid: React.CSSProperties = cols.includes("map") && cols.length > 1 ? {
     gridTemplateColumns: ["minmax(0,1.6fr)", ...r0.slice(1).map(() => "minmax(0,1.2fr)")].join(" "),
     gridTemplateRows: "minmax(0,1.15fr) minmax(0,.85fr)",
@@ -238,11 +242,11 @@ export function Page1({ d, c }: { d: OverviewData; c: Console }) {
           </article>
         )}
 
-        {both ? <article className="card a-sev att" style={iv()}><AttentionCard d={d} c={c} /></article> : <>
-          {L.panels.severity && <article className="card a-sev att" style={iv()}><AttentionCard d={d} c={c} only="sev" /></article>}
-          {L.panels.tasks && <article className="card a-tasks att" style={iv()}><AttentionCard d={d} c={c} only="tasks" /></article>}
+        {both ? <article className={`card a-sev att${end("sev")}`} style={iv()}><AttentionCard d={d} c={c} /></article> : <>
+          {L.panels.severity && <article className={`card a-sev att${end("sev")}`} style={iv()}><AttentionCard d={d} c={c} only="sev" /></article>}
+          {L.panels.tasks && <article className={`card a-tasks att${end("tasks")}`} style={iv()}><AttentionCard d={d} c={c} only="tasks" /></article>}
         </>}
-        {L.panels.brief && <article className="card a-brief" style={iv()}><BriefCard d={d} c={c} /></article>}
+        {L.panels.brief && <article className={`card a-brief${end("brief")}`} style={iv()}><BriefCard d={d} c={c} /></article>}
       </section>
     </>
   );

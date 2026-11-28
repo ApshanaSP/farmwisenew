@@ -2,19 +2,31 @@ import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { aiStatus } from "./gateway";
 
-// The user's order is what runs: Claude, then Bedrock. Gemini and Groq keys stay in .env for Jarvis's voice, and must
-// not slip into the AI steps.
-const KEYS = ["AI_PROVIDER", "AI_FALLBACK_PROVIDER", "AI_CHAT_PROVIDER", "AI_FORCE_PROVIDER", "ANTHROPIC_API_KEY", "AWS_BEARER_TOKEN_BEDROCK", "GEMINI_API_KEY", "GROQ_API_KEY", "AWS_ACCESS_KEY_ID", "AWS_PROFILE"];
+// The user's order runs first: Claude, then Bedrock. v20 (28 Nov 2026): the other keys in .env (Groq, Gemini) follow it, so that one provider
+// being out never leaves a console panel without an AI answer; AI_STRICT_PROVIDERS=1 keeps the named providers only, as before.
+const KEYS = ["AI_PROVIDER", "AI_FALLBACK_PROVIDER", "AI_CHAT_PROVIDER", "AI_FORCE_PROVIDER", "AI_STRICT_PROVIDERS", "ANTHROPIC_API_KEY", "AWS_BEARER_TOKEN_BEDROCK", "GEMINI_API_KEY", "GROQ_API_KEY", "AWS_ACCESS_KEY_ID", "AWS_PROFILE"];
 const saved = Object.fromEntries(KEYS.map((k) => [k, process.env[k]]));
 
 describe("provider order", () => {
   afterEach(() => { for (const k of KEYS) { if (saved[k] === undefined) delete process.env[k]; else process.env[k] = saved[k]; } });
 
-  it("AI_PROVIDER=claude, AI_FALLBACK_PROVIDER=bedrock: Claude then Bedrock, other keys ignored", () => {
+  it("AI_PROVIDER=claude, AI_FALLBACK_PROVIDER=bedrock: Claude then Bedrock, then the other keys (Groq before Gemini)", () => {
     Object.assign(process.env, { AI_PROVIDER: "claude", AI_FALLBACK_PROVIDER: "bedrock", ANTHROPIC_API_KEY: "sk-ant-x", AWS_BEARER_TOKEN_BEDROCK: "b", GEMINI_API_KEY: "g", GROQ_API_KEY: "q" });
+    delete process.env.AI_CHAT_PROVIDER; delete process.env.AI_FORCE_PROVIDER; delete process.env.AI_STRICT_PROVIDERS;
+    expect(aiStatus().providers.map((p) => p.name)).toEqual(["anthropic", "bedrock", "groq", "gemini"]);
+    expect(aiStatus().providers[0].reasoning).toBe("claude-opus-5-5");
+  });
+
+  it("AI_STRICT_PROVIDERS=1: Claude then Bedrock, other keys ignored (the old rule)", () => {
+    Object.assign(process.env, { AI_PROVIDER: "claude", AI_FALLBACK_PROVIDER: "bedrock", AI_STRICT_PROVIDERS: "1", ANTHROPIC_API_KEY: "sk-ant-x", AWS_BEARER_TOKEN_BEDROCK: "b", GEMINI_API_KEY: "g", GROQ_API_KEY: "q" });
     delete process.env.AI_CHAT_PROVIDER; delete process.env.AI_FORCE_PROVIDER;
     expect(aiStatus().providers.map((p) => p.name)).toEqual(["anthropic", "bedrock"]);
-    expect(aiStatus().providers[0].reasoning).toBe("claude-opus-5-5");
+  });
+
+  it("AI_PROVIDER=none (a test server's AI off) stays off, whatever keys .env holds", () => {
+    Object.assign(process.env, { AI_PROVIDER: "none", AI_FALLBACK_PROVIDER: "none", AI_FORCE_PROVIDER: "none", ANTHROPIC_API_KEY: "sk-ant-x", GEMINI_API_KEY: "g", GROQ_API_KEY: "q" });
+    delete process.env.AI_CHAT_PROVIDER; delete process.env.AI_STRICT_PROVIDERS;
+    expect(aiStatus().providers).toEqual([]);
   });
 
   it("without the Claude key, Bedrock answers alone", () => {
@@ -23,9 +35,9 @@ describe("provider order", () => {
     expect(aiStatus().providers.map((p) => p.name)).toEqual(["bedrock"]);
   });
 
-  it("a console step's `prefer` cannot bring in a provider the settings leave out", async () => {
+  it("AI_STRICT_PROVIDERS=1: a console step's `prefer` cannot bring in a provider the settings leave out", async () => {
     const { generateJson, AiUnavailableError } = await import("./gateway");
-    Object.assign(process.env, { AI_PROVIDER: "claude", AI_FALLBACK_PROVIDER: "bedrock" });
+    Object.assign(process.env, { AI_PROVIDER: "claude", AI_FALLBACK_PROVIDER: "bedrock", AI_STRICT_PROVIDERS: "1" });
     for (const k of ["ANTHROPIC_API_KEY", "AWS_BEARER_TOKEN_BEDROCK", "AWS_ACCESS_KEY_ID", "AWS_PROFILE", "AI_CHAT_PROVIDER", "AI_FORCE_PROVIDER"]) delete process.env[k];
     process.env.GROQ_API_KEY = "";
     const call = { role: "fast" as const, name: "t", schema: z.object({ a: z.string() }), system: "s", prompt: "p", temperature: 0, user: "u" };

@@ -164,3 +164,22 @@
 .mn-steps li.off i { border-color: #C69A3B; background: #FFF3DC; }
 @keyframes mn-turn { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .mn-spin, .mn-steps li.now i { animation-duration: 2.4s; } }
+
+/* 28 Nov: the consoles' look. The page is the citizen/console shell (cz-page, cz-body); the band holds the counts; the queue and the
+   work area are two cards side by side that fill the rest of the window (one column on a phone). */
+.mn-page.diq-bg{height:auto;min-height:100dvh}
+.mn-body{max-width:none!important;flex:1;min-height:0;display:flex;flex-direction:column;gap:12px}
+.mn-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.mn.mn-cards{flex:1;min-height:560px;gap:12px;grid-template-columns:330px minmax(0,1fr)}
+.mn.mn-cards>.mn-q,.mn.mn-cards>.mn-work{border:1px solid var(--line);border-radius:var(--r-lg,16px);background:var(--surface);box-shadow:var(--shadow-1,0 1px 2px rgba(16,24,40,.06));overflow:hidden}
+.mn.mn-cards>.mn-q{border-right:1px solid var(--line)}
+.mn.mn-cards .mn-up{border-bottom:1px solid var(--line-2,var(--line))}
+.mn.mn-cards>.mn-work{min-height:0;overflow:auto}
+@media (max-width:860px){
+  .mn-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mn.mn-cards{grid-template-columns:minmax(0,1fr);min-height:0}
+  .mn.mn-cards>.mn-q{max-height:none}
+}
+.mn.mn-cards{min-height:0;height:calc(100dvh - 330px);min-height:520px}
+.mn.mn-cards .mn-home{justify-content:flex-start;padding-top:48px}
+.mn-cband .cz-hello{font-size:24px;font-weight:800;margin:2px 0 4px}

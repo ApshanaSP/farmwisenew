@@ -1,0 +1,763 @@
+{
+ "layer": "hospitals",
+ "at": "2026-11-28T01:37:28.291Z",
+ "count": 63,
+ "features": [
+  {
+   "id": "osm:n1129195836",
+   "name": null,
+   "kind": "hospital",
+   "ward": null,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.12107,
+    12.94457
+   ]
+  },
+  {
+   "id": "osm:n11468740371",
+   "name": "SMF",
+   "kind": "hospital",
+   "ward": 91,
+   "why": "AI: Unclear, likely not medical",
+   "by": "ai",
+   "lonlat": [
+    80.16975,
+    13.08687
+   ]
+  },
+  {
+   "id": "osm:n12146055740",
+   "name": "Commissioner of Police office, Greater chennai Police",
+   "kind": "hospital",
+   "ward": 58,
+   "why": "an office, not a hospital or clinic",
+   "by": "rule",
+   "lonlat": [
+    80.26312,
+    13.08128
+   ]
+  },
+  {
+   "id": "osm:n12367559381",
+   "name": null,
+   "kind": "hospital",
+   "ward": 78,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.25881,
+    13.0921
+   ]
+  },
+  {
+   "id": "osm:n12458714111",
+   "name": "Chinnus Blood Testing",
+   "kind": "clinic",
+   "ward": 5,
+   "why": "a laboratory or scan centre",
+   "by": "rule",
+   "lonlat": [
+    80.31476,
+    13.18891
+   ]
+  },
+  {
+   "id": "osm:n12560767886",
+   "name": null,
+   "kind": "hospital",
+   "ward": 167,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.18711,
+    12.98095
+   ]
+  },
+  {
+   "id": "osm:n13401498982",
+   "name": "SRI CHAKRA SCANS",
+   "kind": "clinic",
+   "ward": 64,
+   "why": "a laboratory or scan centre",
+   "by": "rule",
+   "lonlat": [
+    80.21457,
+    13.12956
+   ]
+  },
+  {
+   "id": "osm:n13738124430",
+   "name": "Vee Kay",
+   "kind": "clinic",
+   "ward": 76,
+   "why": "AI: Vague, no medical indication",
+   "by": "ai",
+   "lonlat": [
+    80.25922,
+    13.09671
+   ]
+  },
+  {
+   "id": "osm:n14196861801",
+   "name": "Bahola Labs",
+   "kind": "clinic",
+   "ward": 181,
+   "why": "a laboratory or scan centre",
+   "by": "rule",
+   "lonlat": [
+    80.26433,
+    12.99575
+   ]
+  },
+  {
+   "id": "osm:n1597151538",
+   "name": null,
+   "kind": "hospital",
+   "ward": 129,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.20117,
+    13.05841
+   ]
+  },
+  {
+   "id": "osm:n2086712439",
+   "name": null,
+   "kind": "hospital",
+   "ward": null,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.18556,
+    12.95594
+   ]
+  },
+  {
+   "id": "osm:n2124734395",
+   "name": "Fourtts India Laboratories",
+   "kind": "hospital",
+   "ward": 194,
+   "why": "a laboratory or scan centre",
+   "by": "rule",
+   "lonlat": [
+    80.23374,
+    12.93217
+   ]
+  },
+  {
+   "id": "osm:n2162771723",
+   "name": "SV Lab",
+   "kind": "clinic",
+   "ward": null,
+   "why": "a laboratory or scan centre",
+   "by": "rule",
+   "lonlat": [
+    80.18742,
+    12.9179
+   ]
+  },
+  {
+   "id": "osm:n248420920",
+   "name": "Kalaignar Karunanidhi Nagar",
+   "kind": "hospital",
+   "ward": 131,
+   "why": "AI: Place name, not facility",
+   "by": "ai",
+   "lonlat": [
+    80.20522,
+    13.03865
+   ]
+  },
+  {
+   "id": "osm:n248559397",
+   "name": "Koyambedu",
+   "kind": "clinic",
+   "ward": 127,
+   "why": "AI: Area name",
+   "by": "ai",
+   "lonlat": [
+    80.19804,
+    13.07202
+   ]
+  },
+  {
+   "id": "osm:n248560797",
+   "name": "Kasimedu",
+   "kind": "hospital",
+   "ward": 43,
+   "why": "AI: Area name",
+   "by": "ai",
+   "lonlat": [
+    80.29606,
+    13.12278
+   ]
+  },
+  {
+   "id": "osm:n370967673",
+   "name": null,
+   "kind": "hospital",
+   "ward": null,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.19497,
+    13.00978
+   ]
+  },
+  {
+   "id": "osm:n4411855589",
+   "name": null,
+   "kind": "hospital",
+   "ward": 155,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.18299,
+    13.02649
+   ]
+  },
+  {
+   "id": "osm:n4455385690",
+   "name": null,
+   "kind": "clinic",
+   "ward": 147,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.1695,
+    13.05948
+   ]
+  },
+  {
+   "id": "osm:n4488387389",
+   "name": "Liberty High Scans",
+   "kind": "clinic",
+   "ward": 123,
+   "why": "a laboratory or scan centre",
+   "by": "rule",
+   "lonlat": [
+    80.25268,
+    13.03278
+   ]
+  },
+  {
+   "id": "osm:n4764302980",
+   "name": "HEALTH",
+   "kind": "hospital",
+   "ward": 171,
+   "why": "AI: Too generic",
+   "by": "ai",
+   "lonlat": [
+    80.23954,
+    13.0136
+   ]
+  },
+  {
+   "id": "osm:n5259088422",
+   "name": "Government Veterinary Hospital",
+   "kind": "hospital",
+   "ward": null,
+   "why": "a veterinary clinic (not for people)",
+   "by": "rule",
+   "lonlat": [
+    80.15228,
+    12.88552
+   ]
+  },
+  {
+   "id": "osm:n5525433061",
+   "name": "King Institute of Preventive Medicine and Research",
+   "kind": "health_centre",
+   "ward": 170,
+   "why": "AI: Research lab, not treatment",
+   "by": "ai",
+   "lonlat": [
+    80.21818,
+    13.01423
+   ]
+  },
+  {
+   "id": "osm:n6131954385",
+   "name": "Breast Scan Center",
+   "kind": "clinic",
+   "ward": 173,
+   "why": "a laboratory or scan centre",
+   "by": "rule",
+   "lonlat": [
+    80.26972,
+    13.01991
+   ]
+  },
+  {
+   "id": "osm:n6914937617",
+   "name": "Sri Ramachandra Hospital",
+   "kind": "hospital",
+   "ward": null,
+   "why": "a second map point of Sri Ramachandra Medical Centre (SRMC)",
+   "by": "rule",
+   "lonlat": [
+    80.1402,
+    13.03787
+   ]
+  },
+  {
+   "id": "osm:n6926055599",
+   "name": "Christudas Orthopaedic Speciality Hospital",
+   "kind": "hospital",
+   "ward": null,
+   "why": "a second map point of Christudas Orthopaedic Speciality Hospital",
+   "by": "rule",
+   "lonlat": [
+    80.12748,
+    12.92141
+   ]
+  },
+  {
+   "id": "osm:n6930188138",
+   "name": "Chennai Skin Foundation and Yesudian Research Institute",
+   "kind": "hospital",
+   "ward": 173,
+   "why": "a second map point of Chennai Skin Foundation and Yesudian Research Instit",
+   "by": "rule",
+   "lonlat": [
+    80.25929,
+    13.02104
+   ]
+  },
+  {
+   "id": "osm:n6936134766",
+   "name": null,
+   "kind": "hospital",
+   "ward": null,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.16908,
+    12.94983
+   ]
+  },
+  {
+   "id": "osm:n6936695178",
+   "name": "Women and Children Foundation",
+   "kind": "hospital",
+   "ward": 117,
+   "why": "AI: Foundation, not treatment centre",
+   "by": "ai",
+   "lonlat": [
+    80.23291,
+    13.04785
+   ]
+  },
+  {
+   "id": "osm:n6936891601",
+   "name": "Aarthi Scans",
+   "kind": "clinic",
+   "ward": 123,
+   "why": "a laboratory or scan centre",
+   "by": "rule",
+   "lonlat": [
+    80.25768,
+    13.03467
+   ]
+  },
+  {
+   "id": "osm:n7252333371",
+   "name": "Hiba Hospital",
+   "kind": "hospital",
+   "ward": 114,
+   "why": "a second map point of Hiba Hospital",
+   "by": "rule",
+   "lonlat": [
+    80.27579,
+    13.06162
+   ]
+  },
+  {
+   "id": "osm:n7257289121",
+   "name": "Vn Allergy & Asthma Research Centre",
+   "kind": "hospital",
+   "ward": null,
+   "why": "AI: Research centre, not primary care",
+   "by": "ai",
+   "lonlat": [
+    80.11254,
+    12.92752
+   ]
+  },
+  {
+   "id": "osm:n7819840755",
+   "name": "Sri Venkatesvara Physio and Obesity Centre",
+   "kind": "clinic",
+   "ward": 149,
+   "why": "AI: Physio only, not medical",
+   "by": "ai",
+   "lonlat": [
+    80.18442,
+    13.04478
+   ]
+  },
+  {
+   "id": "osm:n7822260007",
+   "name": "Sai Babaji's Accupuncture Centre",
+   "kind": "hospital",
+   "ward": null,
+   "why": "AI: Acupuncture alternative service",
+   "by": "ai",
+   "lonlat": [
+    80.17121,
+    12.91865
+   ]
+  },
+  {
+   "id": "osm:n7822543448",
+   "name": "Puthur Kattu",
+   "kind": "hospital",
+   "ward": null,
+   "why": "AI: Place name",
+   "by": "ai",
+   "lonlat": [
+    80.13705,
+    12.94786
+   ]
+  },
+  {
+   "id": "osm:n7822543498",
+   "name": "Venus Accupoint",
+   "kind": "hospital",
+   "ward": null,
+   "why": "AI: Acupuncture centre",
+   "by": "ai",
+   "lonlat": [
+    80.1381,
+    12.94224
+   ]
+  },
+  {
+   "id": "osm:n7822543504",
+   "name": "Thyrocare",
+   "kind": "clinic",
+   "ward": null,
+   "why": "AI: Laboratory service",
+   "by": "ai",
+   "lonlat": [
+    80.13608,
+    12.94538
+   ]
+  },
+  {
+   "id": "osm:n7823212572",
+   "name": "Turiya Care",
+   "kind": "clinic",
+   "ward": 183,
+   "why": "AI: Wellness name, unclear",
+   "by": "ai",
+   "lonlat": [
+    80.25551,
+    12.97539
+   ]
+  },
+  {
+   "id": "osm:n7823415063",
+   "name": "Akshi Vision Therapy",
+   "kind": "clinic",
+   "ward": 181,
+   "why": "AI: Vision therapy, not medical",
+   "by": "ai",
+   "lonlat": [
+    80.26618,
+    12.99432
+   ]
+  },
+  {
+   "id": "osm:n7823415084",
+   "name": "The Crescent Hospital",
+   "kind": "hospital",
+   "ward": 120,
+   "why": "a second map point of The Crescent Hospital",
+   "by": "rule",
+   "lonlat": [
+    80.27279,
+    13.05288
+   ]
+  },
+  {
+   "id": "osm:n7823776199",
+   "name": "Pranic Health",
+   "kind": "clinic",
+   "ward": 110,
+   "why": "AI: Alternative health name",
+   "by": "ai",
+   "lonlat": [
+    80.24239,
+    13.06246
+   ]
+  },
+  {
+   "id": "osm:n7824965228",
+   "name": "Padma Clinic & Nursing Home",
+   "kind": "clinic",
+   "ward": 103,
+   "why": "a second map point of Padma Clinic And Nursing Home",
+   "by": "rule",
+   "lonlat": [
+    80.23393,
+    13.07691
+   ]
+  },
+  {
+   "id": "osm:n8108613662",
+   "name": "Veekays Pet Care Clinic",
+   "kind": "clinic",
+   "ward": 138,
+   "why": "a veterinary clinic (not for people)",
+   "by": "rule",
+   "lonlat": [
+    80.20859,
+    13.029
+   ]
+  },
+  {
+   "id": "osm:n8869350452",
+   "name": null,
+   "kind": "hospital",
+   "ward": 151,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.16194,
+    13.03815
+   ]
+  },
+  {
+   "id": "osm:w1180441173",
+   "name": "Mother Diagnostic Centre",
+   "kind": "clinic",
+   "ward": 56,
+   "why": "a laboratory or scan centre",
+   "by": "rule",
+   "lonlat": [
+    80.2844,
+    13.10302
+   ]
+  },
+  {
+   "id": "osm:w1263441145",
+   "name": null,
+   "kind": "hospital",
+   "ward": 54,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.27961,
+    13.09852
+   ]
+  },
+  {
+   "id": "osm:w1409776420",
+   "name": "MIOT Hospital",
+   "kind": "hospital",
+   "ward": 157,
+   "why": "a second map point of MIOT Hospitals",
+   "by": "rule",
+   "lonlat": [
+    80.18632,
+    13.02235
+   ]
+  },
+  {
+   "id": "osm:w1541182154",
+   "name": null,
+   "kind": "hospital",
+   "ward": null,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.13033,
+    12.94147
+   ]
+  },
+  {
+   "id": "osm:w209413524",
+   "name": "Trinity Acute Care",
+   "kind": "hospital",
+   "ward": 123,
+   "why": "a second map point of Trinity Acute Care Hospital - Chennai",
+   "by": "rule",
+   "lonlat": [
+    80.25787,
+    13.03856
+   ]
+  },
+  {
+   "id": "osm:w211436948",
+   "name": null,
+   "kind": "hospital",
+   "ward": 116,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.28064,
+    13.05275
+   ]
+  },
+  {
+   "id": "osm:w240385003",
+   "name": null,
+   "kind": "hospital",
+   "ward": 59,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.28268,
+    13.08478
+   ]
+  },
+  {
+   "id": "osm:w240869141",
+   "name": null,
+   "kind": "hospital",
+   "ward": 78,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.25934,
+    13.09229
+   ]
+  },
+  {
+   "id": "osm:w28404807",
+   "name": null,
+   "kind": "hospital",
+   "ward": 174,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.23969,
+    13.00542
+   ]
+  },
+  {
+   "id": "osm:w32686766",
+   "name": "King's Institute of Preventive Medicine & Research",
+   "kind": "hospital",
+   "ward": 170,
+   "why": "AI: Research institute, no patient care",
+   "by": "ai",
+   "lonlat": [
+    80.21729,
+    13.0144
+   ]
+  },
+  {
+   "id": "osm:w343141649",
+   "name": "Vasan",
+   "kind": "hospital",
+   "ward": 142,
+   "why": "AI: Name too vague, likely not medical",
+   "by": "ai",
+   "lonlat": [
+    80.22577,
+    13.02173
+   ]
+  },
+  {
+   "id": "osm:w354810486",
+   "name": null,
+   "kind": "hospital",
+   "ward": 179,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.22891,
+    12.98566
+   ]
+  },
+  {
+   "id": "osm:w355074781",
+   "name": "Xcellent Care Hospital",
+   "kind": "hospital",
+   "ward": 178,
+   "why": "a second map point of Xcellent Care Superspeciality Hospital",
+   "by": "rule",
+   "lonlat": [
+    80.21839,
+    12.98563
+   ]
+  },
+  {
+   "id": "osm:w469945922",
+   "name": null,
+   "kind": "hospital",
+   "ward": 37,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.26622,
+    13.12356
+   ]
+  },
+  {
+   "id": "osm:w48132798",
+   "name": "Madras Pinjrapole Veterinary Home",
+   "kind": "hospital",
+   "ward": 71,
+   "why": "a veterinary clinic (not for people)",
+   "by": "rule",
+   "lonlat": [
+    80.24855,
+    13.09875
+   ]
+  },
+  {
+   "id": "osm:w48737654",
+   "name": null,
+   "kind": "hospital",
+   "ward": 71,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.2457,
+    13.0978
+   ]
+  },
+  {
+   "id": "osm:w59359967",
+   "name": null,
+   "kind": "hospital",
+   "ward": 98,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.24038,
+    13.09337
+   ]
+  },
+  {
+   "id": "osm:w907941484",
+   "name": null,
+   "kind": "hospital",
+   "ward": 14,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.29947,
+    13.14856
+   ]
+  },
+  {
+   "id": "osm:w940932459",
+   "name": null,
+   "kind": "hospital",
+   "ward": null,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.18511,
+    12.96943
+   ]
+  }
+ ]
+}

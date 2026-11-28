@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from scipy.spatial import cKDTree
 
-from . import priority
+from . import priority, scorewhy
 from .refdata import SEV_RANK, Reference
 from .util import IST, epoch_hours, log, to_xy
 
@@ -93,7 +93,9 @@ def build(events: pd.DataFrame, timeline: pd.DataFrame, actions: pd.DataFrame, r
     inc.loc[lapsed, "status_std"] = "Lapsed"
     inc["is_open"] = (~inc["status_std"].isin(["Resolved", "Rejected", "Lapsed"])).astype(int)
     inc["severity_score"] = g["severity_score"].max()
-    sev_best = e.drop_duplicates("incident_id").set_index("incident_id")
+    # the reasons are the member's whose score the incident carries (the highest; the lead on a tie), so the points
+    # shown add up to the score shown (they were the lead's, which could be another report's lower score)
+    sev_best = e.sort_values(["incident_id", "severity_score"], ascending=[True, False], kind="stable").drop_duplicates("incident_id").set_index("incident_id")
     inc["severity_level"] = g["_sev"].min().map({v: k for k, v in SEV_RANK.items()})
     inc["severity_reasons"] = sev_best["severity_reasons"]
     inc["dead"] = g["dead"].max().fillna(0)
@@ -137,10 +139,11 @@ def build(events: pd.DataFrame, timeline: pd.DataFrame, actions: pd.DataFrame, r
 
     # ---- priority with reasons (hand-set weights here; the pipeline re-scores with learned ones when there are enough
     # Collector decisions, see priority.py)
-    facts = inc[priority.FACTS].to_dict("records")
-    sev, X = priority.matrix(facts)
+    sev, X = priority.frame_signals(inc)
     inc["priority_score"] = priority.score(sev, X, priority.DEFAULT_WEIGHTS)
-    inc["priority_reasons"] = [priority.reasons(r) for r in facts]
+    inc["priority_reasons"] = priority.frame_reasons(inc)
+    # where the deadline comes from, and every point of the severity and the priority (scorewhy.py)
+    inc["sla_source"], inc["score_why"] = scorewhy.build(inc, sev_best.reindex(inc.index))
     inc["awaiting_collector"] = (inc["status_std"] == "Awaiting verification").astype(int)
     age_d = (as_of - inc["first_reported_at"]).dt.total_seconds() / 86400
     hi = inc["severity_level"].isin(["Severe", "High"])

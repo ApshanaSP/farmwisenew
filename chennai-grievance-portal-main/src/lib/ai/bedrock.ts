@@ -31,7 +31,25 @@ const keyId = () => `${env("AWS_REGION")}|${env("AWS_ACCESS_KEY_ID")}|${env("AWS
  */
 export function bedrockProblem(): string | null {
   const f = global.__bedrockRefused;
-  return f && f.key === keyId() ? f.reason : null;
+  if (f && f.key === keyId()) return f.reason;
+  // 28 Nov 2026: a short-term Bedrock API key says when it ends; once past, it is known to be refused without a call (the one in .env ended 18 Oct)
+  const end = bedrockKeyEnds(env("AWS_BEARER_TOKEN_BEDROCK"));
+  return end != null && end <= Date.now() ? `the Bedrock API key expired on ${new Date(end).toISOString().slice(0, 10)}: paste a new one into .env` : null;
+}
+
+/**
+ * When a short-term Bedrock API key ("bedrock-api-key-" and a base64 presigned URL, valid up to 12 hours) stops working, from its own
+ * X-Amz-Date and X-Amz-Expires; null for a long-term key or anything that cannot be read. Only the dates are read; the key is never logged.
+ */
+export function bedrockKeyEnds(token: string): number | null {
+  const PREFIX = "bedrock-api-key-";
+  if (!token.startsWith(PREFIX)) return null;
+  let url = "";
+  try { url = Buffer.from(token.slice(PREFIX.length), "base64").toString("utf8"); } catch { return null; }
+  const d = /X-Amz-Date=(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/.exec(url);
+  const secs = Number(/X-Amz-Expires=(\d+)/.exec(url)?.[1] ?? NaN);
+  if (!d || !Number.isFinite(secs)) return null;
+  return Date.UTC(+d[1], +d[2] - 1, +d[3], +d[4], +d[5], +d[6]) + secs * 1000;
 }
 
 export function bedrockConfigured(): boolean {

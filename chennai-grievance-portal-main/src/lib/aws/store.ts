@@ -202,8 +202,9 @@ const SQL_TYPE: Record<Kind, string> = { text: "TEXT COLLATE NOCASE", int: "INTE
 const COMPAT: Record<string, [string, Kind][]> = {
   // headline: filled on this server from the incident's own reports (lib/collector/derive.ts)
   // cluster_id, cluster_size: incidents that are one problem in one area (lib/collector/cluster.ts via derive.ts)
+  // score_why, sla_source: every point of the severity and priority and where the deadline comes from (district_intel scorewhy.py, 28 Nov)
   incidents: [["headline", "text"], ["cluster_id", "text"], ["cluster_size", "int"], ["loc_precision_m", "float"], ["ai_summary", "text"], ["ai_summary_ta", "text"], ["ai_attention", "text"],
-    ["ai_next_step", "text"], ["ai_model", "text"]],
+    ["ai_next_step", "text"], ["ai_model", "text"], ["score_why", "text"], ["sla_source", "text"]],
   briefings: [["ai_summary", "text"], ["ai_summary_ta", "text"]],
   documents: [["category_suggestion", "text"], ["category_method", "text"], ["incident_method", "text"], ["places", "text"],
     ["geo_conf", "float"], ["dept_src", "text"], ["language", "text"], ["is_complaint", "bool"], ["title_en", "text"],
@@ -722,6 +723,9 @@ async function websiteCasesOnServed(why: string): Promise<void> {
 
 /** Deletes durable files nothing uses any more; one still open (by a build about to close) goes at the next sweep. */
 function sweep(keep: string): void {
+  // a copy whose store file lives elsewhere (a dry-run test or harness: AWS_DURABLE_FILE outside the cache folder) never
+  // clears the cache folder: those files belong to the running site
+  if (path.resolve(path.dirname(keep)) !== path.resolve(CACHE_DIR)) return;
   const alive = (pid: number) => { try { process.kill(pid, 0); return true; } catch { return false; } };
   for (const f of fs.readdirSync(CACHE_DIR)) {
     // the file of another copy of the website (durable-p<pid>) goes only once that copy has stopped

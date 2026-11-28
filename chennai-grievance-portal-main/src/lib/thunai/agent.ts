@@ -33,6 +33,7 @@ import { offTopicReply } from "@/lib/topicguard/reply";
 import { scopeOf } from "@/lib/topicguard/scope";
 import { isTopic } from "./v18/topics";
 import { checkPlan as checkAsk, planFromSlots } from "./v19/shape";
+import { BOARD_PARTS } from "./board";
 
 export const AGENT_V = "thunai-agent-v1";
 export const MAX_ROUNDS = 3;
@@ -331,7 +332,16 @@ export function checkScreen(raw: unknown, w: World, stage: StageContext | null):
     // or nothing at all (the scope's most urgent open case)
     if (recipe === "case" && !out.id && !(out.zones.length || out.cat || out.q)) return null;
   }
-  if (recipe === "compare" && out.zones.length < 2 && out.depts.length < 2) return null;
+  // 28 Nov (board.ts): a comparison's localities as sides ("Velachery vs T. Nagar"), and the parts a dashboard was asked to hold
+  if ((recipe === "compare" || recipe === "summary") && Array.isArray(s.places)) {
+    const ps = [...new Set(s.places.map((x) => words(x, 60)).filter((p): p is string => !!p && /^[\p{L}\p{M} .,'()-]{2,60}$/u.test(p)))].slice(0, 4);
+    if (ps.length) out.places = ps;
+  }
+  if ((recipe === "compare" || recipe === "summary") && Array.isArray(s.parts)) {
+    const ps = BOARD_PARTS.filter((p) => (s.parts as unknown[]).includes(p));
+    if (ps.length) out.parts = ps;
+  }
+  if (recipe === "compare" && out.zones.length + (out.places?.length ?? 0) < 2 && out.depts.length < 2) return null;
   if (recipe === "nearby" && !out.q) return null;
   if (recipe === "readings" && !out.metric) out.metric = "lakes";
   if (recipe === "performance" && !out.by) out.by = "dept";

@@ -578,11 +578,10 @@ export default function FileComplaintPage() {
     return (
       <div className="flex min-h-screen flex-col diq-bg">
         <Header homeHref="/citizen" nav={CITIZEN_NAV} />
-        <main className="mx-auto w-full max-w-[1100px] flex-1 px-4 py-10 sm:px-6">
-          <Skeleton h={30} w={240} className="mb-3" />
-          <Skeleton h={14} w={300} className="mb-8" />
-          <div className="mb-8 flex justify-between gap-6">{[0, 1, 2, 3].map((i) => <Skeleton key={i} h={32} w={32} r={16} />)}</div>
-          <div className="card space-y-4">
+        <main className="cz-body" aria-busy="true">
+          <div className="cz-band slim"><p className="cz-band-eb">Public Grievance Redressal</p><h1>File a complaint</h1></div>
+          <div className="cz-card flex justify-between gap-6 px-6 py-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} h={32} w={32} r={16} />)}</div>
+          <div className="cz-card space-y-4 p-5 sm:p-6">
             <Skeleton h={18} w={190} />
             <div className="grid grid-cols-3 gap-4"><Skeleton h={44} /><Skeleton h={44} /><Skeleton h={44} /></div>
             <Skeleton h={44} />
@@ -605,13 +604,11 @@ export default function FileComplaintPage() {
     </AnimatePresence>
   );
   const StepHead = ({ icon: Icon, title, sub }: { icon: typeof UserRound; title: string; sub: React.ReactNode }) => (
-    <div className="mb-6 flex items-start gap-3">
-      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[10px] bg-navy-50 text-navy-700 ring-1 ring-inset ring-navy-200">
-        <Icon className="h-5 w-5" aria-hidden="true" />
-      </span>
-      <div>
-        <h2 className="text-[17px] font-semibold tracking-[-0.01em] text-ink">{title}</h2>
-        <p className="mt-0.5 text-sm text-ink-muted">{sub}</p>
+    <div className="cz-sh">
+      <span className="cz-ch-ic" aria-hidden="true"><Icon /></span>
+      <div className="min-w-0">
+        <h2>{title}</h2>
+        <p>{sub}</p>
       </div>
     </div>
   );
@@ -623,31 +620,35 @@ export default function FileComplaintPage() {
     <MotionConfig reducedMotion="user">
     <div className="flex min-h-screen flex-col diq-bg">
       <Header userName={me?.email} homeHref="/citizen" nav={CITIZEN_NAV} />
-      <main className="mx-auto w-full max-w-[1100px] flex-1 px-4 py-8 sm:px-6 sm:py-10">
-        <div className="mb-7">
-          <Link href="/citizen" className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-subtle transition hover:text-navy-600">
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-            Back to overview
-          </Link>
-          <h1 className="mt-2 text-[28px] font-semibold leading-tight tracking-[-0.03em] text-ink">File a complaint</h1>
-          <p className="mt-1 text-[15px] text-ink-muted">Public Grievance Redressal &mdash; Greater Chennai Corporation</p>
-        </div>
+      <main className="cz-body">
+        {/* the green band, as on the consoles' pages: the page's title and where the complaint goes */}
+        <section className="cz-band slim">
+          <div className="cz-band-row">
+            <div className="cz-band-t">
+              <p className="cz-band-eb"><span>Citizen portal</span><i aria-hidden="true">·</i><span>File a Complaint</span></p>
+              <h1>File a complaint</h1>
+              <p className="cz-band-sub">Public Grievance Redressal &mdash; Greater Chennai Corporation</p>
+            </div>
+            <Link href="/citizen" className="cz-bbtn"><ArrowLeft aria-hidden="true" />Back to overview</Link>
+          </div>
+        </section>
 
         {/* Stepper: the line fills between steps; completed steps take you back */}
         {step < 5 && (
-          <div className="mb-8">
+          <div className="cz-card px-3 py-4 sm:px-6">
             <Stepper steps={STEPS.map((s) => s.label)} current={step - 1} onStep={(i) => goToStep(i + 1)} />
           </div>
         )}
 
-        <div className="relative">
+        {/* clipped sideways: a step sliding in from 28 px right gave a phone a moment of sideways scroll (clip, not hidden, keeps the review's sticky) */}
+        <div className="relative overflow-x-clip">
         <AnimatePresence mode="wait" initial={false} custom={dir}>
         <motion.div key={step} custom={dir} initial={{ opacity: 0, x: 28 * dir }} animate={{ opacity: 1, x: 0, transition: { duration: 0.34, ease: EASE_OUT } }}
           exit={{ opacity: 0, x: -20 * dir, transition: { duration: 0.16 } }}>
 
         {/* STEP 1: WHO IS REPORTING */}
         {step === 1 && (
-          <div className="card mx-auto max-w-3xl">
+          <div className="cz-card mx-auto max-w-3xl p-4 sm:p-6">
             <StepHead icon={UserRound} title="Your details" sub={missingDetails.length === 0
               ? "Prefilled from your profile — you only enter these once."
               : "Fields marked * are required. They are saved to your profile, so you will not be asked again."} />
@@ -774,7 +775,7 @@ export default function FileComplaintPage() {
 
         {/* STEP 2: LOCATION — the map (60%) beside the address (40%) */}
         {step === 2 && (
-          <div className="card">
+          <div className="cz-card p-4 sm:p-6">
             <StepHead icon={MapPin} title="Complaint location" sub="Drop a pin where the problem is; the ward and zone fill in by themselves." />
 
             <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
@@ -939,7 +940,7 @@ export default function FileComplaintPage() {
 
         {/* STEP 3: DEPARTMENT + TYPE */}
         {step === 3 && (
-          <div className="card">
+          <div className="cz-card p-4 sm:p-6">
             <StepHead icon={Building2} title="Complaint type" sub="Choose one complaint type from the Corporation's official list." />
 
             <ComplaintTypeSelector
@@ -981,7 +982,7 @@ export default function FileComplaintPage() {
         {/* STEP 4: COMPLAINT DETAILS, with the review summary beside it */}
         {step === 4 && (
           <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <form className="card" onSubmit={handleSubmit} noValidate>
+            <form className="cz-card p-4 sm:p-6" onSubmit={handleSubmit} noValidate>
               <StepHead icon={FileText} title="Complaint details" sub="Describe the issue and attach evidence." />
 
               <div className="mb-5">
@@ -1007,7 +1008,7 @@ export default function FileComplaintPage() {
                   value={description} onChange={(e) => setDescription(e.target.value)} />
                 <div className="mt-1.5 flex items-center justify-between text-xs">
                   <span className="text-ink-subtle">{lang ? `Writing in ${lang}` : ""}</span>
-                  <span className={`font-mono tabular-nums ${description.length > 360 ? "text-gold-600" : "text-ink-subtle"}`}>{description.length}/400</span>
+                  <span className={`font-mono tabular-nums ${description.length > 360 ? "text-gold-700" : "text-ink-subtle"}`}>{description.length}/400</span>
                 </div>
               </div>
 
@@ -1067,7 +1068,7 @@ export default function FileComplaintPage() {
             </form>
 
             {/* review: everything entered, each part editable */}
-            <aside className="card sticky top-[84px] space-y-4 p-5" aria-label="Review">
+            <aside className="cz-card space-y-4 p-5 lg:sticky lg:top-[76px]" aria-label="Review">
               <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-subtle">Review</h3>
               {[
                 { k: "You", v: [[firstName, lastName].filter(Boolean).join(" "), mobileNumber].filter(Boolean).join(" · ") || "—", s: 1 },
@@ -1092,7 +1093,7 @@ export default function FileComplaintPage() {
 
         {/* STEP 5: CONFIRMATION */}
         {step === 5 && result && (
-          <div className="card mx-auto max-w-2xl text-center">
+          <div className="cz-card mx-auto max-w-2xl p-5 text-center sm:p-8">
             <div className="relative mx-auto mb-4 grid place-items-center">
               <SuccessCheck size={76} />
               <Confetti />

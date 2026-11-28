@@ -9,11 +9,14 @@
  *
  * The box is the district's ward boundaries plus 3 km, so "nearest hospital" can find one just outside the district;
  * every feature carries in_district (inside a ward polygon, or for a line, any point inside one).
+ * Schools, colleges, hospitals, fire stations and rail/metro stations are then checked against official lists (build-official-places.mjs):
+ * the OSM build is kept in data/layers/official/<id>.osm.geojson and the layer file holds only the places that pass.
  * Re-run only on request. Run from the portal folder: node scripts/build-map-layers.mjs [--only roads,schools]
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { OFFICIAL_LAYERS, applyOfficial, saveSnapshot } from "./build-official-places.mjs";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(ROOT, "data", "layers");
@@ -418,6 +421,13 @@ async function main() {
       merged_duplicates: built.merged ?? 0, dropped_unnamed: built.unnamed ?? 0, dropped_small: built.small ?? 0,
       ...(L.partial ? { partial: L.partial } : {}), query: q
     };
+    // 28 Nov 2026: the facility layers keep only what an official list or a plain name says they are (scripts/build-official-places.mjs);
+    // the OSM build is kept as the layer's snapshot, so the check can run again without asking Overpass
+    if (OFFICIAL_LAYERS.includes(L.id)) {
+      saveSnapshot(L.id, feats);
+      const r = applyOfficial(L.id, feats, meta);
+      console.log(`  official check: kept ${r.kept} (${r.matched} matched to an official list), dropped ${r.dropped}${r.unjudged ? `, ${r.unjudged} doubtful names left out (run node scripts/build-official-places.mjs --ai, then again without it)` : ""}`);
+    }
     fs.writeFileSync(metaFile, JSON.stringify(meta, null, 1));
     console.log(`${L.id}: ${feats.length} features (${inside} in the district) from ${json.elements.length} elements, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
   }

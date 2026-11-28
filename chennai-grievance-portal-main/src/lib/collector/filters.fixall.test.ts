@@ -15,6 +15,11 @@ vi.mock("@/lib/officer/guard", async (orig) => ({
   fresh: (d: unknown, status = 200) => NextResponse.json(d, { status })
 }));
 vi.mock("@/lib/officer/data", () => ({ grievanceList: async (_d: unknown, f: Record<string, unknown>) => (h.calls.push(f), { rows: [], total: 0 }) }));
+// 28 Nov: the Resolved tile's list is built by lib/cases/resolution.ts (each case with its resolution), from the same filter values
+vi.mock("@/lib/cases/resolution", () => ({
+  resolvedList: async (f: Record<string, unknown>) => (h.calls.push({ ...f, status: "Resolved" }), { rows: [], total: 0, resolvedList: true }),
+  resolutionsFor: async () => ({})
+}));
 
 const { GET: collectorList } = await import("@/app/api/collector/list/route");
 const { GET: officerList } = await import("@/app/api/officer/grievances/route");

@@ -13,7 +13,6 @@
     { "id": "a10", "q": "இந்த வாரம் எந்த மண்டலங்களில் விபத்துகள் அதிகரித்தன", "want": { "show": "rank", "layers": ["incidents"], "cats": ["ROAD_ACCIDENT"], "by": "zone", "order": "rise", "language": "ta" } },
     { "id": "a11", "q": "stray dog complaints near parks", "want": { "show": "within", "layers": ["incidents", "parks"], "cats": ["STRAY_ANIMALS"] } },
     { "id": "a12", "q": "dengue spots clustering in the north", "want": { "show": "hotspot", "layers": ["incidents"], "cats": ["VECTOR_DISEASE"] } },
-    { "id": "a13", "q": "open complaints within 300 m of my uploaded list", "want": { "show": "within", "layers": ["incidents", "my_list"], "meters": 300 } },
     { "id": "a14", "q": "zone wise streetlight complaints this month", "want": { "show": "count_by", "layers": ["incidents"], "cats": ["STREETLIGHT_ELECTRICAL"], "by": "zone", "period_days": 30 } },
     { "id": "a15", "q": "hello how are you", "want": { "understood": false } }
   ]

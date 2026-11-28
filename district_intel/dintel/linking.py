@@ -300,8 +300,10 @@ def link(events: pd.DataFrame, ref: Reference, truth: pd.DataFrame | None, merge
     best_prob = pd.concat([accept[["a", "prob"]].rename(columns={"a": "i"}), accept[["b", "prob"]].rename(columns={"b": "i"})])
     bp = best_prob.groupby("i")["prob"].max()
     e["link_prob"] = e["event_id"].map(pd.Series(bp.values, index=ids[bp.index.to_numpy()]) if len(bp) else {}).round(3)
+    # within-source groups say how they were made (dedup.run: the learned model or the rule)
+    within = e["_dup_method"].fillna("within_source_rule") if "_dup_method" in e else "within_source_rule"
     e["link_method"] = np.where(e["link_prob"].notna(), "scorer", np.where(e["event_id"] != e["dup_group_id"].fillna(e["event_id"]),
-                                                                              "within_source_rule", "singleton"))
+                                                                              within, "singleton"))
 
     pairs = accept.assign(event_a=ids[accept["a"]], event_b=ids[accept["b"]], decision="linked")
     rq = review.assign(event_a=ids[review["a"]], event_b=ids[review["b"]], decision="review")

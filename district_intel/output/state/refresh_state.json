@@ -15,20 +15,20 @@
     "tail": "     4    0.5%\n  Parks & Play Fields Department                                  3    0.4%\n  Financial Management Unit                                       2    0.2%\n  Family Welfare Department                                       1    0.1%\nDepartment method: {'fallback': 521, 'keyword': 282}\nComplaints: 32 of 803 (4.0%)\nMySQL: not configured\n11:25:04 | INFO    | === Run finished in 0:08:02 ===\n"
   },
   "cpcb": {
-    "started": 1795771810.734845,
-    "last_run": 1795772417.2087147,
-    "ok": false,
-    "last_ok": 1795728994.5621016,
-    "attempts": 3,
-    "tail": "1-01, 2026-11-05..2026-11-08, 2026-11-12..2026-11-13, 2026-11-19..2026-11-27\nstale / failed sources: data.gov.in CPCB real-time air quality (3b01bcb8) [no-api-key]; CPCB CCR live city map [playwright-error (stale)]; CPCB CCR historical (advance search / repository) [captcha-gated]; app.cpcbccr.com AQI_India [200 rejected: US-AQI scale]\nrows by fetch_method: requests=0, playwright=1496, download=0\n"
+    "started": 1795847412.0900383,
+    "last_run": 1795847996.5862503,
+    "ok": true,
+    "last_ok": 1795847996.5862503,
+    "attempts": 2,
+    "tail": "6-10-09, 2026-10-22..2026-10-23, 2026-10-31..2026-11-01, 2026-11-05..2026-11-08, 2026-11-12..2026-11-13, 2026-11-19..2026-11-26\nstale / failed sources: data.gov.in CPCB real-time air quality (3b01bcb8) [no-api-key]; CPCB CCR historical (advance search / repository) [captcha-gated]; app.cpcbccr.com AQI_India [200 rejected: US-AQI scale]\nrows by fetch_method: requests=0, playwright=1597, download=0\n"
   },
   "cfm": {
-    "started": 1795772417.209715,
-    "last_run": 1795772442.6884713,
+    "started": 1795847996.5912483,
+    "last_run": 1795848023.7041316,
     "ok": true,
-    "last_ok": 1795772442.6884713,
+    "last_ok": 1795848023.7041316,
     "attempts": 1,
-    "tail": " : coordinates: not published by any accessible endpoint (latitude/longitude left empty)\nlimitation     : gates_open_count: not published for any site\nlimitation     : gate discharge (spillway) is only in the live daily record; history has inflow only\nlimitation     : alert validity: no valid_from/valid_to published\nfailed calls   : none\nfetch methods  : requests 0, playwright 10 successful calls\n1-27\n2026-11-27 15:10:21 INFO HTTP 403 via requests on /Master/GetCsectionAndWaterLevel; switching to Playwright\n2026-11-27 15:10:33 INFO /Master/GetCsectionAndWaterLevel: skipped 9 readings with no verifiable observation time\n2026-11-27 15:10:33 INFO /Master/GetCsectionAndWaterLevel: dropped 2 out-of-scope records\n2026-11-27 15:10:36 INFO /Master/GetTankDataByDate: dropped 3 out-of-scope records\n"
+    "tail": " : coordinates: not published by any accessible endpoint (latitude/longitude left empty)\nlimitation     : gates_open_count: not published for any site\nlimitation     : gate discharge (spillway) is only in the live daily record; history has inflow only\nlimitation     : alert validity: no valid_from/valid_to published\nfailed calls   : none\nfetch methods  : requests 0, playwright 10 successful calls\n1-28\n2026-11-28 12:10:00 INFO HTTP 403 via requests on /Master/GetCsectionAndWaterLevel; switching to Playwright\n2026-11-28 12:10:12 INFO /Master/GetCsectionAndWaterLevel: skipped 9 readings with no verifiable observation time\n2026-11-28 12:10:12 INFO /Master/GetCsectionAndWaterLevel: dropped 2 out-of-scope records\n2026-11-28 12:10:16 INFO /Master/GetTankDataByDate: dropped 3 out-of-scope records\n"
   },
   "hospital": {
     "last_run": 1791093798.6979213,
@@ -60,13 +60,11 @@
   },
   "_mysql_exported_mtime": 1791046257.78129,
   "_last_collection": {
-    "at": 1795771810.531168,
+    "at": 1795847411.528341,
     "ran": [
       "cpcb",
       "cfm"
     ],
-    "failed": [
-      "cpcb"
-    ]
+    "failed": []
   }
 }

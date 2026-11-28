@@ -6,6 +6,7 @@ import crypto from "crypto";
 import type { AnswerCard, ChartSpec, ChartType, Dataset, Field } from "@/lib/assistant/answer";
 import { figuresIn } from "@/lib/thunai/numbergate";
 import { checkStage, type BlockT, type CaseRowT, type DrillT, type StageDocT } from "@/lib/thunai/stage";
+import { answerForm } from "@/lib/thunai/board";
 import type { World } from "@/lib/thunai/types";
 import type { BrainOut } from "./loop";
 import { istWords } from "./format";
@@ -168,10 +169,16 @@ export function stageOf(o: BrainOut, question: string, w: World, ctx: { period: 
   blocks.push({ kind: "Answer", id: "say", title: L(lang, "In short", "சுருக்கமாக"), text: clip(a.say, 2390), facts: [] });
   const drawn: BlockT[] = [];
   shows.forEach((sh, i) => { const hit = parts.get(sh.from); const b = hit ? blockOf(sh, hit.p, i, lang, w, hit.e) : null; if (b && drawn.length < 13) drawn.push(b); });
+  // 28 Nov (the owner: "no need to answer everything as an AI textual summary; answer it the way the user asks"): the form the question asks
+  // for (thunai/board.ts answerForm). How many, or yes or no: the sentence and the one thing it counts. A list: the list, no points on top. Which
+  // or where: the places first (a map, else a ranking), no points
+  const form = (() => { try { return answerForm(question, w); } catch { return null; } })();
+  const short = form === "count" || form === "yesno";
+  if (form === "where") drawn.sort((x, y) => Number(y.kind === "MapView") - Number(x.kind === "MapView") || Number(y.kind === "Ranking") - Number(x.kind === "Ranking"));
   // the words and the first picture side by side (Stage.tsx brainSpans), the points under them, then the rest
   if (drawn[0] && PICTURE.has(drawn[0].kind)) blocks.push(drawn.shift()!);
-  if (a.points.length) blocks.push({ kind: "Brief", id: "points", title: L(lang, "Key points", "முக்கியக் குறிப்புகள்"), points: a.points.slice(0, 12).map((t) => ({ text: clip(t, 395), ...(lang === "ta" ? { ta: clip(t, 395) } : {}), incidentId: null })) });
-  blocks.push(...drawn.slice(0, 14 - blocks.length));
+  if (a.points.length && !short && form !== "list" && form !== "where") blocks.push({ kind: "Brief", id: "points", title: L(lang, "Key points", "முக்கியக் குறிப்புகள்"), points: a.points.slice(0, 12).map((t) => ({ text: clip(t, 395), ...(lang === "ta" ? { ta: clip(t, 395) } : {}), incidentId: null })) });
+  blocks.push(...drawn.slice(0, short ? (blocks.length > 1 ? 0 : 1) : 14 - blocks.length));
   const used = [...new Set(shows.map((sh) => parts.get(sh.from)?.e).filter((e): e is Evidence => !!e))];
   const from = used.length ? used : o.evidence;
   const when = from.map((e) => e.out.when).find(Boolean) ?? null;

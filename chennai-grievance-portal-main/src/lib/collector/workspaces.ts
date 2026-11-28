@@ -9,6 +9,15 @@ import { audit, auditIn, inTransaction } from "@/lib/collector/sources";
 
 type Row = Record<string, any>;
 const parse = (v: unknown) => (typeof v === "string" ? JSON.parse(v) : v ?? null);
+/** a stored JSON that cannot be read is no fact pack (the version still opens, with its markdown) */
+const parseSafe = (v: unknown) => { try { return parse(v); } catch { return null; } };
+
+/**
+ * A version is one row of the archive in the store (one DynamoDB item, at most 400 KB): its markdown and its fact pack together stay well
+ * under that, in bytes (Tamil letters are three bytes each). The page keeps its copy under 120 KB (workspacesnap.ts capView).
+ */
+export const BRIEFING_MAX_BYTES = 320_000;
+export const briefingBytes = (b: { md: string; facts: Row }) => Buffer.byteLength(b.md, "utf8") + Buffer.byteLength(JSON.stringify(b.facts), "utf8");
 
 export async function listWorkspaces(owner: string) {
   const [rows] = await intelPool.query<RowDataPacket[]>(
@@ -67,7 +76,8 @@ export async function openWorkspace(owner: string, id: number) {
        FROM ${ops("briefing_archive")} WHERE archive_id = ?`,
       [filters.archiveId]
     );
-    if (a) briefing = { ...a, facts: a.fact_pack ? JSON.parse(a.fact_pack) : null };
+    // the fact pack once, parsed: since 28 Nov it holds the Briefing page's own copy (workspacesnap.ts `view`), sent back only as `facts`
+    if (a) { const { fact_pack: pack, ...rest } = a; briefing = { ...rest, facts: pack ? parseSafe(pack) : null }; }
   }
   await audit(owner, "workspace:open", "workspaces", id, null, { name: w.name, version: w.version });
   return { ...w, filters, layout: parse(w.layout), briefing };
@@ -115,8 +125,10 @@ export async function auditLog(limit = 200) {
   const page = 500;
   for (let offset = 0; out.length < limit && offset < page * 10; offset += page) {
     const [rows] = await intelPool.query<RowDataPacket[]>(
+      // the daily generated resolutions keep their own audit rows (action synthetic:*) as the honest trail, but they are the system's
+      // demonstration work, not the Collector's decisions or source changes, so they are left out of this view and never crowd it
       `SELECT log_id AS id, DATE_FORMAT(at, '%Y-%m-%d %H:%i:%s') AS at, actor, action, table_name, record_id, LEFT(after_value, 400) AS after_value
-       FROM ${ops("audit_log")} ORDER BY log_id DESC LIMIT ? OFFSET ?`,
+       FROM ${ops("audit_log")} WHERE action NOT LIKE 'synthetic:%' ORDER BY log_id DESC LIMIT ? OFFSET ?`,
       [page, offset]
     );
     out.push(...(await staffVisible(rows)));

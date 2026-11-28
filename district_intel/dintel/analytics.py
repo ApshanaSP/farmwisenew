@@ -208,16 +208,23 @@ def gi_star(values: pd.Series, adj: dict[int, set[int]]) -> pd.Series:
     return pd.Series(z.round(2), index=wards)
 
 
-def ward_stats(wards: WardIndex, events: pd.DataFrame, inc: pd.DataFrame, ward_taluk: dict, adj: dict, as_of: pd.Timestamp) -> pd.DataFrame:
+def ward_stats(wards: WardIndex, events: pd.DataFrame, inc: pd.DataFrame, ward_taluk: dict, adj: dict, as_of: pd.Timestamp,
+               taluk_table: pd.DataFrame | None = None) -> pd.DataFrame:
+    """One row per ward. taluk_code / taluk_share come from `ward_taluk` (the official table: share = the taluk's share of
+    the ward's area); taluk_method and taluk_others (other taluks with their shares) from `taluk_table` when given."""
     rows = []
+    info = taluk_table.set_index("ward_no") if taluk_table is not None and len(taluk_table) else None
     fl = events[(events["category_family"] == "FLOOD") & events["ward_no"].notna()].groupby("ward_no").size()
     inc30 = inc[(inc["first_reported_at"] >= as_of - pd.Timedelta(days=30)) & inc["ward_no"].notna()]
     c30 = inc30.groupby("ward_no").size()
     opn = inc[(inc["is_open"] == 1) & inc["ward_no"].notna()].groupby("ward_no").size()
     brc = inc[(inc["is_open"] == 1) & (inc["sla_breached"] == 1) & inc["ward_no"].notna()].groupby("ward_no").size()
     for w in wards.wards:
+        has = info is not None and w.ward_no in info.index
         rows.append({"ward_no": w.ward_no, "zone_no": w.zone_no, "zone_name": w.zone_name,
-                     "taluk_code": ward_taluk.get(w.ward_no, (None, 0))[0], "taluk_vote_share": ward_taluk.get(w.ward_no, (None, 0))[1],
+                     "taluk_code": ward_taluk.get(w.ward_no, (None, 0))[0], "taluk_share": ward_taluk.get(w.ward_no, (None, None))[1],
+                     "taluk_method": info.at[w.ward_no, "method"] if has else None,
+                     "taluk_others": (info.at[w.ward_no, "other_taluks"] or None) if has else None,
                      "area_km2": round(w.area_km2, 3), "centroid_lat": round(w.centroid[0], 6), "centroid_lon": round(w.centroid[1], 6),
                      "adjacent_wards": "|".join(str(a) for a in sorted(adj.get(w.ward_no, set()))),
                      "flood_reports": int(fl.get(w.ward_no, 0)), "incidents_30d": int(c30.get(w.ward_no, 0)),

@@ -194,7 +194,8 @@ export async function draftAction(id: string, user: string): Promise<ActionDraft
   let ai: ActionDraft["ai"] = null;
   try {
     const r = await generateJson({
-      role: "fast", name: "action-email", schema: DraftSchema, system: SYSTEM, temperature: 0.2, maxOutputTokens: 600, user,
+      // v20: the Collector is waiting on Take action: Claude gets 15 s, then the free models their 8 s each (gateway.ts chain)
+      role: "fast", name: "action-email", schema: DraftSchema, system: SYSTEM, temperature: 0.2, maxOutputTokens: 600, user, claudeMs: 15_000, first: ["openai/gpt-oss-120b"],
       prompt: facts(i, why, { reports: d.reports.length, outlets, group: d.group.length + 1, deptReport, officer, playbook })
     });
     if (r.object.subject.trim() && r.object.body.trim().length > 60) {

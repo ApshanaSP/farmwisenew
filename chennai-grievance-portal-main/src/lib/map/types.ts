@@ -62,6 +62,8 @@ export interface PointFeat {
   government?: boolean;
   in_district: boolean;
   ward: number | null;
+  /** 28 Nov 2026: the official list this place was matched to (its id there and the list's short id), when it was */
+  official?: { src: string; id: string | null; name: string } | null;
 }
 
 /** A road or a waterway: one named line (several OSM ways that touch), [lat, lon] pairs. */
@@ -189,12 +191,25 @@ export interface LayerMeta {
    * under any answer that uses it ("OpenStreetMap, 31 shops, not the full list"), and who holds the full list.
    */
   partial?: { what: string; owner: string } | null;
+  /**
+   * 28 Nov 2026: how the layer was checked against official lists (scripts/build-official-places.mjs, meta.json `official`): the lists (with
+   * their links and the date they were read), how many places matched one, and the official places that have no map point (named, never drawn).
+   */
+  official?: LayerOfficial | null;
+}
+export interface LayerOfficial {
+  sources: { name: string; url: string | null; checked: string | null }[];
+  matched: number;
+  kept: number;
+  dropped: number;
+  unmapped: string[];
+  note: string | null;
 }
 
 /**
  * The Collector's own layers (Ask the Map final, 20 Nov 2026), from OpenStreetMap (data/layers, scripts/build-map-layers.mjs): banks and
  * ATMs for the quarterly bank meeting, places of worship and wine shops for the distance rules, ration shops for food access, and the
- * civic places a Collector sends people to. `my_list` is the officer's own approved upload (lib/map/uploads.ts).
+ * civic places a Collector sends people to. (The officer's own uploaded list, `my_list`, went with the Your lists tool on 28 Nov 2026.)
  */
 export const COLLECTOR_LAYERS = [
   "banks", "atms", "worship", "parks", "water_tanks", "toilets", "bus_stations", "gov_offices", "pharmacies", "fuel", "markets", "cemeteries", "liquor", "ration_shops"
@@ -203,13 +218,13 @@ export type CollectorLayer = (typeof COLLECTOR_LAYERS)[number];
 
 export const LAYER_IDS = [
   "incidents", "schools", "colleges", "hospitals", "fire_stations", "police", "water_bodies", "waterways", "roads", "rail_metro", "osm_places",
-  "lakes_store", "gauges", "pwd_assets", "hotspots", ...COLLECTOR_LAYERS, "my_list"
+  "lakes_store", "gauges", "pwd_assets", "hotspots", ...COLLECTOR_LAYERS
 ] as const;
 export type LayerId = (typeof LAYER_IDS)[number];
-export type PointLayer = "schools" | "colleges" | "hospitals" | "fire_stations" | "police" | "rail_metro" | "osm_places" | "lakes_store" | "gauges" | "pwd_assets" | CollectorLayer | "my_list";
+export type PointLayer = "schools" | "colleges" | "hospitals" | "fire_stations" | "police" | "rail_metro" | "osm_places" | "lakes_store" | "gauges" | "pwd_assets" | CollectorLayer;
 export type LineLayer = "roads" | "waterways";
 export type PolyLayer = "water_bodies";
-export const POINT_LAYERS: PointLayer[] = ["schools", "colleges", "hospitals", "fire_stations", "police", "rail_metro", "osm_places", "lakes_store", "gauges", "pwd_assets", ...COLLECTOR_LAYERS, "my_list"];
+export const POINT_LAYERS: PointLayer[] = ["schools", "colleges", "hospitals", "fire_stations", "police", "rail_metro", "osm_places", "lakes_store", "gauges", "pwd_assets", ...COLLECTOR_LAYERS];
 export const LINE_LAYERS: LineLayer[] = ["roads", "waterways"];
 
 export interface World {

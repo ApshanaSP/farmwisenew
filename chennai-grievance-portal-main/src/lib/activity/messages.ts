@@ -128,7 +128,12 @@ const RULES: Rule[] = [
   ["POST", /^\/api\/map\/send$/, (b) => (b.action === "draft" ? null : said("Forwarding the work to the departments", "The work has been forwarded to the departments."))],
   ["POST", /^\/api\/rehearsal\/plan$/, said("Preparing the rain response plan")],
   ["GET", /^\/api\/rehearsal\/tasks$/, said("Retrieving the assigned tasks")],
-  ["POST", /^\/api\/rehearsal\/tasks$/, said("Forwarding the tasks to the departments", "The tasks have been forwarded to the departments.")],
+  // the officer's own step on a rain task (an update, or done): it goes to the Collector, not to the departments
+  ["POST", /^\/api\/rehearsal\/tasks$/, said("Sending your update to the Collector", "Your update has been sent.")],
+  // the Collector's action tracker inside Rain: reading it is quiet (Rain shows its own spinner); assign, verify, send back, withdraw, move
+  ["GET", /^\/api\/rehearsal\/tasks\/collector$/, () => null],
+  ["POST", /^\/api\/rehearsal\/tasks\/collector$/, (b) => (b.action === "assign" ? said("Assigning the places to the departments", "The places have been assigned.")
+    : said("Recording your decision", "Your decision has been recorded."))],
 
   // ---- the department officer's console
   ["GET", /^\/api\/officer\/overview$/, { ...said("Updating your department's dashboard"), primary: true }],
@@ -303,6 +308,10 @@ export const NOTICE_TA: Record<string, string> = {
   "Calculating the route": "பாதை கணக்கிடப்படுகிறது",
   "Retrieving the assigned tasks": "ஒதுக்கப்பட்ட பணிகள் பெறப்படுகின்றன",
   "Forwarding the tasks to the departments": "பணிகள் துறைகளுக்கு அனுப்பப்படுகின்றன",
+  "Sending your update to the Collector": "உங்கள் தகவல் ஆட்சியருக்கு அனுப்பப்படுகிறது",
+  "Your update has been sent.": "உங்கள் தகவல் அனுப்பப்பட்டது.",
+  "Assigning the places to the departments": "இடங்கள் துறைகளுக்கு ஒதுக்கப்படுகின்றன",
+  "The places have been assigned.": "இடங்கள் ஒதுக்கப்பட்டன.",
   "The tasks have been forwarded to the departments.": "பணிகள் துறைகளுக்கு அனுப்பப்பட்டன.",
   "Updating your department's dashboard": "உங்கள் துறையின் டாஷ்போர்டு புதுப்பிக்கப்படுகிறது",
   "Compiling your department's analysis": "உங்கள் துறையின் பகுப்பாய்வு தொகுக்கப்படுகிறது",

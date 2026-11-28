@@ -8,6 +8,9 @@
  * longer (a daily cap) hands over to the provider's other model; then the next provider is
  * tried, then the caller gets AiBusyError with the seconds to wait.
  *
+ * v20 (28 Nov 2026): after the providers the settings name, every other provider with a key joins the chain (providerOrder), so one
+ * provider being out never leaves a console panel without an AI answer; background work has its own token allowance and Claude share.
+ *
  * Keys are read here, on the server, and nowhere else. Calls are logged with provider,
  * model, tokens and latency, never with the prompt (it can carry untrusted text), and each
  * user has a daily token budget.
@@ -18,7 +21,8 @@ import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
 import type { z } from "zod";
 import { BedrockBusyError, bedrockConfigured, bedrockJson, bedrockModel, bedrockProblem } from "@/lib/ai/bedrock";
-import { billedOf, ClaudeBusyError, claudeConfigured, claudeJson, claudeModel, claudeProblem } from "@/lib/ai/claude";
+import { billedOf, ClaudeBusyError, claudeConfigured, claudeJson, claudeModel, claudeOff, claudeProblem } from "@/lib/ai/claude";
+import { budgetLeft as claudeBudgetLeft, budgetUsd, spentUsd } from "@/lib/ai/claudebudget";
 import { isKeyRefusal, keyRefused, keyWorks } from "@/lib/ai/keyhealth";
 import { ledger, type Lane, type Org } from "@/lib/thunai/ledger";
 import { groqFetch } from "@/lib/thunai/keepalive";
@@ -98,7 +102,7 @@ function bedrock(): Provider | null {
       const r = await bedrockJson({ name: c.name, role: c.role, schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt,
         maxOutputTokens: c.maxOutputTokens, abortSignal: c.abortSignal });
       const info: CallInfo = { step: c.name, provider: "bedrock", model: r.model, ms: r.ms, inputTokens: r.inputTokens, outputTokens: r.outputTokens, attempts: 1 };
-      charge(c.user, info.inputTokens - r.cacheReadTokens + info.outputTokens);
+      charge(bucketOf(c), info.inputTokens - r.cacheReadTokens + info.outputTokens);
       console.info(`[assistant] ${c.name} bedrock/${r.model} ${r.ms} ms, ${r.inputTokens}+${r.outputTokens} tokens (${r.cacheReadTokens} from cache)`);
       return { object: r.object, info };
     }
@@ -128,18 +132,20 @@ function anthropic(): Provider | null {
       const fc = !jarvis && c.feature ? featureClaude(c.feature) : null;
       const r = await claudeJson({ name: c.name, role: jarvis ? undefined : c.role, ...(jarvis && c.only?.models?.[0] ? { model: c.only.models[0] } : {}),
         ...(fc ? { model: c.claudeModel || fc.model, effort: fc.effort, think: fc.think, sentinels: true } : {}), schema: c.schema, lenient: c.lenient, system: c.system, prompt: c.prompt, maxOutputTokens: c.maxOutputTokens,
-        timeoutMs: jarvis || !c.timeoutMs ? c.timeoutMs : Math.max(c.timeoutMs, 10_000), abortSignal: c.abortSignal }).catch((e: unknown) => {
+        timeoutMs: jarvis ? c.timeoutMs : claudeTimeout(c), abortSignal: c.abortSignal }).catch((e: unknown) => {
         // refused or off-schema, but billed: the budget and (for Jarvis) the ledger are told before the caller moves on (review, Planner 4)
         const b = billedOf(e);
         if (b) {
-          charge(c.user, b.inputTokens - b.cacheReadTokens + b.outputTokens);
+          charge(bucketOf(c), b.inputTokens - b.cacheReadTokens + b.outputTokens);
+          if (c.background) backgroundClaudeUsed(b.inputTokens + b.outputTokens);
           if (jarvis) ledger().record("anthropic", b.model, { tokens: b.inputTokens + b.outputTokens, lane: c.lane ?? "other" });
         }
         throw e;
       });
       const info: CallInfo = { step: c.name, provider: "anthropic", model: r.model, ms: r.ms, inputTokens: r.inputTokens, outputTokens: r.outputTokens, attempts: 1,
         path: r.path, cacheReadTokens: r.cacheReadTokens, cacheWriteTokens: r.cacheWriteTokens };
-      charge(c.user, info.inputTokens - r.cacheReadTokens + info.outputTokens);
+      charge(bucketOf(c), info.inputTokens - r.cacheReadTokens + info.outputTokens);
+      if (c.background) backgroundClaudeUsed(info.inputTokens + info.outputTokens);
       // the ledger's Claude ceiling is Jarvis's own: the console's steps must not use it up (they have the per-user daily budget)
       if (jarvis) ledger().record("anthropic", r.model, { tokens: info.inputTokens + info.outputTokens, lane: c.lane ?? "other" });
       console.info(`[assistant] ${c.name} anthropic/${r.model} ${r.ms} ms, ${r.inputTokens}+${r.outputTokens} tokens (${r.cacheReadTokens} from cache, ${r.cacheWriteTokens} written), ${r.path}`);
@@ -228,18 +234,60 @@ const makers = (): Record<string, () => Provider | null> => ({ gemini, bedrock, 
  * AI_CHAT_PROVIDER (e.g. groq, or groq,bedrock) is the whole list for Ask District IQ's own calls (`chat`): only those, in
  * that order; when they are all busy the question is answered from the data by rules.
  */
-function providers(prefer?: ProviderName, chat = false, feature?: Feature): Provider[] {
+function providers(prefer?: ProviderName, chat = false, feature?: Feature, background = false): Provider[] {
   const make = makers();
-  const chosen = [...names("AI_FORCE_PROVIDER", ""), ...names("AI_PROVIDER", "gemini"), ...names("AI_FALLBACK_PROVIDER", "none")];
-  const own = feature ? featureProviders(feature) : null;
-  const order = own ?? (chat && names("AI_CHAT_PROVIDER", "").length ? names("AI_CHAT_PROVIDER", "")
-    : [...names("AI_FORCE_PROVIDER", ""), ...(prefer && chosen.includes(prefer) ? [prefer] : []), ...names("AI_PROVIDER", "gemini"), ...names("AI_FALLBACK_PROVIDER", "none")]);
   const out: Provider[] = [];
-  for (const name of order) {
+  for (const name of providerOrder(prefer, chat, feature, background)) {
     const p = make[name]?.();
     if (p && !out.some((x) => x.name === p.name)) out.push(p);
   }
   return out;
+}
+
+/**
+ * v20 (28 Nov 2026, the owner: "make sure wherever we are using AI, all the AIs are used properly"): the one shared chain. The providers the
+ * settings name come first, in their order (AI_FORCE_PROVIDER, `prefer` when named, AI_PROVIDER, AI_FALLBACK_PROVIDER); then every other
+ * provider whose key is in .env, so that one provider being out (Claude past the owner's spend ceiling or rate-limited, an expired Bedrock key)
+ * never leaves a panel without an AI answer. .env named Claude then Bedrock, and the Bedrock key ended on 18 Oct: when Claude was out, nothing
+ * answered, though the Groq and Gemini keys were there. A question someone waits on tries Groq (about 1 s) before Gemini; background write-ups
+ * try Gemini first, which keeps Groq's small per-minute allowance for the Collector's questions and Jarvis. Left as named (no safety net): a
+ * feature with its own order (Ask the Map's AI_MAP_PROVIDER), Ask District IQ's AI_CHAT_PROVIDER when it is set, and AI_STRICT_PROVIDERS=1.
+ */
+const NET_ASKED: ProviderName[] = ["anthropic", "groq", "gemini", "bedrock"];
+const NET_BACKGROUND: ProviderName[] = ["anthropic", "gemini", "groq", "bedrock"];
+export function providerOrder(prefer?: ProviderName, chat = false, feature?: Feature, background = false): string[] {
+  const chosen = [...names("AI_FORCE_PROVIDER", ""), ...names("AI_PROVIDER", "gemini"), ...names("AI_FALLBACK_PROVIDER", "none")];
+  const own = feature ? featureProviders(feature) : null;
+  const chatOnly = chat && names("AI_CHAT_PROVIDER", "").length ? names("AI_CHAT_PROVIDER", "") : null;
+  const named = own ?? chatOnly ?? [...names("AI_FORCE_PROVIDER", ""), ...(prefer && chosen.includes(prefer) ? [prefer] : []), ...names("AI_PROVIDER", "gemini"), ...names("AI_FALLBACK_PROVIDER", "none")];
+  // AI_PROVIDER=none (or AI_FORCE_PROVIDER=none) is how a test server or a probe turns the console's AI off: nothing is added to it
+  const off = names("AI_PROVIDER", "gemini").includes("none") || names("AI_FORCE_PROVIDER", "").includes("none");
+  const strict = own != null || chatOnly != null || off || env("AI_STRICT_PROVIDERS") === "1";
+  return [...new Set([...named, ...(strict ? [] : background ? NET_BACKGROUND : NET_ASKED)])].filter((x) => x !== "none");
+}
+
+/** Why a provider with a key in .env is not in the chain right now ("the owner's spend ceiling is reached"), else null. */
+export function providerOut(name: ProviderName): string | null {
+  if (name === "anthropic") {
+    if (!env("ANTHROPIC_API_KEY")) return null;
+    if (claudeOff()) return "switched off (JARVIS_CLAUDE_OFF=1)";
+    const p = claudeProblem();
+    if (p) return p;
+    if (!claudeBudgetLeft()) return `the owner's Claude spend ceiling is reached ($${spentUsd().toFixed(2)} of $${budgetUsd().toFixed(2)}, JARVIS_CLAUDE_BUDGET_USD)`;
+    return null;
+  }
+  if (name === "bedrock") return env("AWS_BEARER_TOKEN_BEDROCK") || env("AWS_ACCESS_KEY_ID") || env("AWS_PROFILE") ? bedrockProblem() : null;
+  return null;
+}
+
+/** A log line said once in ten minutes, not on every call (a provider out for the day would fill the log). */
+const said = new Map<string, number>();
+function sayOnce(line: string) {
+  const at = said.get(line) ?? 0;
+  if (Date.now() - at < 10 * 60_000) return;
+  said.set(line, Date.now());
+  while (said.size > 200) said.delete(said.keys().next().value!);
+  console.warn(line);
 }
 
 /** What the assistant can use right now (for the dialog's status line and the sources panel). */
@@ -256,18 +304,47 @@ export function aiStatus(feature?: Feature) {
 
 // ------------------------------------------------------------ token budget --
 
-const DAILY_TOKENS = Number(env("ASSISTANT_DAILY_TOKENS")) || 600_000;
+/**
+ * Each user's tokens a day (ASSISTANT_DAILY_TOKENS, default 600,000), a guard against a runaway loop, not a price. v20 (28 Nov): work no one
+ * is waiting on (`background`: the Briefing's key points, the story timelines, Reports differ, Next door, the news desk) is charged to one
+ * shared background allowance (ASSISTANT_BACKGROUND_TOKENS, default 6,000,000), not to the Collector who opened the page. The story picker alone
+ * asks for about 22,000 tokens, and every new headline asks again: those calls used up the Collector's own 600,000 by the afternoon, and every
+ * incident and news panel then had no AI answer until midnight (AiBudgetError).
+ */
+const BACKGROUND = "(background)";
+const dailyTokens = (who: string) => who === BACKGROUND ? Number(env("ASSISTANT_BACKGROUND_TOKENS")) || 6_000_000 : Number(env("ASSISTANT_DAILY_TOKENS")) || 600_000;
+const bucketOf = (c: { user: string; background?: boolean }) => (c.background ? BACKGROUND : c.user);
 const spent = new Map<string, { day: string; tokens: number }>();
 const today = () => new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
 
-function budgetLeft(user: string): boolean {
-  const s = spent.get(user);
-  return !s || s.day !== today() || s.tokens < DAILY_TOKENS;
+function budgetLeft(who: string): boolean {
+  const s = spent.get(who);
+  return !s || s.day !== today() || s.tokens < dailyTokens(who);
 }
-function charge(user: string, tokens: number) {
+function charge(who: string, tokens: number) {
   const d = today();
-  const s = spent.get(user);
-  spent.set(user, { day: d, tokens: (s && s.day === d ? s.tokens : 0) + tokens });
+  const s = spent.get(who);
+  spent.set(who, { day: d, tokens: (s && s.day === d ? s.tokens : 0) + tokens });
+}
+
+/**
+ * v20: Claude's share of the background work, tokens a day (AI_BACKGROUND_CLAUDE_TOKENS, default 1,500,000: about $0.30 a day on Haiku 5.5).
+ * Past it, background write-ups go to the free models (Gemini, then Groq) while one is configured, so the owner's Claude budget is kept for
+ * the panels the Collector opens and for Jarvis. Cheap work on cheap models; the spend ceiling itself is not touched.
+ */
+const bgClaude = { day: "", tokens: 0 };
+function backgroundClaudeLeft(): boolean {
+  if (bgClaude.day !== today()) Object.assign(bgClaude, { day: today(), tokens: 0 });
+  return bgClaude.tokens < (Number(env("AI_BACKGROUND_CLAUDE_TOKENS")) || 1_500_000);
+}
+function backgroundClaudeUsed(tokens: number) {
+  if (bgClaude.day !== today()) Object.assign(bgClaude, { day: today(), tokens: 0 });
+  bgClaude.tokens += Math.max(0, tokens);
+}
+/** test hook: forget today's budgets, the background Claude share, the log's once-a-while lines and which models are resting */
+export function resetAiForTests() {
+  spent.clear(); Object.assign(bgClaude, { day: "", tokens: 0 }); said.clear();
+  cooling.clear(); strikes.clear(); usage.clear();
 }
 
 // ------------------------------------------------------------------- calls --
@@ -311,6 +388,10 @@ export interface JsonCall<T> {
   only?: { provider: ProviderName; models: string[] };
   /** a feature with its own provider order and Claude model (featureProviders): Ask the Map's "map" */
   feature?: Feature;
+  /** v20: providers not to ask this time (a write-up whose figures one model got wrong twice asks the next provider) */
+  skip?: ProviderName[];
+  /** v20: Claude's own deadline for this call (ms), when it should differ from timeoutMs (the free models keep timeoutMs or the role's) */
+  claudeMs?: number;
 }
 
 export interface CallInfo {
@@ -391,20 +472,42 @@ const roughTokens = (c: { system: string; prompt: string; maxOutputTokens?: numb
 export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
   // `only` walks Jarvis's own ladder, whatever AI_PROVIDER names
   const named = c.only ? makers()[c.only.provider]?.() : null;
-  const all = c.only ? (named ? [named] : []) : providers(c.prefer, c.chat, c.feature);
+  const all = (c.only ? (named ? [named] : []) : providers(c.prefer, c.chat, c.feature, c.background)).filter((p) => !c.skip?.includes(p.name));
   // the main provider is the first configured one named in AI_PROVIDER
   const main = all.find((p) => names("AI_PROVIDER", "gemini").includes(p.name))?.name ?? names("AI_PROVIDER", "gemini")[0];
   // background work stays off the main provider while another one is configured (not when a provider is forced), to keep
   // a free tier's small per-minute allowance for the questions; a paid main provider (Claude) has none to keep
   const forced = names("AI_FORCE_PROVIDER", "").length > 0 || !!(c.feature && featureProviders(c.feature));
   const spare = main !== "anthropic";
-  const list = c.background && spare && !forced && all.some((p) => p.name !== main) ? all.filter((p) => p.name !== main) : all;
-  if (!list.length) throw new AiUnavailableError();
-  if (!budgetLeft(c.user)) throw new AiBudgetError();
-  // all models together get one deadline (twice one call's): a question is answered from the data rather than wait longer
-  const state = { busyFor: null as number | null, lastError: null as unknown, attempts: 0, until: Date.now() + 2 * callTimeout(c) };
-  for (const p of list) {
-    if (Date.now() >= state.until) break;
+  let list = c.background && spare && !forced && all.some((p) => p.name !== main) ? all.filter((p) => p.name !== main) : all;
+  // v20: background work past Claude's share of the day goes to the free models, while one is there to answer
+  if (c.background && !c.only && !backgroundClaudeLeft() && list.some((p) => p.name === "anthropic") && list.some((p) => p.name !== "anthropic")) {
+    sayOnce(`[ai] background write-ups: Claude's share for today (AI_BACKGROUND_CLAUDE_TOKENS) is used; the free models write them until midnight`);
+    list = list.filter((p) => p.name !== "anthropic");
+  }
+  // v20: a provider that has a key but is out says so in the log (once in ten minutes), with the reason
+  if (!c.only) for (const name of providerOrder(c.prefer, c.chat, c.feature, c.background)) {
+    const why = list.some((p) => p.name === name) ? null : providerOut(name as ProviderName);
+    if (why) sayOnce(`[ai] ${name} is skipped: ${why}${list.length ? `; ${list.map((p) => p.name).join(", ")} answer instead` : ""}`);
+  }
+  if (!list.length) {
+    // (a Jarvis rung, `only`, is one of a ladder: its next rung answers, so it is not reported here)
+    if (!c.only) console.warn(`[ai] ${c.name}: no AI provider can answer (none configured, or every one is out); the caller shows its rules text`);
+    throw new AiUnavailableError();
+  }
+  if (!budgetLeft(bucketOf(c))) {
+    sayOnce(`[ai] today's AI token allowance for ${bucketOf(c) === BACKGROUND ? "background write-ups (ASSISTANT_BACKGROUND_TOKENS)" : "one user (ASSISTANT_DAILY_TOKENS)"} is used up; rules text until midnight`);
+    throw new AiBudgetError();
+  }
+  // all models together get one deadline (twice one call's, plus Claude's own when it is in the chain: it thinks before it answers); every
+  // provider after a failure still gets one call's time (v20: a slow Claude used to leave no time for any other provider, and no answer)
+  const t0 = Date.now(), one = callTimeout(c), claudeIn = !c.only && list.some((p) => p.name === "anthropic");
+  const hardEnd = t0 + (claudeIn ? claudeTimeout(c) : 0) + 3 * one;
+  const state = { busyFor: null as number | null, lastError: null as unknown, attempts: 0, until: t0 + (claudeIn ? claudeTimeout(c) : 0) + 2 * one };
+  const fails: string[] = [];
+  for (const [k, p] of list.entries()) {
+    if (k > 0) state.until = Math.max(state.until, Math.min(Date.now() + one, hardEnd));
+    if (Date.now() >= state.until) { fails.push(`${p.name}: no time left`); continue; }
     if (p.json) {
       state.attempts++;
       try {
@@ -414,12 +517,14 @@ export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
         state.lastError = e;
         if (e instanceof BedrockBusyError || e instanceof ClaudeBusyError) state.busyFor = Math.max(state.busyFor ?? 0, e.retryAfter);
         console.warn(`[assistant] ${c.name} ${p.name} failed: ${(e as Error).message.slice(0, 200)}`);
+        fails.push(`${p.name}: ${(e as Error).message.slice(0, 90)}`);
         continue;
       }
     }
     // a pool of models, each with its own free allowance: those resting after a refusal or without allowance left this
     // minute are skipped (no refused call costs the Collector time); among the rest, the least used goes first
     if (p.pool) {
+      const tried = state.attempts;
       const need = roughTokens(c);
       const lead =(id: string) => { const k = (c.first ?? []).findIndex((f) => id.split("#")[0] === f); return k < 0 ? 100 : k; };
       const only = c.only?.models;
@@ -456,6 +561,7 @@ export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
         const r = await tryModel(c, p, soonest.id, soonest.lm, state);
         if (r.result) return r.result;
       }
+      fails.push(`${p.name}: ${state.lastError && state.attempts > tried ? errWords(state.lastError) : "every model resting or at its per-minute limit"}`);
       continue;
     }
     // each model has its own rate limits: when one is out for a long while (a daily cap) or overloaded, the provider's other model answers
@@ -468,9 +574,24 @@ export async function generateJson<T>(c: JsonCall<T>): Promise<JsonResult<T>> {
       const r2 = await tryModel(c, p, other.id, other.lm, state);
       if (r2.result) return r2.result;
     }
+    fails.push(`${p.name}: ${state.lastError ? errWords(state.lastError) : "no answer"}`);
   }
+  // v20: one line says what every provider did, so "no AI answer" in a panel can be traced in the server log
+  if (!c.only) console.warn(`[ai] ${c.name}: no AI answer (${fails.join("; ") || "nothing tried"}); the caller shows its rules text`);
   if (state.busyFor != null) throw new AiBusyError(state.busyFor);
   throw state.lastError instanceof Error ? state.lastError : new Error("The AI call failed.");
+}
+
+/** An error in a few words for the log (never a prompt or a key) */
+const errWords = (e: unknown) => {
+  const s = APICallError.isInstance(e) ? e.statusCode : undefined;
+  return `${s ? `HTTP ${s} ` : ""}${String((e as Error)?.message ?? e).replace(/\s+/g, " ").slice(0, 90)}`;
+};
+
+/** How long a console step may wait for Claude (it thinks before it answers): the step's own deadline, at least 10 s, else AI_CLAUDE_TIMEOUT_MS or 25 s. */
+function claudeTimeout(c: { timeoutMs?: number; claudeMs?: number }): number {
+  if (c.claudeMs) return Math.max(c.claudeMs, 5_000);
+  return c.timeoutMs ? Math.max(c.timeoutMs, 10_000) : Number(env("AI_CLAUDE_TIMEOUT_MS")) || 25_000;
 }
 
 /**
@@ -572,7 +693,7 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
         }
         const info: CallInfo = { step: c.name, provider: p.name, model: id, ms: Date.now() - t0, attempts: state.attempts,
           inputTokens: r.usage?.inputTokens ?? 0, outputTokens: r.usage?.outputTokens ?? 0 };
-        charge(c.user, info.inputTokens + info.outputTokens);
+        charge(bucketOf(c), info.inputTokens + info.outputTokens);
         recordUse(key, info.inputTokens + info.outputTokens, c.lane);
         strikes.delete(key);
         keyWorks(p.name);
@@ -588,7 +709,7 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
       const cached = r.usage?.inputTokenDetails?.cacheReadTokens;
       const info: CallInfo = { step: c.name, provider: p.name, model: id, ms: Date.now() - t0, attempts: state.attempts,
         inputTokens: r.usage?.inputTokens ?? 0, outputTokens: r.usage?.outputTokens ?? 0, ...(cached != null ? { cacheReadTokens: cached } : {}) };
-      charge(c.user, info.inputTokens + info.outputTokens);
+      charge(bucketOf(c), info.inputTokens + info.outputTokens);
       recordUse(key, info.inputTokens + info.outputTokens, c.lane);
       strikes.delete(key);
       keyWorks(p.name);
@@ -616,7 +737,7 @@ async function tryModel<T>(c: JsonCall<T>, p: Provider, id: string, lm: Language
             // the provider reports no usage on this error, but the call did spend: the estimate goes to the budget, the ledger and the turn's count
             const need = roughTokens(c);
             const info: CallInfo = { step: c.name, provider: p.name, model: id, ms: Date.now() - t0, attempts: state.attempts, inputTokens: need, outputTokens: 0 };
-            charge(c.user, need);
+            charge(bucketOf(c), need);
             recordUse(key, need, c.lane);
             emitAttempt({ name: c.name, provider: p.name, model: id, outcome: "draft_used", status: 400, ms: info.ms, lane: c.lane, rateHeaders: errHeaders });
             console.info(`[assistant] ${c.name} ${p.name}/${id}: provider rejected the draft; it passed our schema, used it`);

@@ -8,7 +8,7 @@
 import fs from "fs";
 import path from "path";
 import { z } from "zod";
-import { generateJson } from "@/lib/ai/gateway";
+import { generateJson, type ProviderName } from "@/lib/ai/gateway";
 import intelPool from "@/lib/collector/db";
 import { asOfNow, incident, newsArticles, newsDoc, type Plain } from "@/lib/collector/intel";
 import { isPastDeadline } from "@/lib/reference/metrics";
@@ -70,49 +70,109 @@ next_step: one concrete step for the administration (which department, what to d
 
 // ------------------------------------------------------------------ cache --
 
-const FILE = path.join(process.cwd(), "data", "aws-cache", "analysis.json");
+// ANALYSIS_FILE moves it (a probe's own copy); under vitest it is memory only unless one is named, as storyai.ts does
+const FILE = process.env.ANALYSIS_FILE || (process.env.VITEST ? null : path.join(process.cwd(), "data", "aws-cache", "analysis.json"));
+/**
+ * Why a panel shows the rules' text instead of the AI's (v20, 28 Nov 2026): no provider answered ("unavailable"), or every answer used a
+ * figure the records do not give ("unchecked"). The panel says so in one small line; null when the AI's account is shown.
+ */
+export type NoAi = "unavailable" | "unchecked";
+export interface AnalysisOutcome { analysis: Analysis | null; noAi: NoAi | null; /** still being written (the Briefing does not wait) */ pending?: true }
+/** A miss is remembered for minutes, not hours, so a panel opened again soon does not wait on the same failure; the AI answer is never replaced by it. */
+const REST: Record<NoAi, number> = { unavailable: 2 * 60_000, unchecked: 10 * 60_000 };
+/** Claude's own deadline for an analysis (Haiku 5.5 took 4.3 s on 28 Nov); the free models keep the gateway's 8 s each */
+const CLAUDE_MS = Number(process.env.AI_ANALYSIS_CLAUDE_MS) || 15_000;
+
 declare global {
   // eslint-disable-next-line no-var
-  var __analysis: { cache: Map<string, Analysis> | null; busy: Map<string, Promise<Analysis | null>> } | undefined;
+  var __analysis: { cache: Map<string, Analysis> | null; busy: Map<string, Promise<AnalysisOutcome>>; miss?: Map<string, { until: number; why: NoAi }> } | undefined;
 }
-const g = (global.__analysis ??= { cache: null, busy: new Map() });
+const g: NonNullable<typeof global.__analysis> = (global.__analysis ??= { cache: null, busy: new Map() });
+const misses = () => (g.miss ??= new Map());
+
+/** The numbers of `text` that are not among the facts' (the same rule as numbersHold: counts up to 12 aside), to name them when asking again. */
+export function strayNumbers(text: string, facts: string): string[] {
+  const have = new Set((facts.match(/\d+(?:[.,]\d+)*/g) ?? []).map((n) => n.replace(/,/g, "")));
+  const out: string[] = [];
+  for (const n of text.match(/\d+(?:[.,]\d+)*/g) ?? []) {
+    const v = n.replace(/,/g, "");
+    if (Number(v) <= 12 || have.has(v) || have.has(String(Number(v))) || out.includes(n)) continue;
+    out.push(n);
+  }
+  return out;
+}
 function cache(): Map<string, Analysis> {
   if (g.cache) return g.cache;
-  try { g.cache = new Map(Object.entries(JSON.parse(fs.readFileSync(FILE, "utf8")))); } catch { g.cache = new Map(); }
+  try { g.cache = new Map(FILE ? Object.entries(JSON.parse(fs.readFileSync(FILE, "utf8"))) : []); } catch { g.cache = new Map(); }
   return g.cache!;
 }
 function remember(key: string, a: Analysis) {
   const c = cache();
   c.set(key, a);
   while (c.size > 3000) c.delete(c.keys().next().value!);
-  try { fs.mkdirSync(path.dirname(FILE), { recursive: true }); fs.writeFileSync(FILE, JSON.stringify(Object.fromEntries(c))); } catch { /* read-only disk */ }
+  if (FILE) try { fs.mkdirSync(path.dirname(FILE), { recursive: true }); fs.writeFileSync(FILE, JSON.stringify(Object.fromEntries(c))); } catch { /* read-only disk */ }
 }
 
-async function write(key: string, system: string, facts: string, user: string): Promise<Analysis | null> {
+interface WriteOpts {
+  /** no one is waiting (the Briefing's list): the background allowance pays, and the free models once Claude's share is used */ background?: boolean;
+  /** answer within this long, else `pending` (the write goes on) */ waitMs?: number;
+  /** only what is already written: no model is asked */ peek?: boolean;
+}
+
+/**
+ * One checked analysis. Up to three asks: the second names the figures the first used that the records do not give; when the same provider
+ * got them wrong twice, the next provider in the chain writes the third. Only an answer that passes is kept (cache); a miss is remembered for
+ * a few minutes (REST) and never stands in for the AI's answer.
+ */
+async function write(key: string, system: string, facts: string, user: string, o: WriteOpts = {}): Promise<AnalysisOutcome> {
   const hit = cache().get(key);
-  if (hit) return hit;
-  if (g.busy.has(key)) return g.busy.get(key)!;
-  const run = (async () => {
-    for (let k = 0; k < 2; k++) {
-      try {
-        const r = await generateJson({ role: "fast", name: "analysis", schema: Schema, system, temperature: k ? 0 : 0.2, maxOutputTokens: 900, user,
-          prompt: k ? `${facts}\n\nYour last answer used a number that is not in these facts. Use only numbers from the facts.` : facts });
-        const o = r.object;
-        const all = [o.what_happened, ...o.why.flatMap((w) => [w.title, w.detail]), o.handled, o.next_step].join(" ");
-        if (o.what_happened.trim().length < 40 || !numbersHold(all, facts)) continue;
-        const a: Analysis = { what: o.what_happened.trim(), why: o.why.filter((w) => w.title && w.detail).slice(0, 4),
-          handled: o.why.length ? "" : o.handled.trim(), next: o.next_step.trim(), model: r.info.model };
-        remember(key, a);
-        return a;
-      } catch (e) {
-        console.warn(`[analysis] ${key}: ${(e as Error).message}`);
-        return null;
+  if (hit) return { analysis: hit, noAi: null };
+  // a background write's miss (its own allowance, the free models only) never stops the Collector's own click from asking
+  const miss = [misses().get(key), o.background ? misses().get(`${key}|bg`) : undefined].find((m) => m && m.until > Date.now());
+  if (miss) return { analysis: null, noAi: miss.why };
+  if (o.peek) return g.busy.has(key) ? { analysis: null, noAi: null, pending: true } : { analysis: null, noAi: null };
+  if (!g.busy.has(key)) {
+    const run = (async (): Promise<AnalysisOutcome> => {
+      let prompt = facts, skip: ProviderName[] = [], wrong = 0;
+      const missed = (why: NoAi): AnalysisOutcome => {
+        misses().set(o.background ? `${key}|bg` : key, { until: Date.now() + REST[why], why });
+        while (misses().size > 500) misses().delete(misses().keys().next().value!);
+        return { analysis: null, noAi: why };
+      };
+      for (let k = 0; k < 3; k++) {
+        try {
+          // on Groq the larger free model writes it (gpt-oss-20b put Theni among Chennai's areas in the probe of 28 Nov); same allowance, about 1 s more
+          const r = await generateJson({ role: "fast", name: "analysis", schema: Schema, system, temperature: k ? 0 : 0.2, maxOutputTokens: 900, user,
+            background: o.background, claudeMs: CLAUDE_MS, skip, prompt, first: ["openai/gpt-oss-120b"] });
+          const x = r.object;
+          const all = [x.what_happened, ...x.why.flatMap((w) => [w.title, w.detail]), x.handled, x.next_step].join(" ");
+          const stray = numbersHold(all, facts) ? [] : strayNumbers(all, facts);
+          if (x.what_happened.trim().length < 40 || stray.length) {
+            wrong++;
+            console.warn(`[analysis] ${key.slice(0, 80)}: ${r.info.provider}/${r.info.model} ${stray.length ? `used figures the records do not give (${stray.slice(0, 4).join(", ")})` : "wrote too little"}; ${k < 2 ? "asking again" : "the rules' text stays"}`);
+            prompt = `${facts}\n\nYour last answer ${stray.length ? `used ${stray.slice(0, 6).join(", ")}, which the facts do not give` : "was too short"}. Write it again using only numbers from the facts.`;
+            if (k === 1) skip = [...skip, r.info.provider];
+            continue;
+          }
+          const a: Analysis = { what: x.what_happened.trim(), why: x.why.filter((w) => w.title && w.detail).slice(0, 4),
+            handled: x.why.length ? "" : x.handled.trim(), next: x.next_step.trim(), model: r.info.model };
+          remember(key, a);
+          misses().delete(key); misses().delete(`${key}|bg`);
+          return { analysis: a, noAi: null };
+        } catch (e) {
+          console.warn(`[analysis] ${key.slice(0, 80)}: no AI answer (${(e as Error).message.slice(0, 160)}); the rules' text is shown`);
+          return missed(wrong ? "unchecked" : "unavailable");
+        }
       }
-    }
-    return null;
-  })().finally(() => g.busy.delete(key));
-  g.busy.set(key, run);
-  return run;
+      return missed("unchecked");
+    })().finally(() => g.busy.delete(key));
+    g.busy.set(key, run);
+  }
+  const run = g.busy.get(key)!;
+  if (o.waitMs == null) return run;
+  const late = Symbol("late");
+  const r = await Promise.race([run, new Promise<typeof late>((ok) => setTimeout(() => ok(late), o.waitMs))]);
+  return r === late ? { analysis: null, noAi: null, pending: true } : r;
 }
 
 // --------------------------------------------------------------- incident --
@@ -139,8 +199,13 @@ export function otherDepts(codes: string[], lead: string, names: Map<string, str
 }
 
 export async function analyseIncident(id: string, user: string): Promise<Analysis | null> {
+  return (await incidentAnalysis(id, user)).analysis;
+}
+
+/** The incident's analysis, with why there is none when there is none (the panel's note); `background` and `waitMs` as WriteOpts. */
+export async function incidentAnalysis(id: string, user: string, o: WriteOpts = {}): Promise<AnalysisOutcome> {
   const d = await incident(id);
-  if (!d) return null;
+  if (!d) return { analysis: null, noAi: null };
   const i = d.incident as Row;
   const why = i.why as Plain;
   const reports = d.reports as Row[];
@@ -172,14 +237,19 @@ export async function analyseIncident(id: string, user: string): Promise<Analysi
     cat?.playbook ? `Standard steps for this category: ${String(cat.playbook).replace(/\|/g, "; ")}.` : ""
   ].filter(Boolean).join("\n");
   const key = `inc2|${id}|${i.updated}|${reports.length}|${deptReports.length}|${emails.length}|${i.status}`;
-  return write(key, INCIDENT_SYSTEM, facts, user);
+  return write(key, INCIDENT_SYSTEM, facts, user, o);
 }
 
 // ------------------------------------------------------------------- news --
 
 export async function analyseStory(ids: string[], user: string): Promise<Analysis | null> {
+  return (await storyAnalysis(ids, user)).analysis;
+}
+
+/** The news story's analysis, with why there is none when there is none (the panel's note). */
+export async function storyAnalysis(ids: string[], user: string): Promise<AnalysisOutcome> {
   const arts = (await newsArticles(ids)) as Row[];
-  if (!arts.length) return null;
+  if (!arts.length) return { analysis: null, noAi: null };
   let withBody: Row | undefined = arts.find((a) => a.body);
   if (!withBody) {
     // only headlines stored: read one article from its outlet (cached; at most 10 s here)
@@ -199,3 +269,9 @@ export async function analyseStory(ids: string[], user: string): Promise<Analysi
   const key = `news2|${[...ids].sort().join(",").slice(0, 400)}|${arts.length}|${withBody ? 1 : 0}`;
   return write(key, NEWS_SYSTEM, facts, user);
 }
+
+/** What a panel says under its rules' text when there is no AI answer (formal, one line). */
+export const NO_AI_WORDS: Record<NoAi, string> = {
+  unavailable: "AI unavailable, showing the rules summary.",
+  unchecked: "The AI's account used figures the records do not give, so the rules summary is shown."
+};

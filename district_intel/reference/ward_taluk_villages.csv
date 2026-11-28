@@ -1,0 +1,165 @@
+lgd_village_code,village_name,tngis_district,tngis_taluk,taluk_code,rule,collectorate_village,collectorate_taluk,match_score,area_km2,area_in_gcc_wards_km2,wards
+933215,Cantonment Pallavaram,Chengalpattu,Pallavaram,,outside Chennai district,,,,0.7,0.686,160 0.566; 161 0.119
+629387,Meedavakkam,Chengalpattu,Tambaram,,outside Chennai district,,,,5.102,0.002,
+629373,Muvarasampattu,Chengalpattu,Pallavaram,,outside Chennai district,,,,0.606,0.005,
+629400,Navaloor,Chengalpattu,Thiruporur,,outside Chennai district,,,,2.214,0.024,200 0.024
+629375,Perumpakkam,Chengalpattu,Tambaram,,outside Chennai district,,,,8.489,0.009,191 0.009
+629399,Thazhambur,Chengalpattu,Vandalur,,outside Chennai district,,,,5.589,0.014,200 0.014
+629372,Thirusulam,Chengalpattu,Pallavaram,,outside Chennai district,,,,2.564,0.05,166 0.038; 159 0.012
+933821,Adambakkam,Chennai,Alandur,TLK-ALD,"TNGIS taluk; the Chennai Collectorate list agrees ('Adambakkam', Alandur)",Adambakkam,TLK-ALD,1.0,2.866,2.861,165 1.009; 162 0.667; 161 0.615; 163 0.500; 164 0.034; 177 0.016; 168 0.011; 169 0.006
+933818,Alandur,Chennai,Alandur,TLK-ALD,"TNGIS taluk; the Chennai Collectorate list agrees ('Alandur', Alandur)",Alandur,TLK-ALD,1.0,1.642,1.612,170 1.551; 139 0.032; 138 0.017; 142 0.011
+933806,Magananthapuram,Chennai,Alandur,TLK-ALD,"TNGIS taluk; the Chennai Collectorate list agrees ('Madanandapuram', Alandur)",Madanandapuram,TLK-ALD,0.86,1.448,1.379,156 1.376
+933814,Manappakkam,Chennai,Alandur,TLK-ALD,"TNGIS taluk; the Chennai Collectorate list agrees ('Manapakkam', Alandur)",Manapakkam,TLK-ALD,1.0,4.172,4.126,157 4.074; 156 0.023; 159 0.014; 154 0.008
+933830,Meenambakaam,Chennai,Alandur,TLK-ALD,"TNGIS taluk; the Chennai Collectorate list agrees ('Meenambakkam', Alandur)",Meenambakkam,TLK-ALD,1.0,1.323,1.303,159 1.298
+933813,Mukalivakkam,Chennai,Alandur,TLK-ALD,"TNGIS taluk; the Chennai Collectorate list agrees ('Mugalivakkam', Alandur)",Mugalivakkam,TLK-ALD,0.91,1.764,1.76,156 1.712; 153 0.026; 157 0.013
+945666,Nanganallur,Chennai,Alandur,TLK-ALD,"TNGIS taluk; the Chennai Collectorate list agrees ('Nanganallur', Alandur)",Nanganallur,TLK-ALD,1.0,1.209,1.2,164 0.492; 166 0.361; 167 0.275; 165 0.055; 159 0.011
+933816,Nanthambakkam,Chennai,Alandur,TLK-ALD,"TNGIS taluk; the Chennai Collectorate list agrees ('Nandambakkam', Alandur)",Nandambakkam,TLK-ALD,0.91,8.517,2.856,158 2.027; 170 0.394; 159 0.352; 157 0.050; 137 0.010; 160 0.009; 138 0.007; 166 0.006
+933825,Palavanthangal,Chennai,Alandur,TLK-ALD,"TNGIS taluk; the Chennai Collectorate list agrees ('Pazhavanthangal', Alandur)",Pazhavanthangal,TLK-ALD,1.0,0.709,0.692,162 0.602; 164 0.090
+277301,St.Thomas Mount-cum-Pallavaram,Chennai,Alandur,TLK-ALD,TNGIS taluk; not found by name in the Chennai Collectorate list,,,,1.674,1.663,159 1.660
+945667,Thalakkananheri,Chennai,Alandur,TLK-ALD,"TNGIS taluk; the Chennai Collectorate list agrees ('Thalakanacheri', Alandur)",Thalakanacheri,TLK-ALD,0.92,1.987,1.912,167 1.099; 166 0.809
+933879,Ambattur,Chennai,Ambattur,TLK-AMB,"TNGIS taluk; the Chennai Collectorate list agrees ('Ambattur', Ambattur)",Ambattur,TLK-AMB,1.0,7.909,7.743,85 4.077; 86 1.628; 81 1.611; 82 0.286; 84 0.084; 79 0.055
+803328,Ambattur,Chennai,Ambattur,TLK-AMB,TNGIS taluk; not found by name in the Chennai Collectorate list,,,,0.122,0.122,84 0.117; 88 0.006
+945721,Athippattu,Chennai,Ambattur,TLK-AMB,"TNGIS taluk; the Chennai Collectorate list agrees ('Athipet', Ambattur)",Athipet,TLK-AMB,0.77,2.722,2.629,86 2.393; 91 0.228; 143 0.007
+933882,Korattur,Chennai,Ambattur,TLK-AMB,"TNGIS taluk; the Chennai Collectorate list agrees ('Korattur', Ambattur)",Korattur,TLK-AMB,1.0,11.911,11.895,83 6.759; 82 2.594; 84 2.249; 85 0.118; 86 0.079; 94 0.064; 24 0.020; 80 0.011
+933881,Mannurpettai,Chennai,Ambattur,TLK-AMB,"TNGIS taluk; the Chennai Collectorate list agrees ('Mannurpet', Ambattur)",Mannurpet,TLK-AMB,0.89,1.436,1.434,86 1.339; 91 0.058; 84 0.022; 85 0.015
+933877,Meenambedu,Chennai,Ambattur,TLK-AMB,"TNGIS taluk; the Chennai Collectorate list agrees ('Menambedu', Ambattur)",Menambedu,TLK-AMB,0.89,1.311,1.303,82 1.272; 80 0.029
+933884,Mogappair,Chennai,Ambattur,TLK-AMB,"TNGIS taluk; the Chennai Collectorate list agrees ('Mogappair', Ambattur)",Mogappair,TLK-AMB,1.0,4.453,4.453,91 1.206; 92 1.153; 93 0.764; 89 0.519; 86 0.503; 87 0.250; 143 0.054; 145 0.005
+933876,Oragadam,Chennai,Ambattur,TLK-AMB,"TNGIS taluk; the Chennai Collectorate list agrees ('Oragadam', Ambattur)",Oragadam,TLK-AMB,1.0,3.537,3.446,79 1.981; 80 1.388; 81 0.046; 82 0.032
+945717,Padi,Chennai,Ambattur,TLK-AMB,"TNGIS taluk; the Chennai Collectorate list agrees ('Padi', Ambattur)",Padi,TLK-AMB,1.0,3.133,3.134,90 1.019; 88 0.741; 87 0.552; 89 0.339; 93 0.246; 84 0.110; 95 0.071; 99 0.046; 86 0.007
+933878,Patravakkam,Chennai,Ambattur,TLK-AMB,"TNGIS taluk; the Chennai Collectorate list agrees ('Patravakkam', Ambattur)",Patravakkam,TLK-AMB,1.0,1.399,1.403,84 0.892; 82 0.341; 85 0.168
+945709,Agaram,Chennai,Aminjikarai,TLK-AMJ,"TNGIS taluk; the Chennai Collectorate list agrees ('Vada Agaram', Aminjikarai)",Vada Agaram,TLK-AMJ,0.8,0.486,0.487,106 0.431; 109 0.044; 101 0.011
+942736,Aminjikarai,Chennai,Aminjikarai,TLK-AMJ,"TNGIS taluk; the Chennai Collectorate list agrees ('Aminjikarai', Aminjikarai)",Aminjikarai,TLK-AMJ,1.0,1.058,1.064,102 0.790; 106 0.215; 101 0.049; 103 0.009
+945668,Arumbakkam,Chennai,Aminjikarai,TLK-AMJ,"TNGIS taluk; the Chennai Collectorate list agrees ('Arumbakkam', Aminjikarai)",Arumbakkam,TLK-AMJ,1.0,1.869,1.874,105 1.171; 106 0.302; 100 0.222; 108 0.132; 127 0.032; 101 0.016
+945711,Chinnakudal,Chennai,Aminjikarai,TLK-AMJ,"TNGIS taluk; the Chennai Collectorate list agrees ('Chinnakudal', Aminjikarai)",Chinnakudal,TLK-AMJ,1.0,0.123,0.12,101 0.116
+945712,Koyambedu,Chennai,Aminjikarai,TLK-AMJ,"TNGIS taluk; the Chennai Collectorate list agrees ('Koyambedu', Aminjikarai)",Koyambedu,TLK-AMJ,1.0,5.087,5.076,127 3.139; 99 1.163; 90 0.408; 93 0.201; 145 0.110; 100 0.040; 105 0.009; 129 0.005
+945713,Mullam,Chennai,Aminjikarai,TLK-AMJ,"TNGIS taluk; the Chennai Collectorate list agrees ('Mullam', Aminjikarai)",Mullam,TLK-AMJ,1.0,1.091,1.09,100 0.732; 101 0.265; 99 0.092
+945714,Naduvakkarai,Chennai,Aminjikarai,TLK-AMJ,"TNGIS taluk; the Chennai Collectorate list agrees ('Naduvankarai', Aminjikarai)",Naduvankarai,TLK-AMJ,0.96,1.394,1.385,100 1.239; 99 0.064; 127 0.044; 101 0.039
+945715,Periyakudal,Chennai,Aminjikarai,TLK-AMJ,"TNGIS taluk; the Chennai Collectorate list agrees ('Periakudal', Aminjikarai)",Periakudal,TLK-AMJ,1.0,1.091,1.091,101 0.855; 102 0.168; 100 0.067
+942737,Sencheri,Chennai,Aminjikarai,TLK-AMJ,"TNGIS taluk; the Chennai Collectorate list agrees ('Sencherri', Aminjikarai)",Sencherri,TLK-AMJ,1.0,0.405,0.409,127 0.380; 148 0.015; 145 0.014
+945708,Thirumangalam,Chennai,Aminjikarai,TLK-AMJ,"TNGIS taluk; the Chennai Collectorate list agrees ('Tirumangalam', Aminjikarai)",Tirumangalam,TLK-AMJ,1.0,0.038,0.043,100 0.043
+945710,Villivakkam,Chennai,Aminjikarai,TLK-AMJ,"TNGIS taluk; the Chennai Collectorate list agrees ('Villivakkam', Aminjikarai)",Villivakkam,TLK-AMJ,1.0,2.784,2.778,95 1.407; 94 0.530; 100 0.502; 99 0.218; 84 0.082; 90 0.039
+945669,Ayanavaram (Part 1),Chennai,Ayanavaram,TLK-AYN,"TNGIS taluk; the Chennai Collectorate list agrees ('Ayanavaram (Part-I)', Ayanavaram)",Ayanavaram (Part-I),TLK-AYN,1.0,3.739,3.746,96 2.025; 67 0.458; 102 0.410; 101 0.388; 95 0.216; 100 0.199; 65 0.031; 97 0.019
+945806,Ayanavaram (Part 2),Chennai,Ayanavaram,TLK-AYN,"TNGIS taluk; the Chennai Collectorate list agrees ('Ayanavaram (Part-II)', Ayanavaram)",Ayanavaram (Part-II),TLK-AYN,1.0,1.686,1.687,97 0.718; 96 0.481; 98 0.393; 69 0.082; 102 0.006; 74 0.005
+945670,Chinna Chemparampakkam,Chennai,Ayanavaram,TLK-AYN,"TNGIS taluk; the Chennai Collectorate list agrees ('Chinna Sembarambakkam', Ayanavaram)",Chinna Sembarambakkam,TLK-AYN,0.81,0.982,0.983,69 0.507; 96 0.476
+945672,Konnur,Chennai,Ayanavaram,TLK-AYN,"TNGIS taluk; the Chennai Collectorate list agrees ('Konnur', Ayanavaram)",Konnur,TLK-AYN,1.0,2.532,2.528,94 1.226; 65 1.004; 95 0.189; 64 0.096; 83 0.013
+945673,Mallikaicheri,Chennai,Ayanavaram,TLK-AYN,"TNGIS taluk; the Chennai Collectorate list agrees ('Malligaicherri', Ayanavaram)",Malligaicherri,TLK-AYN,0.92,0.272,0.268,95 0.268
+945676,Egmore (Part 1),Chennai,Egmore,TLK-EGM,"TNGIS taluk; the Chennai Collectorate list agrees ('Egmore (Part I)', Egmore)",Egmore (Part I),TLK-EGM,1.0,5.846,5.841,107 1.477; 103 1.278; 61 1.173; 98 0.643; 104 0.450; 110 0.335; 102 0.266; 111 0.144; 106 0.036; 109 0.025; 58 0.011
+945807,Egmore (Part 2),Chennai,Egmore,TLK-EGM,"TNGIS taluk; the Chennai Collectorate list agrees ('Egmore (Part II)', Egmore)",Egmore (Part II),TLK-EGM,1.0,1.377,1.373,61 0.963; 63 0.312; 111 0.097
+945677,Nungambakkam,Chennai,Egmore,TLK-EGM,"TNGIS taluk; the Chennai Collectorate list agrees ('Nungambakkam', Egmore)",Nungambakkam,TLK-EGM,1.0,5.028,5.023,111 2.235; 110 1.661; 113 0.833; 63 0.217; 118 0.041; 109 0.019; 115 0.013
+945678,Puliyur,Chennai,Egmore,TLK-EGM,"TNGIS taluk; the Chennai Collectorate list agrees ('Puliyur', Egmore)",Puliyur,TLK-EGM,1.0,5.283,5.293,134 1.048; 112 1.017; 108 0.870; 109 0.862; 130 0.613; 135 0.238; 133 0.235; 105 0.198; 110 0.070; 106 0.056; 117 0.039; 129 0.022; 136 0.019
+945808,Adayar (Part 1),Chennai,Guindy,TLK-GND,"TNGIS taluk; the Chennai Collectorate list agrees ('Adayar (Part I)', Guindy)",Adayar (Part I),TLK-GND,1.0,1.457,1.451,174 0.718; 170 0.620; 171 0.061; 160 0.054
+945679,Adayar (Part 2),Chennai,Guindy,TLK-GND,"TNGIS taluk; the Chennai Collectorate list agrees ('Adayar (Part II)', Guindy)",Adayar (Part II),TLK-GND,1.0,1.952,1.955,171 1.080; 172 0.860; 122 0.012
+945680,Alandur,Chennai,Guindy,TLK-GND,"TNGIS taluk; the Chennai Collectorate list agrees ('Alandur', Guindy)",Alandur,TLK-GND,1.0,0.193,0.193,170 0.193
+945681,Ekkatuthangal,Chennai,Guindy,TLK-GND,"TNGIS taluk; the Chennai Collectorate list agrees ('Ekkatuthangal', Guindy)",Ekkatuthangal,TLK-GND,1.0,0.735,0.734,170 0.734
+945682,Govt.Farm,Chennai,Guindy,TLK-GND,"TNGIS taluk; the Chennai Collectorate list agrees ('Government Farm', Guindy)",Government Farm,TLK-GND,1.0,1.274,1.272,171 1.175; 122 0.065; 141 0.023; 172 0.009
+945683,Guindy Park,Chennai,Guindy,TLK-GND,"TNGIS taluk; the Chennai Collectorate list agrees ('Guindy Park', Guindy)",Guindy Park,TLK-GND,1.0,5.151,5.147,174 5.088; 171 0.051; 180 0.005
+945684,Kottur,Chennai,Guindy,TLK-GND,"TNGIS taluk; the Chennai Collectorate list agrees ('Kottur', Guindy)",Kottur,TLK-GND,1.0,2.033,2.025,172 1.004; 175 0.940; 173 0.053; 171 0.022; 174 0.006
+945685,T.Nagar,Chennai,Guindy,TLK-GND,"TNGIS taluk; the Chennai Collectorate list agrees ('Thiyagaraya Nagar', Guindy)",Thiyagaraya Nagar,TLK-GND,1.0,5.775,5.77,136 1.821; 117 1.655; 141 0.752; 113 0.619; 122 0.347; 118 0.272; 171 0.201; 123 0.102
+945686,Venkatapuram,Chennai,Guindy,TLK-GND,"TNGIS taluk; the Chennai Collectorate list agrees ('Venkatapuram', Guindy)",Venkatapuram,TLK-GND,1.0,0.818,0.816,171 0.814
+945671,Kolathur,Chennai,Ayanavaram,TLK-KLT,Kolathur taluk (2024) per the Chennai Collectorate list; TNGIS still files it under Ayanavaram,Kolathur,TLK-KLT,1.0,3.1,3.112,64 2.280; 65 0.775; 83 0.026; 26 0.008; 33 0.008; 32 0.007
+945674,Peravallur,Chennai,Ayanavaram,TLK-KLT,Kolathur taluk (2024) per the Chennai Collectorate list; TNGIS still files it under Ayanavaram,Peravallur,TLK-KLT,1.0,2.234,2.231,66 1.637; 67 0.299; 68 0.210; 33 0.053; 65 0.019; 64 0.013
+945675,Siruvallur,Chennai,Ayanavaram,TLK-KLT,Kolathur taluk (2024) per the Chennai Collectorate list; TNGIS still files it under Ayanavaram,Siruvallur,TLK-KLT,1.0,0.623,0.621,69 0.424; 67 0.165; 96 0.025
+945730,Kodambakkam (Part 1),Chennai,Mambalam,TLK-MBM,"TNGIS taluk; the Chennai Collectorate list agrees ('Kodambakkam (Part I)', Mambalam)",Kodambakkam (Part I),TLK-MBM,1.0,2.445,2.444,138 1.117; 131 0.719; 137 0.526; 132 0.044; 139 0.016; 129 0.011; 170 0.010
+945813,Kodambakkam (Part 2),Chennai,Mambalam,TLK-MBM,"TNGIS taluk; the Chennai Collectorate list agrees ('Kodambakkam (Part II)', Mambalam)",Kodambakkam (Part II),TLK-MBM,1.0,3.499,3.498,132 1.359; 133 0.748; 139 0.568; 135 0.258; 130 0.172; 140 0.137; 142 0.115; 131 0.114; 129 0.014; 138 0.013
+945694,Mambalam,Chennai,Mambalam,TLK-MBM,"TNGIS taluk; the Chennai Collectorate list agrees ('Mambalam', Mambalam)",Mambalam,TLK-MBM,1.0,1.48,1.481,140 0.440; 135 0.434; 171 0.384; 142 0.145; 141 0.044; 136 0.034
+945695,Nesapakkam,Chennai,Mambalam,TLK-MBM,"TNGIS taluk; the Chennai Collectorate list agrees ('Nesapakkam', Mambalam)",Nesapakkam,TLK-MBM,1.0,0.526,0.517,137 0.266; 128 0.229; 155 0.022
+945696,Saidapet,Chennai,Mambalam,TLK-MBM,"TNGIS taluk; the Chennai Collectorate list agrees ('Saidapet', Mambalam)",Saidapet,TLK-MBM,1.0,1.264,1.266,142 0.864; 170 0.186; 140 0.104; 139 0.084; 171 0.027
+945697,Saligramam,Chennai,Mambalam,TLK-MBM,"TNGIS taluk; the Chennai Collectorate list agrees ('Saligramam', Mambalam)",Saligramam,TLK-MBM,1.0,2.512,2.51,129 1.676; 130 0.390; 131 0.325; 137 0.052; 133 0.037; 127 0.018; 128 0.013
+945698,Virugambakkam,Chennai,Mambalam,TLK-MBM,"TNGIS taluk; the Chennai Collectorate list agrees ('Virugambakkam', Mambalam)",Virugambakkam,TLK-MBM,1.0,2.71,2.71,128 1.737; 137 0.644; 127 0.131; 129 0.108; 152 0.036; 131 0.022; 148 0.017; 149 0.015
+933839,Chettiaragaram,Chennai,Maduravoyal,TLK-MDR,"TNGIS taluk; the Chennai Collectorate list agrees ('Chettiyar Agaram', Maduravoyal)",Chettiyar Agaram,TLK-MDR,1.0,0.641,0.0,
+933835,Karambakkam,Chennai,Maduravoyal,TLK-MDR,"TNGIS taluk; the Chennai Collectorate list agrees ('Karambakkam', Maduravoyal)",Karambakkam,TLK-MDR,1.0,1.018,0.991,150 0.982; 153 0.009
+933831,Maduravoyal,Chennai,Maduravoyal,TLK-MDR,"TNGIS taluk; the Chennai Collectorate list agrees ('Maduravoyal', Maduravoyal)",Maduravoyal,TLK-MDR,1.0,4.851,4.785,147 2.359; 146 1.293; 144 1.072; 143 0.034; 150 0.010; 151 0.008
+933836,Nerkundram,Chennai,Maduravoyal,TLK-MDR,"TNGIS taluk; the Chennai Collectorate list agrees ('Nerkundram', Maduravoyal)",Nerkundram,TLK-MDR,1.0,2.648,2.64,145 1.674; 148 0.887; 144 0.045; 149 0.012; 93 0.011; 147 0.011
+933834,Nolambur,Chennai,Maduravoyal,TLK-MDR,"TNGIS taluk; the Chennai Collectorate list agrees ('Nolambur', Maduravoyal)",Nolambur,TLK-MDR,1.0,2.606,2.513,143 2.501; 91 0.011
+933833,Porur,Chennai,Maduravoyal,TLK-MDR,"TNGIS taluk; the Chennai Collectorate list agrees ('Porur', Maduravoyal)",Porur,TLK-MDR,1.0,3.728,3.675,153 2.221; 151 1.407; 156 0.034; 150 0.012
+933837,Ramapuram,Chennai,Maduravoyal,TLK-MDR,"TNGIS taluk; the Chennai Collectorate list agrees ('Ramapuram', Maduravoyal)",Ramapuram,TLK-MDR,1.0,2.7,2.698,155 1.504; 154 1.008; 137 0.119; 151 0.037; 157 0.013; 156 0.009
+933838,Sivapoodam,Chennai,Maduravoyal,TLK-MDR,"TNGIS taluk; the Chennai Collectorate list agrees ('Sivabootham', Maduravoyal)",Sivabootham,TLK-MDR,0.78,0.666,0.0,
+933840,Thundalam,Chennai,Maduravoyal,TLK-MDR,"TNGIS taluk; the Chennai Collectorate list agrees ('Thundalam', Maduravoyal)",Thundalam,TLK-MDR,1.0,0.992,0.009,150 0.009
+933832,Valasaravakkam,Chennai,Maduravoyal,TLK-MDR,"TNGIS taluk; the Chennai Collectorate list agrees ('Valasaravakkam', Maduravoyal)",Valasaravakkam,TLK-MDR,1.0,2.953,2.954,149 1.567; 152 1.318; 147 0.036; 151 0.015; 155 0.011; 128 0.005
+933875,Chettimedu,Chennai,Madhavaram,TLK-MDV,"TNGIS taluk; the Chennai Collectorate list agrees ('Chettimedu', Madhavaram)",Chettimedu,TLK-MDV,1.0,0.603,0.575,17 0.575
+933858,Kadirvedu,Chennai,Madhavaram,TLK-MDV,"TNGIS taluk; the Chennai Collectorate list agrees ('Kadhirvedu', Madhavaram)",Kadhirvedu,TLK-MDV,1.0,1.573,1.575,25 1.506; 24 0.054; 23 0.011
+933874,Kosapur,Chennai,Madhavaram,TLK-MDV,"TNGIS taluk; the Chennai Collectorate list agrees ('Kosapur', Madhavaram)",Kosapur,TLK-MDV,1.0,2.367,2.36,17 2.348; 19 0.011
+933859,Madhavaram,Chennai,Madhavaram,TLK-MDV,"TNGIS taluk; the Chennai Collectorate list agrees ('Madhavaram-1', Madhavaram)",Madhavaram-1,TLK-MDV,0.95,17.52,17.508,26 4.658; 27 3.174; 28 3.051; 33 2.121; 31 1.558; 25 1.002; 30 0.884; 32 0.773; 23 0.119; 34 0.072; 65 0.023; 24 0.023; 66 0.014; 64 0.012; 35 0.009; 29 0.007; 19 0.005
+933873,Manjambakkam,Chennai,Madhavaram,TLK-MDV,"TNGIS taluk; the Chennai Collectorate list agrees ('Manchambakkam', Madhavaram)",Manchambakkam,TLK-MDV,0.87,0.895,0.898,19 0.872; 17 0.011; 27 0.008; 22 0.005
+933872,Mathur,Chennai,Madhavaram,TLK-MDV,"TNGIS taluk; the Chennai Collectorate list agrees ('Mathur', Madhavaram)",Mathur,TLK-MDV,1.0,3.237,3.239,19 3.216; 27 0.011; 17 0.009
+933857,Puthagaram,Chennai,Madhavaram,TLK-MDV,"TNGIS taluk; the Chennai Collectorate list agrees ('Puthagaram', Madhavaram)",Puthagaram,TLK-MDV,1.0,1.986,1.985,24 1.947; 83 0.035
+933860,Puzhal,Chennai,Madhavaram,TLK-MDV,"TNGIS taluk; the Chennai Collectorate list agrees ('Puzhal', Madhavaram)",Puzhal,TLK-MDV,1.0,6.854,6.739,22 3.915; 23 2.780; 24 0.018; 25 0.014; 26 0.006
+933855,Soorapattu,Chennai,Madhavaram,TLK-MDV,"TNGIS taluk; the Chennai Collectorate list agrees ('Surapet', Madhavaram)",Surapet,TLK-MDV,0.8,2.841,2.758,24 2.614; 82 0.145
+933862,Vadaperumbakkam,Chennai,Madhavaram,TLK-MDV,"TNGIS taluk; the Chennai Collectorate list agrees ('Vadaperumbakkam', Madhavaram)",Vadaperumbakkam,TLK-MDV,1.0,1.748,1.709,17 1.686; 22 0.023
+933864,Vilakkupattu,Chennai,Madhavaram,TLK-MDV,"TNGIS taluk; the Chennai Collectorate list agrees ('Villakupattu', Madhavaram)",Villakupattu,TLK-MDV,1.0,0.148,0.153,26 0.133; 25 0.017
+111111,Adayar River,Chennai,Mylapore,TLK-MYL,TNGIS taluk; not found by name in the Chennai Collectorate list,,,,2.791,2.603,173 2.447; 176 0.119; 126 0.037
+945699,Chintadripet,Chennai,Mylapore,TLK-MYL,"TNGIS taluk; the Chennai Collectorate list agrees ('Chindadripet', Mylapore)",Chindadripet,TLK-MYL,0.92,1.137,1.14,62 0.636; 59 0.305; 63 0.129; 58 0.069
+945816,Mylapore (Part 1),Chennai,Mylapore,TLK-MYL,"TNGIS taluk; the Chennai Collectorate list agrees ('Mylapore (Part I)', Mylapore)",Mylapore (Part I),TLK-MYL,1.0,7.37,7.362,123 1.866; 118 1.470; 173 1.455; 122 1.444; 126 0.340; 124 0.296; 111 0.232; 175 0.115; 172 0.078; 119 0.063
+945700,Mylapore (Part 2),Chennai,Mylapore,TLK-MYL,"TNGIS taluk; the Chennai Collectorate list agrees ('Mylapore (Part II)', Mylapore)",Mylapore (Part II),TLK-MYL,1.0,6.126,5.578,119 1.299; 125 1.243; 121 0.868; 124 0.774; 126 0.669; 120 0.515; 123 0.208
+945815,Triplicane (Part 1),Chennai,Mylapore,TLK-MYL,"TNGIS taluk; the Chennai Collectorate list agrees ('Triplicane (Part I)', Mylapore)",Triplicane (Part I),TLK-MYL,1.0,1.632,1.631,115 0.592; 63 0.521; 114 0.253; 111 0.140; 59 0.103; 119 0.015; 118 0.006
+945701,Triplicane (Part 2),Chennai,Mylapore,TLK-MYL,"TNGIS taluk; the Chennai Collectorate list agrees ('Triplicane (Part II)', Mylapore)",Triplicane (Part II),TLK-MYL,1.0,3.042,2.692,114 1.393; 116 0.670; 115 0.242; 59 0.240; 60 0.100; 120 0.044
+945702,Erukkanjeri,Chennai,Perambur,TLK-PRB,"TNGIS taluk; the Chennai Collectorate list agrees ('Erukancherry', Perambur)",Erukancherry,TLK-PRB,0.86,1.096,1.093,36 0.472; 35 0.395; 37 0.219; 69 0.007
+945703,Jambuli,Chennai,Perambur,TLK-PRB,"TNGIS taluk; the Chennai Collectorate list agrees ('Jambuli', Perambur)",Jambuli,TLK-PRB,1.0,0.411,0.41,34 0.384; 31 0.027
+945704,Kodungaiyur,Chennai,Perambur,TLK-PRB,"TNGIS taluk; the Chennai Collectorate list agrees ('Kodungaiyur', Perambur)",Kodungaiyur,TLK-PRB,1.0,4.722,4.73,37 1.984; 35 1.324; 34 1.150; 36 0.262; 31 0.009
+945705,Perambur (Part 1),Chennai,Perambur,TLK-PRB,"TNGIS taluk; the Chennai Collectorate list agrees ('Perambur (Part I)', Perambur)",Perambur (Part I),TLK-PRB,1.0,5.447,5.448,37 1.194; 45 1.081; 46 0.883; 36 0.783; 70 0.676; 44 0.654; 47 0.057; 41 0.053; 69 0.025; 71 0.022; 35 0.019
+945818,Perambur (Part 2),Chennai,Perambur,TLK-PRB,"TNGIS taluk; the Chennai Collectorate list agrees ('Perambur (Part II)', Perambur)",Perambur (Part II),TLK-PRB,1.0,2.204,2.199,71 0.927; 70 0.792; 73 0.436; 69 0.041
+945817,Perambur (Part 3),Chennai,Perambur,TLK-PRB,"TNGIS taluk; the Chennai Collectorate list agrees ('Perambur (Part III)', Perambur)",Perambur (Part III),TLK-PRB,1.0,1.117,1.117,72 0.735; 73 0.143; 46 0.128; 53 0.059; 45 0.033; 70 0.013
+945706,Selavoyal,Chennai,Perambur,TLK-PRB,"TNGIS taluk; the Chennai Collectorate list agrees ('Selavoyal', Perambur)",Selavoyal,TLK-PRB,1.0,1.621,1.618,34 0.765; 29 0.462; 37 0.278; 28 0.110
+945707,Sembiyam,Chennai,Perambur,TLK-PRB,"TNGIS taluk; the Chennai Collectorate list agrees ('Sembium', Perambur)",Sembium,TLK-PRB,0.86,1.805,1.803,68 0.675; 69 0.652; 33 0.402; 67 0.063; 44 0.006
+945731,Purasawalkam (Part 1),Chennai,Purasaivakkam,TLK-PSW,"TNGIS taluk; the Chennai Collectorate list agrees ('Purasaiwalkkam Part I', Purasaiwalkkam)",Purasaiwalkkam Part I,TLK-PSW,0.96,2.543,2.544,74 0.916; 104 0.406; 75 0.338; 78 0.275; 76 0.238; 73 0.132; 103 0.128; 58 0.082; 98 0.022; 71 0.007
+945819,Purasawalkam (Part 2),Chennai,Purasaivakkam,TLK-PSW,"TNGIS taluk; the Chennai Collectorate list agrees ('Purasaiwalkkam Part II', Purasaiwalkkam)",Purasaiwalkkam Part II,TLK-PSW,0.96,1.491,1.491,103 0.689; 104 0.447; 58 0.248; 98 0.106
+945732,V.O.C Nagar,Chennai,Purasaivakkam,TLK-PSW,"TNGIS taluk; the Chennai Collectorate list agrees ('VOC Nagar', Purasaiwalkkam)",VOC Nagar,TLK-PSW,1.0,6.951,6.757,60 3.540; 57 0.761; 59 0.687; 55 0.572; 56 0.563; 54 0.509; 53 0.119; 52 0.006
+945733,Vepery,Chennai,Purasaivakkam,TLK-PSW,"TNGIS taluk; the Chennai Collectorate list agrees ('Vepery', Purasaiwalkkam)",Vepery,TLK-PSW,1.0,6.446,6.429,58 2.011; 60 1.326; 59 0.842; 77 0.665; 72 0.398; 78 0.382; 53 0.278; 76 0.215; 61 0.109; 73 0.096; 57 0.063; 54 0.038; 114 0.007
+933866,Enchambakkam,Chennai,Sholinganallur,TLK-SHN,"TNGIS taluk; the Chennai Collectorate list agrees ('Enjambakkam', Sholinganallur)",Enjambakkam,TLK-SHN,0.86,5.21,5.175,196 5.168; 192 0.008
+933849,Jalladianpattai,Chennai,Sholinganallur,TLK-SHN,TNGIS taluk; not found by name in the Chennai Collectorate list,,,,2.292,2.245,191 2.223; 190 0.023
+933867,Karappakam,Chennai,Sholinganallur,TLK-SHN,"TNGIS taluk; the Chennai Collectorate list agrees ('Karapakkam', Sholinganallur)",Karapakkam,TLK-SHN,1.0,2.432,2.427,197 2.403; 196 0.013; 195 0.006
+933854,Kottivakkam,Chennai,Sholinganallur,TLK-SHN,"TNGIS taluk; the Chennai Collectorate list agrees ('Kottivakkam', Sholinganallur)",Kottivakkam,TLK-SHN,1.0,2.446,2.449,183 2.354; 180 0.086
+933848,Madipakam   - 1,Chennai,Sholinganallur,TLK-SHN,"TNGIS taluk; the Chennai Collectorate list agrees ('Madipakkam-I', Sholinganallur)",Madipakkam-I,TLK-SHN,1.0,7.813,5.589,188 2.409; 169 2.279; 187 0.883; 168 0.007; 177 0.006
+945820,Madipakkam- 2,Chennai,Sholinganallur,TLK-SHN,"TNGIS taluk; the Chennai Collectorate list agrees ('Madipakkam-II', Sholinganallur)",Madipakkam-II,TLK-SHN,1.0,1.833,0.029,188 0.028
+933863,Neelangarai,Chennai,Sholinganallur,TLK-SHN,"TNGIS taluk; the Chennai Collectorate list agrees ('Neelangarai', Sholinganallur)",Neelangarai,TLK-SHN,1.0,2.852,2.829,192 2.491; 193 0.309; 185 0.027
+933865,Okkkiyam Thorambakka,Chennai,Sholinganallur,TLK-SHN,"TNGIS taluk; the Chennai Collectorate list agrees ('Okkiyam Thoraipakkam', Sholinganallur)",Okkiyam Thoraipakkam,TLK-SHN,0.83,6.015,6.013,194 2.182; 193 2.082; 195 1.716; 186 0.009; 189 0.009; 196 0.008
+933856,Palavakam,Chennai,Sholinganallur,TLK-SHN,"TNGIS taluk; the Chennai Collectorate list agrees ('Palavakkam', Sholinganallur)",Palavakkam,TLK-SHN,1.0,2.071,2.054,185 2.047; 183 0.008
+933850,Pallikaranai,Chennai,Sholinganallur,TLK-SHN,"TNGIS taluk; the Chennai Collectorate list agrees ('Pallikaranai', Sholinganallur)",Pallikaranai,TLK-SHN,1.0,17.401,17.345,189 10.845; 190 4.580; 188 1.821; 179 0.055; 191 0.027; 194 0.006
+933853,Perunkudi,Chennai,Sholinganallur,TLK-SHN,"TNGIS taluk; the Chennai Collectorate list agrees ('Perungudi', Sholinganallur)",Perungudi,TLK-SHN,0.89,3.943,3.942,184 2.757; 186 1.120; 180 0.033; 189 0.016; 179 0.008; 183 0.006
+933861,Seevaram,Chennai,Sholinganallur,TLK-SHN,"TNGIS taluk; the Chennai Collectorate list agrees ('Seevaram', Sholinganallur)",Seevaram,TLK-SHN,1.0,0.736,0.735,186 0.719; 193 0.015
+933870,Semmancheri,Chennai,Sholinganallur,TLK-SHN,"TNGIS taluk; the Chennai Collectorate list agrees ('Semmancheri', Sholinganallur)",Semmancheri,TLK-SHN,1.0,7.06,7.028,200 7.004; 198 0.022
+933868,Sholinganallur- 1,Chennai,Sholinganallur,TLK-SHN,"TNGIS taluk; the Chennai Collectorate list agrees ('Sholinganallur-I', Sholinganallur)",Sholinganallur-I,TLK-SHN,1.0,11.148,11.131,197 6.547; 198 4.581
+945822,Sholinganallur- 2,Chennai,Sholinganallur,TLK-SHN,"TNGIS taluk; the Chennai Collectorate list agrees ('Sholinganallur-II', Sholinganallur)",Sholinganallur-II,TLK-SHN,1.0,4.103,4.071,198 4.045; 197 0.016; 196 0.008
+933844,Uallakaram,Chennai,Sholinganallur,TLK-SHN,"TNGIS taluk; the Chennai Collectorate list agrees ('Ullagaram', Sholinganallur)",Ullagaram,TLK-SHN,0.82,1.152,1.156,168 0.825; 169 0.305; 167 0.020; 164 0.006
+933869,Uttandi,Chennai,Sholinganallur,TLK-SHN,"TNGIS taluk; the Chennai Collectorate list agrees ('Uthandi', Sholinganallur)",Uthandi,TLK-SHN,1.0,3.553,3.383,199 2.987; 200 0.364; 198 0.032
+945746,Tondiarpet (Part 1),Chennai,Tondiarpet,TLK-TDP,"TNGIS taluk; the Chennai Collectorate list agrees ('Tondiarpet Part I', Tondiarpet)",Tondiarpet Part I,TLK-TDP,1.0,2.944,2.949,38 2.111; 37 0.450; 41 0.355; 39 0.022; 40 0.011
+945825,Tondiarpet (Part 2),Chennai,Tondiarpet,TLK-TDP,"TNGIS taluk; the Chennai Collectorate list agrees ('Tondiarpet Part II', Tondiarpet)",Tondiarpet Part II,TLK-TDP,1.0,3.345,2.902,39 1.000; 40 0.831; 43 0.763; 42 0.239; 38 0.066
+945823,Tondiarpet (Part 3),Chennai,Tondiarpet,TLK-TDP,"TNGIS taluk; the Chennai Collectorate list agrees ('Tondiarpet Part III', Tondiarpet)",Tondiarpet Part III,TLK-TDP,1.0,2.665,2.551,50 1.522; 52 0.438; 49 0.364; 43 0.179; 60 0.048
+945824,Tondiarpet (Part 4),Chennai,Tondiarpet,TLK-TDP,"TNGIS taluk; the Chennai Collectorate list agrees ('Tondiarpet Part IV', Tondiarpet)",Tondiarpet Part IV,TLK-TDP,1.0,4.485,4.489,53 0.904; 47 0.692; 52 0.646; 48 0.476; 41 0.415; 49 0.398; 42 0.338; 51 0.289; 38 0.289; 60 0.033
+629180,Ariyalur,Chennai,Thiruvottiyur,TLK-TVT,"TNGIS taluk; the Chennai Collectorate list agrees ('Ariyalur', Tiruvotriyur)",Ariyalur,TLK-TVT,1.0,1.99,1.972,17 1.963; 18 0.008
+933852,Chinnasekkadu,Chennai,Thiruvottiyur,TLK-TVT,"TNGIS taluk; the Chennai Collectorate list agrees ('Chinna Sekkadu', Tiruvotriyur)",Chinna Sekkadu,TLK-TVT,1.0,1.686,1.689,29 1.675; 28 0.009
+945743,Edayanchavadi 1,Chennai,Thiruvottiyur,TLK-TVT,"TNGIS taluk; the Chennai Collectorate list agrees ('Edayanchavadi-I', Tiruvotriyur)",Edayanchavadi-I,TLK-TVT,1.0,3.411,3.391,15 3.380; 16 0.011
+933434,Edayanchavadi B,Chennai,Thiruvottiyur,TLK-TVT,"TNGIS taluk; the Chennai Collectorate list agrees ('Edayanchavadi-II', Tiruvotriyur)",Edayanchavadi-II,TLK-TVT,0.93,5.199,5.204,15 5.149; 2 0.024; 3 0.021; 16 0.011
+933842,Elanthanjeri,Chennai,Thiruvottiyur,TLK-TVT,"TNGIS taluk; the Chennai Collectorate list agrees ('Elandancherry', Tiruvotriyur)",Elandancherry,TLK-TVT,0.78,3.291,3.295,18 3.023; 16 0.259; 19 0.007; 17 0.007
+933846,Ernavoor,Chennai,Thiruvottiyur,TLK-TVT,"TNGIS taluk; the Chennai Collectorate list agrees ('Ernavoor', Tiruvotriyur)",Ernavoor,TLK-TVT,1.0,6.262,6.178,3 2.854; 4 1.578; 5 1.307; 6 0.437
+629181,Kadapakkam,Chennai,Thiruvottiyur,TLK-TVT,"TNGIS taluk; the Chennai Collectorate list agrees ('Kadapakkam', Tiruvotriyur)",Kadapakkam,TLK-TVT,1.0,3.106,3.083,16 3.073; 18 0.007
+933845,Kahivakkam,Chennai,Thiruvottiyur,TLK-TVT,"TNGIS taluk; the Chennai Collectorate list agrees ('Kathivakkam', Tiruvotriyur)",Kathivakkam,TLK-TVT,0.89,4.66,4.582,2 2.781; 1 1.795; 3 0.006
+933841,Manali,Chennai,Thiruvottiyur,TLK-TVT,"TNGIS taluk; the Chennai Collectorate list agrees ('Manali', Tiruvotriyur)",Manali,TLK-TVT,1.0,7.545,7.545,18 4.985; 21 1.953; 20 0.541; 7 0.028; 29 0.011; 6 0.011; 28 0.010; 19 0.006
+933843,Sadayankuppam,Chennai,Thiruvottiyur,TLK-TVT,"TNGIS taluk; the Chennai Collectorate list agrees ('Sadayankuppam', Tiruvotriyur)",Sadayankuppam,TLK-TVT,1.0,6.664,6.684,16 6.611; 18 0.027; 4 0.019; 6 0.017; 3 0.006
+933851,Sathangadu,Chennai,Thiruvottiyur,TLK-TVT,"TNGIS taluk; the Chennai Collectorate list agrees ('Sathangadu', Tiruvotriyur)",Sathangadu,TLK-TVT,1.0,8.241,8.239,7 6.665; 13 0.439; 6 0.360; 12 0.349; 37 0.201; 11 0.171; 14 0.028; 38 0.017; 39 0.006
+933847,Thiruvottiyur,Chennai,Thiruvottiyur,TLK-TVT,"TNGIS taluk; the Chennai Collectorate list agrees ('Tiruvotriyur-1', Tiruvotriyur)",Tiruvotriyur-1,TLK-TVT,0.91,6.566,6.476,5 1.103; 7 1.038; 11 1.027; 6 1.015; 14 0.767; 9 0.516; 10 0.467; 8 0.463; 4 0.054; 12 0.024
+945688,Kalikundram,Chennai,Velacheri,TLK-VLC,"TNGIS taluk; the Chennai Collectorate list agrees ('Kalikundram', Velachery)",Kalikundram,TLK-VLC,1.0,0.733,0.716,175 0.362; 172 0.321; 174 0.019; 180 0.009; 176 0.006
+945687,Kanagam,Chennai,Velacheri,TLK-VLC,"TNGIS taluk; the Chennai Collectorate list agrees ('Kanagam', Velachery)",Kanagam,TLK-VLC,1.0,1.288,1.29,180 0.896; 174 0.394
+945689,Pallipattu,Chennai,Velacheri,TLK-VLC,"TNGIS taluk; the Chennai Collectorate list agrees ('Pallipattu', Velachery)",Pallipattu,TLK-VLC,1.0,0.793,0.807,175 0.520; 172 0.263; 174 0.024
+945690,Taramani,Chennai,Velacheri,TLK-VLC,"TNGIS taluk; the Chennai Collectorate list agrees ('Taramani', Velachery)",Taramani,TLK-VLC,1.0,1.05,1.056,180 0.562; 174 0.314; 184 0.142; 179 0.036
+945691,Thiruvanmiyur,Chennai,Velacheri,TLK-VLC,"TNGIS taluk; the Chennai Collectorate list agrees ('Tiruvanmiyur', Velachery)",Tiruvanmiyur,TLK-VLC,1.0,5.191,5.174,181 1.821; 182 1.777; 180 1.039; 175 0.324; 183 0.113; 176 0.099
+945692,Urur,Chennai,Velacheri,TLK-VLC,"TNGIS taluk; the Chennai Collectorate list agrees ('Urur', Velachery)",Urur,TLK-VLC,1.0,3.065,2.84,176 2.764; 175 0.067; 181 0.007
+945826,Velacheri (Part 1),Chennai,Velacheri,TLK-VLC,"TNGIS taluk; the Chennai Collectorate list agrees ('Velachery (Part I)', Velachery)",Velachery (Part I),TLK-VLC,1.0,1.609,1.61,174 1.563; 160 0.032; 177 0.010
+945693,Velacheri (Part 2),Chennai,Velacheri,TLK-VLC,"TNGIS taluk; the Chennai Collectorate list agrees ('Velachery (Part II)', Velachery)",Velachery (Part II),TLK-VLC,1.0,6.554,6.553,177 2.405; 179 2.268; 178 1.471; 174 0.208; 169 0.090; 189 0.035; 165 0.029; 163 0.021; 188 0.014; 161 0.007
+629359,Kolapakkam,Kancheepuram,Kundrathur,,outside Chennai district,,,,3.195,0.012,156 0.012
+933238,Thelliaragram,Kancheepuram,Kundrathur,,outside Chennai district,,,,0.695,0.002,
+933486,Ayanambakkam,Tiruvallur,Poonamallee,,outside Chennai district,,,,5.606,0.001,
+933444,Ennore,Tiruvallur,Ponneri,,outside Chennai district,,,,6.962,0.024,1 0.024
+629190,Grand Lyon,Tiruvallur,Ponneri,,outside Chennai district,,,,1.732,0.004,
+629188,Lyongrant,Tiruvallur,Ponneri,,outside Chennai district,,,,2.052,0.024,17 0.024
+252283,Redhills,Tiruvallur,Ponneri,,outside Chennai district,,,,19.859,0.171,82 0.043; 80 0.037; 24 0.035; 22 0.033; 79 0.021
+9999972,Sirugavur (Chenrambakkam),Tiruvallur,Ponneri,,outside Chennai district,,,,1.118,0.004,
+629191,Thandalkalani,Tiruvallur,Ponneri,,outside Chennai district,,,,0.734,0.01,22 0.010
+629193,Vadakarai,Tiruvallur,Ponneri,,outside Chennai district,,,,0.509,0.003,
+933346,Valllur D,Tiruvallur,Ponneri,,outside Chennai district,,,,9.301,0.161,15 0.128; 2 0.021; 1 0.011
+629174,Vanagaram,Tiruvallur,Poonamallee,,outside Chennai district,,,,2.537,0.016,150 0.016
+628766,Vellivoyal,Tiruvallur,Ponneri,,outside Chennai district,,,,2.529,0.001,
+933350,Vellivoyal  2,Tiruvallur,Ponneri,,outside Chennai district,,,,2.737,0.022,15 0.022
+628765,Vichoor,Tiruvallur,Ponneri,,outside Chennai district,,,,4.677,0.01,16 0.010
+629178,Vilangadupakkam,Tiruvallur,Ponneri,,outside Chennai district,,,,5.643,0.009,17 0.009
+933353,Vitchur 2,Tiruvallur,Ponneri,,outside Chennai district,,,,4.292,0.018,16 0.010; 15 0.008

@@ -4,12 +4,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronDown, Home, LogOut, Phone, Plus, Search, UserRound } from "lucide-react";
-import BrandWordmark from "@/components/BrandWordmark";
+import { ChevronDown, FilePlus2, Home, LayoutGrid, LogOut, Phone, Search, UserRound } from "lucide-react";
+import { Wordmark } from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
 import LangToggle from "@/components/LangToggle";
-import { Avatar, useIndicator } from "@/components/ui";
+import { useIndicator } from "@/components/ui";
 import { spring } from "@/components/ui/motion";
+import "@/components/citizen/citizen.css";
 
 export interface HeaderNavItem {
   href: string;
@@ -21,35 +22,42 @@ interface HeaderProps {
   homeHref?: string;
   /** Primary destinations for the signed-in role (Overview · File a Complaint · Track Status for citizens). */
   nav?: HeaderNavItem[];
+  /** the line after the logo's hairline ("Citizen · Chennai") */
+  sub?: string;
 }
 
-const TAB_ICON: Record<string, typeof Home> = { "/citizen": Home, "/citizen/file-complaint": Plus, "/citizen/track-complaints": Search };
+const TAB_ICON: Record<string, typeof Home> = { "/citizen": LayoutGrid, "/citizen/file-complaint": FilePlus2, "/citizen/track-complaints": Search };
+const initialsOf = (name: string) => name.split(/[\s.@_-]+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("") || "?";
 
 /**
- * The citizen portal's glass top bar (64px): brand, the pages with a sliding pill on the active one, the 1913 helpline,
- * the theme toggle and the account menu. Under 1024 px the pages move to a bottom tab bar with a raised "+ File" button.
+ * The citizen portal's top bar, the consoles' own (marina.css .top): white, 60 px; the logo and the place after a hairline; the
+ * pages as tabs with a green bar under the one you are on (it slides to the next); the 1913 helpline, English / தமிழ், the theme
+ * and the account with its menu. Under 1024 px the pages move to a bottom bar, as on the consoles.
  */
-export default function Header({ userName, homeHref = "/", nav = [] }: HeaderProps) {
+export default function Header({ userName, homeHref = "/", nav = [], sub }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const meRef = useRef<HTMLButtonElement>(null);
   const activeHref = nav.find(({ href }) => pathname === href || (href !== homeHref && pathname.startsWith(href + "/")))?.href ?? null;
   const { ref: navRef, box, animateNow } = useIndicator<HTMLElement>(activeHref, [nav.length]);
+  const name = userName || "My account";
+  const citizen = nav.length > 0;
 
   useEffect(() => {
     if (!menuOpen) return;
-    function onClickOutside(e: MouseEvent) {
+    function onOutside(e: PointerEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
     }
     function onEscape(e: KeyboardEvent) {
-      if (e.key === "Escape") setMenuOpen(false);
+      if (e.key === "Escape") { setMenuOpen(false); meRef.current?.focus(); }
     }
-    document.addEventListener("mousedown", onClickOutside);
+    document.addEventListener("pointerdown", onOutside);
     document.addEventListener("keydown", onEscape);
     return () => {
-      document.removeEventListener("mousedown", onClickOutside);
+      document.removeEventListener("pointerdown", onOutside);
       document.removeEventListener("keydown", onEscape);
     };
   }, [menuOpen]);
@@ -63,94 +71,88 @@ export default function Header({ userName, homeHref = "/", nav = [] }: HeaderPro
 
   return (
     <>
-      <header className="diq-top">
-        <div className="mx-auto flex h-16 max-w-[1200px] items-center gap-3 px-4 sm:gap-4 sm:px-6">
-          <Link href={homeHref} className="group flex-none rounded-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-navy-600/25">
-            <BrandWordmark sub={nav.length > 0 ? "Citizen portal · Chennai" : "Chennai"} className="max-xl:[&>span:last-child]:hidden" />
-          </Link>
+      <header className={`cz-top${citizen ? " has-tabs" : ""}`}>
+        <Link href={homeHref} className="cz-brand">
+          <Wordmark className="cz-wm" />
+          <small className="cz-tsub">{sub ?? (citizen ? "Citizen · Chennai" : "Chennai")}</small>
+        </Link>
 
-          {nav.length > 0 && (
-            <nav ref={navRef} aria-label="Primary" className="relative ml-4 hidden items-center gap-1 rounded-[10px] border border-canvas-border bg-canvas-sunken/70 p-1 lg:flex">
-              {box && (
-                <motion.span aria-hidden="true" className="absolute left-0 top-1 h-[calc(100%-8px)] rounded-[7px] bg-brand shadow-brand"
-                  initial={false} animate={{ x: box.x, width: box.w }} transition={animateNow ? spring.snappy : { duration: 0 }} />
-              )}
-              {nav.map(({ href, label }) => {
-                const active = href === activeHref;
-                return (
-                  <Link key={href} href={href} data-key={href} aria-current={active ? "page" : undefined}
-                    className={`relative z-[1] whitespace-nowrap rounded-[7px] px-3.5 py-1.5 text-[13.5px] font-medium transition-colors duration-150 ${active ? "text-white" : "text-ink-subtle hover:text-ink"}`}>
-                    {label}
-                  </Link>
-                );
-              })}
-            </nav>
-          )}
-
-          <div className="ml-auto flex min-w-0 items-center gap-2 [&>*]:shrink-0">
-            <a href="tel:1913" className="diq-tbtn hidden xl:inline-flex" title="GCC helpline, 24x7 (tap to call)">
-              <Phone className="h-4 w-4 text-navy-500" aria-hidden="true" />
-              Helpline <b className="font-mono text-ink">1913</b>
-            </a>
-            <LangToggle />
-            <ThemeToggle />
-            {userName !== undefined && (
-              <div className="relative" ref={menuRef}>
-                <button type="button" onClick={() => setMenuOpen((v) => !v)} aria-haspopup="menu" aria-expanded={menuOpen}
-                  className="flex items-center gap-2 rounded-[10px] py-1 pl-1 pr-2 text-[13px] font-semibold text-ink transition hover:bg-canvas-sunken focus-visible:ring-4 focus-visible:ring-navy-600/20">
-                  <Avatar name={userName || "U"} />
-                  <span className="sr-only">Account menu</span>
-                  <span className="hidden max-w-[160px] truncate 2xl:inline">{userName || "My Account"}</span>
-                  <ChevronDown aria-hidden="true" className={`h-4 w-4 text-ink-subtle transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`} />
-                </button>
-
-                <AnimatePresence>
-                  {menuOpen && (
-                    <motion.div role="menu" initial={{ opacity: 0, y: -6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                      transition={{ duration: 0.16 }} style={{ transformOrigin: "top right" }}
-                      className="absolute right-0 z-30 mt-2 w-60 overflow-hidden rounded-[12px] border border-canvas-border bg-canvas-raised/95 p-1.5 shadow-lift backdrop-blur-xl">
-                      <div className="px-3 pb-2 pt-1.5">
-                        <p className="truncate text-[13px] font-semibold text-ink">{userName || "My Account"}</p>
-                        <p className="text-[11.5px] text-ink-subtle">Signed in</p>
-                      </div>
-                      <div className="my-1 border-t border-canvas-border" />
-                      <Link href="/profile" role="menuitem" onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2.5 rounded-[8px] px-3 py-2.5 text-sm font-medium text-ink transition hover:bg-canvas-sunken">
-                        <UserRound className="h-4 w-4 text-ink-subtle" aria-hidden="true" />
-                        My Profile
-                      </Link>
-                      <button role="menuitem" type="button" disabled={loggingOut} onClick={handleLogout}
-                        className="flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-60">
-                        <LogOut className="h-4 w-4" aria-hidden="true" />
-                        {loggingOut ? "Signing out..." : "Sign out"}
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* phones and tablets (under 1024 px, where the top bar has no room for the pages): bottom tab bar with the raised "+ File" in the middle */}
-      {nav.length > 0 && (
-        <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 z-40 border-t border-canvas-border bg-canvas/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
-          <div className="grid h-16 grid-cols-3 items-center">
+        {citizen && (
+          <nav ref={navRef} aria-label="Primary" className="cz-tabs hidden lg:flex">
             {nav.map(({ href, label }) => {
               const active = href === activeHref;
               const Icon = TAB_ICON[href] ?? Home;
-              const file = href.endsWith("/file-complaint");
-              return file ? (
-                <Link key={href} href={href} aria-current={active ? "page" : undefined} className="flex flex-col items-center gap-1 text-[11px] font-semibold text-ink">
-                  <span className="-mt-7 flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-brand ring-4 ring-canvas"><Plus className="h-6 w-6" aria-hidden="true" /></span>
-                  File
+              return (
+                <Link key={href} href={href} data-key={href} aria-current={active ? "page" : undefined} className="cz-tab">
+                  <Icon aria-hidden="true" /><span>{label}</span>
                 </Link>
-              ) : (
-                <Link key={href} href={href} aria-current={active ? "page" : undefined}
-                  className={`flex min-h-[44px] flex-col items-center justify-center gap-1 text-[11px] font-semibold ${active ? "text-navy-700" : "text-ink-subtle"}`}>
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                  {label.replace(" Status", "")}
+              );
+            })}
+            {box && (
+              <motion.span aria-hidden="true" className="cz-tab-bar" initial={false} animate={{ x: box.x, width: box.w }}
+                transition={animateNow ? spring.snappy : { duration: 0 }} />
+            )}
+          </nav>
+        )}
+
+        <div className="cz-tright">
+          <a href="tel:1913" className="cz-tbtn cz-help" title="GCC helpline, 24x7 (tap to call)">
+            <Phone className="cz-help-ic" aria-hidden="true" />
+            Helpline <b>1913</b>
+          </a>
+          <LangToggle />
+          <ThemeToggle />
+          {userName !== undefined && (
+            <div className="cz-acct" ref={menuRef}>
+              {/* a fixed name: the person's name is shown, never sent to the translator (names stay as typed) */}
+              <button ref={meRef} type="button" className="cz-me" onClick={() => setMenuOpen((v) => !v)} aria-expanded={menuOpen} aria-controls="cz-account"
+                aria-label="Account menu">
+                <span className="cz-avatar" aria-hidden="true" translate="no">{initialsOf(name)}</span>
+                <span className="cz-who" aria-hidden="true"><small>Signed in as</small><b translate="no">{name}</b></span>
+                <ChevronDown className="cz-chev" aria-hidden="true" />
+              </button>
+
+              <AnimatePresence>
+                {menuOpen && (
+                  <motion.div id="cz-account" className="cz-pop" initial={{ opacity: 0, y: -6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.98 }} transition={{ duration: 0.16 }}>
+                    <div className="cz-pop-me">
+                      <span className="cz-avatar" aria-hidden="true" translate="no">{initialsOf(name)}</span>
+                      <span><b translate="no">{name}</b><small>{citizen ? "Citizen · Chennai" : "Signed in"}</small></span>
+                    </div>
+                    <Link href="/profile" className="cz-pop-i" onClick={() => setMenuOpen(false)}>
+                      <span className="cz-pop-ic"><UserRound aria-hidden="true" /></span>
+                      <span><b>My profile</b><small>Contact details and password</small></span>
+                    </Link>
+                    {citizen && (
+                      <Link href="/citizen/track-complaints" className="cz-pop-i" onClick={() => setMenuOpen(false)}>
+                        <span className="cz-pop-ic"><Search aria-hidden="true" /></span>
+                        <span><b>My complaints</b><small>Where each one is now</small></span>
+                      </Link>
+                    )}
+                    <button type="button" className="cz-pop-i out" disabled={loggingOut} onClick={handleLogout}>
+                      <span className="cz-pop-ic"><LogOut aria-hidden="true" /></span>
+                      <span><b>{loggingOut ? "Signing out..." : "Sign out"}</b></span>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* phones and tablets (under 1024 px, where the top bar has no room for the pages): the pages as a bottom bar, as on the consoles */}
+      {citizen && (
+        <nav aria-label="Primary" className="cz-bbar lg:hidden">
+          <div className="cz-bbar-in">
+            {nav.map(({ href, label }) => {
+              const active = href === activeHref;
+              const Icon = TAB_ICON[href] ?? Home;
+              return (
+                <Link key={href} href={href} aria-current={active ? "page" : undefined} className={`${active ? "text-navy-700" : "text-ink-subtle"}`}>
+                  <Icon aria-hidden="true" />
+                  <span>{label}</span>
                 </Link>
               );
             })}

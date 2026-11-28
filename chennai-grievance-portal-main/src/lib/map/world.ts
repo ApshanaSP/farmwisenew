@@ -16,11 +16,10 @@ import { isPinnable } from "@/lib/collector/mapplace";
 import { EFFECT_KEYS, effectiveSql, effectiveStatus, officerStepsOn } from "@/lib/collector/effective";
 import { bboxOf, haversineM, lineLengthM, type Bbox, type Pair } from "./geom";
 import { normText } from "./execute";
-import { myListPoints } from "./uploads";
 import { makeResolver, type Entry, type ResolverData } from "./resolve";
 import { dataEpoch } from "@/lib/collector/epoch";
 import { CAT_TA } from "./words";
-import { COLLECTOR_LAYERS, POINT_LAYERS, type CondPlace, type Hotspot, type Inc, type LayerMeta, type LineFeat, type LineLayer, type NewsDoc, type PointFeat, type PointLayer, type PolyFeat, type Sev, type WardGeo, type Work, type World } from "./types";
+import { COLLECTOR_LAYERS, POINT_LAYERS, type CondPlace, type Hotspot, type Inc, type LayerMeta, type LayerOfficial, type LineFeat, type LineLayer, type NewsDoc, type PointFeat, type PointLayer, type PolyFeat, type Sev, type WardGeo, type Work, type World } from "./types";
 
 type Row = Record<string, any>;
 async function q(sql: string, params: unknown[] = []): Promise<Row[]> {
@@ -42,7 +41,7 @@ declare global {
   // eslint-disable-next-line no-var
   var __askMapNow: { key: string; at: number; incidents: Promise<Inc[]> } | undefined;
   // eslint-disable-next-line no-var
-  var __askMapWorld: { incidents: Inc[]; lists: PointFeat[]; value: { world: World; resolver: ResolverData } } | undefined;
+  var __askMapWorld: { incidents: Inc[]; value: { world: World; resolver: ResolverData } } | undefined;
 }
 
 /**
@@ -54,7 +53,7 @@ export const OVERLAY_MS = 15_000;
 
 const LAYER_DIR = () => path.join(process.cwd(), "data", "layers");
 /** raised when the way the world is built changes, so a running server rebuilds it */
-const WORLD_VERSION = 10;
+const WORLD_VERSION = 11;
 
 /**
  * v3 (owner, 22 Nov 2026: "the area name should come, Anna Nagar, then the ward"): each ward's everyday name, the OpenStreetMap
@@ -78,6 +77,14 @@ export function nameWards(wards: WardGeo[], places: PointFeat[]): void {
 /** The OSM layer files' meta (counts, as-of, licence); empty when the layers were never built. */
 export function osmMeta(): Record<string, any> {
   try { return JSON.parse(fs.readFileSync(path.join(LAYER_DIR(), "meta.json"), "utf8")).layers ?? {}; } catch { return {}; }
+}
+/** A layer's official check as meta.json records it (build-official-places.mjs), in the shape the answer uses; null when it was never checked. */
+export function officialOf(o: any): LayerOfficial | null {
+  if (!o || typeof o !== "object") return null;
+  const sources = (Array.isArray(o.sources) ? o.sources : []).filter((s: any) => s && typeof s.name === "string")
+    .map((s: any) => ({ name: String(s.name), url: typeof s.url === "string" ? s.url : null, checked: typeof s.checked === "string" ? s.checked : null }));
+  return { sources, matched: Number(o.matched_to_official) || 0, kept: Number(o.kept) || 0, dropped: Number(o.dropped) || 0,
+    unmapped: (Array.isArray(o.unmapped_official) ? o.unmapped_official : []).filter((x: unknown) => typeof x === "string").slice(0, 400), note: typeof o.note === "string" ? o.note : null };
 }
 function readLayer(id: string): any[] {
   try { return JSON.parse(fs.readFileSync(path.join(LAYER_DIR(), `${id}.geojson`), "utf8")).features ?? []; } catch { return []; }
@@ -170,7 +177,9 @@ async function loadBase(key: string): Promise<Base> {
       const [lon, lat] = f.geometry.coordinates;
       const p = f.properties;
       points[layer].push({ id: p.id, layer, name: p.name ?? null, name_ta: p.name_ta ?? null, alt: p.alt, lat, lon, kind: p.kind, government: p.government === true,
-        in_district: !!p.in_district, ward: p.ward ?? null });
+        in_district: !!p.in_district, ward: p.ward ?? null,
+        // 28 Nov 2026: matched to an official list (build-official-places.mjs); a station on a reported opening carries its report's id
+        official: p.official && typeof p.official.src === "string" ? { src: String(p.official.src), id: p.official.id == null ? null : String(p.official.id), name: String(p.official.name ?? "") } : null });
     }
   }
   nameWards(wards, points.osm_places);
@@ -196,9 +205,10 @@ async function loadBase(key: string): Promise<Base> {
   meta.pwd_assets = store("pwd_assets", "PWD water works (points)", "பொதுப்பணி நீர்க் கட்டமைப்புகள்", points.pwd_assets.length);
   for (const id of ["schools", "colleges", "hospitals", "fire_stations", "rail_metro", "osm_places", "roads", "waterways", "water_bodies", ...COLLECTOR_LAYERS]) {
     const m = om[id];
-    if (m) meta[id] = { id: id as LayerMeta["id"], name_en: m.name_en, name_ta: m.name_ta, kind: m.kind, source: "OpenStreetMap", licence: m.licence, attribution: m.attribution,
+    if (m) meta[id] = { id: id as LayerMeta["id"], name_en: m.name_en, name_ta: m.name_ta, kind: m.kind, source: typeof m.source === "string" && m.source ? m.source : "OpenStreetMap", licence: m.licence, attribution: m.attribution,
       as_of: m.as_of, count: id === "roads" ? lines.roads.length : id === "waterways" ? lines.waterways.length : m.count,
-      partial: m.partial && typeof m.partial.what === "string" ? { what: String(m.partial.what), owner: String(m.partial.owner ?? "") } : null };
+      partial: m.partial && typeof m.partial.what === "string" ? { what: String(m.partial.what), owner: String(m.partial.owner ?? "") } : null,
+      official: officialOf(m.official) };
   }
 
   const cats = new Map(categories().map((c) => [c.code, { label: c.label, label_ta: CAT_TA[c.code] ?? null, family: c.family, lead: c.lead }]));
@@ -441,12 +451,10 @@ export async function world(): Promise<{ world: World; resolver: ResolverData }>
   const pending = global.__askMapNow!;
   let incidents: Inc[];
   try { incidents = await pending.incidents; } catch (e) { if (global.__askMapNow === pending) global.__askMapNow = undefined; throw e; }
-  // the officers' approved lists (uploads.ts), laid on at every question: an approval shows at once
-  const lists = myListPoints();
   const v = global.__askMapWorld;
-  if (v && v.incidents === incidents && v.lists === lists && v.value.resolver === base.resolver) return v.value;
-  const value = { world: { ...base.world, points: { ...base.world.points, my_list: lists }, now, incidents }, resolver: base.resolver };
-  global.__askMapWorld = { incidents, lists, value };
+  if (v && v.incidents === incidents && v.value.resolver === base.resolver) return v.value;
+  const value = { world: { ...base.world, now, incidents }, resolver: base.resolver };
+  global.__askMapWorld = { incidents, value };
   return value;
 }
 

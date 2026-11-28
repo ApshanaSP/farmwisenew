@@ -10,7 +10,8 @@
  * every pending follow-up and marks the late ones), and what the officer's drawer shows as overdue under the instruction.
  *
  * The rain rehearsal's jobs are follow-ups too ("[RR] " summaries, lib/rehearsal/tasks.ts): they are marked done by their own flow and are
- * left alone here. The job reads first and writes only the rows that changed, so a run with nothing to close writes nothing (and empties
+ * left alone here. So are the fixes after a rain (the Rain view's action tracker, "[RR] " rows with a "fix:" key): the officer's update and
+ * done and the Collector's verify or send-back move them (tasks.ts stepFix), and the next rain's data says whether the place held. The job reads first and writes only the rows that changed, so a run with nothing to close writes nothing (and empties
  * no cache: a write naming the decisions table bumps the data epoch, lib/aws/store.ts).
  */
 import intelPool, { ops } from "@/lib/collector/db";

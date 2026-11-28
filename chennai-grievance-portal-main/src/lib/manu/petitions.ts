@@ -105,15 +105,15 @@ export interface DeskItem {
 
 /** What waits to be read or checked, and the last week's approved petitions. Also restarts any left unread by a restart. */
 export async function deskList(): Promise<DeskItem[]> {
-  const since = addHours(istNow(), -24 * 7);
   const COLS = `id, status, pages, reading, name, problem, dept_code, urgent, read_error, complaint_code, created_at, filed_at, updated_at`;
   // what still waits is the desk's work and is never cut: it shared one LIMIT 300 with the week's approved petitions, newest first, so a
   // busy grievance day pushed older waiting petitions off the desk and out of the restart below (QA pass 6, hunt2-desk-13). Only the
   // approved ones, kept for a week to show, are capped.
   const [waiting] = await pool.query<Row[]>(`SELECT ${COLS} FROM petitions WHERE status IN ('reading', 'needs_check', 'read_failed') ORDER BY created_at DESC`);
-  // the latest approvals, by when they were approved (an old upload approved now is one of them), read after the waiting ones: a petition
-  // approved between the two reads is in both, and is listed once, as approved (the pass 7 reviewer)
-  const [approved] = await pool.query<Row[]>(`SELECT ${COLS} FROM petitions WHERE status = 'filed' AND updated_at >= ? ORDER BY updated_at DESC, id DESC LIMIT 300`, [since]);
+  // every approved petition, newest approval first (28 Nov, owner: "I can't see the already filed petitions": the desk kept only the
+  // last 7 days, so the 9-10 Nov petitions had gone); read after the waiting ones: a petition approved between the two reads is in
+  // both, and is listed once, as approved (the pass 7 reviewer)
+  const [approved] = await pool.query<Row[]>(`SELECT ${COLS} FROM petitions WHERE status = 'filed' ORDER BY updated_at DESC, id DESC LIMIT 500`);
   const filed = new Set(approved.map((r) => Number(r.id)));
   const rows = [...waiting.filter((r) => !filed.has(Number(r.id))), ...approved].sort((a, b) => stamp(b.created_at).localeCompare(stamp(a.created_at)) || Number(b.id) - Number(a.id));
   const old = addHours(istNow(), -0.08);

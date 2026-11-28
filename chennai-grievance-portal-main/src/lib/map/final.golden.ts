@@ -2,7 +2,7 @@
  * Ask the Map final on the frozen store (npm run eval:golden): the new kinds of question, asked as the console asks them (askMap, no AI),
  * each answer checked by a brute-force count written here from the raw layer files and the raw incident rows (plain loops, haversine for every
  * pair; no grid index and no shared code but haversineM): rule checks, gaps per neighbourhood, the league table, the Collector's layers in an
- * area and near incidents, and the partial-layer note. Then the meeting packs' numbers against the same counts.
+ * area and near incidents, and the partial-layer note. (The meeting packs went with the tool panels, 28 Nov 2026.)
  */
 import fs from "fs";
 import path from "path";
@@ -129,15 +129,5 @@ describe.skipIf(!haveStore())("Ask the Map final on the frozen store", () => {
   it("accidents near metro stations stay a map question (the baseline's one miss)", async () => {
     const r = await ask("accidents near metro stations");
     expect(r.kind).toBe("answer");
-  });
-  it("the meeting packs: each number equals the answer the map gives to the same question", async () => {
-    const { world } = await import("./world");
-    const { placeLookup } = await import("./ask");
-    const { buildPack } = await import("./packs");
-    const { world: w, resolver } = await world();
-    const ctx = { place: placeLookup(w, resolver, null), lang: "en" as const, lockDept: null };
-    const weekly = buildPack("weekly", w, ctx, null);
-    const now = w.now;
-    expect(weekly.numbers[0].value).toBe(rows.filter((x) => x.eff_open === 1 && !x.routed && x.first > wall(now, -24 * 7) && x.first <= now).length);
   });
 });

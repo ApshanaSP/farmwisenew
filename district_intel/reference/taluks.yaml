@@ -7,7 +7,7 @@
 - {code: TLK-AYN, name: Ayanavaram, name_ta: அயனாவரம், police: TLK-AYN, pwd: TLK04, in_district: true}
 - {code: TLK-EGM, name: Egmore, name_ta: எழும்பூர், police: TLK-EGM, pwd: TLK05, in_district: true}
 - {code: TLK-GND, name: Guindy, name_ta: கிண்டி, police: TLK-GND, pwd: TLK06, in_district: true}
-- {code: TLK-KLT, name: Kolathur, name_ta: கொளத்தூர், police: null, pwd: null, in_district: true, note: "Official taluk; the police and PWD sources do not code it"}
+- {code: TLK-KLT, name: Kolathur, name_ta: கொளத்தூர், police: null, pwd: null, in_district: true, note: null}  # official taluk (2024); wards are mapped to it from the official revenue villages, so its counts are complete
 - {code: TLK-MDV, name: Madhavaram, name_ta: மாதவரம், police: TLK-MDV, pwd: TLK07, in_district: true}
 - {code: TLK-MDR, name: Maduravoyal, name_ta: மதுரவாயல், police: TLK-MDR, pwd: TLK08, in_district: true}
 - {code: TLK-MBM, name: Mambalam, name_ta: மாம்பலம், police: TLK-MBM, pwd: TLK09, in_district: true}

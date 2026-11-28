@@ -1,53 +1,66 @@
 "use client";
 
 /*
- * Department Officer console: one template for every department, laid out like the Collector
- * console with that department selected. It fits the window (no page scroll) and has pages:
+ * Department Officer console: one template for every department, built from the Collector console's own shell and parts so every
+ * login has the same look (28 Nov 2026, the owner: "every tile, layout, icons, colour, style according to the new Collector console").
+ * One page that scrolls, read top to bottom:
  *
- *   1 Overview     the Collector's overview for the department (same numbers), with the
- *                  officer's work queue: approve, complete and send
- *   2 Work & insights   the department's figures, the grievance board, what needs the officer now,
- *                       complaint types against before, and the store's data that concerns the
- *                       department (weather, lakes, police records, hospitals ...)
+ *   top bar        brand, the page's sections (Overview, Briefing, Work & insights), search, language, Menu (export, data collected,
+ *                  contacts, theme, security), alerts, and the signed-in officer
+ *   band           the day, the alert chip, the greeting and when the data was collected; period, zone and taluk; the four count
+ *                  tiles and the department snapshot (head of department with phone and e-mail, deadlines, where most work is)
+ *   map            the Collector's map, large, with "What needs you" beside it: by severity, and My work (to approve, in action,
+ *                  reopened by the Collector)
+ *   briefing       today at a glance for the department, then its news, the Collector's decisions, and the officer's office
+ *   insights       complaint types against before, grievances across the period, open work by area, the store's data that concerns
+ *                  the department
  *
- * The department is decided on the server from the signed-in account; there is no way to open
- * another department or the Collector console from here (the Collector signs in separately).
- * Every figure comes from the unified district intelligence store. Ask District IQ answers for
- * this department only.
+ * The department is decided on the server from the signed-in account; there is no way to open another department or the Collector
+ * console from here (the Collector signs in separately). Every figure comes from the unified district intelligence store. Ask District
+ * IQ and Jarvis answer for this department only (the server locks them: lib/assistant/access.ts lockDept).
  */
-import { LangSwitch } from "@/components/collector/app/TopMenu";
+import { LangSwitch, TopMenu } from "@/components/collector/app/TopMenu";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Wordmark } from "@/components/Logo";
 import { I, type IconName } from "@/components/collector/app/icons";
-import { BrandMark } from "@/components/collector/app/assistant/Brand";
+import { AskIcon } from "@/components/collector/app/assistant/Brand";
 import type { AssistantHost } from "@/components/collector/app/assistant/host";
 import { ContactBody } from "@/components/collector/app/Overlays";
-import { Empty, deptIcon, fmtDate, fmtDay, fmtTime, fmtWhen, fullTitle, rel, sevTone, type Row } from "@/components/collector/app/lib";
+import { AlertBar } from "@/components/collector/app/AlertBar";
+import { deptIcon, fmtDate, fmtDay, fmtTime, fmtWhen, fullTitle, rel, type Row } from "@/components/collector/app/lib";
 import { esc } from "@/components/collector/app/SatMap";
 import type { MapGeo } from "@/lib/collector/geo";
-import type { DeptProfile, OfficerOverview } from "@/lib/officer/data";
-import type { InsightModule } from "@/lib/officer/insights";
+import type { DeptProfile } from "@/lib/officer/data";
+import type { DeptBriefing, InsightModule, OfficerConsole } from "@/lib/officer/insights";
 import { OFFICER } from "@/lib/officer/departments";
-import { FEEDBACK_LABEL, STAGE_LABEL, type FeedbackKind, type Stage, type Tab } from "@/lib/officer/stages";
-import { OverviewPage } from "./Board";
+import { FEEDBACK_LABEL, STAGE_LABEL, TAB_LABEL, type FeedbackKind, type Stage, type Tab } from "@/lib/officer/stages";
+import { DeptSnap, HeroKpis, MapCard } from "./Board";
+import { BeforeRainStrip } from "./BeforeRainTasks";
+import { OfficerBriefing } from "./Briefing";
+import { AreaCard, ContactsCard, FeedbackCard, NewsCard, TrendCard, type NewsTab } from "./Cards";
 import { GrievanceDrawer } from "./Drawer";
-import { ModuleFull } from "./Insights";
-import { WorkPage } from "./InsightsPage";
-import { ListBody, Modal } from "./Overlays";
+import { InsightsSection, ModuleFull } from "./Insights";
+import { OfficerAttention, type WorkTab } from "./OfficerAttention";
+import { FeedsBody, ListBody, Modal, NewsAll, isTestFeed } from "./Overlays";
 import { SendReport } from "./Report";
 import OfficerJarvis from "./Jarvis";
 import { PERIOD_KEYS, type Period } from "./format";
 import "@/components/collector/app/tokens.css";
 import "@/components/collector/app/collector.css";
-import "./officer.css";
 import "@/components/collector/app/civic.css";
 import "@/components/collector/app/marina.css";
 import "@/components/collector/app/action.css";
 import "@/components/collector/app/motionfx.css";
+import "@/components/collector/app/overview-map.css";
 import "@/components/collector/app/shell2.css";
+import "@/components/collector/app/briefing.css";
+import "@/components/collector/app/clear.css";
+import "@/components/collector/app/dock.css";
+import "./officer.css";
 import { MotionConfig } from "motion/react";
-import { PageSwap, PageTabs, Palette, RollTitle, ToastStack, greeting, type Hit } from "@/components/collector/app/Shell";
+import { PageTabs, Palette, ToastStack, greeting, type Hit } from "@/components/collector/app/Shell";
+import { officerHits } from "./SearchHits";
 import { LiveDot, SegmentedControl } from "@/components/ui";
 import ConfirmHost from "@/components/security/Confirm";
 const SecurityPanel = dynamic(() => import("@/components/security/SecurityPanel"), { ssr: false });
@@ -55,28 +68,33 @@ const SecurityPanel = dynamic(() => import("@/components/security/SecurityPanel"
 // Ask District IQ loads only when it is first opened, so the console stays fast.
 const AssistantDialog = dynamic(() => import("@/components/collector/app/assistant/AssistantDialog"), { ssr: false });
 
-/** laid out for this canvas and scaled to the window, like the Collector console */
+/** laid out for a canvas this wide and scaled to the window like the Collector console; the page scrolls, so only the width is fitted */
 const FIT_W = 1366;
-const FIT_H = 680;
+/** the narrowest canvas the top bar and the two columns fit on */
+const MIN_W = 1180;
+/** the top bar and the dock's strip (dock.css --dock-h), in canvas pixels: what is left is the page's own height */
+const CHROME_H = 64 + 46;
 
-type PageKey = "overview" | "work";
-const PAGES: PageKey[] = ["overview", "work"];
-const PAGE_TITLE: Record<PageKey, string> = { overview: "Overview", work: "Work & insights" };
+type SectionKey = "overview" | "briefing" | "insights";
+const SECTIONS: { key: SectionKey; label: string; icon: IconName; id: string | null }[] = [
+  { key: "overview", label: "Overview", icon: "grid", id: null },
+  { key: "briefing", label: "Briefing", icon: "news", id: "ofc-brief" },
+  { key: "insights", label: "Work & insights", icon: "chart", id: "ofc-ins" }
+];
 const PERIOD_WORD: Record<Period, string> = { daily: "Daily", weekly: "Weekly", monthly: "Monthly", quarterly: "Quarterly" };
 const PERIOD_HINT: Record<Period, string> = {
   daily: "Daily: today, from 12 AM to now", weekly: "Weekly: the last 7 days", monthly: "Monthly: the last 30 days", quarterly: "Quarterly: the last 90 days"
 };
 
-export interface ListData { rows: Row[]; total: number; page: number; per: number; awaiting?: number; awaitingNote?: { en: string; ta: string } | null }
 interface Toast { id: number; msg: string; kind: "ok" | "alert"; act?: { label: string; run: () => void } }
 export type ListFlag = "open" | "serious" | "overdue" | "due";
 type ModalState = { kind: "send"; row: Row }
   | { kind: "list"; cat: string | null; flag?: ListFlag; sev?: string | null; tab?: string; label: string }
-  | { kind: "module"; key: string } | { kind: "contacts" } | { kind: "news" };
+  | { kind: "module"; key: string } | { kind: "contacts" } | { kind: "news" } | { kind: "feeds" };
 
 /** What the cards, drawer and overlays need from the shell. */
 export interface Ctx {
-  ov: OfficerOverview;
+  ov: OfficerConsole;
   dept: DeptProfile;
   /** "now" for relative times: the later of the pipeline's as-of time and the wall clock (IST) */
   now: string;
@@ -93,20 +111,21 @@ export interface Ctx {
   setZone: (z: number | null) => void;
   setTaluk: (t: string | null) => void;
   zoneTip: (z: number) => string;
-  tab: Tab;
+  /** the grievance list of one stage, in a window (the page has no board of its own: My work shows the first rows) */
   setTab: (t: Tab) => void;
-  setPage: (p: number) => void;
-  setPer: (n: number) => void;
-  list: ListData | null;
-  listLoading: boolean;
-  listError: string | null;
-  retryList: () => void;
   fresh: string | null;
   busy: Set<string>;
   reloadKey: number;
   openGrievance: (id: string, mode?: "off" | "news") => void;
   openSend: (r: Row) => void;
   openList: (cat: string | null, label: string, flag?: ListFlag, more?: { sev?: string | null; tab?: string }) => void;
+  /** My work on the page, at one of its lists (scrolls to it) */
+  openWork: (w: WorkTab) => void;
+  openContacts: () => void;
+  /** the page's news card at one of its tabs (scrolls to it) */
+  openNews: (tab?: NewsTab) => void;
+  /** every news report about the department, in a window */
+  openNewsAll: () => void;
   approve: (r: Row) => Promise<void>;
   /** the progress update on an approved case: work has started (the citizen's tracker shows In Progress) */
   startWork: (r: Row) => Promise<void>;
@@ -129,36 +148,34 @@ async function api(path: string, body?: unknown) {
 const istNow = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 19).replace("T", " ");
 /** "officer.gcc-swm@chennai.gov.in" -> "officer.gcc-swm": the name the officer signs in with, shown on the console */
 const loginName = (email: string) => email.split("@")[0];
+/** the page's scrolling body: the main around the band (on a phone the console itself scrolls) */
+const scrollerOf = (band: HTMLElement | null) => band?.closest<HTMLElement>("main.body") ?? null;
+const smooth = (): ScrollBehavior => (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth");
 
-export default function OfficerApp({ initial, user }: { initial: OfficerOverview; user: string }) {
+export default function OfficerApp({ initial, user }: { initial: OfficerConsole; user: string }) {
   const dept = initial.dept;
-  const [ov, setOv] = useState<OfficerOverview>(initial);
+  const [ov, setOv] = useState<OfficerConsole>(initial);
   const [period, setPeriodState] = useState<Period>(initial.period);
   const [zone, setZoneState] = useState<number | null>(null);
   const [taluk, setTalukState] = useState<string | null>(null);
-  const [view, setView] = useState<PageKey>("overview");
-  const [tab, setTabState] = useState<Tab>("new");
-  const [page, setPageState] = useState(0);
-  const [per, setPerState] = useState(8);
-  const [list, setList] = useState<ListData | null>(null);
-  const [listLoading, setListLoading] = useState(true);
-  const [listError, setListError] = useState<string | null>(null);
-  const [listRetry, setListRetry] = useState(0);
   const [insights, setInsights] = useState<InsightModule[] | null>(null);
   const [insightsError, setInsightsError] = useState<string | null>(null);
   const [insightsRetry, setInsightsRetry] = useState(0);
+  /** today's briefing for the department, with the scope it answers (undefined while it loads, null when there is none) */
+  const [brief, setBrief] = useState<{ key: string; d: DeptBriefing | null } | null>(null);
+  const [briefFailed, setBriefFailed] = useState<string | null>(null);
+  const [briefRetry, setBriefRetry] = useState(0);
   const [geo, setGeo] = useState<MapGeo | null>(null);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
-  const [anim, setAnim] = useState(true);
   const [drawer, setDrawer] = useState<{ id: string; mode: "off" | "news" } | null>(null);
   const [modal, setModal] = useState<ModalState | null>(null);
-  const [pop, setPop] = useState<"bell" | "profile" | "feeds" | null>(null);
-  /** account menu → Security: recent sign-ins, check an email's reference */
+  const [pop, setPop] = useState<"bell" | "profile" | "menu" | null>(null);
+  /** Menu → Security: recent sign-ins, check an email's reference */
   const [secOpen, setSecOpen] = useState(false);
   const [ask, setAskState] = useState(false);
-  // same theme switch and saved choice as the Collector console (dark by default)
+  // the Collector console's theme switch and saved choice (light by default)
   // null until mounted, so the first paint follows <html data-theme> (set before paint)
   const [theme, setTheme] = useState<"dark" | "light" | null>(null);
   useEffect(() => { try { setTheme(localStorage.getItem("diq-theme") === "dark" ? "dark" : "light"); } catch { setTheme("light"); } }, []);
@@ -169,7 +186,6 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
     return n;
   });
   const [palette, setPalette] = useState(false);
-  const [pageDir, setPageDir] = useState(1);
   const [boot, setBoot] = useState(true);
   useEffect(() => { const t = setTimeout(() => setBoot(false), 1400); return () => clearTimeout(t); }, []);
   // once opened, the assistant stays mounted so the conversation survives closing it
@@ -187,19 +203,28 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
   // starts at the store's as-of time so the server and browser render the same text; the wall clock takes over after mount
   const [clock, setClock] = useState(initial.now);
   const [seen, setSeen] = useState<string>("");
-  const [fit, setFit] = useState<{ on: boolean; z: number; w: number; h: number }>({ on: true, z: 1, w: FIT_W, h: FIT_H });
+  const [fit, setFit] = useState<{ on: boolean; z: number; w: number; h: number }>({ on: true, z: 1, w: FIT_W, h: 680 });
+  /** the section in view (the top bar's tabs follow the scroll) */
+  const [section, setSection] = useState<SectionKey>("overview");
+  /** My work's list asked for from outside the card (a count tile, a key point, the palette) */
+  const [want, setWant] = useState<{ work: WorkTab; seq: number } | null>(null);
+  const [newsTab, setNewsTab] = useState<NewsTab>("news");
   const firstOv = useRef(true);
   const dirty = useRef(false);
+  /** the band; the page's scrolling body is the main around it (found from it, so the main keeps the Collector's own markup) */
+  const bandRef = useRef<HTMLElement>(null);
   const pulse = useRef({ newCount: -1, exportedAt: initial.exportedAt, lastDecision: null as string | null, updatedAt: initial.updated.at });
   const seenKey = `diq-officer-seen:${user}:${dept.code}`;
 
-  // Fit to the window like the Collector console: laid out for 1366 x 680 and scaled; phones stack instead.
+  // Fit to the window like the Collector console: laid out for a 1366-wide canvas and scaled (never below 0.8, so words stay readable;
+  // the canvas widens instead); the page scrolls, so the height is not fitted. Phones stack in one column instead.
   useLayoutEffect(() => {
     const f = () => {
       const w = window.innerWidth, h = window.innerHeight;
       const on = w >= 700 && h >= 380;
-      const raw = Math.min(w / FIT_W, h / FIT_H);
-      const z = on ? Math.max(0.5, Math.min(1.3, raw > 1 && raw < 1.08 ? 1 : raw)) : 1;
+      const raw = w / FIT_W;
+      // never below 0.8 (the words stay readable), unless the canvas would be narrower than MIN_W: then it is MIN_W wide
+      const z = on ? Math.min(Math.max(0.8, Math.min(1.3, raw > 1 && raw < 1.08 ? 1 : raw)), w / MIN_W) : 1;
       setFit({ on, z: Math.round(z * 1000) / 1000, w, h });
     };
     f();
@@ -240,29 +265,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
     return () => { live = false; };
   }, [scopeQs, reloadKey, toast]);
 
-  const listKey = useRef("");
-  useEffect(() => {
-    if (view !== "work") return;
-    let live = true;
-    // another tab or area: show loading rows, not the previous tab's rows under this tab's name
-    if (listKey.current !== `${tab}|${scopeQs}`) { listKey.current = `${tab}|${scopeQs}`; setList(null); }
-    setListLoading(true);
-    setListError(null);
-    const p = new URLSearchParams(scopeQs);
-    p.set("tab", tab); p.set("page", String(page)); p.set("per", String(per));
-    api(`/api/officer/grievances?${p}`)
-      .then((j: ListData) => {
-        if (!live) return;
-        // the list shrank under the current page (after an action): step back to the last page
-        if (!j.rows.length && j.page > 0 && j.total > 0) setPageState(Math.max(0, Math.ceil(j.total / j.per) - 1));
-        else setList(j);
-      })
-      .catch((e) => live && setListError(e.message))
-      .finally(() => live && setListLoading(false));
-    return () => { live = false; };
-  }, [view, tab, page, per, scopeQs, reloadKey, listRetry]);
-
-  // the department's data from the store: page 3, and the priorities on page 2 that come from it
+  // the department's data from the store (Work & insights)
   useEffect(() => {
     let live = true;
     setInsightsError(null);
@@ -272,11 +275,19 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
     return () => { live = false; };
   }, [scopeQs, reloadKey, insightsRetry]);
 
+  // today's briefing (the Collector's figures for the department): after the page has drawn, so it never slows the first screen
   useEffect(() => {
-    if (!anim) return;
-    const t = setTimeout(() => setAnim(false), 1200);
-    return () => clearTimeout(t);
-  }, [anim]);
+    let live = true;
+    setBriefFailed(null);
+    const t = setTimeout(() => {
+      api(`/api/officer/insights?part=briefing&${scopeQs}`)
+        .then((j) => live && setBrief({ key: scopeQs, d: (j.briefing ?? null) as DeptBriefing | null }))
+        .catch(() => live && setBriefFailed(scopeQs));
+    }, 300);
+    return () => { live = false; clearTimeout(t); };
+  }, [scopeQs, reloadKey, briefRetry]);
+  const briefing = brief?.key === scopeQs ? brief.d : undefined;
+  const briefDown = briefing === undefined && briefFailed === scopeQs;
 
   // New grievances, Collector decisions, new pipeline builds and a changed IMD warning (read live every 10 minutes,
   // lib/live/imd.ts): checked every OFFICER.pollMs (20 s).
@@ -298,12 +309,12 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
         if (warn != null) lastWarn.current = warn;
         if (was.newCount >= 0 && m.newCount > was.newCount) {
           const k = m.newCount - was.newCount;
-          toast(`${k} new grievance${k === 1 ? "" : "s"} for ${dept.short} waiting for your approval.`, "alert", { label: "View", run: () => goGrievances("new") });
+          toast(`${k} new grievance${k === 1 ? "" : "s"} for ${dept.short} waiting for your approval.`, "alert", { label: "View", run: () => openWork("new") });
           changed = true;
         }
         if (was.lastDecision && m.lastDecision && m.lastDecision !== was.lastDecision) {
-          // a decision on a report, or an escalation of one of the department's cases (both are in Notifications)
-          toast("The Collector has acted on one of your cases. See Notifications.", "alert");
+          // a decision on a report, or an escalation of one of the department's cases (both are under the bell and "From the Collector")
+          toast("The Collector has acted on one of your cases. See the alerts bell.", "alert");
           changed = true;
         }
         if (m.updatedAt && m.updatedAt !== was.updatedAt) {
@@ -323,36 +334,75 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
     return () => clearInterval(t);
   }, []);
 
+  // -------------------------------------------------- the page's sections --
+  /** scroll to a section (the band for the Overview); on a phone the console itself scrolls, on a wider window its body does */
+  const goSection = useCallback((k: SectionKey) => {
+    const s = SECTIONS.find((x) => x.key === k);
+    setSection(k);
+    if (!s?.id) {
+      const el = scrollerOf(bandRef.current);
+      el?.scrollTo({ top: 0, behavior: smooth() });
+      el?.closest(".dic")?.scrollTo({ top: 0, behavior: smooth() });
+      return;
+    }
+    document.getElementById(s.id)?.scrollIntoView({ behavior: smooth(), block: "start" });
+  }, []);
+  // the tab of the section whose heading has passed the upper third of the view
+  useEffect(() => {
+    const el = scrollerOf(bandRef.current), root = el?.closest(".dic");
+    if (!el || !root) return;
+    let raf = 0;
+    const f = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const box = (fit.on ? el : root).getBoundingClientRect();
+        let at: SectionKey = "overview";
+        for (const s of SECTIONS) {
+          const h = s.id ? document.getElementById(s.id) : null;
+          if (h && h.getBoundingClientRect().top - box.top < box.height * 0.35) at = s.key;
+        }
+        // scrolled to the end: the last section, even when its heading cannot reach the upper third
+        const sc = fit.on ? el : (root as HTMLElement);
+        if (sc.scrollTop > 0 && sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 4) at = SECTIONS[SECTIONS.length - 1].key;
+        setSection(at);
+      });
+    };
+    el.addEventListener("scroll", f, { passive: true });
+    root.addEventListener("scroll", f, { passive: true });
+    return () => { cancelAnimationFrame(raf); el.removeEventListener("scroll", f); root.removeEventListener("scroll", f); };
+  }, [fit.on]);
+
   // ---------------------------------------------------------- navigation --
   const closeAll = useCallback(() => {
     setDrawer(null);
     setModal(null);
     if (dirty.current) { dirty.current = false; setReloadKey((k) => k + 1); }
   }, []);
-  const goPage = (p: PageKey) => { setPageDir(PAGES.indexOf(p) >= PAGES.indexOf(view) ? 1 : -1); setView(p); setAnim(true); };
-  const setTab = useCallback((t: Tab) => { setTabState(t); setPageState(0); }, []);
-  /** the grievance board on page 2, at one tab */
-  const goGrievances = (t: Tab) => { setTab(t); goPage("work"); };
-  const setPer = useCallback((n: number) => setPerState((p) => (p === n ? p : n)), []);
+  const openWork = useCallback((w: WorkTab) => {
+    setDrawer(null); setModal(null);
+    setWant((x) => ({ work: w, seq: (x?.seq ?? 0) + 1 }));
+    setTimeout(() => document.getElementById("ofc-needs")?.scrollIntoView({ behavior: smooth(), block: "nearest" }), 30);
+  }, []);
+  const openNews = useCallback((tab: NewsTab = "news") => {
+    setDrawer(null); setModal(null);
+    setNewsTab(tab);
+    setTimeout(() => document.getElementById("ofc-news")?.scrollIntoView({ behavior: smooth(), block: "nearest" }), 30);
+  }, []);
   const zoneName = zone ? ov.zones.find((z) => z.zone === zone)?.name ?? `Zone ${zone}` : null;
   const talukName = taluk ? ov.taluks.find((t) => t.code === taluk)?.name ?? taluk : null;
   const areaName = [zoneName, talukName ? `${talukName} taluk` : null].filter(Boolean).join(" · ") || null;
   const talukOptions = zone ? ov.taluks.filter((t) => ov.zones.find((z) => z.zone === zone)?.taluks.includes(t.code)) : ov.taluks;
-  const setPeriod = (p: Period) => { setPeriodState(p); setPageState(0); setAnim(true); };
+  const setPeriod = (p: Period) => setPeriodState(p);
   const setZone = (z: number | null) => {
     setZoneState(z);
     // keep the taluk only if it lies in the new zone
     if (z && taluk && !ov.zones.find((x) => x.zone === z)?.taluks.includes(taluk)) setTalukState(null);
-    setPageState(0);
-    setAnim(true);
     closeAll();
     const name = z ? ov.zones.find((x) => x.zone === z)?.name : null;
     if (z && name) toast(`Showing ${name} zone. All panels filtered.`);
   };
   const setTaluk = (t: string | null) => {
     setTalukState(t);
-    setPageState(0);
-    setAnim(true);
     closeAll();
     const name = t ? ov.taluks.find((x) => x.code === t)?.name : null;
     if (t && name) toast(`Showing ${name} taluk. All panels filtered.`);
@@ -416,6 +466,7 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
     }
   };
 
+  const openList: Ctx["openList"] = (cat, label, flag, more) => { setDrawer(null); setModal({ kind: "list", cat, label, flag, sev: more?.sev ?? null, tab: more?.tab }); };
   const c: Ctx = {
     ov, dept, now: clock > ov.now ? clock : ov.now, fit: fit.on, geo, zone, taluk, zoneName, talukName, areaName, scopeQs, setZone, setTaluk,
     zoneTip: (z) => {
@@ -423,12 +474,13 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
       const n = ov.board.map.zoneCounts[z] ?? 0;
       return `<b>${esc(name)}</b>${n} incident${n === 1 ? "" : "s"}<br><span style="opacity:.7">Click to ${zone === z ? "keep" : "filter to"} this zone</span><br>`;
     },
-    tab, setTab, setPage: (p) => setPageState(Math.max(0, p)), setPer,
-    list, listLoading, listError, retryList: () => setListRetry((n) => n + 1),
+    setTab: (t) => openList(null, TAB_LABEL[t] ?? t, undefined, { tab: t }),
     fresh, busy: busyIds, reloadKey,
     openGrievance: (id, mode = "off") => { setModal(null); setDrawer({ id, mode }); },
     openSend: (r) => { setDrawer(null); setModal({ kind: "send", row: r }); },
-    openList: (cat, label, flag, more) => { setDrawer(null); setModal({ kind: "list", cat, label, flag, sev: more?.sev ?? null, tab: more?.tab }); },
+    openList, openWork, openNews,
+    openContacts: () => { setDrawer(null); setModal({ kind: "contacts" }); },
+    openNewsAll: () => { setDrawer(null); setModal({ kind: "news" }); },
     approve, startWork, toast, closeAll
   };
 
@@ -453,26 +505,28 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
         e.preventDefault();
         setPalette(true);
       }
+      // PageUp / PageDown move between the page's sections, as they turn the Collector's pages
       if (!typing && !drawer && !modal && !ask && (e.key === "PageDown" || e.key === "PageUp")) {
         e.preventDefault();
-        const k = PAGES.indexOf(view) + (e.key === "PageDown" ? 1 : -1);
-        if (PAGES[k]) goPage(PAGES[k]);
+        const k = SECTIONS.findIndex((s) => s.key === section) + (e.key === "PageDown" ? 1 : -1);
+        if (SECTIONS[k]) goSection(SECTIONS[k].key);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [drawer, modal, ask, palette, closeAll, setAsk, view]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [drawer, modal, ask, palette, closeAll, setAsk, section, goSection]);
 
-  const unread = ov.feedback.filter((f) => !seen || String(f.at) > seen);
+  const unreadDecisions = ov.feedback.filter((f) => !seen || String(f.at) > seen);
+  const unreadAlerts = (ov.board.bell as Row[]).filter((i) => !seen || String(i.t) > seen);
   const markRead = () => {
-    const latest = String(ov.feedback[0]?.at ?? istNow());
+    const latest = [String(ov.feedback[0]?.at ?? ""), ...(ov.board.bell as Row[]).map((i) => String(i.t)), istNow()].sort().slice(-1)[0];
     setSeen(latest);
     try { localStorage.setItem(seenKey, latest); } catch { /* not saved in this browser */ }
   };
   // generated departmental feeds (source_health.kind "synthetic") are test data, never live
-  const feedsOk = ov.feeds.filter((f) => (f.status === "ok" || f.status === "degraded") && !/synthetic/i.test(String((f as { kind?: unknown }).kind ?? ""))).length;
+  const feedsOk = ov.feeds.filter((f) => (f.status === "ok" || f.status === "degraded") && !isTestFeed(f)).length;
   const me = loginName(user);
-  const pi = PAGES.indexOf(view);
+  const initials = dept.short.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase();
   const openModule = (key: string) => { setDrawer(null); setModal({ kind: "module", key }); };
   const moduleOpen = modal?.kind === "module" ? insights?.find((m) => m.key === modal.key) ?? null : null;
   const snap = ov.board.snapshot as Row;
@@ -503,32 +557,41 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
     : modal.kind === "module" ? `${moduleOpen?.title ?? "Department data"} · ${areaName ?? dept.name}`
       : modal.kind === "contacts" ? `${dept.name} · contacts`
         : modal.kind === "news" ? `${dept.short} in the news · ${ov.periodInfo.label}`
-          : `${modal.label} · ${areaName ?? dept.name}`;
+          : modal.kind === "feeds" ? "Data collected"
+            : `${modal.label} · ${areaName ?? dept.name}`;
 
-  const actions: Hit[] = [
-    ...PAGES.map((p, k) => ({ g: "Go to", ic: (p === "overview" ? "grid" : "tasks") as IconName, l: `Go to ${PAGE_TITLE[p]}`, s: `Page ${k + 1}`, run: () => goPage(p) })),
-    { g: "Go to", ic: "tasks", l: "New grievances: approve", s: "Grievance board · New", run: () => goGrievances("new") },
-    { g: "Go to", ic: "send", l: "Sent to the Collector", s: "Grievance board · Sent to Collector", run: () => goGrievances("sent") },
-    { g: "Actions", ic: "chat", l: "Ask District IQ", s: `Answers about ${dept.short} only`, kbd: "Ctrl K", run: () => setAsk(true) },
-    { g: "Actions", ic: "download", l: "Export PDF report", s: "This period and area", run: exportPdf },
-    { g: "Actions", ic: "phone", l: "Department contacts", run: () => setModal({ kind: "contacts" }) },
-    { g: "Actions", ic: "news", l: `${dept.short} in the news`, run: () => setModal({ kind: "news" }) },
-    { g: "Actions", ic: theme === "dark" ? "sun" : "moon", l: `Switch to ${theme === "dark" ? "light" : "dark"} theme`, run: toggleTheme },
-    { g: "Actions", ic: "refresh", l: "Reload data", run: () => setReloadKey((k) => k + 1) }
+  const menu = [
+    { key: "export", icon: (exporting ? "refresh" : "download") as IconName, label: "Export PDF report", sub: "This period and area, with your department's insights", run: exportPdf },
+    { key: "data", icon: "sensor" as IconName, label: "Data collected", sub: "When each feed was last collected", run: () => setModal({ kind: "feeds" }) },
+    { key: "contacts", icon: "phone" as IconName, label: "Department contacts", sub: "Head of department and officials", run: c.openContacts },
+    { key: "news", icon: "news" as IconName, label: `${dept.short} in the news`, sub: "Every news report of this period", run: c.openNewsAll },
+    { key: "theme", icon: (theme === "dark" ? "sun" : "moon") as IconName, label: theme === "dark" ? "Light mode" : "Dark mode", sub: theme === "dark" ? "Bright, for daylight" : "Easy on the eyes at night", run: toggleTheme },
+    { key: "sec", icon: "shield" as IconName, label: "Security", sub: "Sign-ins, sessions, check an email from the Collector", run: () => setSecOpen(true) },
+    { key: "reload", icon: "refresh" as IconName, label: "Reload data", sub: "Fetch the latest from the store", run: () => setReloadKey((k) => k + 1) }
   ];
-  /** the department's grievances of the last 90 days; picking one opens it */
-  const searchHits = async (q: string): Promise<Hit[]> => {
-    const r = await api(`/api/officer/search?q=${encodeURIComponent(q)}`);
-    return (r.rows as Row[]).map((h) => ({ g: "Grievances", ic: deptIcon(dept.code), l: fullTitle(h), s: `${STAGE_LABEL[h.stage as Stage]} · ${rel(h.t, c.now)}`, run: () => c.openGrievance(h.id) }));
-  };
+  const actions: Hit[] = [
+    ...SECTIONS.map((s, k) => ({ g: "Go to", ic: s.icon, l: `Go to ${s.label}`, s: `Section ${k + 1}`, run: () => goSection(s.key) })),
+    { g: "Go to", ic: "tasks", l: "New grievances: approve", s: "My work · To approve", run: () => openWork("new") },
+    { g: "Go to", ic: "refresh", l: "Reopened by the Collector", s: "My work · Reopened", run: () => openWork("returned") },
+    { g: "Go to", ic: "send", l: "Sent to the Collector", s: "The list of reports waiting for the Collector", run: () => c.setTab("sent") },
+    { g: "Actions", ic: "chat", l: "Ask District IQ", s: `Answers about ${dept.short} only`, kbd: "Ctrl K", run: () => setAsk(true) },
+    { g: "Actions", ic: "mic", l: "Jarvis", s: `Ask by voice, in English or Tamil: answers about ${dept.short} only`, run: () => window.dispatchEvent(new CustomEvent("jarvis:mode", { detail: { toggle: true } })) },
+    ...menu.map((m) => ({ g: "Actions", ic: m.icon, l: m.label, s: m.sub, run: m.run }))
+  ];
+  /** the department's grievances (the last 90 days, or the dates searched), its cases' news and its readings of any date (SearchHits.ts, 28 Nov) */
+  const searchHits = (q: string): Promise<Hit[]> =>
+    officerHits(q, { api, deptCode: dept.code, now: c.now, openGrievance: c.openGrievance, openModule, openNewsAll: c.openNewsAll });
   const askWith = (q: string) => {
     setAsk(true);
     [60, 900].forEach((ms) => setTimeout(() => window.dispatchEvent(new CustomEvent("diq:ask", { detail: q })), ms));
   };
+  const appStyle = fit.on
+    ? { zoom: fit.z, width: fit.w / fit.z, height: fit.h / fit.z, ["--z" as string]: fit.z, ["--ofc-vh" as string]: `${Math.round(fit.h / fit.z - CHROME_H)}px` }
+    : undefined;
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className={`dic ofc${fit.on ? " fit" : ""}${boot ? " boot" : ""}`} data-theme={theme ?? undefined}
+    <div className={`dic ofc${fit.on ? " fit" : ""}${fit.on && fit.w / fit.z < 1300 ? " narrow" : ""}${boot ? " boot" : ""}`} data-theme={theme ?? undefined}
       onClick={(e) => { if (!(e.target as HTMLElement).closest(".pop") && !(e.target as HTMLElement).closest("[data-pop]")) setPop(null); }}>
       <ConfirmHost />
       {secOpen && <SecurityPanel onClose={() => setSecOpen(false)} />}
@@ -536,69 +599,35 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
         <defs><linearGradient id="gBar" x1="0" x2="0" y1="0" y2="1"><stop offset="0" style={{ stopColor: "var(--accent)" }} /><stop offset="1" style={{ stopColor: "var(--accent-line)" }} /></linearGradient></defs>
       </svg>
       {(loading || exporting) && <div className="loading-bar" />}
-      <div className="app" style={fit.on ? { zoom: fit.z, width: fit.w / fit.z, height: fit.h / fit.z } : undefined}>
+      <div className="app" style={appStyle}>
         <header className="top">
           <div className="tbrand"><Wordmark className="twm" /><small className="tsub">Officer · {dept.short}</small></div>
-          <PageTabs items={PAGES.map((p) => ({ key: p, label: PAGE_TITLE[p], icon: (p === "overview" ? "grid" : "tasks") as IconName }))} active={view} onPick={(p) => goPage(p as PageKey)} />
+          <PageTabs items={SECTIONS.map((s) => ({ key: s.key, label: s.label, icon: s.icon }))} active={section} onPick={(k) => goSection(k as SectionKey)} />
           <span className="tspace" />
           <button className="cmdk" onClick={() => setPalette(true)} aria-label="Search and commands (/)" aria-haspopup="dialog">
             <I n="search" /><span>Search</span><kbd>/</kbd>
           </button>
-          <LangSwitch compact />
-          <div className="rel">
-            <Collected ov={ov} live={feedsOk} onClick={() => setPop((p) => (p === "feeds" ? null : "feeds"))} />
-            {pop === "feeds" && (
-              <div className="pop" style={{ left: 0, right: "auto", width: 330 }}>
-                <div className="pop-h">Data feeds · {feedsOk}/{ov.feeds.length} live</div>
-                {ov.updated.sources.map((s) => (
-                  <div key={s.source} className="pop-i ofeed">
-                    <span className={`kpi-ic ${s.failed ? "t-high" : "t-low"}`} style={{ width: 30, height: 30 }}><I n={s.failed ? "alert" : "checkc"} /></span>
-                    <span><b>{s.label}</b><small>{s.newest ? `Data up to ${fmtTime(s.newest)}, ${fmtDate(s.newest)}` : "No data"}{s.failed ? ` · ${s.failed}` : ""}</small></span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <button className="tbtn icon" onClick={() => setModal({ kind: "news" })} title={`${dept.short} in the news`} aria-label={`${dept.short} in the news`}><I n="news" /></button>
-          <button className="tbtn icon" onClick={() => setModal({ kind: "contacts" })} title="Department contacts" aria-label="Department contacts"><I n="phone" /></button>
-          <button className="tbtn pri" onClick={exportPdf} disabled={exporting} title="Download a PDF report of this period and area">
-            <I n={exporting ? "refresh" : "download"} className={exporting ? "spin" : ""} /><span className="lb">Export PDF</span>
-          </button>
-          <button className="tbtn icon" onClick={toggleTheme} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
-            <span key={theme ?? "l"} className="theme-ic"><I n={theme === "dark" ? "sun" : "moon"} /></span>
-          </button>
-          <div className="rel">
-            <button className="tbtn icon" data-pop onClick={() => setPop((p) => (p === "bell" ? null : "bell"))} aria-label="Notifications" aria-expanded={pop === "bell"}>
-              <I n="bell" />{unread.length > 0 && <span className="dot-n">{unread.length}</span>}
-            </button>
-            {pop === "bell" && (
-              <div className="pop bellpop">
-                <div className="pop-h">The Collector&apos;s decisions<button className="lnk" onClick={() => { markRead(); setPop(null); }}>Mark all read</button></div>
-                {ov.feedback.length ? ov.feedback.slice(0, 6).map((f) => (
-                  <button key={f.did} className="pop-i" onClick={() => { setPop(null); c.openGrievance(f.id); }}>
-                    <span className={`bell-dot ${f.ok ? "" : "s-high"}`} style={f.ok ? { background: "var(--ok)" } : undefined} aria-hidden="true" />
-                    <span><b>{FEEDBACK_LABEL[f.kind as FeedbackKind] ?? f.decision}: {f.title ?? f.type}</b>
-                      <small>{rel(f.at, c.now)}{!seen || String(f.at) > seen ? " · new" : ""}</small></span>
-                  </button>
-                )) : <div className="empty">No notifications in this period.</div>}
-              </div>
-            )}
-          </div>
+          <LangSwitch />
+          <TopMenu open={pop === "menu"} onToggle={() => setPop((p) => (p === "menu" ? null : "menu"))} dashboards={false}
+            title="Export, data collected, contacts, theme, security and language" items={menu} />
+          <OfficerBell open={pop === "bell"} onToggle={() => setPop((p) => (p === "bell" ? null : "bell"))} ov={ov} now={c.now} seen={seen}
+            unread={unreadDecisions.length + unreadAlerts.length} onMarkRead={() => { markRead(); setPop(null); }}
+            onPick={(id) => { setPop(null); c.openGrievance(id); }} />
           <div className="rel">
             <button className="me ome" data-pop onClick={() => setPop((p) => (p === "profile" ? null : "profile"))}
-              title={`Signed in as ${user}`}>
-              <span className="avatar" aria-hidden="true">{dept.short.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase()}</span>
+              title={`Signed in as ${user}`} aria-expanded={pop === "profile"}>
+              <span className="avatar" aria-hidden="true">{initials}</span>
               <span className="who"><small>Logged in as</small><b>{me}</b></span><I n="chevd" />
             </button>
             {pop === "profile" && (
               <div className="pop" style={{ width: 320 }}>
-                <div className="pop-me"><span className="avatar">{dept.short.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase()}</span><span><b>{me}</b><small>Department officer · {dept.short}</small></span></div>
+                <div className="pop-me"><span className="avatar">{initials}</span><span><b>{me}</b><small>Department officer · {dept.short}</small></span></div>
                 <div style={{ padding: "0 10px 8px", color: "var(--text-3)", fontSize: 12.5, lineHeight: 1.5 }}>
                   Logged in as <b style={{ color: "var(--text-2)" }}>{user}</b><br />{dept.name}{dept.org ? `, ${dept.org}` : ""}
                   {dept.route ? <><br />Department head / escalation: {dept.route}</> : null}
                 </div>
                 <button className="pop-i" onClick={() => { setPop(null); setSecOpen(true); }}><I n="shield" /><span><b>Security</b><small>Sign-ins, sessions, check an email from the Collector</small></span></button>
-                <button className="pop-i" onClick={() => { setPop(null); setModal({ kind: "contacts" }); }}><I n="phone" /><span><b>Department contacts</b><small>Head of department and officials</small></span></button>
+                <button className="pop-i" onClick={() => { setPop(null); c.openContacts(); }}><I n="phone" /><span><b>Department contacts</b><small>Head of department and officials</small></span></button>
                 <button className="pop-i" onClick={() => { setPop(null); setReloadKey((k) => k + 1); }}><I n="refresh" /><span><b>Reload data</b><small>Fetch the latest from the store</small></span></button>
                 {(zone || taluk) && <button className="pop-i" onClick={() => { setPop(null); setZone(null); setTaluk(null); }}><I n="home" /><span><b>Clear the area filter</b><small>Every zone and taluk</small></span></button>}
                 <button className="pop-i" onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined); window.location.href = "/login"; }}>
@@ -609,15 +638,21 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
           </div>
         </header>
 
-        <div className="shell">
-          <main className="body">
-            {/* the ocean band: the day, the page and the filters; the department is fixed (the signed-in officer's) */}
-            <section className="band">
-              <div className="band-row">
-                <div className="band-t">
-                  <div className="band-eb"><span>{fmtDay(ov.now)}</span><i aria-hidden="true">·</i><span className="band-scope">{greeting(ov.now)}</span></div>
-                  <RollTitle text={PAGE_TITLE[view]} />
+        <main className="body">
+          {/* the green band, as on the Collector's Overview: the day, alerts, the greeting and the data; the filters; the counts and the
+              department snapshot. The department is fixed (the signed-in officer's) */}
+          <section className="band hero" ref={bandRef}>
+            <div className="band-row">
+              <div className="band-t">
+                <div className="band-eb">
+                  <span>{fmtDay(ov.now)}</span>
+                  <AlertBar now={ov.now} compact src="/api/officer/insights?part=alerts" />
                 </div>
+                <div className="band-h1">
+                  <h1 className="roll ofc-hi"><span><span>{greeting(ov.now)}</span>, <span translate="no">{dept.short}</span> <span>officer</span></span></h1>
+                  <Collected ov={ov} live={feedsOk} onClick={() => setModal({ kind: "feeds" })} />
+                </div>
+              </div>
               <div className="filters" role="group" aria-label="Filters">
                 <SegmentedControl label="Period" size="sm" value={period} onChange={(p) => setPeriod(p)}
                   options={PERIOD_KEYS.map((p) => ({ value: p, label: PERIOD_WORD[p], title: PERIOD_HINT[p] }))} />
@@ -637,86 +672,126 @@ export default function OfficerApp({ initial, user }: { initial: OfficerOverview
               </div>
               {/* the department is fixed: it is the signed-in officer's */}
               <span className="odept-badge" title={`${dept.name}: your department (fixed for this account)`}><I n={deptIcon(dept.code)} />{dept.short}</span>
-              </div>
-            </section>
+            </div>
+            <div className="hero-b">
+              <HeroKpis c={c} />
+              <div className="hsnap"><DeptSnap c={c} /></div>
+            </div>
+          </section>
 
-            <PageSwap k={view} dir={pageDir} className={`${anim ? "anim" : ""}${loading ? " busy" : ""}`}>
-              {view === "overview" ? (
-                <OverviewPage c={c} goGrievances={goGrievances} openContacts={() => setModal({ kind: "contacts" })} openNews={() => setModal({ kind: "news" })} />
-              ) : (
-                <>
-                  {insightsError && <div className="o-state err" style={{ flex: "none", padding: 8 }}><I n="alert" />{insightsError}
-                    <button className="btn sm plain" onClick={() => setInsightsRetry((n) => n + 1)}>Try again</button></div>}
-                  <WorkPage c={c} modules={insights} openModule={openModule} />
-                </>
-              )}
-            </PageSwap>
-          </main>
-        </div>
+          {/* Rain Rehearsal: the jobs the Collector sent before a heavy rain (only while there are some) */}
+          <BeforeRainStrip />
+
+          {/* the map leads, large; what needs the officer beside it, full height */}
+          <section className="p1 ofc-main">
+            <MapCard c={c} />
+            <article className="card a-sev att" id="ofc-needs"><OfficerAttention c={c} want={want} /></article>
+            {/* the news beside them, as on the Collector's Overview (map, what needs you, news in one screen) */}
+            <NewsCard c={c} gaps={briefing} gapsFailed={briefDown} tab={newsTab} setTab={setNewsTab} />
+          </section>
+
+          <div className="ofc-h" id="ofc-brief">
+            <I n="news" /><h2>Today&apos;s briefing</h2><small>{dept.short} · {ov.periodInfo.label}{areaName ? ` · ${areaName}` : ""}</small>
+          </div>
+          <OfficerBriefing c={c} b={briefing} failed={briefDown} retry={() => setBriefRetry((n) => n + 1)} />
+          <section className="ofc-row ofc-brief2">
+            <FeedbackCard c={c} unread={new Set(unreadDecisions.map((f) => f.did))} />
+            <ContactsCard c={c} user={user} />
+          </section>
+
+          <InsightsSection c={c} modules={insights} failed={insightsError} retry={() => setInsightsRetry((n) => n + 1)} openModule={openModule}
+            trend={<TrendCard c={c} />} area={<AreaCard c={c} />} />
+        </main>
 
         {(drawer || modal) && <div className="scrim" onClick={closeAll} />}
         {drawer && <GrievanceDrawer id={drawer.id} mode={drawer.mode} c={c} onMode={(m) => setDrawer({ id: drawer.id, mode: m })} />}
         {modal && (
-          <Modal narrow={modal.kind !== "module" && modal.kind !== "news"} title={modalTitle} onClose={closeAll}>
+          <Modal narrow={modal.kind === "send" || modal.kind === "contacts" || modal.kind === "feeds"} title={modalTitle} onClose={closeAll}>
             {modal.kind === "send" ? (
               <SendReport row={modal.row} c={c} onSent={(step) => {
                 const r = modal.row;
                 toast(step === "send" ? `Sent to the Collector for ${r.sev === "Severe" ? "verification" : "approval"}: ${r.type}.` : `Closed as done by your department: ${r.type}.`);
                 setFresh(r.id);
                 setModal(null);
-                setTab(step === "send" ? "sent" : "verified");
                 setDrawer({ id: r.id, mode: "off" });
                 setReloadKey((k) => k + 1);
               }} />
             ) : modal.kind === "module" ? (moduleOpen ? <ModuleFull m={moduleOpen} c={c} /> : <div className="o-state">This data is no longer in view.</div>)
               : modal.kind === "contacts" ? <ContactBody dept={{ ...(snap.dept as Row ?? {}), code: dept.code, name: dept.name }} contacts={(snap.contacts as Row[] | undefined) ?? []} />
                 : modal.kind === "news" ? <NewsAll c={c} />
-                  : <ListBody c={c} cat={modal.cat} flag={modal.flag} sev={modal.sev} tab={modal.tab} />}
+                  : modal.kind === "feeds" ? <FeedsBody c={c} />
+                    : <ListBody c={c} cat={modal.cat} flag={modal.flag} sev={modal.sev} tab={modal.tab} />}
           </Modal>
         )}
         <Palette open={palette} onClose={() => setPalette(false)} actions={actions} search={searchHits} ask={askWith} />
         <ToastStack toasts={toasts} dismiss={(id) => setToasts((x) => x.filter((y) => y.id !== id))} />
-        <button className="ask-fab" onClick={() => setAsk((v) => !v)} aria-label="Ask District IQ (Ctrl+K)" title="Ask District IQ (Ctrl+K)" aria-expanded={ask}>
-          <BrandMark size={30} className="ask-mark" /><span>Ask District IQ</span>
-        </button>
+        {/* the dock, as the Collector's: Jarvis and the chatbot side by side at the bottom right, in a strip the page keeps free (dock.css) */}
+        <div className="cdock" role="group" aria-label="Jarvis and Ask District IQ">
+          {/* 23 Nov: Jarvis for the officer, by voice, over Ask District IQ locked to this department */}
+          <OfficerJarvis deptShort={dept.short} open={() => setAsk(true)} hidden={ask} />
+          {!ask && (
+            <button className="ask-fab ask-fab-v2" onClick={() => setAsk(true)} aria-keyshortcuts="Control+K" title={`Ask District IQ: type a question about ${dept.short} (Ctrl+K)`}>
+              <i className="ask-ico"><AskIcon size={18} /></i>
+              <span className="ask-label">Ask District IQ<kbd aria-hidden="true" data-t="Ctrl K" /></span>
+            </button>
+          )}
+        </div>
         {askMounted && <AssistantDialog c={host} open={ask} onClose={() => setAsk(false)} />}
-        {/* 23 Nov: Jarvis for the officer, by voice, over Ask District IQ locked to this department */}
-        <OfficerJarvis deptShort={dept.short} open={() => setAsk(true)} />
       </div>
     </div>
     </MotionConfig>
   );
 }
 
-/** Are the feeds current? The same chip as the Collector console's; it opens the feeds list. */
-function Collected({ ov, live, onClick }: { ov: OfficerOverview; live: number; onClick: () => void }) {
+/** Are the feeds current? The same chip as the Collector console's; it opens Data collected. */
+function Collected({ ov, live, onClick }: { ov: OfficerConsole; live: number; onClick: () => void }) {
   const s = ov.board.collection;
   const all = !!s && s.total > 0 && s.missing.length === 0;
   const head = s?.lastRun ? `Collected ${fmtWhen(s.lastRun, ov.now)}` : "Collected hourly";
   const sub = s && !all ? `${s.done.length} of ${s.total} feeds current · ${live}/${ov.feeds.length} live` : `Data as of ${fmtTime(ov.now)}, ${fmtDate(ov.now)}`;
   const tip = "The district intelligence pipeline collects its real feeds hourly; generated department feeds are test data and are not counted live." +
-    (s?.missing.length ? ` Behind: ${s.missing.join(", ")}.` : "") + " Click for the data feeds.";
+    (s?.missing.length ? ` Behind: ${s.missing.join(", ")}.` : "") + " Click for the data collected.";
   return (
-    <button key={ov.exportedAt} className={`daily${s && !all ? " pend" : ""}`} title={tip} onClick={onClick} data-pop>
+    <button key={ov.exportedAt} className={`daily${s && !all ? " pend" : ""}`} title={tip} onClick={onClick}>
       <LiveDot state={s && !all ? "warn" : "ok"} /><span>{head}<small>{sub}</small></span>
     </button>
   );
 }
 
-/** Every news report about the department in the period. */
-function NewsAll({ c }: { c: Ctx }) {
-  const items = c.ov.news;
-  if (!items.length) return <Empty>No news reports about {c.dept.short} in this period.</Empty>;
+/**
+ * The alerts bell, the Collector's bell for the officer: the Collector's decisions on the department's cases (verified, returned,
+ * rejected, escalated), then the department's severe and high incidents of the period. A "new" mark until Mark all read.
+ */
+function OfficerBell({ open, onToggle, ov, now, seen, unread, onMarkRead, onPick }: {
+  open: boolean; onToggle: () => void; ov: OfficerConsole; now: string; seen: string; unread: number; onMarkRead: () => void; onPick: (id: string) => void;
+}) {
+  const alerts = (ov.board.bell as Row[]).slice(0, 8);
+  const isNew = (t: unknown) => !seen || String(t) > seen;
   return (
-    <div className="ngrid">
-      {items.map((i) => (
-        <button key={i.id} className="ncard" onClick={() => c.openGrievance(i.id, "news")}>
-          <div className="nout">{(i.outletNames?.length ? i.outletNames : ["News"]).map((n: string) => <span key={n}>{n}</span>)}</div>
-          <h4>{fullTitle(i)}</h4>
-          <div className="nmeta"><span>{i.zone_name ?? "Chennai"}</span><span>{i.type}</span><span>{rel(i.t, c.now)}</span></div>
-          {i.summary && <p style={{ margin: 0, fontSize: 13, color: "var(--text-2)" }}>{i.summary}</p>}
-        </button>
-      ))}
+    <div className="rel">
+      <button className="tbtn icon" data-pop onClick={onToggle} aria-label={unread > 0 ? `Alerts, ${unread} new` : "Alerts"} aria-expanded={open}>
+        <I n="bell" />{unread > 0 && <span className="dot-n" aria-hidden="true">{unread > 99 ? "99+" : unread}</span>}
+      </button>
+      {open && (
+        <div className="pop bellpop ofc-bell" data-pop>
+          <div className="pop-h"><span>Alerts<small>{ov.dept.short} · {ov.periodInfo.label}</small></span><button className="lnk" onClick={onMarkRead}>Mark all read</button></div>
+          <div className="pop-g">The Collector&apos;s decisions</div>
+          {ov.feedback.length ? ov.feedback.slice(0, 6).map((f) => (
+            <button key={f.did} className="pop-i" onClick={() => onPick(f.id)}>
+              <span className={`bell-dot ${f.ok ? "" : "s-high"}`} style={f.ok ? { background: "var(--ok)" } : undefined} aria-hidden="true" />
+              <span><b>{FEEDBACK_LABEL[f.kind as FeedbackKind] ?? f.decision}: {f.title ?? f.type}</b>
+                <small>{rel(f.at, now)}{isNew(f.at) ? " · new" : ""}</small></span>
+            </button>
+          )) : <div className="empty">No decisions in this period.</div>}
+          <div className="pop-g">Severe and high · {ov.periodInfo.label.toLowerCase()}</div>
+          {alerts.length ? alerts.map((i) => (
+            <button key={i.id} className="pop-i" onClick={() => onPick(String(i.id))}>
+              <span className={`bell-dot s-${String(i.sev).toLowerCase()}`} aria-hidden="true" />
+              <span><b>{fullTitle(i)}</b><small>{[i.zone_name ?? "Chennai", i.sev, rel(i.t, now)].join(" · ")}{isNew(i.t) ? " · new" : ""}</small></span>
+            </button>
+          )) : <div className="empty">No severe or high incidents.</div>}
+        </div>
+      )}
     </div>
   );
 }

@@ -885,7 +885,9 @@ What each pipeline agent did in the build.
 | `zone_no` | int | all | GCC zone 1-15 (null = outside or not placed) | 1 (1 to 15) |
 | `zone_name` | text | all | zone name | Thiruvottiyur |
 | `taluk_code` | text | all | revenue taluk code TLK-… (ref_taluks) | TLK-TVT |
-| `taluk_vote_share` | float | all | how sure the taluk is | 0 (0 to 1) |
+| `taluk_share` | float | all | share of the ward's area in its taluk (official revenue village overlay) | 0 (0 to 1) |
+| `taluk_method` | text | all | how the taluk was found (official_village_overlay, or a flagged method) | 0 |
+| `taluk_others` | text | all | the other taluks under the ward and their shares | 0 |
 | `area_km2` | float | all | area | 1.831 (0.289 to 10.905) |
 | `centroid_lat` | float | all | centre | 13.225054 (12.865226 to 13.225054) |
 | `centroid_lon` | float | all | centre | 80.32431 (80.152326 to 80.32431) |

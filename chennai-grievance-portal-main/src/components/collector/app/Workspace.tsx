@@ -63,14 +63,25 @@ export function WorkspaceBody({ c }: { c: Console }) {
       if (v) load();
     } finally { setBusy(false); }
   };
+  const viewing = c.saved ?? null;
   return (
     <>
+      {/* 28 Nov: a saved workspace is on screen. Saving now would store today's live briefing, not the copy being read, so it waits */}
+      {viewing && (
+        <div className="wview" role="status">
+          <I n="layers" />
+          <span>You are viewing <b data-no-i18n="" translate="no">{viewing.name}</b> v{viewing.version}, saved <span data-no-i18n="">{fmtShort(viewing.savedAt)}</span>.
+            Go back to the live dashboard to save a new version.</span>
+          <button className="btn" onClick={() => { c.closeAll(); c.backToLive?.(); }}><I n="refresh" />Back to live dashboard</button>
+        </div>
+      )}
       <div className="wsave">
-        <label>Save the current view as<input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} /></label>
-        <button className="btn" disabled={busy || name.trim().length < 2} onClick={save}><I n="layers" />{busy ? "Saving…" : "Save new version"}</button>
+        <label>Save the current view as<input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} disabled={!!viewing} /></label>
+        <button className="btn" disabled={busy || !!viewing || name.trim().length < 2} onClick={save}><I n="layers" />{busy ? "Saving…" : "Save new version"}</button>
       </div>
       <p className="sub">A version stores the period, zone, department, category and taluk filters, your dashboard layout, and a frozen copy of the
-        briefing as it reads right now, so you can reopen last week&apos;s version exactly as it was.</p>
+        Briefing page as it reads right now (its key points, departments, stories and news-only incidents), so you can reopen last week&apos;s
+        version exactly as it was.</p>
       {failed && !list ? <div className="empty" role="alert">Your saved workspaces could not be loaded. <button className="lnk" onClick={load}>Retry</button></div>
         : !list ? <div className="empty">Loading…</div> : list.length ? list.map((w) => (
         <div key={w.name} className="wlist">
@@ -98,8 +109,9 @@ export function WorkspaceBody({ c }: { c: Console }) {
             {w.versions.map((v) => {
               const f = v.filters ?? {};
               return (
-                <button key={v.id} className={`wv-i${v.is_current ? " cur" : ""}`} onClick={() => c.openSavedWorkspace(v.id)}>
-                  <b>v{v.version}{v.is_current ? " · latest" : ""}</b>
+                <button key={v.id} className={`wv-i${v.is_current ? " cur" : ""}${viewing?.id === Number(v.id) ? " open" : ""}`} onClick={() => c.openSavedWorkspace(v.id)}
+                  aria-current={viewing?.id === Number(v.id) ? "true" : undefined}>
+                  <b>v{v.version}{v.is_current ? " · latest" : ""}{viewing?.id === Number(v.id) ? " · open now" : ""}</b>
                   <span>{fmtShort(v.created_at)}</span>
                   <small>{[f.period, f.zoneName, f.deptName, f.catLabel, f.talukName].filter(Boolean).join(" · ") || "District-wide"}</small>
                 </button>

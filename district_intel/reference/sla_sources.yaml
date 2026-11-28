@@ -1,0 +1,135 @@
+# Where each deadline (SLA hours) comes from. The pipeline reads the hours from categories.yaml sla_h (Severe, High,
+# Medium, Low); this file says, for every category and level, whether the number is an official service timeline
+# (source, clause, the rule in words) or a District IQ default. tests/test_scoring.py checks that the hours here are
+# categories.yaml's and that every source is listed. Nothing here is called official without a source that was read.
+#
+# `official`: levels whose hours follow a published timeline. Levels not listed are District IQ defaults. `fit` says
+#   how far the published rule fits: the rules are set per kind of fault, the deadlines here per category and level.
+#   `match` (optional): a regular expression on the case's complaint sub-type, title and text; the deadline is called
+#   official ONLY for a case of that kind of fault (else it is the District IQ default, with the rule under related).
+# `related`: published timelines that bear on the category but are not the deadline itself (shown as notes); `url`
+#   on an item links its own section when the source's link is another page.
+
+sources:
+  district_iq_default:
+    name: District IQ default
+    official: false
+    note: >-
+      Set by District IQ. No published timeline was found for this service: the Greater Chennai Corporation's
+      complaints page lists contacts but no time limits (https://chennaicorporation.gov.in/gcc/complaints/, checked
+      2026-11-28), and no GCC citizen's charter with grievance timelines was found.
+  cmwssb_charter_2021:
+    name: CMWSSB Citizen's Charter 2021
+    publisher: Chennai Metropolitan Water Supply and Sewerage Board
+    url: https://cmwssb.tn.gov.in/node/161
+    official: true
+    note: page last reviewed by CMWSSB on 07-01-2025
+    checked: 2026-11-28
+  tnerc_sop_2004:
+    name: TNERC Distribution Standards of Performance Regulations, 2004
+    publisher: Tamil Nadu Electricity Regulatory Commission
+    url: https://indiankanoon.org/doc/39155682/
+    also: https://www.tnerc.tn.gov.in/Regulation/files/Reg-120620240228Eng.pdf
+    official: true
+    note: >-
+      Restoration table as substituted by notification TNERC/SPR/9/1-4 (in force from 16.08.2006), read on Indian
+      Kanoon. The 2024 amendment (Tamil Nadu Government Gazette No. 8, Part VI-2, 21 Feb 2024,
+      https://stationeryprinting.tn.gov.in/gazette/2024/8_VI_2_2024.pdf) adds 12(VI) and leaves the table as it is.
+      TNERC's own consolidated copy (the `also` link) could not be opened on 2026-11-28: its HTTPS certificate had
+      expired. Re-check the table there when it opens.
+    checked: 2026-11-28
+  bnss_2023:
+    name: Bharatiya Nagarik Suraksha Sanhita, 2023
+    url: https://indiankanoon.org/doc/166275157/
+    official: true
+    note: the link is section 193 on Indian Kanoon; section 173 was read in the bare-act copy linked on its own item
+    checked: 2026-11-28
+  darpg_2024:
+    name: DARPG Comprehensive Guidelines for Handling Public Grievances (23 Aug 2024)
+    publisher: Department of Administrative Reforms and Public Grievances, Government of India
+    url: https://pgportal.gov.in/Home/Preview/Q29tcHJlaGVuc2l2ZUd1aWRlbGluZXNGb3JIYW5kbGluZ1RoZVB1YmxpY0dyaWV2YW5jZXMucGRm
+    official: true
+    note: OM F.No. S-15/21/2021-(PG)-DARPG(e-7085) of 23 Aug 2024, read in full; applies to central-government grievances on CPGRAMS, not to GCC complaints
+    checked: 2026-11-28
+  tn_petitions_2025:
+    name: Tamil Nadu Government order on grievance petitions (acknowledge in 3 days, resolve within one month)
+    url: https://www.thenewsminute.com/tamil-nadu/tn-govt-tightens-grievance-redressal-system-monthly-reports-made-mandatory
+    official: false
+    note: news report of 14 Jun 2025 on a Government Order; the GO's number and text were not found, so it is not cited as official
+    checked: 2026-11-28
+
+# outer limit used by the tests: no deadline is longer than one month (the limit reported for Tamil Nadu petitions)
+ceiling_h: 720
+
+categories:
+  FLOOD_WATERLOGGING: {h: [6, 24, 72, 120]}
+  FLOOD_RELIEF: {h: [4, 12, 24, 48]}
+  WATERBODY_INFRA: {h: [6, 24, 72, 168]}
+  FLOOD_RISK_SIGNAL: {h: [6, 12, 24, 48]}
+  DRAINAGE_SEWAGE:
+    h: [24, 72, 168, 240]
+    related:
+      - {source: cmwssb_charter_2021, clause: "section 5D(1), 5D(2)", rule: "Sewer blockages: house sewer 2 days, sewer main 4 days (sewers only; storm-water drains have no published GCC timeline)"}
+  DRAIN_WORKS_SAFETY: {h: [12, 48, 120, 168]}
+  ROAD_DAMAGE: {h: [24, 72, 168, 336]}
+  ROAD_ACCIDENT: {h: [2, 6, 24, 48], basis: response}
+  TRAFFIC_OBSTRUCTION: {h: [2, 6, 24, 72]}
+  ENCROACHMENT: {h: [72, 168, 336, 720]}
+  BUILDING_SAFETY: {h: [6, 24, 72, 168]}
+  SOLID_WASTE: {h: [12, 24, 48, 72]}
+  SANITATION_TOILETS: {h: [24, 48, 96, 168]}
+  # Street lights are the Corporation's (GCC-ELE): TNERC's restoration times bind the electricity licensee (TANGEDCO) for
+  # supply faults, not GCC's street lighting, so the deadlines here are District IQ defaults (review, 28 Nov 2026).
+  STREETLIGHT_ELECTRICAL:
+    h: [4, 24, 48, 96]
+    related:
+      - {source: tnerc_sop_2004, clause: "regulation 12(II)", rule: "When the fault is in TANGEDCO's supply (transformer structure, LT line or pillar box, Corporation area): supply restored within 2 hours"}
+      - {source: tnerc_sop_2004, clause: "regulation 12(II)", rule: "When a TANGEDCO distribution transformer fails, Corporation area: supply restored within 24 hours"}
+  DARK_SPOT_SAFETY: {h: [24, 48, 96, 168]}
+  VECTOR_DISEASE: {h: [12, 24, 72, 120]}
+  FOOD_SAFETY: {h: [24, 72, 168, 240]}
+  STRAY_ANIMALS: {h: [24, 72, 168, 240]}
+  HEALTH_SERVICES: {h: [6, 24, 72, 168]}
+  AIR_POLLUTION: {h: [24, 48, 120, 240]}
+  TREES_PARKS: {h: [6, 48, 120, 240]}
+  CRIME_PROPERTY:
+    h: [6, 24, 72, 168]
+    basis: response
+    related:
+      - {source: bnss_2023, clause: "section 173(3)", url: "https://www.advocatekhoj.com/library/bareacts/bharatiyanagarik2023/173.php",
+         rule: "For a cognizable offence punishable with 3 to under 7 years, a preliminary enquiry (with a DSP's prior permission) is finished within 14 days"}
+  CRIME_VIOLENT: {h: [2, 6, 24, 48], basis: response}
+  CRIMES_AGAINST_WOMEN:
+    h: [2, 6, 24, 48]
+    basis: response
+    related:
+      - {source: bnss_2023, clause: "section 193(2)", rule: "Investigation of rape (BNS 64 to 68, 70 and 71) and the POCSO offences named there is completed within two months of recording the information"}
+      - {source: bnss_2023, clause: "section 193(3)(ii)", rule: "The informant or victim is told of the progress of the investigation within 90 days"}
+  SUICIDE_SELF_HARM: {h: [2, 12, 24, 48], basis: response}
+  FIRE_EXPLOSION: {h: [1, 4, 24, 48], basis: response}
+  MISSING_PERSON: {h: [2, 12, 24, 48], basis: response}
+  DRUGS_LIQUOR: {h: [12, 24, 72, 168], basis: response}
+  PUBLIC_ORDER: {h: [2, 6, 24, 48], basis: response}
+  POLICE_OTHER: {h: [6, 24, 72, 168], basis: response}
+  PUBLIC_WORKS: {h: [48, 120, 240, 480]}
+  WATER_SUPPLY:
+    h: [12, 24, 72, 120]
+    official:
+      Medium: {source: cmwssb_charter_2021, clause: "section 5C(2)", rule: "Leakage in service lines: 3 days",
+               match: "leak|burst|pipe ?line|service line|broken pipe|pipe damage"}
+      Low: {source: cmwssb_charter_2021, clause: "section 5C(4)", rule: "No or defective water supply: 5 days",
+            match: "no water|no supply|not (getting|receiving|coming)|low pressure|irregular|defective supply|water supply (problem|issue|failure)|scarcity"}
+    related:
+      - {source: cmwssb_charter_2021, clause: "section 5C(2)", rule: "Leakage in service lines: 3 days"}
+      - {source: cmwssb_charter_2021, clause: "section 5C(4)", rule: "No or defective water supply: 5 days"}
+      - {source: cmwssb_charter_2021, clause: "section 5E(1)", rule: "Where piped water does not reach, free street water by tanker within 4 hours of the complaint"}
+      - {source: cmwssb_charter_2021, clause: "section 5C(3)", rule: "Contaminated water: 7 days where the point is easily found, else 15 days"}
+  CIVIC_FACILITIES: {h: [48, 120, 240, 480]}
+  ADMIN_SERVICES:
+    h: [72, 168, 336, 720]
+    related:
+      - {source: darpg_2024, clause: "paragraph 5.1", rule: "Central-government grievances on CPGRAMS: resolved within 21 days at most, with an interim reply when more time is needed"}
+  OTHER:
+    h: [72, 168, 336, 720]
+    related:
+      - {source: darpg_2024, clause: "paragraph 5.1", rule: "Central-government grievances on CPGRAMS: resolved within 21 days at most, with an interim reply when more time is needed"}

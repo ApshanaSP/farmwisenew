@@ -266,6 +266,13 @@
 .st-cmp-cats ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: 13px; }
 .st-cmp-cats li { display: flex; justify-content: space-between; gap: 10px; color: var(--text-2); }
 .st-cmp-cats li b { color: var(--text); font-variant-numeric: tabular-nums; }
+/* 28 Nov: a comparison's kinds, departments and sources as grouped bars on one scale, and the way into each side's own summary */
+.st-cmp-group { min-width: 0; }
+.st-cmp-group h4 { margin: 0 0 4px; font-size: 13px; font-weight: 600; color: var(--text-2); }
+.st-cmp-open { grid-column: 1 / -1; margin-top: 0; }
+.st-cmp-open .st-btn { white-space: normal; text-align: left; height: auto; min-height: 30px; padding: 5px 10px; }
+/* 28 Nov: the AI's summary of a dashboard, across the page above its figures */
+.st-block.st-ai .st-answer { max-width: none; margin-bottom: 4px; }
 
 /* heat strip */
 .st-heat { display: grid; gap: 3px; overflow-x: auto; font-variant-numeric: tabular-nums; }

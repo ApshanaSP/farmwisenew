@@ -368,14 +368,15 @@ export function rankedBounds(L: L, k: Ranked): Leaflet.LatLngBounds | null {
   return pts.length ? L.latLngBounds(pts) : null;
 }
 
-function facility(L: L, layer: LayerId, p: { id: string; name: string | null; name_ta: string | null; lat: number; lon: number; kind: string; government?: boolean }, ta: boolean) {
+function facility(L: L, layer: LayerId, p: { id: string; name: string | null; name_ta: string | null; lat: number; lon: number; kind: string; government?: boolean; official?: string | null }, ta: boolean) {
   const w = LAYER_WORD[layer];
   const kind = layer === "hospitals" && p.kind === "clinic" ? "clinic" : w.one;
   const name = (ta ? p.name_ta ?? p.name : p.name) ?? (ta ? w.ta_one : `A ${kind}`);
   return L.marker([p.lat, p.lon], {
     pane: "askMarks", keyboard: true, title: `${cap(kind)}: ${name}`,
-    icon: L.divIcon({ className: "", html: `<div class="afac ${w.shape}" data-l="${layer}">${w.letter || "•"}</div>`, iconSize: [22, 22], iconAnchor: [11, 11] })
-  }).bindTooltip(`<b>${esc(name)}</b>${esc(cap(kind))}${p.government ? (ta ? " · அரசு" : " · government") : ""} · ${layer === "police" ? "district store" : "OpenStreetMap"}`, { className: "dtip", direction: "top", offset: [0, -10] });
+    // data-id: a row of the places list under the mouse lifts this glyph, a chosen row rings it (markPins)
+    icon: L.divIcon({ className: "", html: `<div class="afac ${w.shape}" data-l="${layer}" data-id="${esc(p.id)}">${w.letter || "•"}</div>`, iconSize: [22, 22], iconAnchor: [11, 11] })
+  }).bindTooltip(`<b>${esc(name)}</b>${esc(cap(kind))}${p.government ? (ta ? " · அரசு" : " · government") : ""} · ${layer === "police" ? "district store" : "OpenStreetMap"}${p.official ? (ta ? " · அதிகாரப் பட்டியலில்" : " · on an official list") : ""}`, { className: "dtip", direction: "top", offset: [0, -10] });
 }
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -566,10 +567,10 @@ export function drawHeat(L: L, map: Leaflet.Map, pts: { lat: number; lon: number
   return new (Heat as unknown as new () => Leaflet.Layer)();
 }
 
-/** Lifts the hovered row's pin and rings the focused one. */
+/** Lifts the hovered row's pin and rings the focused one (a case's pin, or a place's glyph from the places list). */
 export function markPins(container: HTMLElement, hover: string | null, focus: string | null) {
-  container.querySelectorAll<HTMLElement>(".apin.lift").forEach((e) => e.classList.remove("lift"));
-  if (hover) container.querySelectorAll<HTMLElement>(`.apin[data-id="${CSS.escape(hover)}"]`).forEach((e) => e.classList.add("lift"));
-  container.querySelectorAll<HTMLElement>(".apin.on").forEach((e) => e.classList.remove("on"));
-  if (focus) container.querySelectorAll<HTMLElement>(`.apin[data-id="${CSS.escape(focus)}"]`).forEach((e) => e.classList.add("on"));
+  container.querySelectorAll<HTMLElement>(".apin.lift, .afac.lift").forEach((e) => e.classList.remove("lift"));
+  if (hover) container.querySelectorAll<HTMLElement>(`.apin[data-id="${CSS.escape(hover)}"], .afac[data-id="${CSS.escape(hover)}"]`).forEach((e) => e.classList.add("lift"));
+  container.querySelectorAll<HTMLElement>(".apin.on, .afac.on").forEach((e) => e.classList.remove("on"));
+  if (focus) container.querySelectorAll<HTMLElement>(`.apin[data-id="${CSS.escape(focus)}"], .afac[data-id="${CSS.escape(focus)}"]`).forEach((e) => e.classList.add("on"));
 }

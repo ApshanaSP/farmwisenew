@@ -1,20 +1,15 @@
 "use client";
 
-/* The officer dashboard's cards. Each takes the console context `c` and renders one panel of the demo layout. */
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import SatMap from "@/components/collector/app/SatMap";
+/* The officer page's cards under the map. Each takes the console context `c`; the look is the Collector console's (collector.css, marina.css). */
+import { useState, type CSSProperties } from "react";
 import { I } from "@/components/collector/app/icons";
-import { Chart, Empty, HBars, SEV_HEX, SevChip, fmtShort, fromManu, fullTitle, rel, useSize, type Row } from "@/components/collector/app/lib";
-import { FEEDBACK_LABEL, STAGE_CLASS, STAGE_LABEL, STAGE_SHORT, TABS, TAB_LABEL, type FeedbackKind, type Stage, type Tab } from "@/lib/officer/stages";
-import { useLangNow } from "@/lib/i18n/lang";
-import { bucketLabels, deadlineOf } from "./format";
-import type { InsightModule } from "@/lib/officer/insights";
-import { MODULE_ICON } from "./Insights";
-import { labelIn } from "@/lib/period/day";
+import { OfficerCard } from "@/components/collector/app/Overview";
+import { Chart, Empty, HBars, fmtDate, fullTitle, rel, type Row } from "@/components/collector/app/lib";
+import { FEEDBACK_LABEL, STAGE_CLASS, STAGE_LABEL, STAGE_SHORT, type FeedbackKind, type Stage } from "@/lib/officer/stages";
+import { labelLower } from "@/lib/period/day";
+import type { DeptBriefing } from "@/lib/officer/insights";
+import { bucketLabels } from "./format";
 import type { Ctx } from "./OfficerApp";
-
-const NONE: Row[] = [];
-const noop = () => undefined;
 
 // ------------------------------------------------------------ small parts --
 
@@ -22,19 +17,21 @@ const noop = () => undefined;
 export function StageChip({ r, compact }: { r: Row; compact?: boolean }) {
   const s = r.stage as Stage;
   const returned = r.returned && (s === "action" || s === "approved");
-  const note = returned ? `Returned by the Collector${r.returnNote ? `: ${r.returnNote}` : ""}` : undefined;
-  if (compact && returned) return <span className="chip sev-high" title={note}><I n="refresh" />Returned</span>;
+  // a closed case the Collector reopened reads "Reopened"; work sent back before it was closed stays "Returned"
+  const word = (r as Row & { reopened?: boolean }).reopened ? "Reopened" : "Returned";
+  const note = returned ? `${word} by the Collector${r.returnNote ? `: ${r.returnNote}` : ""}` : undefined;
+  if (compact && returned) return <span className="chip sev-high" title={note}><I n="refresh" />{word}</span>;
   if (compact) return <span className={`st ${STAGE_CLASS[s] ?? "st-open"}`} title={STAGE_LABEL[s]}>{STAGE_SHORT[s] ?? s}</span>;
   return (
     <>
       <span className={`st ${STAGE_CLASS[s] ?? "st-open"}`}>{STAGE_LABEL[s] ?? s}</span>
-      {returned ? <> <span className="chip sev-high" title={note}>Returned</span></> : null}
+      {returned ? <> <span className="chip sev-high" title={note}>{word}</span></> : null}
     </>
   );
 }
 
 /** The one thing the officer can do next: approve a new grievance, or complete and send one in action. */
-export function NextStep({ r, c }: { r: Row; c: Ctx }) {
+export function NextStep({ r, c }: { r: Row; c: Pick<Ctx, "busy" | "approve" | "openSend"> }) {
   const busy = c.busy.has(r.id);
   const run = (e: React.MouseEvent, f: () => void) => { e.stopPropagation(); f(); };
   switch (r.stage as Stage) {
@@ -66,138 +63,53 @@ export function SourceIcons({ r }: { r: Row }) {
   return out.length ? <>{out}</> : <span className="dim">—</span>;
 }
 
-// ------------------------------------------------------------------- map --
-
-export function MapCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
-  const d = c.ov;
-  const layers = useMemo(() => ({ Severe: true, High: true, Medium: true, Low: true, added: false, stations: false }), []);
-  const pins = useMemo(() => d.map.pins.map((p) => ({ ...p, status: STAGE_LABEL[p.stage as Stage] ?? p.stage })), [d.map.pins]);
-  return (
-    <article className="card o-map" style={style}>
-      <div className="ch"><I n="map" /><h2>{c.dept.short} Grievance Map</h2></div>
-      <div className="map-cb">
-        <div className="map-wrap">
-          <SatMap geo={c.geo} zoneCounts={d.map.zoneCounts} pins={pins} zone={c.zone} layers={layers} stations={[]} added={NONE}
-            mode={c.taluk ? "taluks" : "zones"} taluk={c.taluk} focus={null} onZone={(z) => c.setZone(z)} onTaluk={(t) => c.setTaluk(t)}
-            onPin={(id) => c.openGrievance(id)} onStation={noop} onItem={noop} zoneTip={c.zoneTip} pinColor={(p) => SEV_HEX[p.sev] ?? "#4D8DFF"} />
-          <div className="map-leg">
-            {d.map.sevCounts.map((s) => <span key={s.sev}><i style={{ background: SEV_HEX[s.sev] }} />{s.sev} ({s.n})</span>)}
-          </div>
-          {!c.taluk && <div className="map-heat"><span>Open grievances by zone</span><div /><span><em style={{ fontStyle: "normal" }}>Fewer</em><em style={{ fontStyle: "normal" }}>More</em></span></div>}
-        </div>
-      </div>
-    </article>
-  );
-}
-
-// ------------------------------------------------------------ grievances --
-
-/** column widths (%): grievance and place, severity, reported / updated, next step */
-const COLS = [42, 15, 18, 25];
-/** table header and row heights (px) at the card's font size, for fitting whole rows */
-const ROW_H = { head: 33, row: 47 };
-
-const EMPTY: Record<Tab, string> = {
-  new: "No new grievances in this period.",
-  action: "Nothing in action right now.",
-  sent: "No reports waiting for the Collector.",
-  verified: "Nothing verified in this period."
-};
-
-/** The grievance board: one tab per workflow stage, the one step each grievance needs, as many rows as fit. */
-export function GrievancesCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
-  const uiLang = useLangNow();
-  const [wrap, size] = useSize<HTMLDivElement>();
-  const { setPer, fit } = c;
-  // as many rows as fit the card (the console never scrolls on desktop); phones get a fixed page
-  useEffect(() => {
-    if (!fit) setPer(8);
-    else if (size.h > 0) setPer(Math.max(3, Math.floor((size.h - ROW_H.head) / ROW_H.row)));
-  }, [size.h, fit, setPer]);
-
-  const L = c.list;
-  const counts: Record<Tab, number> = { new: c.ov.counts.new, action: c.ov.counts.action, sent: c.ov.counts.sent, verified: c.ov.counts.verified };
-  const from = L && L.total ? L.page * L.per + 1 : 0;
-  const to = L ? Math.min(L.total, L.page * L.per + L.rows.length) : 0;
-  const pages = L ? Math.max(1, Math.ceil(L.total / L.per)) : 1;
-  const recent = c.tab === "new" || c.tab === "action";
-  return (
-    <article className="card o-q" id="o-queue" style={style}>
-      <div className="ch"><I n="tasks" /><h2>Grievances <span>· Approve → Complete → you close it (severe: the Collector verifies)</span></h2>
-        <span className="pgr">
-          <span>{from}–{to} of {L?.total.toLocaleString("en-IN") ?? "…"}</span>
-          <button onClick={() => c.setPage((L?.page ?? 0) - 1)} disabled={!L || L.page <= 0} aria-label="Previous page"><I n="chevl" /></button>
-          <button onClick={() => c.setPage((L?.page ?? 0) + 1)} disabled={!L || L.page >= pages - 1} aria-label="Next page"><I n="chevr" /></button>
-        </span>
-      </div>
-      <div className="btabs oq-tabs" role="tablist" aria-label="Grievances">
-        {TABS.map((t) => (
-          <button key={t} role="tab" aria-selected={c.tab === t} className={c.tab === t ? "on" : ""} onClick={() => c.setTab(t)}>
-            {TAB_LABEL[t]} <b className="tab-n">{counts[t].toLocaleString("en-IN")}</b>
-          </button>
-        ))}
-      </div>
-      {c.tab === "new" && L?.awaitingNote && <p className="dim" role="status" data-testid="queue-awaiting" style={{ margin: 0, padding: "4px 12px", fontSize: 12 }}>{uiLang === "ta" ? L.awaitingNote.ta : L.awaitingNote.en}</p>}
-      <div className="cb">
-        <div className="tbl-wrap" ref={wrap}>
-          <table>
-            <colgroup>{COLS.map((w, k) => <col key={k} style={{ width: `${w}%` }} />)}</colgroup>
-            <thead><tr><th>Grievance</th><th>Severity</th><th>{recent ? "Reported" : "Updated"}</th><th>Next step</th></tr></thead>
-            <tbody style={{ opacity: c.listLoading && L ? 0.55 : 1 }}>
-              {c.listError ? (
-                <tr><td colSpan={4}><div className="o-state err"><I n="alert" />{c.listError}<button className="btn sm plain" onClick={c.retryList}>Try again</button></div></td></tr>
-              ) : !L ? (
-                Array.from({ length: 5 }, (_, k) => <tr key={k} className="o-skel">{Array.from({ length: 4 }, (_, j) => <td key={j}><span /></td>)}</tr>)
-              ) : L.rows.length ? (
-                L.rows.map((r) => (
-                  <tr key={r.id} className={r.id === c.fresh ? "flash" : ""} onClick={() => c.openGrievance(r.id)} title={`${r.id} · ${fullTitle(r)}`}>
-                    <td className="oq-g">
-                      <b>{r.type}{r.returned && <span className="chip sev-high" title={r.returnNote ?? "Returned by the Collector"}><I n="refresh" />Returned</span>}
-                        {r.instructed && <span className="chip chip-src" title="The Collector sent your department an instruction about this case: open it to read it"><I n="send" />Collector&apos;s instruction</span>}</b>
-                      <small>{[r.loc, r.zone_name ?? "Chennai"].filter(Boolean).join(" · ")}{r.complaints ? ` · ${r.complaints} complaint${r.complaints === 1 ? "" : "s"}` : ""}{r.outlets ? " · in the news" : ""}{fromManu(r) ? " · Manu (paper petition)" : ""}<DueNote r={r} now={c.now} /></small>
-                    </td>
-                    <td><SevChip s={r.sev} /></td>
-                    <td className="dim">{rel(recent ? r.t : r.updated, c.now)}</td>
-                    <td><NextStep r={r} c={c} /></td>
-                  </tr>
-                ))
-              ) : (
-                <tr><td colSpan={4}><Empty>{EMPTY[c.tab]}</Empty></td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-/** An open grievance's own deadline in the work queue's second line (officer-day-10): missed in red, else when it is due. */
-function DueNote({ r, now }: { r: Row; now: string }) {
-  const dl = deadlineOf(r, now);
-  if (!dl || !["new", "approved", "action", "sent"].includes(String(r.stage))) return null;
-  return dl.missed ? <> · <span style={{ color: "var(--sev)" }}>deadline missed ({fmtShort(dl.due)})</span></> : <> · due {fmtShort(dl.due)}</>;
-}
-
 // ------------------------------------------------------------------ news --
 
-export function NewsCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
-  const items = c.ov.news;
+export type NewsTab = "news" | "gaps";
+
+/**
+ * Latest news for the department, as the Collector's Overview card: the news linked to the department's incidents, and (a tab) the
+ * department's incidents seen only in the news, with no department record yet (the Collector's "Only in the news", filtered).
+ */
+export function NewsCard({ c, gaps, gapsFailed, tab, setTab, style }: {
+  c: Ctx; gaps: DeptBriefing | null | undefined; gapsFailed?: boolean; tab: NewsTab; setTab: (t: NewsTab) => void; style?: CSSProperties;
+}) {
+  const seen = new Set<string>();
+  const news = (c.ov.news as Row[]).filter((r) => { const t = fullTitle(r).toLowerCase(); return seen.has(t) ? false : (seen.add(t), true); });
+  const when = c.ov.period === "daily" ? labelLower(c.ov.periodInfo.label) : "in this period";
   return (
-    <article className="card o-news" style={style}>
-      <div className="ch"><I n="news" /><h2>{c.dept.short} in the News <span>· {c.ov.periodInfo.label}</span></h2><span className="cnt-b">{items.length}</span></div>
-      <div className="o-list">
-        {items.length ? items.map((i) => (
-          <button key={i.id} className="brief" onClick={() => c.openGrievance(i.id, "news")}>
-            <span className="bic t-info"><I n="news" /></span>
+    <article className="card a-brief ofc-news" id="ofc-news" style={style}>
+      <div className="ch"><I n="news" /><h2>Latest news</h2>
+        {tab === "news" && news.length > 0 && <button className="more" onClick={c.openNewsAll}>See more<I n="right" /></button>}
+      </div>
+      <div className="btabs" role="tablist" aria-label="News">
+        <button role="tab" aria-selected={tab === "news"} className={tab === "news" ? "on" : ""} onClick={() => setTab("news")}
+          title={`News reports linked to ${c.dept.short} incidents`}>In the news <b className="tab-n">{news.length}</b></button>
+        <button role="tab" aria-selected={tab === "gaps"} className={`${tab === "gaps" ? "on" : ""}${gaps?.gapsTotal ? " warn" : ""}`} onClick={() => setTab("gaps")}
+          title={`${c.dept.short} incidents seen only in the news, with no department record yet`}>
+          Only in the news{gaps && <> <b className="tab-n">{gaps.gapsTotal}</b></>}</button>
+      </div>
+      <div className="fitlist scroll">
+        {tab === "news" ? (news.length ? news.map((i) => (
+          <button key={i.id} className="brief" onClick={() => c.openGrievance(i.id, "news")} title={fullTitle(i)}>
+            <span className="bic t-high"><I n="news" /></span>
             <span style={{ minWidth: 0, flex: 1 }}>
               <b>{fullTitle(i)}</b>
-              <span className="loc">{i.zone_name ?? "Chennai"} · {i.type} · {rel(i.t, c.now)}</span>
+              <span className="loc">{(i.outletNames as string[] | undefined)?.length ? (i.outletNames as string[]).join(", ") : "News"} · {i.zone_name ?? "Chennai"} · {rel(i.t, c.now)}</span>
               {i.summary && <p>{i.summary}</p>}
-              <span className="news-ol">Reported by {i.outletNames.length || i.outlets}:{i.outletNames.map((n: string) => <span key={n} className="chip chip-np">{n}</span>)}</span>
             </span>
           </button>
-        )) : <Empty>No news reports in this period.</Empty>}
+        )) : <Empty>No news about {c.dept.short} {when}.</Empty>)
+          : gaps === undefined ? <Empty>{gapsFailed ? "This list could not be loaded. Reload the data from the Menu." : "Reading the news…"}</Empty>
+            : gaps?.gaps.length ? gaps.gaps.map((g) => (
+              <button key={g.id} className="brief" onClick={() => c.openGrievance(g.id, "news")} title="Open the incident and its news reports">
+                <span className="bic t-info"><I n="alert" /></span>
+                <span style={{ minWidth: 0, flex: 1 }}>
+                  <b>{g.title || g.type}</b>
+                  <span className="loc">{[g.zone_name ?? "Chennai", g.sev, g.outlets ? `${g.outlets} outlet${g.outlets === 1 ? "" : "s"}` : null, g.t ? rel(g.t, c.now) : null].filter(Boolean).join(" · ")}</span>
+                </span>
+              </button>
+            )) : <Empty>Every {c.dept.short} incident in the news has a department record.</Empty>}
       </div>
     </article>
   );
@@ -218,28 +130,15 @@ export function TrendCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
   const total = vals.reduce((s, v) => s + v, 0);
   return (
     <article className="card o-tr" style={style}>
-      <div className="ch"><I n="chart" /><h2>Trend <span>· {P.label}</span></h2></div>
-      <div className="cb">
+      <div className="ch"><I n="line" /><h2>Grievances reported <span>· {P.label}</span></h2>
         <select className="sel" value={pickSeries ? cat : "all"} onChange={(e) => setCat(e.target.value)} aria-label="Grievance type">
           <option value="all">All {c.dept.short} grievances</option>
           {series.map((s) => <option key={s.code} value={s.code}>{s.l}</option>)}
         </select>
+      </div>
+      <div className="cb">
         {total ? <Chart kind="bar" vals={vals} labels={labels} fmt={(v) => `${v.toLocaleString("en-IN")} grievances`} />
           : <Empty>No grievances reported in this period.</Empty>}
-      </div>
-    </article>
-  );
-}
-
-// ------------------------------------------------------- type, area, feedback --
-
-export function TypeCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
-  const rows = c.ov.byType;
-  return (
-    <article className="card o-cat" style={style}>
-      <div className="ch"><I n="chart" /><h2>Complaints by Type <span>· {c.ov.periodInfo.label}</span></h2></div>
-      <div className="cb">
-        {rows.length ? <HBars rows={rows.map((r) => ({ l: r.l, v: r.v, onClick: () => c.openList(r.code, r.l) }))} /> : <Empty>No complaints in this period.</Empty>}
       </div>
     </article>
   );
@@ -248,7 +147,7 @@ export function TypeCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
 /** Open grievances by zone, then (with a zone chosen) by taluk, then (with a taluk chosen) by ward. */
 export function AreaCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
   const { level, rows } = c.ov.byArea;
-  const title = level === "zone" ? "Open by Zone" : level === "taluk" ? "Open by Taluk" : "Open by Ward";
+  const title = level === "zone" ? "Open by zone" : level === "taluk" ? "Open by taluk" : "Open by ward";
   const scope = level === "taluk" ? c.zoneName : level === "ward" ? c.talukName : null;
   const click = (key: string) => (level === "zone" ? () => c.setZone(Number(key)) : level === "taluk" ? () => c.setTaluk(key) : undefined);
   return (
@@ -261,17 +160,20 @@ export function AreaCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
   );
 }
 
+// ----------------------------------------------------------- the Collector --
+
 const FEEDBACK_TONE: Record<FeedbackKind, string> = { verified: "t-low", resolved: "t-low", returned: "t-high", rejected: "t-sev", escalated: "t-high" };
 const FEEDBACK_ICON: Record<FeedbackKind, "checkc" | "refresh" | "x" | "alert"> = { verified: "checkc", resolved: "checkc", returned: "refresh", rejected: "x", escalated: "alert" };
 
-export function FeedbackCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
+/** The Collector's decisions on the department's cases in the period, newest first (verified, closed, returned, rejected, escalated). */
+export function FeedbackCard({ c, style, unread }: { c: Pick<Ctx, "ov" | "now" | "openGrievance">; style?: CSSProperties; unread?: Set<string | number> }) {
   const items = c.ov.feedback;
   return (
     <article className="card o-fb" style={style}>
-      <div className="ch"><I n="shield" /><h2>Collector Feedback</h2></div>
+      <div className="ch"><I n="shield" /><h2>From the Collector</h2>{items.length > 0 && <span className="cnt-b">{items.length}</span>}</div>
       <div className="o-list">
         {items.length ? items.map((f) => (
-          <button key={f.did} className="brief" onClick={() => c.openGrievance(f.id)}>
+          <button key={f.did} className={`brief${unread?.has(f.did) ? " unread" : ""}`} onClick={() => c.openGrievance(f.id)}>
             {/* what the decision did: a reject is closed for good, not returned for rework (officer-day-05) */}
             <span className={`bic ${FEEDBACK_TONE[f.kind as FeedbackKind] ?? "t-high"}`}><I n={FEEDBACK_ICON[f.kind as FeedbackKind] ?? "refresh"} /></span>
             <span style={{ minWidth: 0, flex: 1 }}>
@@ -285,69 +187,47 @@ export function FeedbackCard({ c, style }: { c: Ctx; style?: CSSProperties }) {
   );
 }
 
-// ------------------------------------------------------------ priorities --
-
-interface Priority { key: string; tone: string; icon: Parameters<typeof I>[0]["n"]; title: string; sub: string; run: () => void }
+// ------------------------------------------------------------- your office --
 
 /**
- * What needs the officer now, most urgent first: severe grievances to approve, work the Collector sent back,
- * deadlines missed and about to be missed, the grievance waiting longest, and the first finding of each store
- * source that concerns the department (a warning, a full lake, a hospital near capacity, a rising complaint type).
- * Every line is a figure from the store and opens the list or detail behind it.
+ * The signed-in officer and the department's officials: the login and the department (from the department master), the head of
+ * department and, with a zone chosen, its zonal officer, with phone and e-mail as the GCC Who's who publishes them (the source and the
+ * day it was read are said under them). Nothing here is invented: an official who is not listed is said to be not listed.
  */
-export function PrioritiesCard({ c, modules, openModule, style }: {
-  c: Ctx; modules: InsightModule[] | null; openModule: (key: string) => void; style?: CSSProperties;
-}) {
-  const k = c.ov.counts;
-  const P = labelIn(c.ov.periodInfo.label);
-  const items: Priority[] = [];
-  const n = (v: number) => v.toLocaleString("en-IN");
-  if (k.new) items.push({
-    key: "new", tone: k.newSerious ? "t-sev" : "t-info", icon: "bell",
-    title: `${n(k.new)} new grievance${k.new === 1 ? "" : "s"} waiting for your approval`,
-    sub: k.newSerious ? `${n(k.newSerious)} of them severe or high: approve these first` : `Reported ${P}`, run: () => c.setTab("new")
-  });
-  if (k.returned) items.push({
-    key: "returned", tone: "t-high", icon: "refresh", title: `${n(k.returned)} returned by the Collector for rework`,
-    sub: "Redo the work and send a fresh completion report", run: () => c.setTab("action")
-  });
-  if (k.overdue) items.push({
-    key: "overdue", tone: "t-sev", icon: "clock", title: `${n(k.overdue)} open past the deadline`,
-    sub: c.ov.topZone ? `Most open work in ${c.ov.topZone.name} (${n(c.ov.topZone.n)})` : "Close or escalate them today", run: () => c.openList(null, "Past deadline, still open", "overdue")
-  });
-  if (k.due) items.push({
-    key: "due", tone: "t-high", icon: "timer", title: `${n(k.due)} due within the next 24 hours`,
-    sub: "Not late yet: finish these before they cross the deadline", run: () => c.openList(null, "Due within 24 hours", "due")
-  });
-  const o = c.ov.oldest;
-  if (o) items.push({
-    key: "oldest", tone: "t-violet", icon: "tasks", title: `Waiting longest: ${o.type}${o.loc ? `, ${o.loc}` : ""}`,
-    sub: `Reported ${rel(o.t, c.now)} · ${STAGE_LABEL[o.stage as Stage] ?? o.stage}${o.zone_name ? ` · ${o.zone_name}` : ""}`, run: () => c.openGrievance(o.id)
-  });
-  if (k.sent) items.push({
-    key: "sent", tone: "t-violet", icon: "send", title: `${n(k.sent)} report${k.sent === 1 ? "" : "s"} waiting for the Collector's check`,
-    sub: "Nothing to do until the Collector decides", run: () => c.setTab("sent")
-  });
-  // the first finding of every source that concerns the department (its own work record is already above)
-  for (const m of modules ?? []) {
-    // the work record is above; complaint types have their own card beside this one
-    if (m.key === "work" || m.key === "patterns" || m.empty || !m.notes[0]) continue;
-    items.push({ key: `m:${m.key}`, tone: m.stale ? "t-med" : "t-teal", icon: MODULE_ICON[m.key] ?? "doc", title: m.notes[0], sub: `${m.title} · ${m.source}`, run: () => openModule(m.key) });
-  }
+export function ContactsCard({ c, user, style }: { c: Ctx; user: string; style?: CSSProperties }) {
+  const contacts = ((c.ov.board.snapshot as Row).contacts as Row[] | undefined) ?? [];
+  const own = contacts.filter((x) => x.dept_code === c.dept.code);
+  const zonal = contacts.filter((x) => x.zone_no != null);
+  const head = own[0] ?? (c.ov.head as Row | null);
+  const src = own[0] ?? zonal[0] ?? null;
   return (
-    <article className="card o-pri" style={style}>
-      <div className="ch"><I n="target" /><h2>What needs you now <span>· {c.ov.periodInfo.label}{c.areaName ? ` · ${c.areaName}` : ""}</span></h2>
-        {items.length > 0 && <span className="cnt-b">{items.length}</span>}</div>
+    <article className="card o-me" style={style}>
+      <div className="ch"><I n="user" /><h2>Your office</h2>
+        <button className="more" onClick={c.openContacts}><I n="phone" />All contacts</button></div>
       <div className="o-list">
-        {items.length ? items.map((p) => (
-          <button key={p.key} className="opri" onClick={p.run}>
-            <span className={`bic ${p.tone}`}><I n={p.icon} /></span>
-            <span style={{ minWidth: 0, flex: 1 }}><b>{p.title}</b><small>{p.sub}</small></span>
-            <I n="chevr" className="opri-go" />
-          </button>
-        )) : <Empty>Nothing needs you right now: no new, returned, late or due grievances {P}.</Empty>}
-        {modules == null && <div className="opri-load">Reading the department&apos;s data…</div>}
+        <div className="o-me-who">
+          <span className="avatar" aria-hidden="true">{c.dept.short.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase()}</span>
+          <span style={{ minWidth: 0 }}>
+            <small>Signed in as</small>
+            <b title={user}>{user.split("@")[0]}</b>
+            <span>Department officer · {c.dept.name}{c.dept.org ? `, ${c.dept.org}` : ""}</span>
+          </span>
+        </div>
+        {head ? <OfficerCard o={head} label="Head of department" /> : (
+          <div className="officer"><span className="avatar">{c.dept.head.slice(0, 2).toUpperCase()}</span>
+            <span style={{ minWidth: 0 }}><small className="olabel">Head of department</small><b>{c.dept.head}</b><small className="desig">Not listed on the GCC Who&apos;s who page</small></span></div>
+        )}
+        {head?.office && <p className="o-me-note"><I n="pin" /><span>Office: {String(head.office)}</span></p>}
+        {c.zone && (zonal.length ? zonal.slice(0, 1).map((o) => <OfficerCard key={o.contact_id ?? o.name} o={o} label={`Zonal officer · ${c.zoneName}`} />)
+          : <p className="o-me-note">The zonal officer of {c.zoneName} is not listed on the GCC Who&apos;s who page.</p>)}
+        {c.dept.route && <p className="o-me-note"><I n="send" /><span>Escalation: {c.dept.route}</span></p>}
+        <p className="o-me-src">
+          {src?.source_url ? <>Phone and e-mail: <a href={String(src.source_url)} target="_blank" rel="noreferrer">Greater Chennai Corporation, Who&apos;s who</a>
+            {src.retrieved_on ? `, read ${fmtDate(`${src.retrieved_on} 00:00:00`)}` : ""}. </> : null}
+          GCC 24-hour complaints cell: 1913.
+        </p>
       </div>
     </article>
   );
 }
+

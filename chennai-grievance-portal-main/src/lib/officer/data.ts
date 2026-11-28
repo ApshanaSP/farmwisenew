@@ -33,6 +33,8 @@ import { bumpDataEpoch } from "@/lib/collector/epoch";
 import { CLOSED_BY_DEPARTMENT, scrubCitizenDetails } from "@/lib/collector/scrub";
 import { followupDept } from "@/lib/collector/followupdept";
 import { liveMeta } from "@/lib/live/state";
+import { INQUIRY_TAG, answeredInquiry, reportRefusal, wasReopened } from "@/lib/cases/rules";
+import { resolutionsFor, type Resolution } from "@/lib/cases/resolution";
 
 type Row = Record<string, any>;
 
@@ -108,8 +110,21 @@ const STAGE_SQL = `CASE
     ELSE 'closed' END`;
 
 /**
+ * The Collector's questions about closed cases that the department has not answered yet (lib/cases/rules.ts: a 'note' with escalate_to
+ * 'inquiry'; its answer a 'note' with escalate_to 'answer:<id>'), one row per case with the newest such question. Few rows: no parameter.
+ */
+const PENDING_INQUIRY_SQL = () => `SELECT q.incident_id, MAX(q.decision_id) AS qid FROM ${ops("collector_decisions")} q
+  WHERE q.decision = 'note' AND q.escalate_to = '${INQUIRY_TAG}'
+    AND NOT EXISTS (SELECT 1 FROM ${ops("collector_decisions")} a WHERE a.incident_id = q.incident_id AND a.decision = 'note'
+                    AND a.escalate_to = CONCAT('answer:', q.decision_id))
+  GROUP BY q.incident_id`;
+
+/**
  * `WITH ... w AS (...)`: the department's incidents with their workflow stage. Callers
  * append `SELECT ... FROM w WHERE ...`.
+ * `returned`: the Collector sent it back and the department has not sent it again; `reopened`: of those, the ones sent back while closed
+ * (the Collector's Reopen, lib/cases/rules.ts wasReopened), not a send-back of work waiting for the Collector; `asked`: the Collector asked
+ * a question about it that the department has not answered.
  */
 function withStage(dept: string, now: string) {
   return {
@@ -119,23 +134,29 @@ function withStage(dept: string, now: string) {
           FROM ${ops("officer_steps")} s WHERE s.dept_code = ?) x WHERE rn = 1),
       ls AS (SELECT incident_id, MAX(at) AS at FROM ${ops("officer_steps")} WHERE dept_code = ? AND step = 'send' GROUP BY incident_id),
       cd AS (
-        SELECT incident_id, decision, decided_at, note FROM (
+        SELECT incident_id, decision, decided_at, note, prev FROM (
           SELECT d.incident_id, d.decision, d.decided_at, d.note,
-                 ROW_NUMBER() OVER (PARTITION BY d.incident_id ORDER BY d.decision_id DESC) AS rn
+                 ROW_NUMBER() OVER (PARTITION BY d.incident_id ORDER BY d.decision_id DESC) AS rn,
+                 LAG(d.decision) OVER (PARTITION BY d.incident_id ORDER BY d.decision_id) AS prev
           FROM ${ops("collector_decisions")} d JOIN incidents di ON di.incident_id = d.incident_id AND di.lead_dept = ?
           WHERE d.decision IN ('verify', 'reopen', 'resolve', 'reject')) x WHERE rn = 1),
+      qa AS (${PENDING_INQUIRY_SQL()}),
       w AS (
         SELECT i.incident_id, ${TITLE} AS title, i.category_label, i.category_code, i.zone_no, i.zone_name, i.ward_no, i.taluk_code, i.place_text,
                i.lat, i.lon, i.severity_level, i.status_std, i.citizen_complaints, i.outlet_count, i.sources, i.channels, i.source_count, i.officer,
                i.summary, i.media_only, i.first_reported_at, i.sla_due_at, i.closed_at, i.sla_breached, i.is_open,
                ${STAGE_SQL} AS stage,
                (cd.decision = 'reopen' AND (ls.at IS NULL OR ${DECIDED_AFTER("cd.decided_at", "ls.at")})) AS returned,
+               (cd.decision = 'reopen' AND (ls.at IS NULL OR ${DECIDED_AFTER("cd.decided_at", "ls.at")})
+                 AND (cd.prev IN ('verify', 'resolve', 'reject') OR (cd.prev IS NULL AND i.is_open = 0))) AS reopened,
+               (qa.qid IS NOT NULL) AS asked, qa.qid AS ask_id,
                cd.note AS c_note, cd.decision AS c_decision, cd.decided_at AS c_at,
                GREATEST(i.last_update_at, COALESCE(os.at, i.last_update_at), COALESCE(cd.decided_at, i.last_update_at)) AS upd
         FROM incidents i
         LEFT JOIN os ON os.incident_id = i.incident_id
         LEFT JOIN ls ON ls.incident_id = i.incident_id
         LEFT JOIN cd ON cd.incident_id = i.incident_id
+        LEFT JOIN qa ON qa.incident_id = i.incident_id
         WHERE i.lead_dept = ? AND i.first_reported_at <= ?)`,
     params: [dept, dept, dept, dept, now] as unknown[]
   };
@@ -167,13 +188,14 @@ export type ListFlagKey = keyof ReturnType<typeof flagSql> | "due";
 
 const ROW = `w.incident_id AS id, w.title, w.category_label AS type, w.category_code AS cat, w.zone_no AS zone, w.zone_name,
   w.ward_no AS ward, w.taluk_code AS taluk, w.place_text AS loc, w.lat, w.lon, w.severity_level AS sev, w.status_std AS status, w.stage,
-  w.returned, w.c_note AS returnNote, w.citizen_complaints AS complaints, w.outlet_count AS outlets, w.sources, w.channels, w.source_count, w.officer,
+  w.returned, w.reopened, w.asked, w.ask_id AS askId, w.c_note AS returnNote, w.citizen_complaints AS complaints, w.outlet_count AS outlets, w.sources, w.channels, w.source_count, w.officer,
   ${fmt("w.first_reported_at")} AS t, ${fmt("w.upd")} AS updated, ${fmt("w.sla_due_at")} AS due_at, w.sla_breached AS breached`;
 const SEV_ORDER = `FIELD(w.severity_level, 'Severe', 'High', 'Medium', 'Low')`;
 const OPEN_STAGES = `('new', 'approved', 'action', 'sent')`;
 
 function tidy<T extends Row>(r: T): T {
-  return { ...r, returned: Number(r.returned) === 1, complaints: Number(r.complaints ?? 0), outlets: Number(r.outlets ?? 0) };
+  return { ...r, returned: Number(r.returned) === 1, reopened: Number(r.reopened) === 1, asked: Number(r.asked) === 1,
+    askId: r.askId == null ? null : Number(r.askId), complaints: Number(r.complaints ?? 0), outlets: Number(r.outlets ?? 0) };
 }
 
 // ----------------------------------------------------------- geography --
@@ -246,7 +268,7 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
   const areaKey = level === "zone" ? "w.zone_no" : level === "taluk" ? "w.taluk_code" : "w.ward_no";
   const areaLabel = level === "zone" ? "w.zone_name" : level === "taluk" ? "COALESCE(tk.name, w.taluk_code)" : "CONCAT('Ward ', w.ward_no)";
 
-  const [counts, pins, byZone, byArea, byType, news, trend, feedback, geo, meta, feeds, contacts, oldest, board, qNew, qAction, bySev] = await Promise.all([
+  const [counts, pins, byZone, byArea, byType, news, trend, feedback, geo, meta, feeds, contacts, oldest, board, qNew, qAction, bySev, qAsked] = await Promise.all([
     q(`${b.sql} SELECT SUM(stage = 'new') AS new, SUM(stage IN ('approved', 'action')) AS action, SUM(stage = 'sent') AS sent,
          SUM(stage = 'verified') AS verified, SUM(stage IN ('approved', 'action') AND returned) AS returned,
          SUM(${flagSql(now).serious}) AS serious, SUM(${flagSql(now).overdue}) AS overdue,
@@ -282,7 +304,9 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
     grievanceList(dept, { ...s, tab: "new", page: 0, per: 8, cat: null, q: null }),
     grievanceList(dept, { ...s, tab: "action", page: 0, per: 8, cat: null, q: null }),
     // the map legend counts every open grievance in the window, not the capped pins drawn (OPEN-4)
-    q(`${b.sql} SELECT w.severity_level AS sev, COUNT(*) AS n FROM w WHERE ${win.sql} AND w.stage IN ${OPEN_STAGES} AND w.lat IS NOT NULL GROUP BY w.severity_level`, [...b.params, ...win.params])
+    q(`${b.sql} SELECT w.severity_level AS sev, COUNT(*) AS n FROM w WHERE ${win.sql} AND w.stage IN ${OPEN_STAGES} AND w.lat IS NOT NULL GROUP BY w.severity_level`, [...b.params, ...win.params]),
+    // 28 Nov: the Collector's questions on closed cases still owed an answer, whatever their date (lib/cases/lifecycle.ts)
+    grievanceList(dept, { ...s, tab: "verified", asked: true, page: 0, per: 5, cat: null, q: null })
   ]);
 
   const c = counts[0] ?? {};
@@ -314,7 +338,9 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
       /** new and severe or high: approve these first */
       newSerious: Number(c.new_serious ?? 0),
       /** open and due within the next 24 hours */
-      due: Number(c.due ?? 0)
+      due: Number(c.due ?? 0),
+      /** closed cases the Collector asked about that the department has not answered yet, any date (the list: ?asked=1) */
+      asked: qAsked.total
     },
     oldest: oldest[0] ? tidy(oldest[0]) : null,
     /** the department head (GCC who's who) and the zone with the most open work, as in the Collector's department snapshot */
@@ -344,8 +370,8 @@ export async function officerOverview(dept: DeptProfile, s: Scope) {
     feeds: feeds.map((f) => ({ source: String(f.source), kind: f.kind == null ? null : String(f.kind), status: String(f.status), newest: f.newest as string | null })),
     /** the Collector console's overview with this department as its filter: the same headline numbers, map, snapshot, severity and news */
     board,
-    /** the first rows of New and In action, for the first page's work queue */
-    queue: { new: qNew.rows, action: qAction.rows }
+    /** the first rows of New and In action, for the first page's work queue; `asked`: closed cases with the Collector's question to answer */
+    queue: { new: qNew.rows, action: qAction.rows, asked: qAsked.rows }
   };
 }
 export type OfficerOverview = Awaited<ReturnType<typeof officerOverview>>;
@@ -469,13 +495,18 @@ export interface ListFilter extends Scope {
   flag?: ListFlagKey | null;
   /** one severity level (Severe, High, Medium, Low) */
   sev?: string | null;
+  /** only the cases with a question from the Collector the department has not answered, whatever their date (28 Nov) */
+  asked?: boolean;
+  /** first reported from..to (IST wall clock, `to` exclusive), resolved cases too, in place of the period: the dates a search names (28 Nov) */
+  range?: { from: string; to: string } | null;
 }
 
 export async function grievanceList(dept: DeptProfile, f: ListFilter) {
   const now = await asOf();
   const b = withStage(dept.code, now);
-  const win = windowWhere(now, f);
-  const stages = f.tab === "all" ? [...TAB_STAGES.new, ...TAB_STAGES.action, ...TAB_STAGES.sent, ...TAB_STAGES.verified] : TAB_STAGES[f.tab];
+  const win = f.asked ? { sql: "w.asked = 1", params: [] as unknown[] }
+    : f.range ? { sql: "w.first_reported_at >= ? AND w.first_reported_at < ?", params: [f.range.from, f.range.to] as unknown[] } : windowWhere(now, f);
+  const stages = f.tab === "all" || f.asked ? [...TAB_STAGES.new, ...TAB_STAGES.action, ...TAB_STAGES.sent, ...TAB_STAGES.verified] : TAB_STAGES[f.tab];
   const where = [win.sql, `w.stage IN (?)`];
   const params: unknown[] = [...b.params, ...win.params, stages];
   if (f.cat) (where.push("w.category_code = ?"), params.push(f.cat));
@@ -491,21 +522,34 @@ export async function grievanceList(dept: DeptProfile, f: ListFilter) {
       OR EXISTS (SELECT 1 FROM events e WHERE e.incident_id = w.incident_id AND e.source = 'grievance' AND e.source_record_id LIKE ?))`);
     params.push(like, like, like, like, like, like);
   }
-  const order = f.tab === "new" || f.tab === "action" ? `${SEV_ORDER}, w.citizen_complaints DESC, w.first_reported_at DESC, w.incident_id`
-    : f.tab === "all" ? "w.first_reported_at DESC" : "w.upd DESC, w.incident_id";
+  // 28 Nov: what the Collector sent back (returned, reopened) heads the In action list; in Verified, a case with a question the department
+  // owes an answer on comes first, then the ones closed with a completion report (photos and remarks), newest first
+  const verifiedTab = f.tab === "verified" && !f.asked;
+  const order = f.tab === "new" || f.tab === "action" ? `w.returned DESC, ${SEV_ORDER}, w.citizen_complaints DESC, w.first_reported_at DESC, w.incident_id`
+    : f.asked ? "w.upd DESC, w.incident_id"
+    : f.tab === "all" ? "w.first_reported_at DESC"
+    : verifiedTab ? `w.asked DESC, EXISTS (SELECT 1 FROM ${ops("officer_reports")} rr WHERE rr.incident_id = w.incident_id AND rr.dept_code = ? AND rr.photos IS NOT NULL AND rr.photos <> '[]' AND rr.photos <> '') DESC, w.upd DESC, w.incident_id`
+    : "w.upd DESC, w.incident_id";
   const W = where.join(" AND ");
   const per = Math.max(1, Math.min(100, f.per));
   const [rows, [tot]] = await Promise.all([
-    q(`${b.sql} SELECT ${ROW} FROM w WHERE ${W} ORDER BY ${order} LIMIT ${per} OFFSET ${Math.max(0, f.page) * per}`, params),
+    q(`${b.sql} SELECT ${ROW} FROM w WHERE ${W} ORDER BY ${order} LIMIT ${per} OFFSET ${Math.max(0, f.page) * per}`, verifiedTab ? [...params, dept.code] : params),
     q(`${b.sql} SELECT COUNT(*) AS n FROM w WHERE ${W}`, params)
   ]);
   // RC-47: complaints filed with this department that the next update will add to the queue
-  const [waiting, told] = await Promise.all([
-    f.page === 0 && !f.q ? awaitingQueue(deptConfig(dept.code).portalName).catch(() => 0) : Promise.resolve(0),
-    instructedOf(dept.code, rows.map((r) => String(r.id)))
+  const ids = rows.map((r) => String(r.id));
+  const [waiting, told, resolved] = await Promise.all([
+    f.page === 0 && !f.q && !f.asked ? awaitingQueue(deptConfig(dept.code).portalName).catch(() => 0) : Promise.resolve(0),
+    instructedOf(dept.code, ids),
+    // the Resolved list (the Verified tab): each case's resolution photo, the officer's remark and who approved it (lib/cases/resolution.ts)
+    f.tab === "verified" ? resolutionsFor(ids).catch(orEmptyMap) : Promise.resolve({} as Record<string, Resolution>)
   ]);
-  return { now, rows: rows.map((r): Row => ({ ...tidy(r), instructed: told.has(String(r.id)) })), total: Number(tot?.n ?? 0), page: f.page, per, awaiting: waiting, awaitingNote: queueNoteFor(waiting) };
+  return {
+    now, rows: rows.map((r): Row => ({ ...tidy(r), instructed: told.has(String(r.id)), ...(resolved[String(r.id)] ? { resolution: resolved[String(r.id)] } : {}) })),
+    total: Number(tot?.n ?? 0), page: f.page, per, awaiting: waiting, awaitingNote: queueNoteFor(waiting)
+  };
 }
+const orEmptyMap = (e: unknown): Record<string, Resolution> => { console.warn(`[officer] resolutions skipped: ${(e as Error)?.message ?? e}`); return {}; };
 
 /**
  * Which of these cases carry an instruction the Collector sent this department (Take action, a send from Ask the Map or the traffic view,
@@ -545,7 +589,7 @@ const CHANNEL_LABEL: Record<string, string> = {
 async function stageRow(dept: string, id: string, now: string, conn?: PoolConnection) {
   const b = withStage(dept, now);
   const [r] = await q(
-    `${b.sql} SELECT ${ROW}, w.summary, w.media_only, ${fmt("w.sla_due_at")} AS due, ${fmt("w.closed_at")} AS closed_at
+    `${b.sql} SELECT ${ROW}, w.summary, w.media_only, ${fmt("w.sla_due_at")} AS due, ${fmt("w.closed_at")} AS closed_at, w.is_open AS pipeline_open
      FROM w WHERE w.incident_id = ?`,
     [...b.params, id], conn
   );
@@ -562,7 +606,7 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
     q(`SELECT step_id AS sid, step, note, actor, report_id AS rid, ${fmt("at")} AS t FROM ${ops("officer_steps")} WHERE incident_id = ? AND dept_code = ?
        ORDER BY step_id`, [id, dept.code]),
     // every decision, the department's own closures (a resolve by its officer) included: those place its close steps in the order
-    q(`SELECT decision_id AS did, decision, note, decided_by, COALESCE(decided_role, '') AS role, ${fmt("decided_at")} AS t
+    q(`SELECT decision_id AS did, decision, note, decided_by, COALESCE(decided_role, '') AS role, escalate_to AS tag, ${fmt("decided_at")} AS t
        FROM ${ops("collector_decisions")} WHERE incident_id = ? ORDER BY decision_id`, [id]),
     // the source's whole text: the first 280 characters were the only copy the officer had of a complaint the form allows 400 for (officer-day-17)
     q(`SELECT m.source, m.channel, ${fmt("m.reported_at")} AS t, m.title, m.role, e.text AS text
@@ -607,6 +651,15 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
     ...allDecisions.map((d, k) => ({ at: String(d.t), rank: 1, seq: k, x: d })).filter((e) => e.x.role !== "department_officer")
   ].sort((a, b2) => a.at.localeCompare(b2.at) || a.rank - b2.rank || a.seq - b2.seq);
   const place = new Map<Row, number>(order.map((e, k) => [e.x, k]));
+  // 28 Nov: which of the Collector's reopens came while the case was closed (lib/cases/rules.ts wasReopened), and the department's answers
+  const reopenedAt = new Set<Row>();
+  let lastEffect: string | null = null;
+  for (const d of allDecisions) {
+    if (!["verify", "reopen", "resolve", "reject"].includes(String(d.decision))) continue;
+    if (d.decision === "reopen" && wasReopened("reopen", lastEffect, g.pipeline_open)) reopenedAt.add(d);
+    lastEffect = String(d.decision);
+  }
+  const answers = allDecisions.filter((d) => d.role === "department_officer" && d.decision === "note" && answeredInquiry(d.tag) != null);
   const kindOf = (step: string) => (/resolved|verified/i.test(step) ? "fin" : /reject|lapsed|return|escalat/i.test(step) ? "esc" : "");
   const timeline = [
     ...pipeline.map((p) => ({ t: p.t, label: p.step, note: p.note ?? (p.actor ? `By ${p.actor}` : ""), kind: kindOf(p.step) })),
@@ -621,11 +674,16 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
     // a note the Collector added is shown too: it was saved and audited, and the department never saw it (the integration review, 27 Nov)
     ...decisions.map((d) => ({
       t: d.t,
-      label: ({ verify: "Verified by Collector", reopen: "Returned by Collector", resolve: "Resolved by Collector", reject: "Rejected by Collector", escalate: "Escalated by Collector", note: "Note from the Collector" } as Record<string, string>)[d.decision] ?? d.decision,
+      // 28 Nov: the Collector's question about a closed case, and a reopen of a closed case, say so (lib/cases/rules.ts)
+      label: d.decision === "note" && d.tag === INQUIRY_TAG ? "Question from the Collector"
+        : d.decision === "reopen" && reopenedAt.has(d) ? "Reopened by Collector"
+        : ({ verify: "Verified by Collector", reopen: "Returned by Collector", resolve: "Resolved by Collector", reject: "Rejected by Collector", escalate: "Escalated by Collector", note: "Note from the Collector" } as Record<string, string>)[d.decision] ?? d.decision,
       note: d.note ?? (d.decision === "verify" ? "Work verified; grievance closed" : ""),
       kind: d.decision === "reopen" || d.decision === "reject" || d.decision === "escalate" ? "esc" : d.decision === "note" ? "" : "fin",
       at: place.get(d)!
-    }))
+    })),
+    // the department's answers to the Collector's questions (notes by its officer, lib/cases/lifecycle.ts)
+    ...answers.map((d) => ({ t: d.t, label: "Answered the Collector", note: d.note ?? "", kind: "", at: undefined as number | undefined }))
   ].map((e, k) => ({ e, k })).sort((a, b2) => String(a.e.t).localeCompare(String(b2.e.t)) || ((a.e as { at?: number }).at ?? -1) - ((b2.e as { at?: number }).at ?? -1) || a.k - b2.k)
     .map(({ e }) => ({ t: e.t, label: e.label, note: e.note, kind: e.kind }));
 
@@ -676,6 +734,16 @@ export async function grievanceDetail(dept: DeptProfile, id: string) {
      * drew "Closed by your department" (done) beside the Returned banner and the Complete & close button (reviewerD-02)
      */
     closedByDept: g.stage === "verified" && lastStep?.step === "close" && !(lastReturn && place.get(lastReturn)! > place.get(lastStep)!),
+    /**
+     * the Collector's questions about this case, newest first, each with the department's answer once given (lib/cases/lifecycle.ts); the
+     * drawer asks for the answer to the newest open one
+     */
+    inquiries: decisions.filter((d) => d.decision === "note" && d.tag === INQUIRY_TAG).reverse().map((qn) => {
+      const a = answers.find((x) => answeredInquiry(x.tag) === Number(qn.did));
+      return { id: Number(qn.did), t: String(qn.t), question: String(qn.note ?? ""), answer: a ? { t: String(a.t), text: String(a.note ?? ""), by: String(a.decided_by ?? "") } : null };
+    }),
+    /** the Collector reopened this closed case and sent it back (not a send-back of work waiting for the Collector): when and why */
+    reopened: g.reopened && lastReturn ? { t: String(lastReturn.t), note: lastReturn.note == null ? null : String(lastReturn.note) } : null,
     firstSource: members[0] ? SOURCE_LABEL[members[0].source] ?? members[0].source : docs[0]?.publisher ?? "—"
   };
 }
@@ -721,6 +789,12 @@ export async function recordStep(
     // the same words as the report route's check before the password (stages.ts stepRefusal)
     const refused = stepRefusal(step, String(g.stage), g.sev as string | null);
     if (refused) throw new WorkflowError(409, refused);
+    // the owner's rule (lib/cases/rules.ts), enforced here too for every caller: a send carries remarks and at least one photo, a close
+    // carries remarks (photos optional), and a severe case is never closed by the department
+    if (step === "send" || step === "close") {
+      const bad = reportRefusal(step, g.sev, report?.remarks ?? "", report?.photos.length ?? 0);
+      if (bad) throw new WorkflowError(step === "close" ? 409 : 400, bad);
+    }
     await conn.beginTransaction();
     let reportId: number | null = null;
     if ((step === "send" || step === "close") && report) {

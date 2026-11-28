@@ -11,6 +11,8 @@ import type { RowDataPacket } from "mysql2";
 import intelPool, { TITLE } from "@/lib/collector/db";
 import { exportMeta } from "@/lib/collector/intel";
 import { FLOOD_W, CHOKE_CATS, type FloodInc } from "./memory";
+import { gaugeCache } from "./gauges";
+import { readSatFlood } from "./satflood";
 
 type Row = Record<string, any>;
 async function q(sql: string, params: unknown[] = []): Promise<Row[]> {
@@ -97,6 +99,10 @@ async function load(key: string): Promise<Sources> {
   for (const [d, mm] of byDay) if (mm >= HEAVY_MM) rainDays.push({ day: d, source: "imd", mm });
   for (const rd of rainDays) if (rd.source === "pipeline" && byDay.has(rd.day)) rd.mm = byDay.get(rd.day)!;
   if (byDay.size) notes.push(`IMD station rainfall ${[...byDay.keys()].sort()[0]} to ${[...byDay.keys()].sort().at(-1)} (a day with ${HEAVY_MM} mm or more at any Chennai station is a rain day).`);
+  // v-gauges: how much rain fell comes from the Flood Monitor's own rain gauges, not IMD's four stations (gauges.ts)
+  const gc = gaugeCache();
+  if (gc) notes.push(`Rain amounts: ${gc.gauges.length} active CFM-DSS automatic rain gauges (${gc.gauges.filter((g) => g.inChennai).length} inside the 200 wards), 15-minute readings ${gc.days[0] ?? ""} to ${gc.days.at(-1) ?? ""} from the Chennai Flood Monitor's public map server; IMD's four stations only mark the rain days.`);
+  if (readSatFlood()) notes.push("Flood water from space: Copernicus Sentinel-1 radar (Microsoft Planetary Computer), compared with dry passes, when a pass came within 2 days of a rain (scripts/sat_flood.py).");
 
   const warnings: Warning[] = warnRows.map((r) => ({ at: String(r.at), level: Math.max(0, Math.min(3, Math.round(Number(r.value) || 0))), text: String(r.detail ?? "") }));
 

@@ -150,7 +150,11 @@ export async function summaryRecipe(c: RecipeCtx): Promise<SummaryPart> {
   const wantsWater = subj.district || subj.area || fam === "FLOOD" || fam === "DRAINAGE" || [...cats].some((x) => /FLOOD|DRAIN|WATER/.test(x)) || /SWD|WRD|CMWSSB|DIST-DM/.test(subj.dept ?? "");
   const wantsAir = subj.district || subj.area || fam === "ENVIRONMENT" || fam === "HEALTH" || cats.has("AIR_POLLUTION") || subj.dept === "TNPCB";
   const wantsPrices = (subj.district || subj.area) && !subj.dept && !subj.cats;
-  const wantsTraffic = w.partial && (subj.district || subj.area || fam === "ROADS_TRAFFIC" || subj.dept === "POL-GCP");
+  const wantsTraffic0 = w.partial && (subj.district || subj.area || fam === "ROADS_TRAFFIC" || subj.dept === "POL-GCP");
+  // 28 Nov (board.ts): only the parts a dashboard was asked to hold ("a dashboard of Adyar's incidents and news"); none named: everything
+  const asked = new Set(c.slots.parts ?? []);
+  const want = (p: NonNullable<Slots["parts"]>[number]) => !asked.size || asked.has(p);
+  const wantsTraffic = wantsTraffic0 && want("traffic");
   const zone1 = subj.zones.length === 1 ? subj.zones[0] : null;
   const words = subj.place ? [subj.place.toLowerCase()] : subj.zones.flatMap((z) => zoneWords(c, z));
   c.runs.push("window_incidents");
@@ -158,13 +162,13 @@ export async function summaryRecipe(c: RecipeCtx): Promise<SummaryPart> {
   const safe = <T>(p: Promise<T>, src: string): Promise<T | null> => p.then((x) => { c.runs.push(src); c.sources.add(src); return x; }).catch(() => null);
   const [inc, news, aqi, rain, lakes, warn, prices, traffic] = await Promise.all([
     win.incidents(w, scope, listView ? 30 : 8),
-    listView ? Promise.resolve(null) : safe(win.news(w, { words, cats: subj.cats, dept: subj.dept }, 10), "news (window)"),
-    !listView && wantsAir ? safe(win.readings("aqi", w, zone1), "air quality") : Promise.resolve(null),
-    !listView && wantsWater ? safe(win.readings("rainfall_24h_mm", w, zone1), "rainfall") : Promise.resolve(null),
-    !listView && wantsWater && (subj.district || fam === "FLOOD" || /WRD/.test(subj.dept ?? "") || zone1) ? safe(win.readings("lake_pct_full", w, zone1), "lake storage") : Promise.resolve(null),
-    !listView && wantsWater ? safe(win.warning(w), "IMD warning") : Promise.resolve(null),
+    listView || !want("news") ? Promise.resolve(null) : safe(win.news(w, { words, cats: subj.cats, dept: subj.dept }, 10), "news (window)"),
+    !listView && wantsAir && want("air") ? safe(win.readings("aqi", w, zone1), "air quality") : Promise.resolve(null),
+    !listView && wantsWater && want("rain") ? safe(win.readings("rainfall_24h_mm", w, zone1), "rainfall") : Promise.resolve(null),
+    !listView && wantsWater && want("rain") && (subj.district || fam === "FLOOD" || /WRD/.test(subj.dept ?? "") || zone1) ? safe(win.readings("lake_pct_full", w, zone1), "lake storage") : Promise.resolve(null),
+    !listView && wantsWater && want("rain") ? safe(win.warning(w), "IMD warning") : Promise.resolve(null),
     // (v18 round 2's review: the summary reads the prices held; only the prices screen asks data.gov.in for a missing day, so a summary never waits on it)
-    !listView && wantsPrices ? safe(win.prices(w, zone1, null, { fetch: false }), "Uzhavar Sandhai prices") : Promise.resolve(null),
+    !listView && wantsPrices && want("prices") ? safe(win.prices(w, zone1, null, { fetch: false }), "Uzhavar Sandhai prices") : Promise.resolve(null),
     !listView && wantsTraffic ? safe(win.traffic(zone1), "live traffic") : Promise.resolve(null)
   ]);
 
@@ -308,6 +312,18 @@ export async function summaryRecipe(c: RecipeCtx): Promise<SummaryPart> {
     items: inc.depts.slice(0, 10).map((d, i) => ({ key: d.code, label: clip(ta ? DEPT_TA[d.code] ?? d.name : d.name, 120), value: d.n, rank: i + 1,
       sub: clip(L(`${d.open} open · ${d.overdue} past deadline · ${d.severe} severe`, `${d.open} நிலுவை · ${d.overdue} கெடு தாண்டியவை`), 160), zone: null, lat: null, lon: null, action: "dept" as const,
       drill: drillTo(base, { dept: d.code }, d.name) })) });
+  // 28 Nov (the owner: an overall summary holds "news, grievances, reports"): which records the incidents rest on, citizen complaints, police,
+  // PWD, hospitals and the newspapers (an incident joins several); the departments' records here are generated sample data, and say so
+  const from = inc.from;
+  if (from && want("reports") && inc.n >= 2) {
+    const FROM: [keyof typeof from, string, string][] = [["citizens", "Citizen complaints", "குடிமக்கள் புகார்"], ["police", "Police reports", "காவல் அறிக்கை"], ["pwd", "PWD records", "பொதுப்பணித் துறை"], ["hospital", "Hospital records", "மருத்துவமனை"], ["news", "Newspapers", "செய்தித்தாள்கள்"]];
+    const xs = FROM.filter(([k]) => from[k] > 0);
+    if (xs.length >= 2) {
+      blocks.push({ kind: "Chart", id: "from", title: L("Who reported them", "யார் பதிவு செய்தனர்"), chart: "hbar", unit: "incidents", labels: xs.map(([, en, t]) => (ta ? t : en)), values: xs.map(([k]) => from[k]) });
+      c.notes.push(L("Citizen complaints, police, PWD and hospital records in this console are generated sample data; the news, CPCB air quality and Uzhavar Sandhai prices are real feeds.",
+        "இந்தக் கன்சோலின் குடிமக்கள் புகார், காவல், பொதுப்பணி, மருத்துவமனை பதிவுகள் மாதிரித் தரவு; செய்திகள், காற்றுத் தரம், சந்தை விலை உண்மையான தரவு."));
+    }
+  }
 
   // ---- the cases, and where they are
   if (rows.length) blocks.push({ kind: "CaseList", id: "top", title: L("Most urgent in this window", "இந்தக் காலத்தில் முதலில் கவனிக்க வேண்டியவை"), source: "list", sev: subj.sev, total: inc.n, rows });
@@ -363,6 +379,7 @@ export async function summaryRecipe(c: RecipeCtx): Promise<SummaryPart> {
     zones: bi(`Incidents reported in each zone ${over}; beside each, severe, still open, past deadline and the window before. Click a zone for its summary.`, "ஒவ்வொரு மண்டலத்திலும் பதிவானவை. தொட்டால் அந்த மண்டலத்தின் சுருக்கம்."),
     places: bi(`Incidents by the locality named in their place ${over}. Click one for its summary.`, "இடம் வாரியாகச் சம்பவங்கள். தொட்டால் அதன் சுருக்கம்."),
     depts: bi(`Incidents by the department that leads them ${over}, with how many are still open and past their deadline. Click one for its summary.`, "துறை வாரியாகச் சம்பவங்கள். தொட்டால் அந்தத் துறையின் சுருக்கம்."),
+    from: bi(`How many of these incidents each kind of record holds ${over}: one incident can hold a citizen complaint, a police report and a newspaper story at once.`, "ஒவ்வொரு வகைப் பதிவிலும் எத்தனை சம்பவங்கள்."),
     top: bi("Open cases first, then by priority score (severity, time past the deadline, how many sources and complaints). Click a case for its details.", "முன்னுரிமைப்படி திறந்த சம்பவங்கள். தொட்டால் விவரம்."),
     list: bi("The cases behind the number you clicked, open first, then by priority score.", "நீங்கள் தொட்ட எண்ணுக்குரிய சம்பவங்கள்."),
     map: bi("Each point is an incident of this window (red severe); the numbered ones rank highest. Click a point for its case.", "ஒவ்வொரு புள்ளியும் ஒரு சம்பவம்; சிவப்பு = கடுமை."),

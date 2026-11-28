@@ -706,7 +706,10 @@ export function explain(r: Row): Plain {
     else if (n === "access blocked") facts.push("Access blocked");
     else if (n === "traffic obstruction") facts.push("Traffic held up");
     else if (n === "vulnerable victim") facts.push("Victim is a child, woman or elderly person");
-    else if (n === "weapon involved") facts.push("A weapon was used");
+    // the explainable rules (28 Nov) word a BNS Chapter V offence and a PWD casualty flag this way
+    else if (n.startsWith("offence against a woman or child")) facts.push("Victim is a woman or child");
+    else if (n.startsWith("casualty reported")) facts.push("A casualty was reported (death or injury not stated)");
+    else if (n === "weapon involved" || n.startsWith("weapon used")) facts.push("A weapon was used");
     else if (n === "describes an immediate hazard") facts.push("Reported as an immediate danger");
     else if (n === "citizen reports complaining before") facts.push("People had complained about it before");
     else if (n === "weather emergency") facts.push("During a weather warning");
@@ -1738,8 +1741,13 @@ export function wordsWhere(text: string): { sql: string; params: string[] } {
   return { sql: `((${each.length ? each.join(" AND ") : "1 = 0"}) OR i.incident_id LIKE ?)`, params: [...params, like] };
 }
 
-export async function search(text: string) {
+/**
+ * `o.from` / `o.to` (IST wall clock, `to` exclusive): only incidents first reported then, the dates a search names (28 Nov, lib/search/history.ts).
+ * `o.news: false`: no headlines here (the search box reads every stored report itself, lib/search/news.ts).
+ */
+export async function search(text: string, o: { from?: string | null; to?: string | null; news?: boolean } = {}) {
   const like = `%${text.replace(/[%_\\]/g, (m) => "\\" + m)}%`;
+  const win = o.from && o.to ? { sql: " AND i.first_reported_at >= ? AND i.first_reported_at < ?", params: [o.from, o.to] } : { sql: "", params: [] as string[] };
   const [zones, depts, [incs, incTotal]] = await Promise.all([
     q(
       `SELECT w.zone_no AS zone, w.zone_name AS name, (SELECT COUNT(*) FROM incidents i WHERE i.zone_no = w.zone_no AND ${OPEN_NOW}) AS open
@@ -1759,9 +1767,10 @@ export async function search(text: string) {
       const inTitle = groups.length ? groups.map((g) => `(CASE WHEN ${g.map(() => `${TITLE} LIKE ?`).join(" OR ")} THEN 1 ELSE 0 END)`).join(" + ") : "0";
       const titleParams = groups.flatMap((g) => g.map((x) => `%${x}%`));
       return Promise.all([
-        q(`SELECT ${ROW()} ${FROM} WHERE ${w.sql} ORDER BY ${inTitle} DESC, ${EFF.open} DESC, i.priority_score DESC, i.first_reported_at DESC LIMIT 7`,
-          [...w.params, ...titleParams]),
-        q(`SELECT COUNT(*) AS n ${FROM} WHERE ${w.sql}`, w.params)
+        // (no words, a day's incidents: no title term, which would be "ORDER BY 0", a column number to SQL)
+        q(`SELECT ${ROW()} ${FROM} WHERE ${w.sql}${win.sql} ORDER BY ${groups.length ? `${inTitle} DESC, ` : ""}${EFF.open} DESC, i.priority_score DESC, i.first_reported_at DESC LIMIT 7`,
+          [...w.params, ...win.params, ...titleParams]),
+        q(`SELECT COUNT(*) AS n ${FROM} WHERE ${w.sql}${win.sql}`, [...w.params, ...win.params])
       ]);
     })()
   ]);
@@ -1774,7 +1783,7 @@ export async function search(text: string) {
         params: ng.flatMap((g) => g.flatMap((x) => [`%${x}%`, `%${x}%`])) }
     : { sql: "title LIKE ?", params: [like] };
   const [news, sources, filed] = await Promise.all([
-    q(`SELECT doc_id AS id, title, publisher, url, linked_incident_id AS incident, DATE_FORMAT(published_at, '%Y-%m-%d %H:%i:%s') AS t
+    o.news === false ? Promise.resolve([] as Row[]) : q(`SELECT doc_id AS id, title, publisher, url, linked_incident_id AS incident, DATE_FORMAT(published_at, '%Y-%m-%d %H:%i:%s') AS t
        FROM documents WHERE ${newsWhere.sql} ORDER BY published_at DESC LIMIT 4`, newsWhere.params).catch(orEmpty("intel:search-news")),
     q(`SELECT source_id AS id, name, kind FROM ${ops("sources")} WHERE name LIKE ? ORDER BY source_id LIMIT 3`, [like]).catch(orEmpty("intel:search-sources")),
     code ? q(`SELECT e.incident_id AS id, ${TITLE} AS title FROM events e JOIN incidents i ON i.incident_id = e.incident_id

@@ -8,6 +8,7 @@ import { DeskTags, LinkedNote, NewsHead, OfficerCard, StoryLink } from "./Overvi
 import { FilterChip } from "@/components/ui";
 import { Empty, SEVS, SevChip, Sources, StChip, fmtShort, fullTitle, listScopeWords, rel, reportOpt, type Row } from "./lib";
 import type { Console, ListPreset } from "./CollectorApp";
+import { ResolvedRows } from "@/components/cases/ResolvedRows";
 
 // -------------------------------------------------------------- modal --
 
@@ -32,7 +33,7 @@ const STATUS_OPTS: [string, string][] = [
 
 export function ListBody({ preset, c }: { preset: ListPreset; c: Console }) {
   const [f, setF] = useState({ dept: c.dept ?? "", sev: "", status: "", q: "", sort: "t", dir: -1, page: 0, scope: "period", ...preset });
-  const [data, setData] = useState<{ rows: Row[]; total: number; incidents?: number; complaints: number } | null>(null);
+  const [data, setData] = useState<{ rows: Row[]; total: number; incidents?: number; complaints: number; resolvedList?: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
   const [text, setText] = useState(f.q);
@@ -99,6 +100,8 @@ export function ListBody({ preset, c }: { preset: ListPreset; c: Console }) {
             ? ` in ${data.total.toLocaleString("en-IN")} rows (similar reports in one area grouped)` : ""} · ${listScopeWords(c, f)} · citizen complaints linked: ${data.complaints.toLocaleString("en-IN")}`
           : "Loading…"}
       </div>
+      {/* 28 Nov: the Resolved list shows how each case was resolved: photo, remark, who approved it (lib/cases/resolution.ts) */}
+      {data?.resolvedList ? <ResolvedRows rows={data.rows} who="collector" onOpen={(id) => c.openInc(id)} empty="No incidents match these filters." /> : (
       <div className="tbl-wrap">
         <table>
           <thead><tr><th>Incident</th>{th("r", "Zone")}{th("d", "Department")}{th("sev", "Severity")}<th>Status</th><th>Reported by</th>{th("t", "Reported")}</tr></thead>
@@ -116,7 +119,7 @@ export function ListBody({ preset, c }: { preset: ListPreset; c: Console }) {
             {data && !data.rows.length && <tr><td colSpan={7}><div className="empty">No incidents match these filters.</div></td></tr>}
           </tbody>
         </table>
-      </div>
+      </div>)}
       <div className="pgr" style={{ justifyContent: "flex-end", marginTop: 12 }}>
         <span>Page {f.page + 1} of {pages.toLocaleString("en-IN")}</span>
         <button onClick={() => setF((x) => ({ ...x, page: x.page - 1 }))} disabled={f.page === 0} aria-label="Previous"><I n="chevl" /></button>

@@ -37,6 +37,8 @@ import { thinLine } from "./persona";
 import type { StudioAnswerOut, StudioPick } from "@/lib/studio/forAssistants";
 // v18 (24 Nov): any window, everything about one subject, and a way into every insight
 import { summaryRecipe, type SummaryPart } from "./recipes/summary";
+import { compareBoard } from "./recipes/board";
+import type { BoardPart } from "./board";
 import { spanCompare, spanNews, spanPrices, spanRanking, spanReadings, spanTraffic, spanTrend } from "./recipes/window18";
 import { MAX_BLOCKS } from "./stage";
 import { OutsideRecords, beforeRecords, isToday, isWindowSpec, istWall, overWords } from "./v18/when";
@@ -119,6 +121,10 @@ export interface Slots {
   view?: "cases" | null;
   /** v19, ask: the analyst's plan (v19/plan.ts), so a click, Back or a refresh runs it again with no model */
   plan?: Plan;
+  /** 28 Nov (board.ts), compare: two to four localities as the sides ("Velachery vs T. Nagar") */
+  places?: string[];
+  /** 28 Nov, compare and summary: the parts a dashboard was asked to hold (incidents, news, complaints, reports, prices, air, rain, traffic); absent: all */
+  parts?: BoardPart[];
 }
 export type StudioFilter = { col: string; op: "eq" | "neq" | "in" | "contains" | "gte" | "lte" | "open" | "closed" | "recent_days" | "latest"; values: string[] };
 
@@ -516,7 +522,10 @@ export async function buildScreen(recipe: Recipe, slots: Slots, base: ScopeT, w:
   // (the city: only its traffic has a past, kept by the website; flooding, power and the metro are read live)
   const native = h.win && SPAN_NATIVE[recipe] && !(recipe === "compare" && slots.zones.length < 2) && (recipe === "city" ? slots.q === "traffic" && (!!span || slots.past === true)
     : span || (recipe !== "compare" && (!!slots.family || !!slots.place)) || (recipe === "prices" && slots.zones.length === 1));
-  const run = native ? v18(SPAN_NATIVE[recipe]!) : RECIPE[recipe];
+  // 28 Nov (recipes/board.ts): a comparison is the comparison dashboard whenever the window reads are there: two to four zones, localities
+  // or departments over any window, with only the subject and the parts asked (the console's own compare stays for hands without them)
+  const board = recipe === "compare" && !!h.win && (slots.zones.length + (slots.places?.length ?? 0) >= 2 || slots.depts.length >= 2);
+  const run = board ? v18((x) => compareBoard(x)) : native ? v18(SPAN_NATIVE[recipe]!) : RECIPE[recipe];
   let part: Part;
   try {
     part = await run(c);

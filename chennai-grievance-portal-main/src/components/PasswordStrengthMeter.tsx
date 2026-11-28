@@ -13,12 +13,13 @@ export default function PasswordStrengthMeter({ password }: { password: string }
 
   const passedCount = rules.filter((r) => r.passed).length;
   const filled = Math.max(1, Math.round((passedCount / rules.length) * 4));
+  // c fills the bar; ink is the word's colour, which reaches 4.5:1 on the card ("Fair" in the fill colour was 2.9:1 on white)
   const tone =
     score >= 100
-      ? { c: "var(--ok)", label: "Strong" }
+      ? { c: "var(--ok)", ink: "var(--ok-ink)", label: "Strong" }
       : score >= 60
-        ? { c: "var(--medium)", label: "Fair" }
-        : { c: "var(--critical)", label: "Weak" };
+        ? { c: "var(--medium)", ink: "var(--medium-ink)", label: "Fair" }
+        : { c: "var(--critical)", ink: "var(--critical-ink)", label: "Weak" };
 
   return (
     <div className="mt-3" aria-live="polite">
@@ -31,12 +32,12 @@ export default function PasswordStrengthMeter({ password }: { password: string }
             </span>
           ))}
         </div>
-        <span className="text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: tone.c }}>{tone.label}</span>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.06em]" style={{ color: tone.ink }}>{tone.label}</span>
       </div>
 
       <ul className="mt-2.5 grid grid-cols-1 gap-1 sm:grid-cols-2">
         {rules.map((rule) => (
-          <li key={rule.label} className={`flex items-center gap-1.5 text-[12px] transition-colors ${rule.passed ? "text-emerald-600" : "text-ink-subtle"}`}>
+          <li key={rule.label} className={`flex items-center gap-1.5 text-[12px] transition-colors ${rule.passed ? "text-emerald-700" : "text-ink-subtle"}`}>
             <span aria-hidden="true" className={`flex h-3.5 w-3.5 flex-shrink-0 items-center justify-center rounded-full transition-colors ${rule.passed ? "bg-emerald-100" : "bg-canvas-sunken"}`}>
               {rule.passed && <Check className="h-2.5 w-2.5" strokeWidth={3.5} />}
             </span>

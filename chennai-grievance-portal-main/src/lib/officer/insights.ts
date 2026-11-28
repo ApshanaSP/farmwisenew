@@ -15,8 +15,11 @@ import { RowDataPacket } from "mysql2";
 import intelPool, { ops } from "@/lib/collector/db";
 import { effectiveSql } from "@/lib/collector/effective";
 import { PERIODS, asOf, periodSince, periodWindow, type Period } from "@/lib/collector/intel";
-import { periodBefore } from "@/lib/period/day";
+import { dayStart, periodBefore } from "@/lib/period/day";
 import { closedOnTimeSql, pastDueSql } from "@/lib/reference/metrics";
+import { insights as collectorInsights } from "@/lib/collector/insights";
+import { alertLane } from "@/lib/collector/alerts";
+import { grievanceList, type DeptProfile, type OfficerOverview } from "./data";
 
 /** the effective open flag: the pipeline's, with the Collector's and officers' decisions laid on top, as page 1's KPIs (BUG-035) */
 const EFF = effectiveSql(ops("collector_decisions"));
@@ -53,8 +56,9 @@ export interface InsightModule {
 }
 export interface InsightScope { period: Period; zone: number | null; taluk: string | null }
 
-/** Which store data concerns each department, most useful first. Every department also gets "patterns" and "work". */
-const MODULES: Record<string, string[]> = {
+/** Which store data concerns each department, most useful first. Every department also gets "patterns" and "work". (Exported for the
+ * search box's officer lock, lib/search/history.ts: a department searches only the readings its console uses.) */
+export const MODULES: Record<string, string[]> = {
   // rain drives drains, roads, streetlights, garbage, fallen trees and flooded subways
   "GCC-ENG": ["weather"],
   "GCC-ELE": ["weather"],
@@ -674,4 +678,74 @@ async function markets(_dept: string, s: InsightScope): Promise<Built> {
       down[0] ? `${down.slice(0, 3).map((r) => `${r.commodity} (−${pct(Math.abs(r.ch))})`).join(", ")} fell the most.` : null
     ].filter(Boolean) as string[]
   };
+}
+
+// ======================================================================= the officer's one page ==
+// (28 Nov 2026, the owner: "make it a single-page dashboard like the Collector console") What the page needs beyond the overview:
+// the officer's own work lists (to approve, in action, reopened by the Collector), the department's briefing (the Collector's own
+// "Today at a glance" figures with the department as the filter), and the district's alerts lane. The department is always the
+// signed-in officer's (guard.ts officerSession), never the request's.
+
+/** rows each work list holds on the page (the card scrolls; See all opens the full list) */
+export const WORK_ROWS = 25;
+
+/**
+ * My work: new grievances to approve, work in action, and the cases the Collector reopened (returned for rework), in the console's
+ * period and area, each in the work queue's order (most severe first). Reopened cases are in action (data.ts STAGE_SQL), so they are
+ * read from the first 100 rows of In action; the card's count is the overview's, and See all opens the whole In action list.
+ */
+export async function officerWork(dept: DeptProfile, s: InsightScope) {
+  const base = { period: s.period, zone: s.zone, taluk: s.taluk, page: 0, cat: null, q: null };
+  const [fresh, action] = await Promise.all([
+    grievanceList(dept, { ...base, tab: "new", per: WORK_ROWS }),
+    grievanceList(dept, { ...base, tab: "action", per: 100 })
+  ]);
+  return {
+    new: fresh.rows,
+    action: action.rows.slice(0, WORK_ROWS),
+    returned: action.rows.filter((r) => r.returned).slice(0, WORK_ROWS),
+    /** RC-47: complaints filed with the department that the next update adds to the queue */
+    awaiting: fresh.awaiting,
+    awaitingNote: fresh.awaitingNote
+  };
+}
+export type OfficerWork = Awaited<ReturnType<typeof officerWork>>;
+/** The officer page's data: the overview and the work lists. */
+export type OfficerConsole = OfficerOverview & { work: OfficerWork };
+
+/**
+ * The department's briefing for the page: the Collector's briefing book (lib/collector/briefbook.ts) with the department as the
+ * filter, so its figures are the ones the Collector sees with the department selected. Only what the officer's "Today at a glance"
+ * uses is passed on: no other department's rows, no Collector task list.
+ */
+export async function deptBriefing(dept: string, s: InsightScope) {
+  const ins = await collectorInsights(s.period, s.zone, dept, { taluk: s.taluk }, "briefing");
+  const b = ins.book;
+  if (!b) return null;
+  // the period's first day on the calendar: what is dated by day (an unusual rise) counts from it
+  const from = s.period === "daily" ? dayStart(ins.now).slice(0, 10)
+    : new Date(Date.parse(`${String(ins.now).replace(" ", "T")}Z`) - PERIODS[s.period].hours * 3600_000).toISOString().slice(0, 10);
+  const rise = (ins.briefing.emerging as Row[]).find((e) => String(e.date) >= from) ?? null;
+  const t = b.today;
+  return {
+    now: ins.now,
+    status: { level: b.status.level, reasons: b.status.reasons },
+    today: {
+      kpi: t.kpi, overdue: t.overdue, deaths: t.deaths, injured: t.injured, kinds: t.kinds, zones: t.zones, fatal: t.fatal, days: t.days,
+      cases: t.cases.map((x) => ({ id: x.id, title: x.title, type: x.type, sev: x.sev, zone: x.zone, loc: x.loc, dead: x.dead }))
+    },
+    oldest: b.citizens.oldest,
+    /** the department's incidents seen only in the news, with no department record (the Collector's "Only in the news", filtered) */
+    gaps: (ins.gaps as Row[]).slice(0, 15).map((g) => ({ id: String(g.id), title: String(g.title ?? g.type ?? ""), type: g.type ?? null, sev: g.sev ?? null,
+      zone_name: g.zone_name ?? null, loc: g.loc ?? null, t: g.t ?? null, outlets: Number(g.outlet_count ?? 0) })),
+    gapsTotal: ins.gaps.length,
+    rise: rise ? { cat: String(rise.cat), label: String(rise.label), zone: rise.zone == null ? null : Number(rise.zone), zoneName: (rise.zone_name as string | null) ?? null,
+      n: Number(rise.observed), date: String(rise.date) } : null
+  };
+}
+export type DeptBriefing = NonNullable<Awaited<ReturnType<typeof deptBriefing>>>;
+
+/** The district's alerts lane (IMD, NDMA SACHET and the news, lib/collector/alerts.ts) for the officer's alert chip. No admin notice. */
+export async function officerAlerts() {
+  return { lane: await alertLane(await asOf()), admin: null };
 }

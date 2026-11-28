@@ -46,8 +46,8 @@ export interface ToolOut {
   text?: string | null;
   /** console steps this tool asks for (the console tool), run by the browser once the answer is given */
   steps?: Record<string, unknown>[];
-  /** one of the Stage's own screens to open with the answer (the screen tool) */
-  screen?: { recipe: string; slots: Record<string, unknown> } | null;
+  /** one of the Stage's own screens to open with the answer (the screen tool); `doc`: the screen already built (the board tool's dashboard) */
+  screen?: { recipe: string; slots: Record<string, unknown>; doc?: import("@/lib/thunai/stage").StageDocT } | null;
   /** an action on the open screen (open the third, read, sort, export, pin) */
   stageOp?: { op: string; n: number | null; text: string | null } | null;
 }
@@ -84,6 +84,9 @@ export interface ToolCtx {
   /** who is asking: a voice answer is spoken, a chat answer is read */
   channel: "voice" | "chat";
   progress?: (label: string) => void;
+  /** 28 Nov: the Collector's own words this turn (the board tool reads their window from them), and the language the answer is owed in */
+  text?: string;
+  lang?: Lang | null;
 }
 
 export interface BrainTool {

@@ -1,0 +1,1567 @@
+{
+ "layer": "rail_metro",
+ "at": "2026-11-28T01:37:11.114Z",
+ "count": 130,
+ "features": [
+  {
+   "id": "osm:n10848041900",
+   "name": "Madhavaram Mofussil Bus Terminus",
+   "kind": "bus",
+   "ward": 26,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.2217,
+    13.1461
+   ]
+  },
+  {
+   "id": "osm:n10951278204",
+   "name": "Red Hills MTC Bus Terminus",
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.18399,
+    13.19294
+   ]
+  },
+  {
+   "id": "osm:n10951379005",
+   "name": "Red Hills Bypass Bus Stop",
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.18105,
+    13.19674
+   ]
+  },
+  {
+   "id": "osm:n10951379006",
+   "name": "Red Hills Bypass Bus Stop",
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.19191,
+    13.18703
+   ]
+  },
+  {
+   "id": "osm:n10951379007",
+   "name": "Madhavarm APSRTC , TNSTC Bus Terminus",
+   "kind": "bus",
+   "ward": 26,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.22136,
+    13.14557
+   ]
+  },
+  {
+   "id": "osm:n10980207098",
+   "name": "Koyambedu Mofussil Bus Terminal",
+   "kind": "bus",
+   "ward": 127,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.2056,
+    13.06584
+   ]
+  },
+  {
+   "id": "osm:n10980207099",
+   "name": "CMBT Koyambedu Bus Terminal",
+   "kind": "bus",
+   "ward": 127,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.20629,
+    13.06653
+   ]
+  },
+  {
+   "id": "osm:n11906447555",
+   "name": "Besant Nagar MTC Terminus",
+   "kind": "bus",
+   "ward": 176,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.26578,
+    13.00035
+   ]
+  },
+  {
+   "id": "osm:n11959766020",
+   "name": "Teachers Colony",
+   "kind": "bus",
+   "ward": 32,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.20219,
+    13.12999
+   ]
+  },
+  {
+   "id": "osm:n12458756394",
+   "name": "Bus Stop",
+   "kind": "bus",
+   "ward": 5,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.31496,
+    13.18867
+   ]
+  },
+  {
+   "id": "osm:n1330414242",
+   "name": null,
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.19705,
+    12.92131
+   ]
+  },
+  {
+   "id": "osm:n1391028778",
+   "name": "KK Nagar MTC Terminus",
+   "kind": "bus",
+   "ward": 138,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.20572,
+    13.03542
+   ]
+  },
+  {
+   "id": "osm:n1391573897",
+   "name": "Thirovttriyur MTC Terminus",
+   "kind": "bus",
+   "ward": 5,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.30509,
+    13.17216
+   ]
+  },
+  {
+   "id": "osm:n14018223514",
+   "name": "Madhavaram Milk Colony",
+   "kind": "metro",
+   "ward": 28,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.24142,
+    13.14967
+   ]
+  },
+  {
+   "id": "osm:n14018223515",
+   "name": "Sholinganallur Metro",
+   "kind": "metro",
+   "ward": 197,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.22796,
+    12.90096
+   ]
+  },
+  {
+   "id": "osm:n14018223516",
+   "name": "Kodambakkam Metro",
+   "kind": "metro",
+   "ward": 117,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.23113,
+    13.05212
+   ]
+  },
+  {
+   "id": "osm:n14018223517",
+   "name": "Panagal Park Metro",
+   "kind": "metro",
+   "ward": 136,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.23345,
+    13.04103
+   ]
+  },
+  {
+   "id": "osm:n14018223518",
+   "name": "Boat Club Metro",
+   "kind": "metro",
+   "ward": 122,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.2477,
+    13.02935
+   ]
+  },
+  {
+   "id": "osm:n14018223519",
+   "name": "Bharathidasan Road Metro",
+   "kind": "metro",
+   "ward": 123,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.25498,
+    13.03581
+   ]
+  },
+  {
+   "id": "osm:n14018223530",
+   "name": "Alwarpet Metro",
+   "kind": "metro",
+   "ward": 123,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.25965,
+    13.0383
+   ]
+  },
+  {
+   "id": "osm:n14018223531",
+   "name": "Thirumayilai Metro",
+   "kind": "metro",
+   "ward": 124,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.26765,
+    13.03683
+   ]
+  },
+  {
+   "id": "osm:n14018223536",
+   "name": "Kutchery Road Metro",
+   "kind": "metro",
+   "ward": 125,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.27323,
+    13.03436
+   ]
+  },
+  {
+   "id": "osm:n14018223537",
+   "name": "Lighthouse Metro",
+   "kind": "metro",
+   "ward": 121,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.28004,
+    13.04384
+   ]
+  },
+  {
+   "id": "osm:n14023022804",
+   "name": "Madhavaram Depot",
+   "kind": "metro",
+   "ward": 27,
+   "why": "not a passenger station (a berth, siding, depot or bus terminus)",
+   "by": "rule",
+   "lonlat": [
+    80.23866,
+    13.15576
+   ]
+  },
+  {
+   "id": "osm:n14023780633",
+   "name": "Royapettah Metro",
+   "kind": "metro",
+   "ward": 115,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.26424,
+    13.05451
+   ]
+  },
+  {
+   "id": "osm:n14110631044",
+   "name": "Coal Berth 3",
+   "kind": "station",
+   "ward": null,
+   "why": "not a rail or metro station (a bus terminus, jetty or other station)",
+   "by": "rule",
+   "lonlat": [
+    80.33668,
+    13.25922
+   ]
+  },
+  {
+   "id": "osm:n14125845268",
+   "name": "Kodambakkam Powerhouse",
+   "kind": "metro",
+   "ward": 133,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.21787,
+    13.05165
+   ]
+  },
+  {
+   "id": "osm:n14125845269",
+   "name": "Alwarthirunagar",
+   "kind": "metro",
+   "ward": 128,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.18869,
+    13.04629
+   ]
+  },
+  {
+   "id": "osm:n14125845270",
+   "name": "Valasaravakkam",
+   "kind": "metro",
+   "ward": 152,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.18039,
+    13.04222
+   ]
+  },
+  {
+   "id": "osm:n14125845275",
+   "name": "Karambakkam",
+   "kind": "metro",
+   "ward": 152,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.17024,
+    13.03957
+   ]
+  },
+  {
+   "id": "osm:n14125845276",
+   "name": "Alapakkam",
+   "kind": "metro",
+   "ward": 151,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.16359,
+    13.03818
+   ]
+  },
+  {
+   "id": "osm:n14127634032",
+   "name": "Virugambakkam South",
+   "kind": "metro",
+   "ward": 128,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.19656,
+    13.04746
+   ]
+  },
+  {
+   "id": "osm:n14127634035",
+   "name": "Saligramam",
+   "kind": "metro",
+   "ward": 129,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.20524,
+    13.04833
+   ]
+  },
+  {
+   "id": "osm:n14127634037",
+   "name": "Virugambakkam North",
+   "kind": "metro",
+   "ward": 128,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.19206,
+    13.05102
+   ]
+  },
+  {
+   "id": "osm:n14127634038",
+   "name": "Natesan Nagar",
+   "kind": "metro",
+   "ward": 127,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.19475,
+    13.05836
+   ]
+  },
+  {
+   "id": "osm:n14127634039",
+   "name": "Koyambedu Market",
+   "kind": "metro",
+   "ward": 127,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.1982,
+    13.06498
+   ]
+  },
+  {
+   "id": "osm:n14178350594",
+   "name": "Madhavaram Bus Terminal Metro",
+   "kind": "metro",
+   "ward": 26,
+   "why": "not a passenger station (a berth, siding, depot or bus terminus)",
+   "by": "rule",
+   "lonlat": [
+    80.22078,
+    13.14559
+   ]
+  },
+  {
+   "id": "osm:n14185647961",
+   "name": "Assissi Nagar",
+   "kind": "metro",
+   "ward": 27,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.23236,
+    13.16037
+   ]
+  },
+  {
+   "id": "osm:n14185647962",
+   "name": "Manjampakkam",
+   "kind": "metro",
+   "ward": 27,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.22705,
+    13.1614
+   ]
+  },
+  {
+   "id": "osm:n14185647963",
+   "name": "Velmurugan Nagar",
+   "kind": "metro",
+   "ward": 26,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.22369,
+    13.1532
+   ]
+  },
+  {
+   "id": "osm:n14185647964",
+   "name": "Shastri Nagar",
+   "kind": "metro",
+   "ward": 26,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.21772,
+    13.13889
+   ]
+  },
+  {
+   "id": "osm:n14185647965",
+   "name": "Retteri Junction Metro",
+   "kind": "metro",
+   "ward": 26,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.21484,
+    13.13226
+   ]
+  },
+  {
+   "id": "osm:n14185647966",
+   "name": "Kolathur",
+   "kind": "metro",
+   "ward": 65,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.20527,
+    13.12527
+   ]
+  },
+  {
+   "id": "osm:n14185647971",
+   "name": "Srinivasa Nagar",
+   "kind": "metro",
+   "ward": 65,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.2089,
+    13.11837
+   ]
+  },
+  {
+   "id": "osm:n14185647972",
+   "name": "Villivakkam Metro",
+   "kind": "metro",
+   "ward": 65,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.2108,
+    13.11101
+   ]
+  },
+  {
+   "id": "osm:n14185676079",
+   "name": "Mugalivakkam",
+   "kind": "metro",
+   "ward": 153,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.1638,
+    13.03211
+   ]
+  },
+  {
+   "id": "osm:n14185676080",
+   "name": "Ramapuram",
+   "kind": "metro",
+   "ward": 154,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.17418,
+    13.02632
+   ]
+  },
+  {
+   "id": "osm:n14185676081",
+   "name": "Manapakkam",
+   "kind": "metro",
+   "ward": 157,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.18285,
+    13.02147
+   ]
+  },
+  {
+   "id": "osm:n14185676082",
+   "name": "Chennai Trade Centre",
+   "kind": "metro",
+   "ward": 158,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.1913,
+    13.01564
+   ]
+  },
+  {
+   "id": "osm:n14185676083",
+   "name": "Butt Road",
+   "kind": "metro",
+   "ward": null,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.1991,
+    13.0086
+   ]
+  },
+  {
+   "id": "osm:n14240033431",
+   "name": "Vadapalani",
+   "kind": "metro",
+   "ward": 130,
+   "why": "a second map point of Vadapalani",
+   "by": "rule",
+   "lonlat": [
+    80.21124,
+    13.0498
+   ]
+  },
+  {
+   "id": "osm:n1428608424",
+   "name": "Mathur MMDA",
+   "kind": "bus",
+   "ward": 19,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.24751,
+    13.17137
+   ]
+  },
+  {
+   "id": "osm:n243060332",
+   "name": "மைலாப்பூர்",
+   "kind": "bus",
+   "ward": 124,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.26795,
+    13.03343
+   ]
+  },
+  {
+   "id": "osm:n247691544",
+   "name": "V House Bus Terminus",
+   "kind": "bus",
+   "ward": 120,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.27784,
+    13.05121
+   ]
+  },
+  {
+   "id": "osm:n278746634",
+   "name": "Nanganallur Bus Terminus",
+   "kind": "bus",
+   "ward": 166,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.18125,
+    12.97781
+   ]
+  },
+  {
+   "id": "osm:n306104406",
+   "name": "Puratchi Thalaivar Dr. M.G.R Bus Terminus",
+   "kind": "bus",
+   "ward": 127,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.20513,
+    13.06846
+   ]
+  },
+  {
+   "id": "osm:n308032774",
+   "name": "Saligramam Bus Terminus",
+   "kind": "bus",
+   "ward": 128,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.19708,
+    13.05334
+   ]
+  },
+  {
+   "id": "osm:n311284385",
+   "name": "Perambur MTC Terminus",
+   "kind": "bus",
+   "ward": 70,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.24825,
+    13.10857
+   ]
+  },
+  {
+   "id": "osm:n311337040",
+   "name": "ICF MTC Terminus",
+   "kind": "bus",
+   "ward": 96,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.21471,
+    13.10024
+   ]
+  },
+  {
+   "id": "osm:n316260288",
+   "name": "Chokani Jetty",
+   "kind": "station",
+   "ward": 60,
+   "why": "not a rail or metro station (a bus terminus, jetty or other station)",
+   "by": "rule",
+   "lonlat": [
+    80.29989,
+    13.09731
+   ]
+  },
+  {
+   "id": "osm:n321659385",
+   "name": "Manali MTC Terminus",
+   "kind": "bus",
+   "ward": 20,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.25716,
+    13.16998
+   ]
+  },
+  {
+   "id": "osm:n321661962",
+   "name": "மாதவரம் மாநகர பேருந்து முனையம்",
+   "kind": "bus",
+   "ward": 27,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.22835,
+    13.15237
+   ]
+  },
+  {
+   "id": "osm:n340042533",
+   "name": "Hasthinapuram MTC Terminus",
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.15059,
+    12.94044
+   ]
+  },
+  {
+   "id": "osm:n340088810",
+   "name": "Tambaram MTC Terminus",
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.11675,
+    12.92534
+   ]
+  },
+  {
+   "id": "osm:n340088821",
+   "name": "Tambaram East MTC Terminus",
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.11709,
+    12.9236
+   ]
+  },
+  {
+   "id": "osm:n344420267",
+   "name": "Ayanavaram MTC Terminus",
+   "kind": "bus",
+   "ward": 69,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.242,
+    13.09859
+   ]
+  },
+  {
+   "id": "osm:n360562773",
+   "name": "Puzhuthivakkam Bus Stand",
+   "kind": "bus",
+   "ward": 169,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.20293,
+    12.97398
+   ]
+  },
+  {
+   "id": "osm:n373077167",
+   "name": "Ennore MTC Terminus",
+   "kind": "bus",
+   "ward": 2,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.32084,
+    13.21472
+   ]
+  },
+  {
+   "id": "osm:n389964614",
+   "name": "KK Nagar West MTC Terminus",
+   "kind": "bus",
+   "ward": 128,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.1933,
+    13.04416
+   ]
+  },
+  {
+   "id": "osm:n402290805",
+   "name": "Thiruverkadu MTC Bus Terminus",
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.12402,
+    13.06958
+   ]
+  },
+  {
+   "id": "osm:n402298612",
+   "name": "Semmanchery MTC Terminus",
+   "kind": "bus",
+   "ward": 200,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.20977,
+    12.8747
+   ]
+  },
+  {
+   "id": "osm:n402750050",
+   "name": "Parvathi Nagar MTC Terminus",
+   "kind": "bus",
+   "ward": 34,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.25044,
+    13.14575
+   ]
+  },
+  {
+   "id": "osm:n4221752111",
+   "name": "Saint Thomas Mount",
+   "kind": "rail",
+   "ward": 161,
+   "why": "a second map point of St. Thomas Mount",
+   "by": "rule",
+   "lonlat": [
+    80.19937,
+    12.99477
+   ]
+  },
+  {
+   "id": "osm:n442132009",
+   "name": "Tambaram Bus Stand",
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.11874,
+    12.92772
+   ]
+  },
+  {
+   "id": "osm:n442538699",
+   "name": "Madipakkam Bus Stand",
+   "kind": "bus",
+   "ward": 188,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.19828,
+    12.96286
+   ]
+  },
+  {
+   "id": "osm:n4546369389",
+   "name": "Paulo bus stand",
+   "kind": "bus",
+   "ward": 127,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.19909,
+    13.06951
+   ]
+  },
+  {
+   "id": "osm:n5230370403",
+   "name": "Mogappair West Bus Terminus",
+   "kind": "bus",
+   "ward": 143,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.17041,
+    13.08221
+   ]
+  },
+  {
+   "id": "osm:n5273733276",
+   "name": "Chromepet",
+   "kind": "rail",
+   "ward": null,
+   "why": "a second map point of Chromepet",
+   "by": "rule",
+   "lonlat": [
+    80.14117,
+    12.95219
+   ]
+  },
+  {
+   "id": "osm:n5311755244",
+   "name": "Adambakkam",
+   "kind": "rail",
+   "ward": 165,
+   "why": "trains do not stop here (see the source in rail_metro.opened.json)",
+   "by": "rule",
+   "lonlat": [
+    80.19689,
+    12.98238
+   ]
+  },
+  {
+   "id": "osm:n5318548733",
+   "name": "SRM Travels",
+   "kind": "bus",
+   "ward": 127,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.203,
+    13.0711
+   ]
+  },
+  {
+   "id": "osm:n5319207344",
+   "name": "சென்னை விமான நிலையம்",
+   "kind": "metro",
+   "ward": null,
+   "why": "a second map point of Airport",
+   "by": "rule",
+   "lonlat": [
+    80.16418,
+    12.98077
+   ]
+  },
+  {
+   "id": "osm:n5319207346",
+   "name": "மீனம்பாக்கம்",
+   "kind": "metro",
+   "ward": 159,
+   "why": "a second map point of Meenambakkam Metro",
+   "by": "rule",
+   "lonlat": [
+    80.17647,
+    12.98764
+   ]
+  },
+  {
+   "id": "osm:n6397600715",
+   "name": "வண்ணாரப்பேட்டை",
+   "kind": "metro",
+   "ward": 53,
+   "why": "a second map point of Washermenpet Metro",
+   "by": "rule",
+   "lonlat": [
+    80.28103,
+    13.10796
+   ]
+  },
+  {
+   "id": "osm:n675894194",
+   "name": "Vinayakapuram",
+   "kind": "bus",
+   "ward": 26,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.20568,
+    13.13986
+   ]
+  },
+  {
+   "id": "osm:n7205568985",
+   "name": "தாம்பரம் சானடோரியம் பேருந்து நிலையம்",
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.12728,
+    12.93719
+   ]
+  },
+  {
+   "id": "osm:n7652446224",
+   "name": "Pattur Bus Stand",
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.11851,
+    13.02318
+   ]
+  },
+  {
+   "id": "osm:n7796591114",
+   "name": "Anna Nagar West",
+   "kind": "bus",
+   "ward": 95,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.19849,
+    13.09375
+   ]
+  },
+  {
+   "id": "osm:n9331600151",
+   "name": "Anakaputhur Bus Stand",
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.12308,
+    12.98525
+   ]
+  },
+  {
+   "id": "osm:n9796683105",
+   "name": "Perumbakkam Bus Depot",
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.20969,
+    12.88666
+   ]
+  },
+  {
+   "id": "osm:w1032432141",
+   "name": "Medavakkam Bus Terminus",
+   "kind": "station",
+   "ward": null,
+   "why": "not a rail or metro station (a bus terminus, jetty or other station)",
+   "by": "rule",
+   "lonlat": [
+    80.18225,
+    12.91954
+   ]
+  },
+  {
+   "id": "osm:w1032599147",
+   "name": "NGO Colony Bus Terminus",
+   "kind": "bus",
+   "ward": 177,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.20675,
+    12.99437
+   ]
+  },
+  {
+   "id": "osm:w1052950343",
+   "name": "Keelkattalai Bus Stand",
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.18613,
+    12.95603
+   ]
+  },
+  {
+   "id": "osm:w1079915315",
+   "name": "Koyambedu Omni Bus Station",
+   "kind": "bus",
+   "ward": 127,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.19879,
+    13.07078
+   ]
+  },
+  {
+   "id": "osm:w1115820281",
+   "name": "Chennai Suburban Terminal (Moore Market Complex)",
+   "kind": "rail",
+   "ward": 58,
+   "why": "a second map point of Chennai Central Suburban",
+   "by": "rule",
+   "lonlat": [
+    80.27404,
+    13.08317
+   ]
+  },
+  {
+   "id": "osm:w1173910097",
+   "name": "Tambaram",
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.11905,
+    12.92816
+   ]
+  },
+  {
+   "id": "osm:w1202024841",
+   "name": "Vallalar Nagar Bus Terminal",
+   "kind": "bus",
+   "ward": 52,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.28043,
+    13.10591
+   ]
+  },
+  {
+   "id": "osm:w125180638",
+   "name": "Vyasarpadi MTC Depot",
+   "kind": "bus",
+   "ward": 36,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.25857,
+    13.12018
+   ]
+  },
+  {
+   "id": "osm:w125234675",
+   "name": "Vadapalani Bus Terminus",
+   "kind": "bus",
+   "ward": 129,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.20709,
+    13.04919
+   ]
+  },
+  {
+   "id": "osm:w125234686",
+   "name": "Chromepet Bus Stand",
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.14008,
+    12.95158
+   ]
+  },
+  {
+   "id": "osm:w125234691",
+   "name": "சென்னை சென்ட்ரல்",
+   "kind": "bus",
+   "ward": 59,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.27562,
+    13.08201
+   ]
+  },
+  {
+   "id": "osm:w125234693",
+   "name": null,
+   "kind": "bus",
+   "ward": 5,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.30507,
+    13.17212
+   ]
+  },
+  {
+   "id": "osm:w125234699",
+   "name": "Pallavaram Bus Stand",
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.15025,
+    12.9693
+   ]
+  },
+  {
+   "id": "osm:w125234700",
+   "name": null,
+   "kind": "bus",
+   "ward": 138,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.20569,
+    13.03537
+   ]
+  },
+  {
+   "id": "osm:w125234709",
+   "name": null,
+   "kind": "bus",
+   "ward": 2,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.32083,
+    13.21471
+   ]
+  },
+  {
+   "id": "osm:w125234712",
+   "name": null,
+   "kind": "bus",
+   "ward": 69,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.24201,
+    13.09861
+   ]
+  },
+  {
+   "id": "osm:w125234714",
+   "name": "Thiruverkadu Bus Depot",
+   "kind": "bus",
+   "ward": null,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.12401,
+    13.0695
+   ]
+  },
+  {
+   "id": "osm:w125234717",
+   "name": null,
+   "kind": "bus",
+   "ward": 38,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.28213,
+    13.13906
+   ]
+  },
+  {
+   "id": "osm:w125234718",
+   "name": "Thiruvanmiyur MTC Terminus",
+   "kind": "bus",
+   "ward": 182,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.25933,
+    12.98684
+   ]
+  },
+  {
+   "id": "osm:w125234719",
+   "name": null,
+   "kind": "bus",
+   "ward": 127,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.2051,
+    13.06885
+   ]
+  },
+  {
+   "id": "osm:w125234722",
+   "name": "Saidapet MTC Terminus",
+   "kind": "bus",
+   "ward": 171,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.22772,
+    13.02343
+   ]
+  },
+  {
+   "id": "osm:w1533546779",
+   "name": "Ambattur OT Bus Shelter",
+   "kind": "bus",
+   "ward": 81,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.15017,
+    13.11964
+   ]
+  },
+  {
+   "id": "osm:w1536001832",
+   "name": "Ambattur Estate Bus Terminus",
+   "kind": "metro",
+   "ward": 86,
+   "why": "not a passenger station (a berth, siding, depot or bus terminus)",
+   "by": "rule",
+   "lonlat": [
+    80.16963,
+    13.09949
+   ]
+  },
+  {
+   "id": "osm:w177370822",
+   "name": null,
+   "kind": "bus",
+   "ward": 188,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.19845,
+    12.96281
+   ]
+  },
+  {
+   "id": "osm:w209562041",
+   "name": "Egmore Railway Station",
+   "kind": "bus",
+   "ward": 61,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.26277,
+    13.07946
+   ]
+  },
+  {
+   "id": "osm:w217753807",
+   "name": "MMDA Colony",
+   "kind": "bus",
+   "ward": 108,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.21538,
+    13.06251
+   ]
+  },
+  {
+   "id": "osm:w217920756",
+   "name": "Thiru Vi-Ka Nagar",
+   "kind": "metro",
+   "ward": 68,
+   "why": "a metro station not yet open (CMRL Phase 2: not in the timetable nor in an opening reported by 28 Nov 2026)",
+   "by": "rule",
+   "lonlat": [
+    80.23261,
+    13.11988
+   ]
+  },
+  {
+   "id": "osm:w217928912",
+   "name": "Villivakkam MTC Bus Terminus",
+   "kind": "bus",
+   "ward": 95,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.20837,
+    13.10538
+   ]
+  },
+  {
+   "id": "osm:w217933047",
+   "name": null,
+   "kind": "bus",
+   "ward": 66,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.22404,
+    13.11623
+   ]
+  },
+  {
+   "id": "osm:w27618346",
+   "name": "Broadway Bus Terminus",
+   "kind": "bus",
+   "ward": 59,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.28417,
+    13.08692
+   ]
+  },
+  {
+   "id": "osm:w28089412",
+   "name": "Thyagaraya Nagar Bus Terminus",
+   "kind": "bus",
+   "ward": 141,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.23008,
+    13.03456
+   ]
+  },
+  {
+   "id": "osm:w28342504",
+   "name": null,
+   "kind": "bus",
+   "ward": 70,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.24824,
+    13.10853
+   ]
+  },
+  {
+   "id": "osm:w29246499",
+   "name": "Madhavaram MTC Bus Depot",
+   "kind": "metro",
+   "ward": 33,
+   "why": "not a passenger station (a berth, siding, depot or bus terminus)",
+   "by": "rule",
+   "lonlat": [
+    80.23584,
+    13.13152
+   ]
+  },
+  {
+   "id": "osm:w31956728",
+   "name": "Chennai Mofussil Bus Terminus",
+   "kind": "bus",
+   "ward": 127,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.20565,
+    13.06704
+   ]
+  },
+  {
+   "id": "osm:w35372225",
+   "name": "Anna Square Bus Station",
+   "kind": "bus",
+   "ward": 114,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.2843,
+    13.06641
+   ]
+  },
+  {
+   "id": "osm:w354794432",
+   "name": "Taramani",
+   "kind": "bus",
+   "ward": 174,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.24056,
+    12.98551
+   ]
+  },
+  {
+   "id": "osm:w354810503",
+   "name": "Bus Shed",
+   "kind": "bus",
+   "ward": 174,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.22373,
+    12.9881
+   ]
+  },
+  {
+   "id": "osm:w443147288",
+   "name": "Kaviarasu Kannadasan Nagar(KKD) Nagar Bus Terminus",
+   "kind": "bus",
+   "ward": 35,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.25676,
+    13.13618
+   ]
+  },
+  {
+   "id": "osm:w443147289",
+   "name": "Kodungaiyur Parvathi Nagar Bus Terminus",
+   "kind": "bus",
+   "ward": 34,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.24916,
+    13.14256
+   ]
+  },
+  {
+   "id": "osm:w919654467",
+   "name": null,
+   "kind": "bus",
+   "ward": 195,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.23828,
+    12.92522
+   ]
+  },
+  {
+   "id": "osm:w919654468",
+   "name": null,
+   "kind": "bus",
+   "ward": 195,
+   "why": "a bus station (it is on the bus stations layer)",
+   "by": "rule",
+   "lonlat": [
+    80.23836,
+    12.92486
+   ]
+  }
+ ]
+}

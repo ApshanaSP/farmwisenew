@@ -24,7 +24,7 @@ export default function AuthCard({ children }: { children: ReactNode }) {
   }, [ctl]);
   return (
     <MotionConfig reducedMotion="user">
-      <motion.div initial={{ opacity: 0, y: 14, scale: 1 }} animate={ctl} className="auth-card w-full max-w-[440px]">
+      <motion.div initial={{ opacity: 0, y: 14, scale: 1 }} animate={ctl} className="auth-card my-auto w-full max-w-[440px]">
         {children}
       </motion.div>
     </MotionConfig>

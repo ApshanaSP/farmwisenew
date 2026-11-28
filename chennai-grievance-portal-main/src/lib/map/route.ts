@@ -51,8 +51,7 @@ const COLLECTOR_FACILITIES: Facility[] = (<Facility[]>[
   { layer: "parks", where: null, words: ["parks", "public park", "public parks", "பூங்கா"] },
   { layer: "water_tanks", where: null, words: ["water tank", "water tanks", "overhead tank", "overhead tanks", "water tower", "water towers", "நீர்த்தேக்கத் தொட்டி", "தண்ணீர் தொட்டி", "நீர்த் தொட்டி"] },
   { layer: "toilets", where: null, words: ["public toilet", "public toilets", "toilet block", "toilet blocks", "comfort station", "comfort stations", "பொதுக் கழிப்பறை", "பொது கழிப்பறை"] },
-  { layer: "bus_stations", where: null, words: ["bus station", "bus stations", "bus stand", "bus stands", "bus terminus", "bus depot", "bus depots", "பேருந்து நிலைய"] },
-  { layer: "my_list", where: null, words: ["my list", "your list", "uploaded list", "my uploaded list", "my places", "என் பட்டியல்"] }
+  { layer: "bus_stations", where: null, words: ["bus station", "bus stations", "bus stand", "bus stands", "bus terminus", "bus depot", "bus depots", "பேருந்து நிலைய"] }
 ]).map((f): Facility => ({ ...(f as Facility), own: true }));
 
 /** Facility types a question can be "near", longest phrases first within each. The Collector's layers come first: their words are taken out once read. */
@@ -1259,6 +1258,6 @@ export function kindWordsIn(text: string): { word: string; codes: string[] }[] {
 
 export function wordTables(): { cats: string[]; layers: string[] } {
   const cats = CAT_WORDS.map((c) => `${[...(c.cats ?? []), ...(c.family ?? []).map((f) => `family ${f}`)].join(" / ")}: ${c.words.slice(0, 18).join(", ")}`);
-  const layers = FACILITIES.filter((f) => f.layer !== "my_list").map((f) => `${f.layer}${f.where?.kinds ? ` (kinds ${f.where.kinds.join(", ")})` : f.where?.government ? " (government)" : ""}: ${f.words.slice(0, 8).join(", ")}`);
+  const layers = FACILITIES.map((f) => `${f.layer}${f.where?.kinds ? ` (kinds ${f.where.kinds.join(", ")})` : f.where?.government ? " (government)" : ""}: ${f.words.slice(0, 8).join(", ")}`);
   return { cats, layers };
 }

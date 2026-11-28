@@ -380,8 +380,8 @@ async function timeline(s: Story, text: Map<string, string>, user: string): Prom
 }
 
 const V = 12;
-/** stories the AI writes a timeline for (the list shows no more than it can explain) */
-const EXPLAIN = 24;
+/** stories the AI writes a timeline for (the list shows no more than it can explain); STORY_EXPLAIN lowers it for a live probe's few calls */
+const EXPLAIN = Number(process.env.STORY_EXPLAIN) || 24;
 /** reports the AI reads to find the stories: the newest of the window */
 const READ = 900;
 

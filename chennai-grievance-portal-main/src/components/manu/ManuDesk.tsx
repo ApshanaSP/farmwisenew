@@ -269,7 +269,7 @@ function Check({ d, onFiled, onDelete, onReload, onHome }: { d: Detail; onFiled:
   );
 }
 
-export default function ManuDesk() {
+export default function ManuDesk({ band = false }: { band?: boolean }) {
   const [items, setItems] = useState<DeskItem[] | null>(null);
   const [sel, setSel] = useState<number | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
@@ -383,8 +383,41 @@ export default function ManuDesk() {
     </li>
   );
 
+  // the band's counts: what waits, what is being read, what was approved today and in all (the desk's own list)
+  const todayIso = new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
+  const approvedToday = filed.filter((i) => i.at.slice(0, 10) === todayIso).length;
+  const hour = Number(new Date(Date.now() + 330 * 60_000).toISOString().slice(11, 13));
+  const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   return (
-    <div className="mn">
+    <>
+    {band && (
+      <section className="cz-band mn-cband">
+        <div className="cz-band-row">
+          <div className="cz-band-t">
+            <p className="cz-band-eb"><span suppressHydrationWarning>{new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Kolkata" })}</span><i aria-hidden="true">·</i><span>Manu Desk · மனு</span></p>
+            <h2 className="cz-hello">{greet}, petition desk</h2>
+            <p className="cz-band-sub">Photograph a paper petition, check what was read, and approve it: it becomes a complaint with its department, and the petitioner gets an SMS.</p>
+          </div>
+          <div className="cz-band-acts">
+            <button className="cz-bbtn solid" onClick={() => camRef.current?.click()}>Take a photo</button>
+            <button className="cz-bbtn" onClick={() => pickRef.current?.click()}>Choose files</button>
+          </div>
+        </div>
+        <div className="cz-kpis mn-kpis">
+          {([["Awaiting verification", toCheck.length, "Read, waiting for your check", "#FFC56E"], ["Being read", inReader.length, "The reader is on them now", "#7FD6FF"],
+            ["Approved today", approvedToday, "Filed as complaints since 12 AM", "#9BE7B4"], ["Approved in all", filed.length, "Every petition this desk filed", "#D8F5E2"]] as const).map(([l, n, note, kc]) => (
+            <div key={l} className="cz-kpi" style={{ ["--kc" as string]: kc }}>
+              <div className="cz-kpi-t">
+                <p className="cz-kpi-l">{l}</p>
+                <p className="cz-kpi-n">{items ? n.toLocaleString("en-IN") : "…"}</p>
+                <p className="cz-kpi-note">{note}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+    <div className={`mn${band ? " mn-cards" : ""}`}>
       <aside className="mn-q">
         <div className="mn-up">
           <div className="mn-upb">
@@ -401,7 +434,7 @@ export default function ManuDesk() {
           {inReader.length > 0 && <><h3>Being read <b>{inReader.length}</b></h3><ul>{inReader.map(row)}</ul></>}
           <h3>Awaiting verification <b>{toCheck.length}</b></h3>
           {toCheck.length ? <ul>{toCheck.map(row)}</ul> : <p className="mn-none">{items ? "No petitions are awaiting verification." : "Retrieving the petitions. Please wait."}</p>}
-          {filed.length > 0 && <><h3>Approved this week <b>{filed.length}</b></h3><ul>{filed.map(row)}</ul></>}
+          {filed.length > 0 && <><h3>Approved petitions <b>{filed.length}</b></h3><ul>{filed.map(row)}</ul></>}
         </div>
       </aside>
 
@@ -427,5 +460,6 @@ export default function ManuDesk() {
         )}
       </main>
     </div>
+    </>
   );
 }

@@ -1,0 +1,542 @@
+{
+ "source": {
+  "id": "anna-univ-cai",
+  "name": "Anna University, Centre for Affiliation of Institutions: affiliated colleges by district (Chennai, Chengalpattu, Kancheepuram, Thiruvallur)",
+  "url": "https://annauniv.edu/cai/District%20wise/district/Chennai.php",
+  "urls": [
+   "https://annauniv.edu/cai/District%20wise/district/Chennai.php",
+   "https://annauniv.edu/cai/District%20wise/district/Chengalpattu.php",
+   "https://annauniv.edu/cai/District%20wise/district/Kancheepuram.php",
+   "https://annauniv.edu/cai/District%20wise/district/Thiruvallur.php"
+  ],
+  "checked": "2026-11-28",
+  "note": "Engineering, technology and architecture colleges. The full AISHE directory (dashboard.aishe.gov.in/hedirectory) answers only requests whose parameters its own page encrypts, so it was not read by program."
+ },
+ "entries": [
+  {
+   "id": "au:3103",
+   "name": "Central Institute of Petrochemicals Engineering and Technology",
+   "district": "Chennai"
+  },
+  {
+   "id": "au:3111",
+   "name": "Loyola - ICAM College of Engineering and Technology",
+   "district": "Chennai"
+  },
+  {
+   "id": "au:3113",
+   "name": "Measi Academy of Architecture",
+   "district": "Chennai"
+  },
+  {
+   "id": "au:3114",
+   "name": "Meenakshi College of Engineering",
+   "district": "Chennai"
+  },
+  {
+   "id": "au:3115",
+   "name": "Meenakshi Sundararajan Engineering College",
+   "district": "Chennai"
+  },
+  {
+   "id": "au:3134",
+   "name": "National Institute of Technical Teachers Training and Research",
+   "district": "Chennai"
+  },
+  {
+   "id": "au:4204",
+   "name": "Adhiparasakthi Engineering College",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:3128",
+   "name": "Agni College of Technology",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:3101",
+   "name": "Anand Institute of Higher Technology",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:4130",
+   "name": "Annai Veilankanni's College of Engineering",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:4104",
+   "name": "Asan Memorial College of Engineering and Technology",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:4208",
+   "name": "Chendu College of Engineering and Technology",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:3105",
+   "name": "Dhanalakshmi Srinivasan College of Engineering and Technology",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:4108",
+   "name": "G.K.M. College of Engineering and Technology",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:3108",
+   "name": "Jeppiaar Engineering College",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:3109",
+   "name": "Jerusalem College of Engineering (Autonomous)",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:3110",
+   "name": "K.C.G. College of Technology(Autonomous)",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:4212",
+   "name": "Karpaga Vinayaga College of Engineering and Technology",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:3116",
+   "name": "Misrimal Navajee munoth Jain Engineering College",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:3117",
+   "name": "Mohammed Sathak A.J. Academy of Architecture",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:3118",
+   "name": "Mohammed Sathak AJ College of Engineering",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:3131",
+   "name": "Misrimal Navajee Munoth Jain School of Architecture",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:3112",
+   "name": "MARG Institute of Design & Architecture Swarnabhoomi (MIDAS)",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:4114",
+   "name": "New Prince Shri Bhavani College of Engineering and Technology (Autonomous)",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:4115",
+   "name": "PERI Institute of Technology",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:4116",
+   "name": "Prince Dr. K. Vasudevan College of Engineering and Technology",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:4117",
+   "name": "Prince Shri Venkateshwaraa Padmavathy Engineering College",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:5115",
+   "name": "P.T. Lee Chengalvaraya Naicker College of Engineering and Technology",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:3121",
+   "name": "SMK Fomra Institute of Technology",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:4123",
+   "name": "Sri Ramanujar Engineering College",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:3122",
+   "name": "Sri Sivasubramaniya Nadar College of Engineering (Autonomous)",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:4128",
+   "name": "SRM Valliammai Engineering College (Autonomous)",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:3123",
+   "name": "St. Joseph's College of Engineering (Autonomous)",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:3124",
+   "name": "St. Joseph's Institute of Technology (Autonomous)",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:3125",
+   "name": "T.J. Institute of Technology",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:4127",
+   "name": "Tagore Engineering College",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:3126",
+   "name": "Thangavelu Engineering College",
+   "district": "Chengalpattu"
+  },
+  {
+   "id": "au:4101",
+   "name": "Adhi College of Engineering and Technology",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:2102",
+   "name": "Apollo Engineering College",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:4103",
+   "name": "ARM College of Engineering and Technology",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:4105",
+   "name": "A R S College of Engineering",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:2104",
+   "name": "Chennai Institute of Technology (Autonomous)",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:t1398",
+   "name": "Chennai Institute of Technology and Applied Research",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:2105",
+   "name": "D.M.I. College of Engineering",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:4106",
+   "name": "Dhaanish Ahmed College of Engineering",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:4107",
+   "name": "Dhanalakshmi College of Engineering",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:5110",
+   "name": "JEI Mathaajee College of Engineering",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:2106",
+   "name": "Jeppiaar Institute of Technology",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:2108",
+   "name": "Kings Engineering College",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:2109",
+   "name": "Loyola Institute of Technology",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:2111",
+   "name": "Madha Engineering College",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:2112",
+   "name": "Madha Institute of Engineering and Technology",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:2131",
+   "name": "Papni School of Architecture",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:2113",
+   "name": "P.B. College of Engineering",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:5117",
+   "name": "Pallavan College of Engineering",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:2116",
+   "name": "Rajalakshmi Engineering College (Autonomous)",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:2118",
+   "name": "Rajalakshmi School of Architecture",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:2119",
+   "name": "Rajiv Gandhi College of Engineering",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:4118",
+   "name": "Rrase College of Engineering",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:2122",
+   "name": "Saveetha Engineering College (Autonomous)",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:4120",
+   "name": "Sri Krishna Engineering College",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:4121",
+   "name": "Sri Krishna Institute of Technology",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:2126",
+   "name": "Sri Muthukumaran Institute of Technology",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:4124",
+   "name": "Sri Sai Ram Institute of Technology (Autonomous)",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:4125",
+   "name": "Sri Sai Ram Engineering College (Autonomous)",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:2127",
+   "name": "Sri Venkateswara College of Engineering (Autonomous)",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:4126",
+   "name": "Sri Venkateswaraa College of Technology",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:2129",
+   "name": "St. Joseph College Engineering",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:5132",
+   "name": "Thirumalai Engineering College",
+   "district": "Kancheepuram"
+  },
+  {
+   "id": "au:1102",
+   "name": "Aalim Muhammed Salegh Academy of Architecture",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1101",
+   "name": "Aalim Muhammed Salegh College of Engineering",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:2101",
+   "name": "Alpha College of Engineering",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1137",
+   "name": "CAAD-Chennai Academy of Architecture and Design",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:3106",
+   "name": "Easwari Engineering College (Autonomous)",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1103",
+   "name": "G.R.T. Institute of Engineering and Technology",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1105",
+   "name": "Gojan School of Business and Technology",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1106",
+   "name": "Indira Institute of Engineering and Technology",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1107",
+   "name": "J N N Institute of Engineering",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1108",
+   "name": "Jaya Engineering College",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1111",
+   "name": "Jaya Institute of Technology",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:2128",
+   "name": "Jaya College of Engineering and Technology",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1120",
+   "name": "Jaya Sakthi Engineering College",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:2114",
+   "name": "Panimalar Engineering College (Autonomous)",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1113",
+   "name": "PMR Engineering College",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1114",
+   "name": "Prathyusha Engineering College(Autonomous)",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1115",
+   "name": "R.M.D. Engineering College (Autonomous)",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1116",
+   "name": "R.M.K. College of Engineering and Technology (Autonomous)",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1117",
+   "name": "R.M.K. Engineering College (Autonomous)",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1135",
+   "name": "RVS Padmavathy School of Architecture",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:2117",
+   "name": "Rajalakshmi Institute of Technology(Autonomous)",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1119",
+   "name": "S.A. Engineering College (Autonomous)",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:2120",
+   "name": "S.K.R. Engineering College",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1121",
+   "name": "Sams College of Engineering and Technology",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:2124",
+   "name": "Sree Sastha Institute of Engineering and Technology",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1124",
+   "name": "Sri Venkateswara College of Engineering and Technology",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1125",
+   "name": "Sri Venkateswara Institute of Science and Technology",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1126",
+   "name": "Sriram Engineering College",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1136",
+   "name": "School of Architecture St.Peter's College of Engineering and Technology",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1138",
+   "name": "Sri Jayaram Institute of Engineering and Technology",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1127",
+   "name": "St. Peter's College of Engineering and Technology",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1128",
+   "name": "T.J.S. Engineering College",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1130",
+   "name": "Vel Tech High Tech Dr. Rangarajan Dr. Sakunthala Engineering College (Autonomous)",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1131",
+   "name": "Vel Tech Multi Tech Dr. Rangarajan Dr. Sakunthala Engineering College (Autonomous)",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1132",
+   "name": "Velammal Engineering College (Autonomous)",
+   "district": "Thiruvallur"
+  },
+  {
+   "id": "au:1133",
+   "name": "Velammal Institute of Technology",
+   "district": "Thiruvallur"
+  }
+ ]
+}

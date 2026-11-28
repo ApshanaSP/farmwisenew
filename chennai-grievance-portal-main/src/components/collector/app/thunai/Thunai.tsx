@@ -60,6 +60,7 @@ import { ackDelay, ackDue, ackToSay, newsOpener, stillLine, asksFirst, consoleDi
 import { coreOf, hud, type JarvisMode } from "./hudstore";
 import { ENGAGED_MS, levelAllowed, type Addressed } from "@/lib/thunai/addressed";
 import { cityQuick, districtNounIn, intentMarker, quickScreen } from "@/lib/thunai/quick";
+import { boardAsk } from "@/lib/thunai/board";
 import { understandV8 } from "@/lib/thunai/v8/flag8";
 import { placeWord, wordsLang } from "@/lib/thunai/v8/lang8";
 import { caseInFocus, newsLane8, onNewsPanel, refLane8, userLang8, type LastFound } from "@/lib/thunai/v8/browser";
@@ -2173,6 +2174,9 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     if (!original && understandV10()) {
       const f10 = front10(said);
       if (brainFirst && f10.lane && f10.lane.lane !== "wait" && !(f10.lane.lane === "control" && shortOrder && !f10.lane.which) && !(f10.lane.lane === "map" && shortOrder && f10.lane.cmd.op !== "ask" && f10.lane.cmd.op !== "city")) f10.lane = null;
+      // 28 Nov: a dashboard asked for ("Anna Nagar-க்கு weekly report எடு", "compare Adyar and Anna Nagar") is never a console control (the weekly
+      // report only set the console to Weekly, 27 Nov 23:29): the server builds it (lib/thunai/board.ts)
+      if (f10.lane?.lane === "control" && boardAsk(said, worldRef.current)) f10.lane = null;
       // (the brain reads the words as they were heard)
       if (brainFirst) f10.said = said;
       if (f10.lane?.lane === "wait") {
@@ -2469,7 +2473,7 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // and "the most congested"; the same reading sends the rules' fallback below to the city screen)
     const ca = cityAsk(said, { last: lastCityNow() });
     const cityAsFilter = !!ca && rules.kind === "do" && rules.steps.some((x) => x.a === "view" && !!x.view.cat);
-    if (rules.kind === "do" && shortOrder && rules.confidence >= 0.9 && planRisk(rules.steps) === "A" && ((isPlainMove(rules.steps) && !asksBeyondMove(said)) || isNavCommand(said, rules.steps)) && !cityAsFilter) {
+    if (rules.kind === "do" && shortOrder && rules.confidence >= 0.9 && planRisk(rules.steps) === "A" && ((isPlainMove(rules.steps) && !asksBeyondMove(said)) || isNavCommand(said, rules.steps)) && !cityAsFilter && !boardAsk(said, worldRef.current)) {
       traceDecided("rules");
       setBrainNow({ by: "instant", model: null, ms: 0 });
       await run(rules.steps, rules.lang, said, "rules", rules.note?.[rules.lang]);

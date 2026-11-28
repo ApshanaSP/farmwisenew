@@ -9,6 +9,8 @@ import { StageChip } from "./Cards";
 import { deadlineOf } from "./format";
 import type { Ctx } from "./OfficerApp";
 import PetitionOriginal from "@/components/manu/PetitionOriginal";
+import { isSevere } from "@/lib/cases/rules";
+import { CaseAnswer } from "./CaseAnswer";
 
 type Report = GrievanceDetail["reports"][number];
 
@@ -169,6 +171,12 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
 
   const busy = c.busy.has(g.id);
   const lastReturn = d.reports.find((r) => r.returned)?.returned ?? (g.returned ? { note: g.returnNote ?? "", t: g.updated } : null);
+  // the Collector's questions about this case (lib/cases/lifecycle.ts), newest first: the oldest one still unanswered is asked first, so
+  // no earlier question is left pending for ever; with none open, the newest (answered) one is shown with its answer
+  const unanswered = (d.inquiries ?? []).filter((x) => x.answer == null);
+  const openAsk = unanswered.length ? unanswered[unanswered.length - 1] : (d.inquiries ?? [])[0] ?? null;
+  const askOpen = !!openAsk && openAsk.answer == null;
+  const workStage = g.stage === "new" || g.stage === "approved" || g.stage === "action" || g.stage === "sent";
   return (
     <div className="odrawer" role="dialog" aria-label={`Grievance ${g.id}`}>
       <div className="odrawer-h">{close}
@@ -180,7 +188,7 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
         <Steps stage={g.stage as Stage} severe={g.sev === "Severe"} closedByDept={!!d.closedByDept} hist={historyOf(d.timeline)} />
         {g.returned && lastReturn && (
           <div className="banner" style={{ background: "var(--high-soft)", color: "#8A4A06" }}><I n="refresh" />
-            <span><b>Returned by the Collector for rework.</b> {lastReturn.note || "No note was added."} Fix it on site, then complete and send again.</span>
+            <span><b>{g.reopened ? "Reopened by the Collector." : "Returned by the Collector for rework."}</b> {lastReturn.note || "No note was added."} Fix it on site, then complete and send again.</span>
           </div>
         )}
         {d.instructions.length > 0 && (
@@ -234,21 +242,27 @@ export function GrievanceDrawer({ id, mode, c, onMode }: { id: string; mode: "of
         </div>
       </div>
       <div className="odrawer-f">
+        {/* the case's choices (lib/cases/rules.ts, enforced on the server): a severe case only goes to the Collector for approval, with remarks
+            and at least one photo; any other is closed by the department (remarks; photos optional) or sent to the Collector (with a photo) */}
+        {/* an open question sits above the case's own actions, never instead of them (a reopened case keeps Close / Send) */}
+        {askOpen && workStage && <CaseAnswer caseId={g.id} q={openAsk!} onDone={() => setRetry((n) => n + 1)} />}
         {g.stage === "new" ? (
           <><button className="btn" disabled={busy} onClick={() => c.approve(g)}><I n="check" />Approve</button>
             <span className="hint">Approving moves it to In action and assigns it to {g.officer ?? "the field officer"}.</span></>
-        ) : (g.stage === "approved" || g.stage === "action") && g.sev === "Severe" ? (
-          <><button className="btn ok" disabled={busy} onClick={() => c.openSend(g)}><I n="send" />Complete &amp; send to Collector</button>
+        ) : (g.stage === "approved" || g.stage === "action") && isSevere(g.sev) ? (
+          <><button className="btn ok" disabled={busy} onClick={() => c.openSend({ ...g, intent: "send" })}><I n="send" />Send to Collector for approval</button>
             {g.stage === "approved" && <StartWork g={g} c={c} busy={busy} />}
-            <span className="hint">Severe: the Collector verifies it. Remarks and photos go to the Collector.</span></>
+            <span className="hint">{g.reopened && d.reopened?.note ? `Reopened by the Collector: ${d.reopened.note}. ` : ""}Severe: only the Collector can close it. Send your remarks and at least one photo of the completed work.</span></>
         ) : g.stage === "approved" || g.stage === "action" ? (
-          <><button className="btn ok" disabled={busy} onClick={() => c.openSend(g)}><I n="check" />Complete &amp; close</button>
+          <><button className="btn ok" disabled={busy} onClick={() => c.openSend({ ...g, intent: "close" })}><I n="check" />Close as done</button>
+            <button className="btn plain" disabled={busy} onClick={() => c.openSend({ ...g, intent: "send" })} title="The Collector checks your report and photos, then closes the case or sends it back"><I n="send" />Send to Collector</button>
             {g.stage === "approved" && <StartWork g={g} c={c} busy={busy} />}
-            <span className="hint">You verify this one: your remarks and photos are kept as the record.</span></>
+            <span className="hint">{g.reopened && d.reopened?.note ? `Reopened by the Collector: ${d.reopened.note}. ` : ""}Close it yourself with your remarks (a photo is optional), or send it to the Collector for approval with a photo.</span></>
         ) : g.stage === "sent" ? (
           <span className="st st-await" style={{ padding: "8px 12px", display: "inline-flex", gap: 6, alignItems: "center" }}><I n="clock" />
-            {g.sev === "Severe" ? "Waiting for the Collector's verification" : "Waiting for the Collector's approval"}</span>
-        ) : <Outcome stage={g.stage as Stage} closedByDept={!!d.closedByDept} rejected={d.rejected} />}
+            {isSevere(g.sev) ? "Waiting for the Collector's verification" : "Waiting for the Collector's approval"}</span>
+        ) : <>{openAsk && <CaseAnswer caseId={g.id} q={openAsk} onDone={() => setRetry((n) => n + 1)} />}
+          <Outcome stage={g.stage as Stage} closedByDept={!!d.closedByDept} rejected={d.rejected} /></>}
       </div>
     </div>
   );

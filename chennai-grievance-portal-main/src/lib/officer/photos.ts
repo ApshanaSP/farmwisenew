@@ -56,6 +56,55 @@ export async function readPhoto(dir: string, name: string): Promise<{ buf: Buffe
     const buf = await readFile(path.join(uploadRoot(), dir, name));
     return { buf, type: PHOTO_TYPES[name.split(".")[1] as PhotoExt] };
   } catch {
+    // a generated resolution's photo (lib/cases/synthetic.ts) on a copy of the site that did not write it (the hosted copy, a fresh
+    // checkout): the folder name says which library photo it is a copy of, and the library is in the repository
+    return libraryPhoto(dir, name);
+  }
+}
+
+// ------------------------------------------------------------- generated photos --
+
+/**
+ * The generated "after" photos of the daily generated resolutions (lib/cases/synthetic.ts): made once (scripts/build-case-photos.cjs),
+ * kept in the repository (data/case-photos, index.json lists them in a fixed order) and copied into an ordinary report folder for each
+ * resolution. Such a folder is named `<yyyymmdd>-c45e00<4 hex: the library index><6 hex>`, so any copy of the site can serve the photo
+ * from the library when the folder itself is not on its disk.
+ */
+export const GENERATED_DIR_MARK = "c45e00";
+const GENERATED_DIR_RE = /^\d{8}-c45e00([0-9a-f]{4})[0-9a-f]{6}$/;
+
+export function libraryRoot(): string {
+  return path.resolve(process.env.CASE_PHOTO_LIBRARY || path.join(process.cwd(), "data", "case-photos"));
+}
+
+export interface LibraryEntry { file: string; group: string; source: string; made: string; prompt?: string }
+
+let libCache: { at: number; files: (LibraryEntry | null)[] } | null = null;
+/**
+ * The library's index (data/case-photos/index.json), read at most once a minute; empty when there is none. A report folder names its
+ * photo by its PLACE in the index, so positions are kept: a malformed entry becomes null in its slot instead of shifting the later ones.
+ */
+export async function libraryIndex(): Promise<(LibraryEntry | null)[]> {
+  if (libCache && Date.now() - libCache.at < 60_000) return libCache.files;
+  let files: (LibraryEntry | null)[] = [];
+  try {
+    const j = JSON.parse(await readFile(path.join(libraryRoot(), "index.json"), "utf8")) as { files?: LibraryEntry[] };
+    files = Array.isArray(j.files) ? j.files.map((f) => (f && typeof f.file === "string" && /^[a-z0-9-]+\.(jpg|png|webp)$/.test(f.file) ? f : null)) : [];
+  } catch { files = []; }
+  libCache = { at: Date.now(), files };
+  return files;
+}
+
+/** The library photo a generated report folder is a copy of, or null (any other folder, or a photo not in the library). */
+export async function libraryPhoto(dir: string, name: string): Promise<{ buf: Buffer; type: string } | null> {
+  const m = GENERATED_DIR_RE.exec(dir);
+  if (!m || name !== "1.jpg") return null;
+  const entry = (await libraryIndex())[parseInt(m[1], 16)];
+  if (!entry) return null;
+  try {
+    const buf = await readFile(path.join(libraryRoot(), entry.file));
+    return { buf, type: PHOTO_TYPES[entry.file.split(".")[1] as PhotoExt] };
+  } catch {
     return null;
   }
 }

@@ -5,6 +5,8 @@ import "@/components/manu/manu.css";
 import { typedDigits } from "@/lib/typed-digits";
 import { shownStatus as shown } from "@/lib/manu/track-words";
 import LangToggle from "@/components/LangToggle";
+import ThemeToggle from "@/components/ThemeToggle";
+import { Wordmark } from "@/components/Logo";
 import { getLang, hasLangChoice, setLang, useLang, type UiLang } from "@/lib/i18n/lang";
 
 interface Step { status: string; stage: string; note: string | null; at: string }
@@ -48,11 +50,19 @@ export default function TrackPage() {
     if (c && k) void ask(c, { key: k });
   }, [ask]);
 
+  // the consoles' white top bar (the logo, English / தமிழ், the theme) and the green band with the page's title, as on the citizen pages.
+  // No words of its own in the bar: every word on this page has hand-checked Tamil (track.i18n.fixall.test.ts)
   return (
-    <main className="trk diq-bg" style={{ minHeight: "100dvh" }}>
-      <div style={{ display: "flex", justifyContent: "flex-end" }}><LangToggle /></div>
-      <h1>உங்கள் மனுவின் நிலை</h1>
-      <p>Track your petition or complaint</p>
+    <div className="diq-bg flex flex-col" style={{ minHeight: "100dvh" }}>
+      <header className="cz-top">
+        <span className="cz-brand"><Wordmark className="cz-wm" /></span>
+        <div className="cz-tright"><LangToggle /><ThemeToggle /></div>
+      </header>
+    <main className="trk">
+      <section className="cz-band slim trk-band">
+        <h1>உங்கள் மனுவின் நிலை</h1>
+        <p className="cz-band-sub">Track your petition or complaint</p>
+      </section>
       {!view && (
         <form className="trk-card trk-form" onSubmit={(e) => { e.preventDefault(); void ask(code, { last4 }); }}>
           <label>Number on your slip<input ref={codeBox} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="2026-123ABC" autoComplete="off" /></label>
@@ -76,5 +86,6 @@ export default function TrackPage() {
         </section>
       )}
     </main>
+    </div>
   );
 }

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSessionFromCookies } from "@/lib/auth";
 import { officerDeptCode } from "@/lib/officer/guard";
 import { deptProfile, officerOverview } from "@/lib/officer/data";
+import { officerWork } from "@/lib/officer/insights";
 import { OFFICER } from "@/lib/officer/departments";
 import type { Period } from "@/lib/collector/intel";
 import OfficerApp from "@/components/officer/OfficerApp";
@@ -47,10 +48,11 @@ export default async function OfficerPage() {
       return <Unavailable title="Your department is not set"
         text="This officer account is not linked to a department that has work in the district intelligence store. Ask the administrator to set your department." />;
     }
-    const initial = await officerOverview(dept, { period: OFFICER.defaultPeriod as Period, zone: null, taluk: null });
+    const scope = { period: OFFICER.defaultPeriod as Period, zone: null, taluk: null };
+    const [ov, work] = await Promise.all([officerOverview(dept, scope), officerWork(dept, scope)]);
     return (
       <>
-        <OfficerApp initial={initial} user={session.email} />
+        <OfficerApp initial={{ ...ov, work }} user={session.email} />
       </>
     );
   } catch (err: any) {

@@ -41,6 +41,8 @@ export interface Progress {
 }
 
 const DECISIONS = ["verify", "resolve", "reopen", "reject"];
+/** what the resident reads when the Collector's office reopens their closed complaint (StatusTracker.tsx titles that step "Reopened") */
+export const REOPENED_WORDS = "The Collector's office reopened the complaint and sent it back to the department to check the work again.";
 
 /**
  * The resident's journey from the incident's officer steps and Collector decisions after the complaint was filed,
@@ -92,7 +94,10 @@ export function progressOf(incidentId: string, filedAt: string, steps: WorkStep[
       add("Verified by Collector", "Collector", "The Collector's office checked the work and closed the complaint.", e.at);
       checkedBy = "collector";
     } else if (d.decision === "reopen") {
-      add("In Progress", "Collector", "The Collector's office returned it to the department for more work.", e.at);
+      // 28 Nov: a reopen of a complaint that was closed says so (the Collector's Reopen, lib/cases/lifecycle.ts); a send-back of work the
+      // department reported done keeps its words
+      const wasClosed = ["Resolved by Department", "Verified by Collector", "Rejected"].includes(journey[journey.length - 1]?.status ?? "");
+      add("In Progress", "Collector", wasClosed ? REOPENED_WORDS : "The Collector's office returned it to the department for more work.", e.at);
       checkedBy = null;
       // the report it sent back no longer stands: its photos are not "the work done" (officer-day-28); the next report's are
       reportIds.clear();

@@ -1,0 +1,1425 @@
+{
+ "built_at": "2026-11-28T10:34:42+05:30",
+ "checked_on": "2026-11-28",
+ "what": "GCC ward -> revenue taluk (Chennai district): official revenue village boundaries (TNGIS, checked against the Chennai Collectorate's village list) overlaid on the console's ward polygons (DataMeet community copy, not GCC-official)",
+ "ward_geometry_sha256": "0940ba40c19460878de9e7be13363ef897b6650a774fc55c6802d94748341f71",
+ "collectorate_check": {
+  "url": "https://chennai.nic.in/revenue-administration/",
+  "checked_on": "2026-11-28",
+  "file": "reference/collectorate_villages.csv",
+  "collectorate_villages": 144,
+  "tngis_chennai_villages": 140,
+  "same_taluk": 136,
+  "taluk_differs_collectorate_taken": [],
+  "tngis_villages_not_in_the_list": [
+   "St.Thomas Mount-cum-Pallavaram",
+   "Jalladianpattai",
+   "Adayar River",
+   "Ambattur"
+  ],
+  "collectorate_villages_with_no_tngis_polygon": [
+   {
+    "village": "Tiruvotriyur-2",
+    "taluk": "Tiruvotriyur"
+   },
+   {
+    "village": "Theyambakkam",
+    "taluk": "Tiruvotriyur"
+   },
+   {
+    "village": "Aamullaivayal",
+    "taluk": "Tiruvotriyur"
+   },
+   {
+    "village": "Vaikkadu",
+    "taluk": "Tiruvotriyur"
+   },
+   {
+    "village": "Madhavaram-2",
+    "taluk": "Madhavaram"
+   },
+   {
+    "village": "S.Kolathur",
+    "taluk": "Sholinganallur"
+   },
+   {
+    "village": "Jaladampet",
+    "taluk": "Sholinganallur"
+   },
+   {
+    "village": "Kakkapallam",
+    "taluk": "Ambattur"
+   }
+  ],
+  "match": "names normalised (spelling, part numbers) and paired one to one at similarity 0.75 or more"
+ },
+ "flags": {
+  "official_number_differs": "the same-numbered TNGIS (official) ward lies mainly in another taluk",
+  "near_tie": "the main taluk leads the next by under 0.05 of the ward's area"
+ },
+ "method": "Each GCC ward is sampled on a 25 m grid (finer for wards under 400 samples); each point is placed in a TNGIS revenue village polygon; the village's taluk is TNGIS's own, except Kolathur, Peravallur and Siruvallur, which the Chennai Collectorate lists as the Kolathur taluk formed in 2024. The ward's taluk is the taluk holding the largest share of its area; 'share' is that taluk's share of the whole ward area.",
+ "ward_geometry": "chennai-grievance-portal-main/data/boundaries/gcc-wards.geojson",
+ "ward_geometry_note": "The ward polygons are the pipeline's (a DataMeet community copy of the GCC wards), so every ward number means the same area here as on the console's map. TNGIS's GCC ward layer follows the zone ranges of the 2021 wards-committee notification (Tamil Nadu Government Gazette Extraordinary No. 594, 14 Dec 2021: zone II = wards 15-22, III = 23-33, XIII = 168-180, XIV = 181-191); the DataMeet file follows the superseded 2011 numbering in several zones. tngis_ward_taluk gives the taluk of the TNGIS ward with the same number, ready for the day the console switches to the official ward polygons (then re-run this script).",
+ "methods": {
+  "official_village_overlay": "official revenue village polygons cover at least half of the ward",
+  "official_village_overlay_low_cover": "less than half of the ward lies in Chennai revenue villages (flagged)",
+  "nearest_official_village": "no Chennai revenue village under the ward; nearest official taluk (flagged)"
+ },
+ "sources": [
+  {
+   "name": "TNGIS revenue village boundaries (TNeGA, Government of Tamil Nadu)",
+   "url": "https://tngis.tn.gov.in/tngismaps/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=tngis_basemap%3Abasemap_revenue_village&outputFormat=application%2Fjson&srsName=EPSG%3A4326&CQL_FILTER=BBOX%28the_geom%2C80.05%2C12.75%2C80.45%2C13.35%2C%27EPSG%3A4326%27%29",
+   "layer": "tngis_basemap:basemap_revenue_village",
+   "used_for": "village polygons, village names, LGD village codes, TNGIS taluk of each village",
+   "terms": "TNGIS terms of use (https://tngis.tn.gov.in/apps/thematic_view, read 2026-11-28): for information only and not for legal use; not to be shared or published in public media without prior approval from TNGIS/TNeGA; data owned by the source departments. The raw polygons are therefore kept out of the repository.",
+   "features": 535,
+   "bytes": 3490750,
+   "sha256": "ccb11ef0be625f12c2e26197b4522d26fd419b60fa7e54c0fcb39bf3a11e514f",
+   "fetched_at": "2026-11-28T03:44:18+05:30"
+  },
+  {
+   "name": "Chennai District Collectorate: revenue administration (17 taluks, their firkas and revenue villages)",
+   "url": "https://chennai.nic.in/revenue-administration/",
+   "checked_on": "2026-11-28",
+   "used_for": "taluk of each village; Kolathur taluk = Kolathur, Peravallur, Siruvallur (formed 2024 from Ayanavaram)"
+  },
+  {
+   "name": "TNGIS taluk boundaries",
+   "url": "https://tngis.tn.gov.in/tngismaps/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=generic_viewer%3Ataluk_boundary&outputFormat=application%2Fjson&srsName=EPSG%3A4326&CQL_FILTER=BBOX%28the_geom%2C80.05%2C12.75%2C80.45%2C13.35%2C%27EPSG%3A4326%27%29",
+   "layer": "generic_viewer:taluk_boundary",
+   "used_for": "cross-check only (16 Chennai taluks, drawn before Kolathur); LGD sub-district codes",
+   "features": 29,
+   "bytes": 774520,
+   "sha256": "93e690d2823685e84537d09e5c50b23b6a2dc6e3740ffd80c411ddc4bd3fa360",
+   "fetched_at": "2026-11-28T03:44:20+05:30"
+  },
+  {
+   "name": "TNGIS GCC ward boundaries",
+   "url": "https://tngis.tn.gov.in/tngismaps/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=generic_viewer%3Agcc_ward_boundary&outputFormat=application%2Fjson&srsName=EPSG%3A4326&CQL_FILTER=BBOX%28the_geom%2C80.05%2C12.75%2C80.45%2C13.35%2C%27EPSG%3A4326%27%29",
+   "layer": "generic_viewer:gcc_ward_boundary",
+   "used_for": "cross-check only: the same overlay on TNGIS's copy of the ward polygons",
+   "features": 200,
+   "bytes": 1586274,
+   "sha256": "6c8e8d2dd780cce62f404b31e28aeb2f2117d48652e5b28389eb7d1c464b430a",
+   "fetched_at": "2026-11-28T03:44:23+05:30"
+  },
+  {
+   "name": "OpenStreetMap taluk boundaries (community data, not official)",
+   "url": "https://nominatim.openstreetmap.org/lookup?osm_ids=R10326120,R10302482,R21757515,R10302481,R21602899,R21775650,R21772138,R10326119,R21499640,R21785484,R21745736&polygon_geojson=1&format=json",
+   "used_for": "cross-check only (11 of the 17 taluks are mapped in OSM)",
+   "features": 11,
+   "sha256": "886407d005f355dd0fd72cab76b382e0241b722fe3ffbe69c60eafe42573e2ee",
+   "fetched_at": "2026-11-28T03:44:24+05:30"
+  }
+ ],
+ "sources_tried": [
+  {
+   "url": "https://chennai.nic.in/revenue-administration/",
+   "has": "17 taluks in 3 revenue divisions, 49 firkas, revenue villages per taluk; no ward lists",
+   "usable": "yes: village -> taluk"
+  },
+  {
+   "url": "https://tngis.tn.gov.in/tngismaps/wfs",
+   "has": "public OGC WFS/WMS of TNGIS: revenue villages (with LGD codes), taluks, GCC wards",
+   "usable": "yes: polygons"
+  },
+  {
+   "url": "https://www.stationeryprinting.tn.gov.in/extraordinary/2021/594_Ex_II_2.pdf",
+   "has": "TN Gazette Extraordinary No. 594 (14 Dec 2021), MAWS notification II(2)/MAWS/871(e-1)/2021: the 15 GCC wards committees (zones) and their ward ranges; no taluks",
+   "usable": "cross-check of ward numbering only (TNGIS's GCC ward layer matches it; the DataMeet file does not in zones II, III, XIII, XIV)"
+  },
+  {
+   "url": "https://tngis.tn.gov.in/downloads.html",
+   "has": "Taluk.zip and Revenue_Villages_Boundary.zip shapefiles",
+   "usable": "not used: the page asks visitors to log in or register before downloading (no account was created)"
+  },
+  {
+   "url": "https://lgdirectory.gov.in/",
+   "has": "LGD codes of sub-districts, villages, ULB wards; PC/AC-wise ward mapping report",
+   "usable": "not used: the reports and downloads sit behind a CAPTCHA form; no ward -> taluk report exists there"
+  },
+  {
+   "url": "https://tnsdma.tn.gov.in/img/document/DDMPPDF/chennai Gcc ddmp.pdf",
+   "has": "GCC City Disaster Management Perspective Plan 2024 (806 pages)",
+   "usable": "no: no ward -> taluk table (taluk appears only in addresses)"
+  },
+  {
+   "url": "https://gis.chennaicorporation.gov.in/server/rest/services/",
+   "has": "GCC's own ArcGIS server",
+   "usable": "no: HTTPS fails and HTTP answers 'Could not access any server machines' (2026-11-28)"
+  },
+  {
+   "url": "https://en.wikipedia.org/wiki/Administrative_divisions_of_Chennai",
+   "has": "zone -> taluk(s) table, community-edited, zone level only",
+   "usable": "no: not official and not ward level"
+  },
+  {
+   "url": "https://tn.data.gov.in/resource/revenue-divisions-taluks-firkas-and-revenue-villages-chennai-district-dhb-2017-18",
+   "has": "District Statistical Handbook 2017-18 list of divisions, taluks, firkas, villages (seen in search results, not downloaded)",
+   "usable": "not used: a list without geometry from before Kolathur; the Collectorate page is current"
+  },
+  {
+   "url": "https://www.elections.tn.gov.in/",
+   "has": "assembly constituency documents",
+   "usable": "not checked: with official village polygons available, an assembly-constituency crosswalk would only be an approximation"
+  },
+  {
+   "url": "https://bhuvan.nrsc.gov.in/ ; https://onlinemaps.surveyofindia.gov.in/ ; https://censusindia.gov.in/",
+   "has": "national boundary services",
+   "usable": "not checked: the state's own TNGIS layers were found first and are the Revenue Department's"
+  },
+  {
+   "url": "https://overpass-api.de/api/interpreter",
+   "has": "OSM admin_level 6 taluks: 11 of 17 Chennai taluks",
+   "usable": "cross-check only (community data)"
+  }
+ ],
+ "counts": {
+  "wards": 200,
+  "taluks_with_wards": 17,
+  "split_wards": 36,
+  "flagged_wards": [
+   160
+  ],
+  "sample_points_in_two_villages": 227,
+  "wards_whose_main_taluk_depends_on_the_adyar_river_polygon": []
+ },
+ "cross_checks": {
+  "tngis_taluk_layer": {
+   "compared": 200,
+   "agree": 199,
+   "note": "Kolathur counted as Ayanavaram, as in the TNGIS taluk layer"
+  },
+  "tngis_ward_polygons": {
+   "compared": 200,
+   "agree": 172,
+   "note": "agree = the TNGIS ward with the same number lies mainly in the same taluk",
+   "median_share_of_ward_in_same_numbered_tngis_ward": 0.851,
+   "wards_under_50pct_in_same_numbered_tngis_ward": [
+    14,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    74,
+    75,
+    99,
+    100,
+    101,
+    102,
+    103,
+    104,
+    106,
+    107,
+    108,
+    131,
+    132,
+    133,
+    134,
+    135,
+    136,
+    168,
+    169,
+    170,
+    171,
+    172,
+    173,
+    174,
+    175,
+    176,
+    177,
+    178,
+    179,
+    180,
+    181,
+    182,
+    183,
+    185,
+    186,
+    190,
+    194,
+    195,
+    196,
+    197,
+    198,
+    199
+   ],
+   "wards_whose_best_tngis_match_has_another_number": [
+    {
+     "ward": 22,
+     "tngis_ward": 23,
+     "share": 0.96
+    },
+    {
+     "ward": 23,
+     "tngis_ward": 24,
+     "share": 0.9
+    },
+    {
+     "ward": 24,
+     "tngis_ward": 32,
+     "share": 0.97
+    },
+    {
+     "ward": 25,
+     "tngis_ward": 31,
+     "share": 0.92
+    },
+    {
+     "ward": 26,
+     "tngis_ward": 30,
+     "share": 0.55
+    },
+    {
+     "ward": 27,
+     "tngis_ward": 26,
+     "share": 0.62
+    },
+    {
+     "ward": 28,
+     "tngis_ward": 27,
+     "share": 0.96
+    },
+    {
+     "ward": 29,
+     "tngis_ward": 22,
+     "share": 0.99
+    },
+    {
+     "ward": 30,
+     "tngis_ward": 25,
+     "share": 0.86
+    },
+    {
+     "ward": 31,
+     "tngis_ward": 28,
+     "share": 0.66
+    },
+    {
+     "ward": 32,
+     "tngis_ward": 33,
+     "share": 0.83
+    },
+    {
+     "ward": 33,
+     "tngis_ward": 29,
+     "share": 0.81
+    },
+    {
+     "ward": 64,
+     "tngis_ward": 65,
+     "share": 0.77
+    },
+    {
+     "ward": 65,
+     "tngis_ward": 64,
+     "share": 0.83
+    },
+    {
+     "ward": 66,
+     "tngis_ward": 68,
+     "share": 0.68
+    },
+    {
+     "ward": 67,
+     "tngis_ward": 69,
+     "share": 0.96
+    },
+    {
+     "ward": 68,
+     "tngis_ward": 67,
+     "share": 0.97
+    },
+    {
+     "ward": 69,
+     "tngis_ward": 70,
+     "share": 0.98
+    },
+    {
+     "ward": 70,
+     "tngis_ward": 71,
+     "share": 0.97
+    },
+    {
+     "ward": 71,
+     "tngis_ward": 74,
+     "share": 0.92
+    },
+    {
+     "ward": 74,
+     "tngis_ward": 75,
+     "share": 0.92
+    },
+    {
+     "ward": 75,
+     "tngis_ward": 76,
+     "share": 0.75
+    },
+    {
+     "ward": 99,
+     "tngis_ward": 104,
+     "share": 0.92
+    },
+    {
+     "ward": 100,
+     "tngis_ward": 103,
+     "share": 0.75
+    },
+    {
+     "ward": 101,
+     "tngis_ward": 102,
+     "share": 0.97
+    },
+    {
+     "ward": 102,
+     "tngis_ward": 101,
+     "share": 0.9
+    },
+    {
+     "ward": 103,
+     "tngis_ward": 100,
+     "share": 0.97
+    },
+    {
+     "ward": 104,
+     "tngis_ward": 99,
+     "share": 0.98
+    },
+    {
+     "ward": 106,
+     "tngis_ward": 107,
+     "share": 0.98
+    },
+    {
+     "ward": 107,
+     "tngis_ward": 108,
+     "share": 0.98
+    },
+    {
+     "ward": 108,
+     "tngis_ward": 106,
+     "share": 0.8
+    },
+    {
+     "ward": 131,
+     "tngis_ward": 136,
+     "share": 0.87
+    },
+    {
+     "ward": 132,
+     "tngis_ward": 135,
+     "share": 0.98
+    },
+    {
+     "ward": 133,
+     "tngis_ward": 131,
+     "share": 0.97
+    },
+    {
+     "ward": 134,
+     "tngis_ward": 132,
+     "share": 0.99
+    },
+    {
+     "ward": 135,
+     "tngis_ward": 134,
+     "share": 0.97
+    },
+    {
+     "ward": 136,
+     "tngis_ward": 133,
+     "share": 0.97
+    },
+    {
+     "ward": 168,
+     "tngis_ward": 185,
+     "share": 0.98
+    },
+    {
+     "ward": 169,
+     "tngis_ward": 186,
+     "share": 0.86
+    },
+    {
+     "ward": 170,
+     "tngis_ward": 168,
+     "share": 0.95
+    },
+    {
+     "ward": 171,
+     "tngis_ward": 169,
+     "share": 0.97
+    },
+    {
+     "ward": 172,
+     "tngis_ward": 170,
+     "share": 0.97
+    },
+    {
+     "ward": 173,
+     "tngis_ward": 171,
+     "share": 0.84
+    },
+    {
+     "ward": 174,
+     "tngis_ward": 172,
+     "share": 1.0
+    },
+    {
+     "ward": 175,
+     "tngis_ward": 173,
+     "share": 0.96
+    },
+    {
+     "ward": 176,
+     "tngis_ward": 174,
+     "share": 0.99
+    },
+    {
+     "ward": 177,
+     "tngis_ward": 175,
+     "share": 0.58
+    },
+    {
+     "ward": 178,
+     "tngis_ward": 176,
+     "share": 0.54
+    },
+    {
+     "ward": 179,
+     "tngis_ward": 177,
+     "share": 0.87
+    },
+    {
+     "ward": 180,
+     "tngis_ward": 178,
+     "share": 0.88
+    },
+    {
+     "ward": 181,
+     "tngis_ward": 179,
+     "share": 0.99
+    },
+    {
+     "ward": 182,
+     "tngis_ward": 180,
+     "share": 0.99
+    },
+    {
+     "ward": 183,
+     "tngis_ward": 181,
+     "share": 0.64
+    },
+    {
+     "ward": 185,
+     "tngis_ward": 183,
+     "share": 0.73
+    },
+    {
+     "ward": 186,
+     "tngis_ward": 184,
+     "share": 0.8
+    },
+    {
+     "ward": 194,
+     "tngis_ward": 195,
+     "share": 0.93
+    },
+    {
+     "ward": 195,
+     "tngis_ward": 196,
+     "share": 0.81
+    },
+    {
+     "ward": 196,
+     "tngis_ward": 194,
+     "share": 0.74
+    },
+    {
+     "ward": 197,
+     "tngis_ward": 198,
+     "share": 0.61
+    },
+    {
+     "ward": 198,
+     "tngis_ward": 199,
+     "share": 0.53
+    },
+    {
+     "ward": 199,
+     "tngis_ward": 197,
+     "share": 0.85
+    }
+   ]
+  },
+  "osm_taluks": {
+   "compared": 147,
+   "agree": 143,
+   "differ": [
+    20,
+    160,
+    170,
+    175
+   ]
+  }
+ },
+ "old_vote_comparison": {
+  "file": "output/curated/ref_wards.csv (last build, majority vote of generated police and PWD points)",
+  "wards_compared": 200,
+  "same_taluk": 149,
+  "changed": 51,
+  "changed_wards": [
+   {
+    "ward": 24,
+    "vote": "TLK-KLT",
+    "official": "TLK-MDV",
+    "share": 0.988
+   },
+   {
+    "ward": 34,
+    "vote": "TLK-MDV",
+    "official": "TLK-PRB",
+    "share": 0.97
+   },
+   {
+    "ward": 39,
+    "vote": "TLK-TVT",
+    "official": "TLK-TDP",
+    "share": 0.992
+   },
+   {
+    "ward": 46,
+    "vote": "TLK-TDP",
+    "official": "TLK-PRB",
+    "share": 1.0
+   },
+   {
+    "ward": 54,
+    "vote": "TLK-TDP",
+    "official": "TLK-PSW",
+    "share": 1.0
+   },
+   {
+    "ward": 55,
+    "vote": "TLK-TDP",
+    "official": "TLK-PSW",
+    "share": 0.997
+   },
+   {
+    "ward": 56,
+    "vote": "TLK-TDP",
+    "official": "TLK-PSW",
+    "share": 0.998
+   },
+   {
+    "ward": 57,
+    "vote": "TLK-TDP",
+    "official": "TLK-PSW",
+    "share": 1.0
+   },
+   {
+    "ward": 58,
+    "vote": "TLK-EGM",
+    "official": "TLK-PSW",
+    "share": 0.967
+   },
+   {
+    "ward": 59,
+    "vote": "TLK-EGM",
+    "official": "TLK-PSW",
+    "share": 0.702
+   },
+   {
+    "ward": 60,
+    "vote": "TLK-TDP",
+    "official": "TLK-PSW",
+    "share": 0.846
+   },
+   {
+    "ward": 62,
+    "vote": "TLK-EGM",
+    "official": "TLK-MYL",
+    "share": 1.0
+   },
+   {
+    "ward": 63,
+    "vote": "TLK-EGM",
+    "official": "TLK-MYL",
+    "share": 0.551
+   },
+   {
+    "ward": 64,
+    "vote": "TLK-AYN",
+    "official": "TLK-KLT",
+    "share": 0.955
+   },
+   {
+    "ward": 66,
+    "vote": "TLK-AYN",
+    "official": "TLK-KLT",
+    "share": 0.992
+   },
+   {
+    "ward": 67,
+    "vote": "TLK-PRB",
+    "official": "TLK-KLT",
+    "share": 0.471
+   },
+   {
+    "ward": 72,
+    "vote": "TLK-PSW",
+    "official": "TLK-PRB",
+    "share": 0.649
+   },
+   {
+    "ward": 73,
+    "vote": "TLK-PSW",
+    "official": "TLK-PRB",
+    "share": 0.717
+   },
+   {
+    "ward": 74,
+    "vote": "TLK-AYN",
+    "official": "TLK-PSW",
+    "share": 0.989
+   },
+   {
+    "ward": 75,
+    "vote": "TLK-AYN",
+    "official": "TLK-PSW",
+    "share": 1.0
+   },
+   {
+    "ward": 90,
+    "vote": "TLK-AMJ",
+    "official": "TLK-AMB",
+    "share": 0.695
+   },
+   {
+    "ward": 93,
+    "vote": "TLK-MDR",
+    "official": "TLK-AMB",
+    "share": 0.827
+   },
+   {
+    "ward": 95,
+    "vote": "TLK-AYN",
+    "official": "TLK-AMJ",
+    "share": 0.654
+   },
+   {
+    "ward": 98,
+    "vote": "TLK-AYN",
+    "official": "TLK-EGM",
+    "share": 0.553
+   },
+   {
+    "ward": 103,
+    "vote": "TLK-PSW",
+    "official": "TLK-EGM",
+    "share": 0.607
+   },
+   {
+    "ward": 107,
+    "vote": "TLK-PSW",
+    "official": "TLK-EGM",
+    "share": 0.999
+   },
+   {
+    "ward": 108,
+    "vote": "TLK-AMJ",
+    "official": "TLK-EGM",
+    "share": 0.868
+   },
+   {
+    "ward": 109,
+    "vote": "TLK-AMJ",
+    "official": "TLK-EGM",
+    "share": 0.954
+   },
+   {
+    "ward": 110,
+    "vote": "TLK-PSW",
+    "official": "TLK-EGM",
+    "share": 1.0
+   },
+   {
+    "ward": 111,
+    "vote": "TLK-PSW",
+    "official": "TLK-EGM",
+    "share": 0.869
+   },
+   {
+    "ward": 112,
+    "vote": "TLK-MBM",
+    "official": "TLK-EGM",
+    "share": 1.0
+   },
+   {
+    "ward": 113,
+    "vote": "TLK-MBM",
+    "official": "TLK-EGM",
+    "share": 0.574
+   },
+   {
+    "ward": 117,
+    "vote": "TLK-MYL",
+    "official": "TLK-GND",
+    "share": 0.976
+   },
+   {
+    "ward": 127,
+    "vote": "TLK-MDR",
+    "official": "TLK-AMJ",
+    "share": 0.959
+   },
+   {
+    "ward": 130,
+    "vote": "TLK-MBM",
+    "official": "TLK-EGM",
+    "share": 0.522
+   },
+   {
+    "ward": 134,
+    "vote": "TLK-MBM",
+    "official": "TLK-EGM",
+    "share": 1.0
+   },
+   {
+    "ward": 136,
+    "vote": "TLK-MBM",
+    "official": "TLK-GND",
+    "share": 0.972
+   },
+   {
+    "ward": 138,
+    "vote": "TLK-GND",
+    "official": "TLK-MBM",
+    "share": 0.979
+   },
+   {
+    "ward": 139,
+    "vote": "TLK-GND",
+    "official": "TLK-MBM",
+    "share": 0.954
+   },
+   {
+    "ward": 141,
+    "vote": "TLK-MBM",
+    "official": "TLK-GND",
+    "share": 0.947
+   },
+   {
+    "ward": 142,
+    "vote": "TLK-GND",
+    "official": "TLK-MBM",
+    "share": 0.99
+   },
+   {
+    "ward": 148,
+    "vote": "TLK-MBM",
+    "official": "TLK-MDR",
+    "share": 0.965
+   },
+   {
+    "ward": 156,
+    "vote": "TLK-MDR",
+    "official": "TLK-ALD",
+    "share": 0.982
+   },
+   {
+    "ward": 160,
+    "vote": "TLK-ALD",
+    "official": "TLK-GND",
+    "share": 0.081
+   },
+   {
+    "ward": 168,
+    "vote": "TLK-ALD",
+    "official": "TLK-SHN",
+    "share": 0.985
+   },
+   {
+    "ward": 169,
+    "vote": "TLK-VLC",
+    "official": "TLK-SHN",
+    "share": 0.964
+   },
+   {
+    "ward": 170,
+    "vote": "TLK-GND",
+    "official": "TLK-ALD",
+    "share": 0.527
+   },
+   {
+    "ward": 187,
+    "vote": "TLK-VLC",
+    "official": "TLK-SHN",
+    "share": 1.0
+   },
+   {
+    "ward": 188,
+    "vote": "TLK-VLC",
+    "official": "TLK-SHN",
+    "share": 0.997
+   },
+   {
+    "ward": 189,
+    "vote": "TLK-VLC",
+    "official": "TLK-SHN",
+    "share": 0.997
+   },
+   {
+    "ward": 190,
+    "vote": "TLK-VLC",
+    "official": "TLK-SHN",
+    "share": 1.0
+   }
+  ]
+ },
+ "taluks": {
+  "TLK-ALD": {
+   "name": "Alandur",
+   "lgd_sub_district_code": 5704,
+   "wards": [
+    156,
+    157,
+    158,
+    159,
+    161,
+    162,
+    163,
+    164,
+    165,
+    166,
+    167,
+    170
+   ],
+   "ward_count": 12,
+   "villages": [
+    "Adambakkam",
+    "Alandur",
+    "Magananthapuram",
+    "Manappakkam",
+    "Meenambakaam",
+    "Mukalivakkam",
+    "Nanganallur",
+    "Nanthambakkam",
+    "Palavanthangal",
+    "St.Thomas Mount-cum-Pallavaram",
+    "Thalakkananheri"
+   ],
+   "label_lat": 12.99525,
+   "label_lon": 80.18848
+  },
+  "TLK-AMB": {
+   "name": "Ambattur",
+   "lgd_sub_district_code": 5700,
+   "wards": [
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93
+   ],
+   "ward_count": 15,
+   "villages": [
+    "Ambattur",
+    "Ambattur",
+    "Athippattu",
+    "Korattur",
+    "Mannurpettai",
+    "Meenambedu",
+    "Mogappair",
+    "Oragadam",
+    "Padi",
+    "Patravakkam"
+   ],
+   "label_lat": 13.10321,
+   "label_lon": 80.1741
+  },
+  "TLK-AMJ": {
+   "name": "Aminjikarai",
+   "lgd_sub_district_code": 7161,
+   "wards": [
+    95,
+    99,
+    100,
+    101,
+    102,
+    105,
+    106,
+    127
+   ],
+   "ward_count": 8,
+   "villages": [
+    "Agaram",
+    "Aminjikarai",
+    "Arumbakkam",
+    "Chinnakudal",
+    "Koyambedu",
+    "Mullam",
+    "Naduvakkarai",
+    "Periyakudal",
+    "Sencheri",
+    "Thirumangalam",
+    "Villivakkam"
+   ],
+   "label_lat": 13.08079,
+   "label_lon": 80.21224
+  },
+  "TLK-AYN": {
+   "name": "Ayanavaram",
+   "lgd_sub_district_code": 7163,
+   "wards": [
+    65,
+    94,
+    96,
+    97
+   ],
+   "ward_count": 4,
+   "villages": [
+    "Ayanavaram (Part 1)",
+    "Ayanavaram (Part 2)",
+    "Chinna Chemparampakkam",
+    "Konnur",
+    "Mallikaicheri"
+   ],
+   "label_lat": 13.1065,
+   "label_lon": 80.21844
+  },
+  "TLK-EGM": {
+   "name": "Egmore",
+   "lgd_sub_district_code": 7164,
+   "wards": [
+    61,
+    98,
+    103,
+    107,
+    108,
+    109,
+    110,
+    111,
+    112,
+    113,
+    130,
+    134
+   ],
+   "ward_count": 12,
+   "villages": [
+    "Egmore (Part 1)",
+    "Egmore (Part 2)",
+    "Nungambakkam",
+    "Puliyur"
+   ],
+   "label_lat": 13.06516,
+   "label_lon": 80.23436
+  },
+  "TLK-GND": {
+   "name": "Guindy",
+   "lgd_sub_district_code": 7169,
+   "wards": [
+    117,
+    136,
+    141,
+    160,
+    171,
+    172,
+    174
+   ],
+   "ward_count": 7,
+   "villages": [
+    "Adayar (Part 1)",
+    "Adayar (Part 2)",
+    "Alandur",
+    "Ekkatuthangal",
+    "Govt.Farm",
+    "Guindy Park",
+    "Kottur",
+    "T.Nagar",
+    "Venkatapuram"
+   ],
+   "label_lat": 13.0208,
+   "label_lon": 80.23102
+  },
+  "TLK-KLT": {
+   "name": "Kolathur",
+   "lgd_sub_district_code": null,
+   "wards": [
+    64,
+    66,
+    67
+   ],
+   "ward_count": 3,
+   "villages": [
+    "Kolathur",
+    "Peravallur",
+    "Siruvallur"
+   ],
+   "label_lat": 13.11722,
+   "label_lon": 80.2246
+  },
+  "TLK-MBM": {
+   "name": "Mambalam",
+   "lgd_sub_district_code": 7165,
+   "wards": [
+    128,
+    129,
+    131,
+    132,
+    133,
+    135,
+    137,
+    138,
+    139,
+    140,
+    142
+   ],
+   "ward_count": 11,
+   "villages": [
+    "Kodambakkam (Part 1)",
+    "Kodambakkam (Part 2)",
+    "Mambalam",
+    "Nesapakkam",
+    "Saidapet",
+    "Saligramam",
+    "Virugambakkam"
+   ],
+   "label_lat": 13.03713,
+   "label_lon": 80.21022
+  },
+  "TLK-MDR": {
+   "name": "Maduravoyal",
+   "lgd_sub_district_code": 5981,
+   "wards": [
+    143,
+    144,
+    145,
+    146,
+    147,
+    148,
+    149,
+    150,
+    151,
+    152,
+    153,
+    154,
+    155
+   ],
+   "ward_count": 13,
+   "villages": [
+    "Chettiaragaram",
+    "Karambakkam",
+    "Maduravoyal",
+    "Nerkundram",
+    "Nolambur",
+    "Porur",
+    "Ramapuram",
+    "Sivapoodam",
+    "Thundalam",
+    "Valasaravakkam"
+   ],
+   "label_lat": 13.04689,
+   "label_lon": 80.17215
+  },
+  "TLK-MDV": {
+   "name": "Madhavaram",
+   "lgd_sub_district_code": 5701,
+   "wards": [
+    17,
+    19,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    30,
+    31,
+    32,
+    33
+   ],
+   "ward_count": 13,
+   "villages": [
+    "Chettimedu",
+    "Kadirvedu",
+    "Kosapur",
+    "Madhavaram",
+    "Manjambakkam",
+    "Mathur",
+    "Puthagaram",
+    "Puzhal",
+    "Soorapattu",
+    "Vadaperumbakkam",
+    "Vilakkupattu"
+   ],
+   "label_lat": 13.15227,
+   "label_lon": 80.22214
+  },
+  "TLK-MYL": {
+   "name": "Mylapore",
+   "lgd_sub_district_code": 7170,
+   "wards": [
+    62,
+    63,
+    114,
+    115,
+    116,
+    118,
+    119,
+    120,
+    121,
+    122,
+    123,
+    124,
+    125,
+    126,
+    173
+   ],
+   "ward_count": 15,
+   "villages": [
+    "Adayar River",
+    "Chintadripet",
+    "Mylapore (Part 1)",
+    "Mylapore (Part 2)",
+    "Triplicane (Part 1)",
+    "Triplicane (Part 2)"
+   ],
+   "label_lat": 13.04563,
+   "label_lon": 80.26712
+  },
+  "TLK-PRB": {
+   "name": "Perambur",
+   "lgd_sub_district_code": 7166,
+   "wards": [
+    34,
+    35,
+    36,
+    37,
+    44,
+    45,
+    46,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73
+   ],
+   "ward_count": 13,
+   "villages": [
+    "Erukkanjeri",
+    "Jambuli",
+    "Kodungaiyur",
+    "Perambur (Part 1)",
+    "Perambur (Part 2)",
+    "Perambur (Part 3)",
+    "Selavoyal",
+    "Sembiyam"
+   ],
+   "label_lat": 13.11671,
+   "label_lon": 80.25306
+  },
+  "TLK-PSW": {
+   "name": "Purasawalkam",
+   "lgd_sub_district_code": 7167,
+   "wards": [
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    74,
+    75,
+    76,
+    77,
+    78,
+    104
+   ],
+   "ward_count": 13,
+   "villages": [
+    "Purasawalkam (Part 1)",
+    "Purasawalkam (Part 2)",
+    "V.O.C Nagar",
+    "Vepery"
+   ],
+   "label_lat": 13.09139,
+   "label_lon": 80.26834
+  },
+  "TLK-SHN": {
+   "name": "Sholinganallur",
+   "lgd_sub_district_code": 5705,
+   "wards": [
+    168,
+    169,
+    183,
+    184,
+    185,
+    186,
+    187,
+    188,
+    189,
+    190,
+    191,
+    192,
+    193,
+    194,
+    195,
+    196,
+    197,
+    198,
+    199,
+    200
+   ],
+   "ward_count": 20,
+   "villages": [
+    "Enchambakkam",
+    "Jalladianpattai",
+    "Karappakam",
+    "Kottivakkam",
+    "Madipakam   - 1",
+    "Madipakkam- 2",
+    "Neelangarai",
+    "Okkkiyam Thorambakka",
+    "Palavakam",
+    "Pallikaranai",
+    "Perunkudi",
+    "Seevaram",
+    "Semmancheri",
+    "Sholinganallur- 1",
+    "Sholinganallur- 2",
+    "Uallakaram",
+    "Uttandi"
+   ],
+   "label_lat": 12.93678,
+   "label_lon": 80.22817
+  },
+  "TLK-TDP": {
+   "name": "Tondiarpet",
+   "lgd_sub_district_code": 7168,
+   "wards": [
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53
+   ],
+   "ward_count": 13,
+   "villages": [
+    "Tondiarpet (Part 1)",
+    "Tondiarpet (Part 2)",
+    "Tondiarpet (Part 3)",
+    "Tondiarpet (Part 4)"
+   ],
+   "label_lat": 13.12044,
+   "label_lon": 80.28564
+  },
+  "TLK-TVT": {
+   "name": "Thiruvottiyur",
+   "lgd_sub_district_code": 5982,
+   "wards": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    18,
+    20,
+    21,
+    29
+   ],
+   "ward_count": 20,
+   "villages": [
+    "Ariyalur",
+    "Chinnasekkadu",
+    "Edayanchavadi 1",
+    "Edayanchavadi B",
+    "Elanthanjeri",
+    "Ernavoor",
+    "Kadapakkam",
+    "Kahivakkam",
+    "Manali",
+    "Sadayankuppam",
+    "Sathangadu",
+    "Thiruvottiyur"
+   ],
+   "label_lat": 13.17501,
+   "label_lon": 80.29251
+  },
+  "TLK-VLC": {
+   "name": "Velachery",
+   "lgd_sub_district_code": 7171,
+   "wards": [
+    175,
+    176,
+    177,
+    178,
+    179,
+    180,
+    181,
+    182
+   ],
+   "ward_count": 8,
+   "villages": [
+    "Kalikundram",
+    "Kanagam",
+    "Pallipattu",
+    "Taramani",
+    "Thiruvanmiyur",
+    "Urur",
+    "Velacheri (Part 1)",
+    "Velacheri (Part 2)"
+   ],
+   "label_lat": 12.98788,
+   "label_lon": 80.24309
+  }
+ }
+}

@@ -1,0 +1,847 @@
+{
+ "layer": "colleges",
+ "at": "2026-11-28T01:43:11.511Z",
+ "count": 70,
+ "features": [
+  {
+   "id": "osm:n10266829567",
+   "name": "R Square Academy",
+   "kind": "university",
+   "ward": 81,
+   "why": "AI: Coaching centre, not degree-granting",
+   "by": "ai",
+   "lonlat": [
+    80.14863,
+    13.12107
+   ]
+  },
+  {
+   "id": "osm:n10266877855",
+   "name": "R Square Academy for Tnpsc, Tnusrb SI, Tet, Police, Ssc, Rrb, Bank Exam Coaching Centre",
+   "kind": "university",
+   "ward": 153,
+   "why": "coaching or exam preparation",
+   "by": "rule",
+   "lonlat": [
+    80.16388,
+    13.03079
+   ]
+  },
+  {
+   "id": "osm:n13276785999",
+   "name": "BIHER CSE Block",
+   "kind": "university",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.14032,
+    12.90786
+   ]
+  },
+  {
+   "id": "osm:n13348614701",
+   "name": "Institute for Energy Studies (IES)",
+   "kind": "college",
+   "ward": 171,
+   "why": "AI: Research centre, no degrees",
+   "by": "ai",
+   "lonlat": [
+    80.23265,
+    13.01065
+   ]
+  },
+  {
+   "id": "osm:n13378366146",
+   "name": "Center of Advanced studies",
+   "kind": "college",
+   "ward": 200,
+   "why": "AI: Generic centre, not college",
+   "by": "ai",
+   "lonlat": [
+    80.22536,
+    12.87133
+   ]
+  },
+  {
+   "id": "osm:n2381473122",
+   "name": "NIIT",
+   "kind": "college",
+   "ward": 60,
+   "why": "a training or coaching company",
+   "by": "rule",
+   "lonlat": [
+    80.28627,
+    13.08988
+   ]
+  },
+  {
+   "id": "osm:n432468196",
+   "name": "Department of Aeronautical Engineering",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.1408,
+    12.94862
+   ]
+  },
+  {
+   "id": "osm:n432468200",
+   "name": "Mechatronics",
+   "kind": "college",
+   "ward": null,
+   "why": "AI: Just a field name",
+   "by": "ai",
+   "lonlat": [
+    80.14098,
+    12.94911
+   ]
+  },
+  {
+   "id": "osm:n432468201",
+   "name": "Department of Production Technology",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.1411,
+    12.94929
+   ]
+  },
+  {
+   "id": "osm:n432468205",
+   "name": "Department of Automobile Engineering",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.14034,
+    12.94788
+   ]
+  },
+  {
+   "id": "osm:n432468246",
+   "name": "RLHC (Rajam Lecture Hall Complex)",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.13985,
+    12.94847
+   ]
+  },
+  {
+   "id": "osm:n4584956489",
+   "name": "Department of Electrical Engineering;Electrical Engineering Department",
+   "kind": "university",
+   "ward": 174,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.23069,
+    12.98871
+   ]
+  },
+  {
+   "id": "osm:n5372322923",
+   "name": "Liba extension centre",
+   "kind": "college",
+   "ward": 110,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.23677,
+    13.05931
+   ]
+  },
+  {
+   "id": "osm:n7130308740",
+   "name": null,
+   "kind": "college",
+   "ward": 21,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.26305,
+    13.16544
+   ]
+  },
+  {
+   "id": "osm:n968597207",
+   "name": "The Institute of Mathematical Sciences",
+   "kind": "college",
+   "ward": 180,
+   "why": "a research institute, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.24701,
+    12.99408
+   ]
+  },
+  {
+   "id": "osm:r18264688",
+   "name": null,
+   "kind": "university",
+   "ward": null,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.15643,
+    12.84303
+   ]
+  },
+  {
+   "id": "osm:w1019657132",
+   "name": null,
+   "kind": "college",
+   "ward": null,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.12213,
+    12.9213
+   ]
+  },
+  {
+   "id": "osm:w1019657146",
+   "name": "Quadrangle",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.12213,
+    12.92167
+   ]
+  },
+  {
+   "id": "osm:w102664282",
+   "name": null,
+   "kind": "college",
+   "ward": null,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.19647,
+    13.18001
+   ]
+  },
+  {
+   "id": "osm:w1066918385",
+   "name": "Government Industrial Training Institute Perumbakkam",
+   "kind": "college",
+   "ward": null,
+   "why": "a training institute, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.20866,
+    12.88812
+   ]
+  },
+  {
+   "id": "osm:w1122563581",
+   "name": "R Square Academy for Tnpsc, Tnusrb SI, Tet, Police, Ssc, Rrb, Bank Exam Coaching Centre",
+   "kind": "university",
+   "ward": 70,
+   "why": "coaching or exam preparation",
+   "by": "rule",
+   "lonlat": [
+    80.244,
+    13.11007
+   ]
+  },
+  {
+   "id": "osm:w132073185",
+   "name": null,
+   "kind": "college",
+   "ward": 183,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.24387,
+    12.97825
+   ]
+  },
+  {
+   "id": "osm:w132510315",
+   "name": "The Institute of Road Transport",
+   "kind": "college",
+   "ward": 180,
+   "why": "a training institute, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.24441,
+    12.98243
+   ]
+  },
+  {
+   "id": "osm:w1409767940",
+   "name": "Mohamed Sathak AJ College of Engineering",
+   "kind": "university",
+   "ward": null,
+   "why": "a second map point of Mohammed Sathak AJ College of Engineering",
+   "by": "rule",
+   "lonlat": [
+    80.21808,
+    12.83608
+   ]
+  },
+  {
+   "id": "osm:w1444733268",
+   "name": "Central Institute of Classical Tamil",
+   "kind": "university",
+   "ward": null,
+   "why": "AI: Research institute, no degrees",
+   "by": "ai",
+   "lonlat": [
+    80.21139,
+    12.90503
+   ]
+  },
+  {
+   "id": "osm:w185317256",
+   "name": null,
+   "kind": "college",
+   "ward": 171,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.23259,
+    13.00944
+   ]
+  },
+  {
+   "id": "osm:w208570721",
+   "name": null,
+   "kind": "college",
+   "ward": 125,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.27714,
+    13.03497
+   ]
+  },
+  {
+   "id": "osm:w211121332",
+   "name": "Balaji Seamen Training Institute",
+   "kind": "college",
+   "ward": 200,
+   "why": "a training institute, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.22821,
+    12.86554
+   ]
+  },
+  {
+   "id": "osm:w211900030",
+   "name": "Central Leather Research Institute",
+   "kind": "college",
+   "ward": 172,
+   "why": "a research institute, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.24396,
+    13.00911
+   ]
+  },
+  {
+   "id": "osm:w214599871",
+   "name": null,
+   "kind": "college",
+   "ward": 171,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.23151,
+    13.01022
+   ]
+  },
+  {
+   "id": "osm:w217684164",
+   "name": null,
+   "kind": "college",
+   "ward": 58,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.26452,
+    13.08421
+   ]
+  },
+  {
+   "id": "osm:w217870941",
+   "name": null,
+   "kind": "college",
+   "ward": 38,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.28063,
+    13.12074
+   ]
+  },
+  {
+   "id": "osm:w217875245",
+   "name": null,
+   "kind": "college",
+   "ward": 53,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.27886,
+    13.10826
+   ]
+  },
+  {
+   "id": "osm:w217906528",
+   "name": null,
+   "kind": "college",
+   "ward": 69,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.24189,
+    13.12089
+   ]
+  },
+  {
+   "id": "osm:w217940549",
+   "name": null,
+   "kind": "college",
+   "ward": 44,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.24708,
+    13.1135
+   ]
+  },
+  {
+   "id": "osm:w218191086",
+   "name": null,
+   "kind": "college",
+   "ward": 107,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.23947,
+    13.07456
+   ]
+  },
+  {
+   "id": "osm:w26562014",
+   "name": "Hangar 1",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.1408,
+    12.95017
+   ]
+  },
+  {
+   "id": "osm:w26562015",
+   "name": "Hangar 2",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.14022,
+    12.94933
+   ]
+  },
+  {
+   "id": "osm:w27484068",
+   "name": "Reserve Bank Staff College",
+   "kind": "college",
+   "ward": 118,
+   "why": "a staff training college, not a college for students",
+   "by": "rule",
+   "lonlat": [
+    80.24917,
+    13.04493
+   ]
+  },
+  {
+   "id": "osm:w27618365",
+   "name": null,
+   "kind": "college",
+   "ward": 59,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.28273,
+    13.08614
+   ]
+  },
+  {
+   "id": "osm:w27618369",
+   "name": null,
+   "kind": "college",
+   "ward": 59,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.28095,
+    13.08331
+   ]
+  },
+  {
+   "id": "osm:w28234120",
+   "name": null,
+   "kind": "college",
+   "ward": 172,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.24672,
+    12.99924
+   ]
+  },
+  {
+   "id": "osm:w28345325",
+   "name": "Arts College Hostel",
+   "kind": "college",
+   "ward": 56,
+   "why": "a building or facility of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.28743,
+    13.10337
+   ]
+  },
+  {
+   "id": "osm:w28856428",
+   "name": "National Institute of Ocean Technology",
+   "kind": "college",
+   "ward": 189,
+   "why": "a research institute, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.21116,
+    12.94654
+   ]
+  },
+  {
+   "id": "osm:w29046944",
+   "name": "Kalakshetra School of Fine Arts",
+   "kind": "college",
+   "ward": 181,
+   "why": "AI: Fine arts school, not college",
+   "by": "ai",
+   "lonlat": [
+    80.2658,
+    12.98741
+   ]
+  },
+  {
+   "id": "osm:w30348389",
+   "name": "Rani Meyammai School",
+   "kind": "college",
+   "ward": 175,
+   "why": "AI: Primary school",
+   "by": "ai",
+   "lonlat": [
+    80.25729,
+    13.00993
+   ]
+  },
+  {
+   "id": "osm:w30973303",
+   "name": "Institute of Mental Health - Kilpauk",
+   "kind": "college",
+   "ward": 98,
+   "why": "AI: Mental health hospital",
+   "by": "ai",
+   "lonlat": [
+    80.23851,
+    13.08995
+   ]
+  },
+  {
+   "id": "osm:w31276227",
+   "name": "DCOE Office",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.13973,
+    12.94902
+   ]
+  },
+  {
+   "id": "osm:w31276228",
+   "name": "Lecture Hall Complex",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.13963,
+    12.9483
+   ]
+  },
+  {
+   "id": "osm:w31276232",
+   "name": "Rubber and Plastics Technology",
+   "kind": "college",
+   "ward": null,
+   "why": "AI: Training institute, not college",
+   "by": "ai",
+   "lonlat": [
+    80.14021,
+    12.94744
+   ]
+  },
+  {
+   "id": "osm:w31276233",
+   "name": "Department of Information Technology",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.14008,
+    12.948
+   ]
+  },
+  {
+   "id": "osm:w31276234",
+   "name": "Department of Electonics Engineering - Old  Block",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.14024,
+    12.94824
+   ]
+  },
+  {
+   "id": "osm:w32551143",
+   "name": "Anna Adarsh College for Women",
+   "kind": "college",
+   "ward": 100,
+   "why": "a second map point of Anna Adarsh College For Women",
+   "by": "rule",
+   "lonlat": [
+    80.21069,
+    13.07991
+   ]
+  },
+  {
+   "id": "osm:w32616590",
+   "name": "Police Training College",
+   "kind": "college",
+   "ward": 132,
+   "why": "a staff training college, not a college for students",
+   "by": "rule",
+   "lonlat": [
+    80.21105,
+    13.0364
+   ]
+  },
+  {
+   "id": "osm:w333385672",
+   "name": null,
+   "kind": "college",
+   "ward": 171,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.23622,
+    13.02658
+   ]
+  },
+  {
+   "id": "osm:w35572405",
+   "name": "Council of Scientific and Industrial Research - CSIR Taramani",
+   "kind": "college",
+   "ward": 180,
+   "why": "a research institute, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.24465,
+    12.98822
+   ]
+  },
+  {
+   "id": "osm:w35573178",
+   "name": "Shri A. M. M. Murugappa Chettiar Research Centre",
+   "kind": "college",
+   "ward": 180,
+   "why": "a research centre, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.24221,
+    12.98464
+   ]
+  },
+  {
+   "id": "osm:w37133364",
+   "name": "Instrumentation Engineering Block-1",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.13961,
+    12.94736
+   ]
+  },
+  {
+   "id": "osm:w37133365",
+   "name": "Admin Block & Dean Office",
+   "kind": "college",
+   "ward": null,
+   "why": "a building or facility of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.13937,
+    12.94801
+   ]
+  },
+  {
+   "id": "osm:w37133367",
+   "name": "Instrumentation Engineering Block-2",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.13927,
+    12.94755
+   ]
+  },
+  {
+   "id": "osm:w43442316",
+   "name": "Central Workshop",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.14062,
+    12.9497
+   ]
+  },
+  {
+   "id": "osm:w43826808",
+   "name": "Rajam Lecture Hall Complex",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.13966,
+    12.94856
+   ]
+  },
+  {
+   "id": "osm:w47497716",
+   "name": null,
+   "kind": "college",
+   "ward": 116,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.28103,
+    13.05411
+   ]
+  },
+  {
+   "id": "osm:w48048694",
+   "name": "St Joseph Technical Institute",
+   "kind": "college",
+   "ward": 72,
+   "why": "a training institute, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.26622,
+    13.10309
+   ]
+  },
+  {
+   "id": "osm:w540171893",
+   "name": "MIT Chromepet - Annexure",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.13592,
+    12.94198
+   ]
+  },
+  {
+   "id": "osm:w55058244",
+   "name": "Ethiraj Annex",
+   "kind": "college",
+   "ward": 61,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.25708,
+    13.06353
+   ]
+  },
+  {
+   "id": "osm:w631591467",
+   "name": "Instrumentation Engineering - New Block",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.13906,
+    12.94765
+   ]
+  },
+  {
+   "id": "osm:w631591470",
+   "name": "Department of Electonics Engineering - New Block",
+   "kind": "college",
+   "ward": null,
+   "why": "a department, block or centre of a campus, not a college",
+   "by": "rule",
+   "lonlat": [
+    80.14039,
+    12.94846
+   ]
+  },
+  {
+   "id": "osm:w84723041",
+   "name": null,
+   "kind": "university",
+   "ward": null,
+   "why": "no name: it cannot be checked against an official list",
+   "by": "rule",
+   "lonlat": [
+    80.1282,
+    12.96506
+   ]
+  },
+  {
+   "id": "osm:n4517223590",
+   "name": "my college",
+   "kind": "college",
+   "ward": 82,
+   "why": "not the name of a place",
+   "by": "rule",
+   "lonlat": [
+    80.16975,
+    13.12322
+   ]
+  }
+ ]
+}
