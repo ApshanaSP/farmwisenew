@@ -9,6 +9,7 @@
  * Collector's memory, a polite Watch, and two missions. Every number it speaks comes from the console's data through a
  * template (lib/thunai/say.ts); it never sends, approves or deletes: drafts wait in the tray for the Collector's own tap.
  */
+import { openIncidentAsk, policeAsk } from "@/lib/thunai/placeasks";
 import { mailAsk, openMail } from "../MailComposer";
 import { workspaceIds } from "./guards";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -1444,6 +1445,17 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
    * whole answer then shows and says only what is left (turnstream.ts settleStream), never the same screen or sentence twice.
    */
   const showStage = (doc: StageDocT, say: string | null, lang: Lang, brainInfo: BrainInfo, opts: { push?: boolean; drafts?: boolean; heard?: string; stream?: Streamed | null } = {}) => {
+    // 28 Nov (the owner: "if I ask to open an incident, open it as the dashboard does, not Jarvis's own screen"): one incident's screen
+    // opens the console's own incident pop-up (the one a click on a row opens); Jarvis still says its answer
+    const one = doc.blocks.length <= 2 ? doc.blocks.find((b) => b.kind === "CaseDetail") : undefined;
+    if (one && one.kind === "CaseDetail" && one.incident?.id) {
+      setStreaming(false);
+      unfinishedScreen.current = null;
+      closeStage();
+      hostRef.current.c.openInc(String(one.incident.id));
+      if (say) out(say, lang, "ready", speakableFigures(doc, lang)); // eslint-disable-line @typescript-eslint/no-use-before-define
+      return;
+    }
     const sx = opts.stream?.screen ? opts.stream : null;
     setStreaming(false);
     // v12 (RC4): the turn's answer is in: the screen it streamed (or this one) is finished
@@ -1939,6 +1951,22 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     const spokenLine = opts.source === "whisper" || opts.source === "captions";
     let said = original || !understandV10() || !spokenLine ? text.trim() : joinCut(cutBefore, text, Date.now());
     if (!said) return;
+    // 29 Nov (the owner): "open incident INC-…" opens the console's own incident pop-up at once; "which police station is responsible for
+    // Avadi" is always asked of the map as the nearest stations (lib/thunai/placeasks.ts), never declined as another city's
+    const openId = original ? null : openIncidentAsk(said);
+    if (openId) {
+      const lg: Lang = /[஀-௿]/.test(said) || listenLangRef.current === "ta" ? "ta" : "en";
+      closeStage();
+      hostRef.current.c.openInc(openId);
+      earcon("done");
+      const line = lg === "ta" ? `${openId} சம்பவத்தைத் திறக்கிறேன்.` : `Opening incident ${openId}.`;
+      remember(said, "answered in words", { result: line }); // eslint-disable-line @typescript-eslint/no-use-before-define
+      out(line, lg, "ready", NO_FIGURES); // eslint-disable-line @typescript-eslint/no-use-before-define
+      decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: 0 });
+      return;
+    }
+    const police = original ? null : policeAsk(said);
+    if (police) said = police;
     // v12 (RC2): typed or tapped, nothing said before this is joined to what is said next (conductor.ts forgetTurn)
     if (!spokenLine) conductor.current?.forgetTurn();
     // the trace (v5): the turn this answers, for the answer's own stamps (the spoken sentence's trace; none for typed text)

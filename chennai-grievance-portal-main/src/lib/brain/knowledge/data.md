@@ -77,3 +77,6 @@ Figures come from tools, not memory; each sentence is checked against the result
 
 ### Who may see what
 The Collector sees the whole district. A department officer's console, and its assistant, sees only its own department. Citizens' names, phones, addresses and Aadhaar are never read by the assistant; officials' published numbers are.
+
+## Police stations and jurisdiction
+The store holds where police stations are (OpenStreetMap's police layer: names such as "Ambattur T1 Police Station", "K4 Police Station"), not the boundaries each station covers. For "which police station is responsible for <place>", ask the map for the nearest police stations to that place and give them with their distances, and say that the station's own jurisdiction is not held. Places just outside the district are known by name too (Avadi, Poonamallee, Tambaram, Pallavaram, Thiruverkadu, Tiruvallur). Avadi and Ambattur's T-series stations come under the Avadi City Police Commissionerate; Tambaram and Pallavaram under the Tambaram City Police Commissionerate (both formed in January 2022); the rest of Chennai under the Greater Chennai Police.

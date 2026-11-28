@@ -1062,19 +1062,19 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
                 <div className="filters" role="group" aria-label="Filters">
                   <SegmentedControl label="Period" size="sm" value={period} onChange={(p) => setPeriod(p)}
                     options={PERIOD_KEYS.map((p) => ({ value: p, label: PERIOD_WORD[p], title: PERIOD_HINT[p] }))} />
-                  <label className="fsel" title="Zone (Greater Chennai Corporation)"><I n="pin" />
+                  <label className={`fsel${zone ? " on" : ""}`} title="Zone (Greater Chennai Corporation)"><I n="pin" />
                     <select value={zone ?? ""} onChange={(e) => setZone(e.target.value ? Number(e.target.value) : null)} aria-label="Zone">
                       <option value="">All 15 zones</option>
                       {ov.zoneTable.map((z) => <option key={z.zone} value={z.zone}>{z.name}</option>)}
                     </select>
                   </label>
-                  <label className="fsel" title="Revenue taluk"><I n="map" />
+                  <label className={`fsel${taluk ? " on" : ""}`} title="Revenue taluk"><I n="map" />
                     <select value={taluk ?? ""} onChange={(e) => setTaluk(e.target.value || null)} aria-label="Taluk">
                       <option value="">All taluks</option>
                       {[...(geo?.taluks ?? [])].sort((a, b) => a.name.localeCompare(b.name)).map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
                     </select>
                   </label>
-                  <label className="fsel" title="Department"><I n="gov" />
+                  <label className={`fsel${dept ? " on" : ""}`} title={dept ? `Filtered to ${depts.find((d) => d.code === dept)?.name ?? dept}` : "Department"}><I n="gov" />
                     <select value={dept ?? ""} onChange={(e) => setDept(e.target.value || null)} aria-label="Department">
                       <option value="">All departments</option>
                       {depts.map((d) => <option key={d.code} value={d.code}>{d.name}{d.open && d.code !== dept ? ` (${d.open} open)` : ""}</option>)}

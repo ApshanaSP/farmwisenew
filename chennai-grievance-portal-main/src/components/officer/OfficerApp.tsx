@@ -655,13 +655,13 @@ export default function OfficerApp({ initial, user }: { initial: OfficerConsole;
               <div className="filters" role="group" aria-label="Filters">
                 <SegmentedControl label="Period" size="sm" value={period} onChange={(p) => setPeriod(p)}
                   options={PERIOD_KEYS.map((p) => ({ value: p, label: PERIOD_WORD[p], title: PERIOD_HINT[p] }))} />
-                <label className="fsel" title="Zone (Greater Chennai Corporation)"><I n="pin" />
+                <label className={`fsel${zone ? " on" : ""}`} title="Zone (Greater Chennai Corporation)"><I n="pin" />
                   <select value={zone ?? ""} onChange={(e) => setZone(e.target.value ? Number(e.target.value) : null)} aria-label="Zone">
                     <option value="">All 15 zones</option>
                     {ov.zones.map((z) => <option key={z.zone} value={z.zone}>{z.name}</option>)}
                   </select>
                 </label>
-                <label className="fsel" title={zone ? `Revenue taluks in ${zoneName} zone` : "Revenue taluk"}><I n="map" />
+                <label className={`fsel${taluk ? " on" : ""}`} title={zone ? `Revenue taluks in ${zoneName} zone` : "Revenue taluk"}><I n="map" />
                   <select value={taluk ?? ""} onChange={(e) => setTaluk(e.target.value || null)} aria-label="Taluk">
                     <option value="">{zone ? `All taluks in ${zoneName}` : "All taluks"}</option>
                     {talukOptions.map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}

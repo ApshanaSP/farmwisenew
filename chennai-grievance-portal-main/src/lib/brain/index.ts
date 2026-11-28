@@ -3,6 +3,7 @@ import { studioLines } from "./studiosql";
  * The one door to the brain, for Jarvis (round.ts) and Ask District IQ (pipeline.ts): the conversation, the console's state and its tiles go in, the
  * checked answer with what it rests on comes out. Null: the brain could not answer (Claude off, busy or out of time) and the caller's older lanes do.
  */
+import { policeAsk } from "@/lib/thunai/placeasks";
 import { asOf, overview } from "@/lib/collector/intel";
 import { asksForbiddenOrder } from "@/lib/thunai/privacy";
 import type { World } from "@/lib/thunai/types";
@@ -68,6 +69,9 @@ async function tilesLine(c: ConsoleNow, u: BrainUser): Promise<string | null> {
 
 export async function askBrain(i: AskIn): Promise<BrainOut | null> {
   if (!brainOn()) return null;
+  // 29 Nov: "which police station is responsible for Avadi" is asked of the map as the nearest stations, the same way every time (placeasks.ts)
+  const police = policeAsk(i.text);
+  if (police) i = { ...i, text: police };
   const now = await asOf();
   const turns: Turn[] = recall(i.key);
   const history = turns.length ? historyOf(turns) : (i.seed ?? []).slice(-6);

@@ -51,3 +51,6 @@
   background:transparent;color:var(--accent-2,#15803D);font:700 12.5px var(--font-ui,inherit);cursor:pointer}
 .dic .mk-more .ic{width:13px;height:13px}
 .dic .mk-more:hover{background:var(--accent-soft,#ECFDF5)}
+/* 28 Nov (the owner: "I couldn't see which department it is filtered to"): a filter that is set shows as a bright chip */
+.dic .filters .fsel.on{background:#fff!important;border-color:#fff!important;box-shadow:0 0 0 2px rgba(255,255,255,.55),0 4px 12px -6px rgba(0,0,0,.4)}
+.dic .filters .fsel.on,.dic .filters .fsel.on select,.dic .filters .fsel.on .ic{color:#14532D!important;opacity:1!important;font-weight:700}

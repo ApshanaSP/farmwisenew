@@ -46,6 +46,11 @@ export function NewsView({ s, c }: { s: Story; c: Console }) {
     return () => { live = false; };
   }, [s.id, s.docIds]);
 
+  // 28 Nov (the owner: "if it is not from an official outlet, don't show it"): a story none of whose reports is from a listed outlet is
+  // not opened at all; the Collector is told why in one line
+  useEffect(() => {
+    if (rows && !rows.length) { c.closeAll(); c.toast("That story has no report from an official news outlet, so it is not shown.", "alert"); }
+  }, [rows]); // eslint-disable-line react-hooks/exhaustive-deps
   const a = rows?.[Math.min(sel, rows.length - 1)];
   // the monitor kept only the headline: fetch the article from the outlet once, when it is read
   useEffect(() => {
