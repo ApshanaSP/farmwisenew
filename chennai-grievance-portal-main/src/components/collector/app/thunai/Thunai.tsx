@@ -9,6 +9,7 @@
  * Collector's memory, a polite Watch, and two missions. Every number it speaks comes from the console's data through a
  * template (lib/thunai/say.ts); it never sends, approves or deletes: drafts wait in the tray for the Collector's own tap.
  */
+import { mailAsk, openMail } from "../MailComposer";
 import { workspaceIds } from "./guards";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -2078,6 +2079,19 @@ export default function Thunai({ host }: { host: ThunaiHost }) {
     // the review of 20 Nov)
     const g11 = opts.gate ?? null;
     const toJarvis = sourceRef.current === "typed" || !g11 || g11.tier === 1 || (lastTurnAt.current != null && Date.now() - lastTurnAt.current < 20_000);
+    // 28 Nov (the owner): "draft a mail to the Metrowater officer about ...": the mail composer opens with the AI's draft for the Collector to
+    // read and approve (MailComposer.tsx); Jarvis never sends it
+    const mail = !original && !askOnce && !pendingB && toJarvis ? mailAsk(said) : null;
+    if (mail) {
+      const lg: Lang = /[஀-௿]/.test(said) ? "ta" : ulang ?? (listenLangRef.current === "ta" ? "ta" : "en");
+      openMail(mail);
+      earcon("done");
+      const line = lg === "ta" ? "மின்னஞ்சல் வரைவு திறக்கப்பட்டது. படித்து, சரிபார்த்து அனுப்புங்கள்." : "I've opened a draft of the mail. Read it, change anything, and approve it to send.";
+      remember(said, "answered in words", { result: line }); // eslint-disable-line @typescript-eslint/no-use-before-define
+      out(line, lg, "ready", NO_FIGURES); // eslint-disable-line @typescript-eslint/no-use-before-define
+      decide({ kind: "answer", query: said, lang: lg, lane: "instant", ms: 0 });
+      return;
+    }
     const small = !original && !askOnce && !pendingB && toJarvis ? smallTalk(said) : null;
     if (small) {
       // a new turn: what the last answer offered is put away, as any other request does

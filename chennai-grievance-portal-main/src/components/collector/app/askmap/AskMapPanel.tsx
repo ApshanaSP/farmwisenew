@@ -34,7 +34,7 @@ let cueSeen = 0;
 
 const T = {
   en: {
-    title: "Ask the map", back: "Back to overview", placeholder: "Ask about any place, distance, road or area…", ask: "Ask", mic: "Speak your question",
+    title: "Map Insights", back: "Back to overview", placeholder: "Ask about any place, distance, road or area…", ask: "Ask", mic: "Speak your question",
     how: "How this was worked out", list: "Cases", none: "Nothing matched.", more: (n: number) => `and ${n.toLocaleString("en-IN")} more`, exportAll: "Export all",
     send: "Send to department", export: "Export", save: "Save view", visits: "Plan my visits", depts: "Responsible", asOf: "As of", noPlace: "no exact place",
     tour: "Tour the top 3", follow: "Follow the road", before: "Before", now: "Now", backTo: "Back to the answer", empty: "Ask about any place, distance, road or area, in English or Tamil.",

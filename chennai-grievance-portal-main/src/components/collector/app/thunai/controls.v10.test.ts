@@ -50,11 +50,10 @@ describe("finding 1: the write controls a spoken 'click …' pressed with no gua
     ["sec.signOutOthers", "../../security/SecurityPanel.tsx", "onClick={others}"],
     ["sources.run", "Sources.tsx", "onClick={() => run(s)}"],
     ["sources.pauseResume", "Sources.tsx", "onClick={() => toggle(s)}"],
-    ["studio.add.linkGo", "studio/Studio.tsx", "aria-label=\"Read the link\""],
+    ["studio.add.linkGo", "studio/Studio.tsx", "className=\"ds-fetch-go\""],
     ["studio.add.sample", "studio/Studio.tsx", "onClick={() => addSample(s.key)}"],
     ["studio.add.sample", "studio/Hero.tsx", "onClick={() => onSample(s.key)}"],
-    ["ds.refetch", "studio/Dataset.tsx", "title=\"Fetch the link again\""],
-    ["ds.enrich.findMore", "studio/Dataset.tsx", "onFindMore?.("],
+    ["ds.refetch", "studio/Dataset.tsx", "title=\"Read the link again now\""],
     ["ds.brief.reanalyse", "studio/Insights.tsx", "onClick={onReanalyse}"],
     ["ds.alert.add", "studio/Analyst.tsx", "text.trim().length < 6"],
     ["ds.mapping.rebuild", "studio/Dataset.tsx", "onRemap(changed.map"],
@@ -83,7 +82,7 @@ describe("finding 1: the write controls a spoken 'click …' pressed with no gua
   });
   it("the pinned list is the inventory's, and every one of them is 'never' in the registry", () => {
     const ids = [...new Set(UNGUARDED.map((x) => x[0]))];
-    expect(ids.length).toBe(26);
+    expect(ids.length).toBe(25); // 28 Nov: the small-dataset "Find more on this site" row left the Studio
     for (const id of ids) expect(CONTROLS10.find((e) => e.id === id)?.level, id).toBe("never");
   });
   it("a harmless neighbour stays pressable (the failed run's Back, the picker's Cancel, an outcome's Close)", () => {
@@ -196,8 +195,8 @@ describe("finding 6: Jarvis's own harmless controls have a voice path", () => {
     expect(read("thunai/HudCards.tsx")).toMatch(/data-testid="queue"/);
   });
   it("the control lane presses inside Jarvis's own UI only for a registry control marked own, and gates a level-B press on a yes", () => {
-    const i = thunai.indexOf("f10.lane?.lane === \"control\"");
-    const block = thunai.slice(i, i + 3200);
+    const i = thunai.indexOf("if (f10.lane?.lane === \"control\") {");
+    const block = thunai.slice(i, i + 4400);
     expect(block).toMatch(/pressControl\(/);
     expect(block).toMatch(/own/);
     expect(block).toMatch(/setPendingB\(/);

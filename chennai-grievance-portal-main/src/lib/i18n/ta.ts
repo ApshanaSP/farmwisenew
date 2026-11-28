@@ -69,7 +69,7 @@ export const TA: Record<string, string> = {
   "Severe, not yet checked": "கடுமையானவை, இன்னும் சரிபார்க்கப்படாதவை",
 
   // ---- overview cards
-  "Ask the map…": "வரைபடத்திடம் கேளுங்கள்…", "Ask the map": "வரைபடத்திடம் கேளுங்கள்", "Rain": "மழை", "Rain & flooding": "மழை & வெள்ளம்",
+  "Ask the map…": "வரைபடத்திடம் கேளுங்கள்…", "Ask the map": "வரைபடத்திடம் கேளுங்கள்", "Map Insights…": "வரைபட நுண்ணறிவு…", "Map Insights": "வரைபட நுண்ணறிவு", "Rain": "மழை", "Rain & flooding": "மழை & வெள்ளம்",
   "By severity": "தீவிரம்", "My tasks": "பணிகள்", "See all": "அனைத்தும்", "Severe": "கடுமை", "High": "அதிகம்", "Medium": "நடுத்தரம்", "Low": "குறைவு",
   "# need you": "# உங்கள் கவனம் தேவை", "shown first": "முதலில் காட்டப்படுகிறது", "Act": "செயல்படு",
   "Latest news": "சமீபத்திய செய்திகள்", "See more": "மேலும்", "News": "செய்தி", "Differ": "முரண்", "Next door": "அண்டை", "Added": "சேர்த்தவை",

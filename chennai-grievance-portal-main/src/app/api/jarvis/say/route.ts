@@ -37,7 +37,7 @@ const provider = () => { const p = (process.env.TTS_PROVIDER ?? "auto").trim().t
 const sarvamOn = () => !!process.env.SARVAM_API_KEY && provider() !== "gemini" && provider() !== "azure";
 const SARVAM_TTS_URL = "https://api.sarvam.ai/text-to-speech";
 const SARVAM_TTS_MODEL = process.env.JARVIS_SARVAM_TTS_MODEL || "bulbul:v3";
-const SARVAM_SPEAKER = process.env.JARVIS_SARVAM_SPEAKER || "priya";
+const SARVAM_SPEAKER = process.env.JARVIS_SARVAM_SPEAKER || "ritu";
 
 /** an answer in pieces of about 400 characters, cut at sentence ends (a whole long answer took 48 s in one request; pieces go in parallel) */
 function pieces(text: string, max = 400): string[] {

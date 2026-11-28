@@ -450,10 +450,10 @@ c("cfm.usePassword", "confirm", "A", P(".cfm .cfm-alt button:nth-of-type(1)::pas
 c("cfm.emailCode", "confirm", NEVER, N("emails a code"), "Email me a code|send another code", "எனக்கு மின்னஞ்சலில் குறியீடு அனுப்பு", "enakku code mail pannu");
 
 // ------------------------------------------------------------------------------------------------------------------- the Data Studio --
-c("studio.add.link", "studio", "A", P(".ds-linkf input", { input: "text" }), "Link box|paste a link|link to a data source", "இணைப்புப் பெட்டி|தரவு இணைப்பு", "link box|link paste pannu", ST);
+c("studio.add.link", "studio", "A", P(".ds-fetch input", { input: "text" }), "Link box|paste a link|link to a data source", "இணைப்புப் பெட்டி|தரவு இணைப்பு", "link box|link paste pannu", ST);
 c("studio.add.linkGo", "studio", NEVER, N("reads a link into a new dataset"), "Read the link|add the link", "இணைப்பைப் படி", "link padi", ST);
-c("studio.add.options", "studio", "A", P(".ds-linkf button.alt"), "Sign-in and refresh options|link options", "உள்நுழைவு மற்றும் புதுப்பிப்பு விருப்பங்கள்", "sign in refresh options|link options", ST);
-c("studio.add.connect", "studio", "A", P(".ds-connect-cta"), "Connect with sign-in or schedule|connect a source", "உள்நுழைவு அல்லது அட்டவணையுடன் இணை|மூலத்தை இணை", "source connect pannu|connect with sign in", ST);
+c("studio.add.options", "studio", "A", P(".ds-fetch-more"), "Sign-in and refresh options|link options", "உள்நுழைவு மற்றும் புதுப்பிப்பு விருப்பங்கள்", "sign in refresh options|link options", ST);
+c("studio.add.connect", "studio", "A", P(".ds-fetch-more"), "Connect with sign-in or schedule|connect a source", "உள்நுழைவு அல்லது அட்டவணையுடன் இணை|மூலத்தை இணை", "source connect pannu|connect with sign in", ST);
 c("studio.add.sample", "studio", NEVER, N("adds a dataset"), "Add the sample|add a sample dataset", "மாதிரியைச் சேர்", "sample add pannu", ST);
 c("studio.list.board", "studio", "A", P(".ds-top-tabs [role=tab]:nth-of-type(1)"), "My dashboards|open the dashboards|dashboards tab", "என் டாஷ்போர்டுகள்|டாஷ்போர்டுகளைத் திற", "en dashboards|dashboards open pannu", ST);
 c("studio.list.datasets", "studio", "A", P(".ds-top-tabs [role=tab]:nth-of-type(2)"), "My datasets|datasets tab|show the datasets", "என் தரவுத்தொகுப்புகள்", "en datasets|datasets kaattu", ST);

@@ -138,7 +138,8 @@ export default function SatMap(props: Props) {
 
   // ---- the base map: Map (a sharp street map, like Google Maps; the default) or Satellite. The Collector's choice is kept
   // in this browser. Rain & flooding draws on the street map while it is open; the choice comes back after.
-  const [view, setView] = useState<BaseKind>("map");
+  // 28 Nov (the owner, with a picture): every console opens on the satellite map; Rain and Live traffic still draw on the street map
+  const [view, setView] = useState<BaseKind>("satellite");
   const choose = (v: BaseKind) => { setView(v); saveBaseChoice(v); };
   // 28 Nov (the owner: "the map should be the default everywhere"): every map opens on the street map; Satellite lasts while it is chosen
   // Rain & flooding and the live traffic view hand the map "streets" with no Ask the Map (Overview.tsx), before their own
@@ -196,7 +197,7 @@ export default function SatMap(props: Props) {
       map.on("zoomend moveend", declutter);
       // the base map, sharp on any screen: the street map or the imagery with names over it. Its own road and place names wait
       // for zoom 13, so the district view stays uncluttered under the console's zone names.
-      const base = addBasemap(L, map, "map", { labels: true, namesFrom: 13 });
+      const base = addBasemap(L, map, cb.current.rain || (!cb.current.ask && cb.current.base === "streets") ? "map" : "satellite", { labels: true, namesFrom: 13 });
       setTone(base.tone);
       base.onTone(setTone);
 

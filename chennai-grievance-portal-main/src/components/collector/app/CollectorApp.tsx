@@ -1,6 +1,7 @@
 "use client";
 
 import { NewsActHost } from "./NewsAct";
+import { MailComposerHost, openMail } from "./MailComposer";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Overview as OverviewData, Period } from "@/lib/collector/intel";
@@ -952,8 +953,9 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
       run: () => openRain({ replay: null, manual: false }) },
     { g: "Actions", ic: "flow", l: "Live traffic (நேரடி போக்குவரத்து)", s: "Jams, closed and flooded roads now, the spots that keep coming back, and who to send them to",
       run: () => openTraffic(null) },
-    { g: "Actions", ic: "map", l: "Ask the map", s: "A question about places and distances, answered on the Overview's map",
+    { g: "Actions", ic: "map", l: "Map Insights", s: "A question about places and distances, answered on the Overview's map",
       run: () => { setPage("overview"); mapAsk.setGrown(true); } },
+    { g: "Actions", ic: "send", l: "Draft a mail", s: "To any department officer or staff, about anything: the AI drafts it, you approve it", run: () => openMail() },
     { g: "Actions", ic: "download", l: "Export report", s: "PDF report or CSV action list", run: openExport },
     { g: "Actions", ic: "sensor", l: "Open data sources", s: "Feeds and audit log", run: c.openFeeds },
     { g: "Actions", ic: "layers", l: "Workspaces", s: "Save or reopen a view", run: c.openWorkspace },
@@ -990,6 +992,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
           {/* the tools, each with its name (they were five bare icons) */}
           <TopMenu open={pop === "menu"} onToggle={() => setPop((p) => (p === "menu" ? null : "menu"))} items={[
             ...(saved ? [{ key: "live", icon: "refresh" as IconName, label: "Back to live dashboard", sub: `Leave "${saved.name}", saved ${fmtShort(saved.savedAt)}`, on: true, run: backToLive }] : []),
+            { key: "mail", icon: "send", label: "Draft a mail", sub: "To any department officer or staff, about anything", run: () => openMail() },
             { key: "export", icon: "download", label: "Export report", sub: "PDF report or CSV action list", run: openExport },
             { key: "ws", icon: "layers", label: "Workspaces", sub: saved ? `Viewing: ${saved.name} v${saved.version}` : workspaceName ? `Last saved or opened: ${workspaceName}` : "Save or reopen a view", on: !!saved, run: c.openWorkspace },
             { key: "custom", icon: "sliders", label: "Customize the dashboard", sub: "Choose what the dashboard shows", run: openCustomize },
@@ -1105,6 +1108,7 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
         {inc && <IncidentView key={inc} id={inc} c={c} startAction={actionFor === inc} />}
         {modal?.kind === "story" && <NewsView key={modal.story.id} s={modal.story} c={c} />}
         <NewsActHost c={c} />
+        <MailComposerHost c={c} />
         {modal && modal.kind !== "story" && (
           <Modal title={modal.title} c={c} narrow={["depts", "zones", "customize", "item"].includes(modal.kind)} wide={["dept", "stories", "markets", "pattern", "story", "review", "nearby", "nextdoor", "conflict"].includes(modal.kind)}>
             {modal.kind === "list" ? <ListBody key={`${modal.title}|${JSON.stringify(modal.preset)}|${qs}`} preset={modal.preset} c={c} />

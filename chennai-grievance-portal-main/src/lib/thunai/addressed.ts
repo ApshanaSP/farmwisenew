@@ -12,6 +12,7 @@
  * Levels B and C need tier 1 or 2. When unsure, do not act: a wrong silent ignore is put right by saying "Jarvis"; acting on
  * someone's side conversation is not.
  */
+import { smallTalk } from "./v11/smalltalk";
 import { talkedAbout, wakeIn } from "@/components/collector/app/thunai/wake";
 import { isEnglishWord } from "./english";
 import { understandV8 } from "./v8/flag8";
@@ -331,6 +332,8 @@ export function addressed(i: GateInput): Addressed {
   if (talkedAbout(text)) return { tier: 0, act: false, text, maxLevel: null, why: "about" };
   if (isStopWord(text)) return { tier: 3, act: true, text, maxLevel: "A", why: "stop" };
   // v8: said to someone else (another assistant, a person by name or title, an errand for a person), a filler or a cut-off line: silent
+  // 28 Nov (the owner: Jarvis did not answer "thank you"): a thanks within 20 s of Jarvis's last turn is said to Jarvis, and gets its reply
+  if (i.lastTurnAt != null && i.now - i.lastTurnAt <= 20_000 && smallTalk(text) === "thanks") return { tier: 2, act: true, text, maxLevel: "A", why: "answer" };
   if (understandV8()) {
     const why = sideTalk8(text, { awaiting: i.awaitingAnswer, districtNoun: i.districtNoun });
     if (why) return { tier: 0, act: false, text, maxLevel: null, why };

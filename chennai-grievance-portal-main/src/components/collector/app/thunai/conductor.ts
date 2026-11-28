@@ -1223,7 +1223,10 @@ export class Conductor {
     const over = !!this.m.provisional || this.m.overVoice || (cut && !isBackchannel(t));
     // "Jarvis" and a pause: the end of utterance is short, so the name often arrives alone. It is not a request (said over the
     // voice, it stops the voice and listens: turn.ts; said while a question is in flight, it cancels nothing: v12)
-    if (namedIn(t) === "") {
+    // 28 Nov (the owner: "if I say Jarvis thank you it should answer that too"): a thanks with the name, said when nothing is in flight and
+    // Jarvis is not speaking, is a turn of its own (handle() answers it at once from smalltalk.ts), not the name alone and a "Yes?"
+    const thanksTurn = !over && !speaking() && !this.m.voice && smallTalk(t) === "thanks";
+    if (namedIn(t) === "" && !thanksTurn) {
       // v13 (review 1-0, 1-10): a thanks or an "okay" around the name ("Thank you Jarvis.", "okay thank you Jarvis": the gate's name alone)
       // said over a question in flight or Jarvis's voice is no call: no "Yes?" for it, nothing stops, and an answer it cut comes back
       if (over && !this.answerAwaited() && noRequest(t, { greeting: false })) {

@@ -177,3 +177,8 @@ html[data-lang="ta"] .dic .nw-en,html[data-lang="ta"] .dic .nw-left .nw-left-t .
 .dic .nact-own span{flex:1;display:flex;flex-direction:column}
 .dic .nact-own small{color:#7F1D1D;font-size:11.5px}
 .dic .nact-dlg .ta-row>small{flex:none;min-width:92px}
+/* the mail composer (MailComposer.tsx) */
+.dic .mail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dic .mail-dlg select{width:100%;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--text);padding:0 10px;font:inherit;font-size:13px}
+.dic .mail-dlg .mail-topic{min-height:72px;resize:vertical}
+.dic .mail-draft{align-self:flex-start;margin:2px 0 8px}

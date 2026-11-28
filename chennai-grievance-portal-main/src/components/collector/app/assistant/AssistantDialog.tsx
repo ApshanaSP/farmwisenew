@@ -17,7 +17,8 @@ import JarvisLogView from "../thunai/JarvisLogView";
 import { canListen, listen, speak, stopSpeaking } from "./speech";
 import { T, X } from "./text";
 import { EXAMPLES, detectLanguage, type Lang, type LangChoice } from "@/lib/assistant/lang";
-import type { AnswerCard as Card, ConsoleAction } from "@/lib/assistant/answer";
+import { emptySources, type AnswerCard as Card, type ConsoleAction } from "@/lib/assistant/answer";
+import { mailAsk, openMail } from "../MailComposer";
 import type { Plan } from "@/lib/map/plan";
 import "./assistant.css";
 
@@ -224,6 +225,20 @@ export default function AssistantDialog({ c, open, onClose, tab = "chat", onTab 
     const message = q.trim();
     if (!message) return;
     asked.current = true;
+    // 28 Nov (the owner): "draft a mail to ... about ...": the Collector's mail composer opens with the AI's draft, to read and approve
+    // (MailComposer.tsx); the chat says so. Not on the officer's console
+    const mail = !c.officer ? mailAsk(message) : null;
+    if (mail) {
+      openMail(mail);
+      const ta = /[஀-௿]/.test(message);
+      const say = ta ? "மின்னஞ்சல் வரைவு திறக்கப்பட்டது: படித்து, மாற்றி, அனுப்ப ஒப்புதல் தாருங்கள்." : "I've opened a draft of your mail. Read it, change anything you like, and approve it to send.";
+      const card: Card = { id: uid(), kind: "action", language: ta ? "ta" : "en", display: "text", headline: ta ? "மின்னஞ்சல் வரைவு" : "Mail draft opened", answerMarkdown: say,
+        voiceSummary: say, voiceLang: ta ? "ta-IN" : "en-IN", chart: null, datasets: [], kpis: [], table: null, followUps: [], chips: [], consoleActions: [], autoActions: [],
+        caveats: [], scope: null, scopeLine: "", asOf: "", testData: false, sources: emptySources() };
+      setItems((x) => [...x, { id: uid(), role: "user", text: message }, { id: uid(), role: "assistant", card }]);
+      setText("");
+      return;
+    }
     openSeq.current++; setOpening(null); // a past conversation still opening must not replace this question
     ctl.current?.abort();
     const ac = new AbortController();

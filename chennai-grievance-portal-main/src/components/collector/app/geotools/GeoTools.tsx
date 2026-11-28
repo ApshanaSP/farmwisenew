@@ -280,7 +280,7 @@ export default function GeoTools(p: Props) {
               </ul>
             )}
             <div className="gt-acts">
-              {p.ask && <button className="pri" onClick={askHere} title="Everything the store knows about this area, in Ask the Map"><I n="search" />Ask about this area</button>}
+              {p.ask && <button className="pri" onClick={askHere} title="Everything the store knows about this area, in Map Insights"><I n="search" />Ask about this area</button>}
               <button onClick={copy} title="For a surveyor or another GIS"><I n="copy" />Copy GeoJSON</button>
               <button onClick={() => setPlot({ pts: [], closed: false, hover: null })}><I n="plus" />New plot</button>
             </div>

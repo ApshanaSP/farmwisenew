@@ -419,8 +419,11 @@ function Stage(p: Props) {
         {doc.blocks.filter((b) => b.kind !== "Note").length >= 4 && (
           <nav className="st-index" aria-label={T(lang, "On this screen", "இந்தத் திரையில்")}>
             <span>{T(lang, "On this screen", "இந்தத் திரையில்")}</span>
-            {doc.blocks.filter((b) => b.kind !== "Note").map((b) => {
-              const t = ("title" in b ? String((b as { title: string }).title) : b.kind).split(" · ")[0];
+            {doc.blocks.filter((b) => b.kind !== "Note").map((b, k, all) => {
+              // a section's short name; two sections with the same short name ("Most urgent · Adyar", "Most urgent · Teynampet") keep their whole title
+              const full = (x: typeof b) => ("title" in x ? String((x as { title: string }).title) : x.kind);
+              const short = full(b).split(" · ")[0];
+              const t = all.some((o) => o !== b && full(o).split(" · ")[0] === short) ? full(b) : short;
               return <button key={b.id} type="button" onClick={() => document.getElementById(`st-sec-${b.id}`)?.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "start" })}>{t}</button>;
             })}
           </nav>

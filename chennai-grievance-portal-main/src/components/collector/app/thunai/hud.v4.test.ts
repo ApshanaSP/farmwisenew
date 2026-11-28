@@ -286,7 +286,7 @@ describe("the bar (rendered)", () => {
   it("puts the evidence chip under an answer, a button when it can open the rows", () => {
     const e: HudEvidence = { by: "ai", model: "claude-opus-5-5", ms: 2400, method: null, n: 47, period: "weekly", sources: [], asOf: null };
     hud.set({ mode: "on", turn: "listening", core: "listening", answer: "Forty-seven cases this week.", evidence: e });
-    expect(render()).toMatch(/<p class="hud-ev"[^>]*>.*claude-opus-5-5.*n = 47.*This week/);
+    expect(render()).toMatch(/<p class="hud-ev"[^>]*>.*How I know.*AI.*n = 47/);
     hud.actions({ onEvidence: () => undefined });
     expect(render()).toMatch(/<button type="button" class="hud-ev"/);
     hud.set({ core: "thinking", turn: "thinking" });

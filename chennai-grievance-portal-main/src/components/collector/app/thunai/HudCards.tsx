@@ -62,12 +62,14 @@ export function EvidenceChip({ e, lang, onOpen }: { e: HudEvidence; lang: Lang; 
   const body = (
     <>
       <I n={e.by === "ai" ? "ai" : "tasks"} />
-      {parts.map((p, i) => <span key={i}>{p}</span>)}
+      {/* 28 Nov (the owner: the bar's line was cut into fragments): one short label, the whole on hover and on click */}
+      <span className="hud-ev-k">{T(lang, "How I know", "எப்படித் தெரியும்")}</span>
+      {[parts[0], parts.find((p) => /^n = /.test(p)) ?? parts[2]].filter(Boolean).map((p, i) => <span key={i}>{p}</span>)}
     </>
   );
   return onOpen
-    ? <button type="button" className="hud-ev" lang={lang} onClick={onOpen} title={T(lang, "Show the rows this answer rests on", "இந்தப் பதிலின் தரவைக் காட்டு")} aria-label={label} data-testid="evidence">{body}</button>
-    : <p className="hud-ev" lang={lang} aria-label={label} data-testid="evidence">{body}</p>;
+    ? <button type="button" className="hud-ev" lang={lang} onClick={onOpen} title={`${label}. ${T(lang, "Click for the rows this answer rests on", "இந்தப் பதிலின் தரவைக் காண அழுத்துங்கள்")}`} aria-label={label} data-testid="evidence">{body}</button>
+    : <p className="hud-ev" lang={lang} aria-label={label} title={label} data-testid="evidence">{body}</p>;
 }
 
 const STEP_WORD: Record<HudMissionStepState, [string, string]> = {

@@ -275,3 +275,6 @@ html:has(.dic.fit .cdock) .hud-first { bottom: 60px; }
   .hud-ans { top: 64px; max-height: 38dvh; }
 
 }
+/* 28 Nov: the "How I know" chip is one short line: its label and two facts, never cut into fragments */
+.hud-ev span { max-width: none; flex: none; }
+.hud-ev .hud-ev-k { font-weight: 700; color: var(--ink); }
