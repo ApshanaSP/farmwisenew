@@ -4,3 +4,6 @@ chennai_news_pipeline/data/raw/*.json filter=lfs diff=lfs merge=lfs -text
 chennai_news_pipeline/data/raw/*.csv filter=lfs diff=lfs merge=lfs -text
 *.bat text eol=crlf
 *.cmd text eol=crlf
+
+# shell scripts run in a Linux container: Unix line endings always
+*.sh text eol=lf
