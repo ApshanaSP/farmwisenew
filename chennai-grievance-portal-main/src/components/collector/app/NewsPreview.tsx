@@ -24,12 +24,12 @@ export function NewsView({ s, c }: { s: Story; c: Console }) {
   const [err, setErr] = useState<string | null>(null);
   const [sel, setSel] = useState(0);
   const [full, setFull] = useState<Record<string, Full>>({});
-  const ana = useAnalysis(`/api/collector/news/analysis?ids=${encodeURIComponent(s.docIds.join(","))}`, s.id);
+  const ana = useAnalysis(`/api/collector/news/analysis?ids=${encodeURIComponent(s.docIds.slice(0, 60).join(","))}`, s.id);
   const diffs = useStoryConflicts(c, s.outletNames.length === 1 ? [] : s.docIds, s.title, s.id);
 
   useEffect(() => {
     let live = true;
-    fetch(`/api/collector/news?ids=${encodeURIComponent(s.docIds.join(","))}`)
+    fetch(`/api/collector/news?ids=${encodeURIComponent(s.docIds.slice(0, 60).join(","))}`)
       .then(async (r) => {
         const j = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(j.error || "Could not load the reports.");
@@ -117,8 +117,8 @@ export function NewsView({ s, c }: { s: Story; c: Console }) {
 
       <div className="iv-b">
         <section className="iv-col">
-          <Explained a={ana.a} busy={ana.busy} rules={rules} open={false} deptName={dept?.name ?? "The department"} needLabel="Why it matters to you" noAi={ana.noAi} />
-          {ana.a?.handled && !ana.a.why.length && <div className="iv-ok"><I n="checkc" /><span>{ana.a.handled}</span></div>}
+          <Explained a={ana.a} busy={ana.busy} rules={rules} open={false} deptName={dept?.name ?? "The department"} needLabel="Why it matters to you" noAi={ana.noAi} act={s.desk ? s.desk.v === "act" : null} />
+          {ana.a?.handled && !ana.a.why.length && s.desk?.v !== "act" && s.desk?.v !== "know" && <div className="iv-ok"><I n="checkc" /><span>{ana.a.handled}</span></div>}
           {diffs && <ConflictBox items={diffs} />}
           <div>
             <div className="iv-t"><I n="news" />Sources<span>{plural(outlets.length, "outlet")}, {plural(rows.length, "report")}</span></div>

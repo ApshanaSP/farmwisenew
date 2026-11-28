@@ -62,12 +62,20 @@ export function useAnalysis(url: string | null, key: unknown) {
  * "What happened" and "Why it needs you": the AI's analysis of every report when it is ready (checked against the
  * facts on the server), the rules' wording until then or when no model answered.
  */
-export function Explained({ a, busy, rules, open, deptName, needLabel = "Why it needs you", noAi = null }: {
+export function Explained({ a, busy, rules, open, deptName, needLabel = "Why it needs you", noAi = null, act = null }: {
   a: Analysis | null; busy: boolean; rules: Plain | null; open: boolean; deptName: string; needLabel?: string; noAi?: string | null;
+  /**
+   * News (28 Nov, the owner: "a story marked Needs action said the Collector need not do anything"): the news desk's AI verdict decides,
+   * the same one that shows the "Needs action" label and the Act button. true: the reasons are shown (the desk's own when the analysis
+   * gave none); false: no "why it needs you", ever. null: the incident's own rules, as before.
+   */
+  act?: boolean | null;
 }) {
   const what = a?.what ?? rules?.summary ?? "";
-  const reasons = a ? a.why : (rules?.needsYou ? rules.attention.map((t) => ({ title: t, detail: "" })) : []);
-  const next = a ? a.next : rules?.next ?? null;
+  const deskWhy = (rules?.attention ?? []).map((t) => ({ title: t, detail: "" }));
+  const reasons = act === false ? [] : act === true ? (a?.why.length ? a.why : deskWhy)
+    : a ? a.why : (rules?.needsYou ? rules.attention.map((t) => ({ title: t, detail: "" })) : []);
+  const next = act === false ? null : a ? a.next : rules?.next ?? null;
   return (
     <>
       <div>
@@ -86,8 +94,8 @@ export function Explained({ a, busy, rules, open, deptName, needLabel = "Why it 
           {a ? <p className="iv-ai"><I n="spark" />Analysed by AI ({a.model}) from these records; every figure is checked against them. Read before acting.</p>
             : rules?.ai ? <p className="iv-ai">Written by AI from this incident&apos;s records; check before acting.</p> : null}
         </div>
-      ) : open ? (
-        <div className="iv-ok"><I n="checkc" /><span><b>No action needed from you.</b> {a?.handled || `${deptName} is handling it; nothing about it is unusual.`}</span></div>
+      ) : open || act === false ? (
+        <div className="iv-ok"><I n="checkc" /><span><b>{act === false ? "For information: no action needed from you." : "No action needed from you."}</b> {a?.handled || `${deptName} is handling it; nothing about it is unusual.`}</span></div>
       ) : null}
     </>
   );

@@ -20,7 +20,7 @@ import type { RainWithData } from "@/lib/rehearsal/satflood";
 import type { RainApi, RainLayer, RainStart } from "./rainLayer";
 import { LENS_WORD } from "./ImpactView";
 import type { ImpactData, ImpactItem, Lens } from "@/lib/rehearsal/impacts";
-import { n0, plural, range } from "./rainKit";
+import { fmtT, n0, plural, range } from "./rainKit";
 import { Grip, useDragPanel } from "../askmap/dragPanel";
 import { onMapCmd } from "../askmap/bridge";
 import { FixBox, FixPill, floodPlacesOf, satName, useFixes } from "./FixTracker";
@@ -35,7 +35,15 @@ interface Place {
   /** points that frame it on the map, and where its circle centre counts it */
   pts: [number, number][]; at: [number, number];
   def: { dept: string; note: string };
+  /** the proof: the records it is listed from (a complaint opens in the console, a news report at its outlet) */
+  proof: { id: string; title: string; sub: string; incident: string | null; url: string | null }[];
+  /** its ward, for the rain measured there */
+  ward: number | null;
 }
+/** where the rain figures come from (28 Nov, the owner: "I want the proof of where the data is taken from") */
+const CFM_URL = "https://chennaifloodmonitor.tn.gov.in";
+const IMD_URL = "https://mausam.imd.gov.in";
+const SRC_WORD: Record<string, string> = { police: "Police report", citizen: "Citizen complaint", news: "News report", flood: "Flood record" };
 const TAB_WORD: Record<Tab, { title: string; icon: IconName; one: string; many: string; hit: string }> = {
   flood: { title: "Flooding", icon: "drop", one: "flooded street", many: "flooded streets", hit: "flooded" },
   traffic: { title: "Traffic", icon: LENS_WORD.traffic.icon, one: "jammed road", many: "jammed roads", hit: "jammed" },
@@ -61,10 +69,14 @@ const ringPts = (g: { lat: number; lon: number; r: number }): [number, number][]
   const dLat = g.r / 111_320, dLon = g.r / (111_320 * Math.cos((g.lat * Math.PI) / 180));
   return [[g.lat - dLat, g.lon - dLon], [g.lat + dLat, g.lon + dLon]];
 };
-/** the rain's district average from the CFM-DSS gauges, in plain words (nothing when there is no gauge figure) */
-const avgOf = (r: RainWithData): string | null => (r.rain?.mean != null ? `${Math.round(r.rain.mean)} mm average` : null);
+/** the rain's district average from the CFM-DSS gauges, else the IMD station's figure, in plain words */
+const avgOf = (r: RainWithData): string | null => (r.rain?.mean != null ? `${Math.round(r.rain.mean)} mm average` : r.maxMm != null ? `${Math.round(r.maxMm)} mm (IMD)`
+  : r.rain?.few ? `Only ${r.rain.gauges} gauges reported` : null);
+/** a real heavy rain: the gauges did not find it dry (district average under 15 mm with no gauge at IMD's 64.5 mm mark). 28 Nov, the owner:
+ *  "16 Nov shows 0 mm but many flooded streets": such days were on the pipeline's rain-day list without rain at the gauges; they are left out */
+const realRain = (r: RainWithData) => !r.rain?.dry;
 
-export default function RainView({ geo, api, start, onClose, onLayer, toast, escRef }: {
+export default function RainView({ geo, api, start, onClose, onLayer, toast, escRef, onOpenIncident }: {
   geo: MapGeo | null;
   api: RainApi;
   start: RainStart;
@@ -126,7 +138,11 @@ export default function RainView({ geo, api, start, onClose, onLayer, toast, esc
         const pts: [number, number][] = s ? s.lines.flat() : p.sat ? p.sat.lines.flat() : [];
         const at: [number, number] = s ? [s.lat, s.lon] : p.sat ? [p.sat.lat, p.sat.lon] : [NaN, NaN];
         const sub = [p.ward ? `Ward ${p.ward}` : null, p.reports ? plural(p.reports, "flooding report") : null, p.sat ? "satellite water on it" : null].filter(Boolean).join(" · ");
-        return { key: p.place, label: p.label, sub, area: p.area ?? areaOfWard(p.ward), pts: pts.length ? pts : [at], at, def: { dept: p.dept, note: p.note } };
+        const reps = rain.reports.filter((r) => r.street === p.place).sort((a, b) => a.first.localeCompare(b.first));
+        const proof: Place["proof"] = reps.map((r) => ({ id: r.id, title: r.title, sub: `Complaint · ${r.place ?? `ward ${r.ward ?? "?"}`} · ${fmtT(r.first)} · ${r.open ? "still open" : "closed"}`, incident: r.id, url: null }));
+        if (p.sat) proof.push({ id: `sat:${p.place}`, title: `Satellite radar: water on about ${n0(Math.round(p.sat.floodedM))} m of this street`,
+          sub: `${rain.sat?.pass?.satellite ?? "Sentinel-1"} pass${rain.sat?.pass?.at ? `, ${fmtT(rain.sat.pass.at)}` : ""} · ${p.sat.conf} confidence`, incident: null, url: null });
+        return { key: p.place, label: p.label, sub, area: p.area ?? areaOfWard(p.ward), pts: pts.length ? pts : [at], at, def: { dept: p.dept, note: p.note }, proof, ward: p.ward || null };
       });
     }
     const x = imp[t];
@@ -134,13 +150,17 @@ export default function RainView({ geo, api, start, onClose, onLayer, toast, esc
     return x.items.filter((y) => y.byRain[rain.id]).map((y: ImpactItem) => {
       const pts: [number, number][] = y.lines?.length ? y.lines.flat() : y.rings?.length ? y.rings.flat() : y.path?.length ? y.path : [[y.lat, y.lon]];
       const ar = t === "metro" ? y.label : t === "power" ? y.sub.replace(/ zone$/, "") : y.sub.includes(" · ") ? y.sub.split(" · ").slice(1).join(" · ") : y.sub || "Place not known";
+      const proof: Place["proof"] = x.reports.filter((r) => r.item === y.key && r.rain === rain.id).sort((a, b) => a.at.localeCompare(b.at))
+        .map((r) => ({ id: r.id, title: r.title, sub: `${SRC_WORD[r.source] ?? "Record"}${r.outlet ? ` · ${r.outlet}` : ""}${r.place ? ` · ${r.place}` : ""} · ${r.source === "flood" ? r.at.slice(0, 10) : fmtT(r.at)}`,
+          incident: r.incident, url: r.url }));
+      const wm = /ward (\d+)/i.exec(`${y.sub} ${y.label}`);
       return { key: y.key, label: y.label, sub: y.byRain[rain.id]?.why ?? y.sub, area: ar || "Place not known", pts, at: [y.lat, y.lon],
-        def: impactDefault(t, y, y.byRain[rain.id]?.why ?? null, range(rain)) };
+        def: impactDefault(t, y, y.byRain[rain.id]?.why ?? null, range(rain)), proof, ward: wm ? Number(wm[1]) : null };
     });
   }, [d, imp, streetBy, areaOfWard]);
 
   // the rains that hit something on this tab, with their places
-  const hitRains = useMemo(() => rains.map((r) => ({ r, places: placesOf(tab, r) })).filter((x) => x.places.length > 0), [rains, tab, placesOf]);
+  const hitRains = useMemo(() => rains.filter(realRain).map((r) => ({ r, places: placesOf(tab, r) })).filter((x) => x.places.length > 0), [rains, tab, placesOf]);
   const cur = rainId ? hitRains.find((x) => x.r.id === rainId) ?? null : null;
   const areas = useMemo(() => {
     if (!cur) return [];
@@ -320,6 +340,7 @@ export default function RainView({ geo, api, start, onClose, onLayer, toast, esc
       <>
         <button className="rv-back" onClick={() => openRain(null)}><I n="chevl" />All rains</button>
         <div className="rw-head"><h3>{range(cur.r)} rain</h3>{avg && <em><I n="drop" />{avg}</em>}<span>{plural(cur.places.length, w.one, w.many)} in {plural(areas.length, tab === "metro" ? "line" : "area")}</span></div>
+        <RainProof r={cur.r} />
         <h4 className="rv-step"><span>2</span>{AREA_WORD[tab]} <small>most first · click one to zoom in</small></h4>
         <ul className="rw-areas">
           {areas.map((a) => {
@@ -342,6 +363,7 @@ export default function RainView({ geo, api, start, onClose, onLayer, toast, esc
       <>
         <button className="rv-back" onClick={() => openArea(null)}><I n="chevl" />All areas of the {range(cur.r)} rain</button>
         <div className="rw-head"><h3>{curArea.name}</h3><span>{plural(curArea.ps.length, w.one, w.many)} in the {range(cur.r)} rain</span></div>
+        <AreaRain r={cur.r} wards={curArea.ps.map((p) => p.ward).filter((x): x is number => x != null)} />
         <h4 className="rv-step"><span>3</span>{w.many[0].toUpperCase() + w.many.slice(1)} <small>open one to take action and follow it</small></h4>
         <ol className="rw-places">
           {curArea.ps.map((p, k) => {
@@ -357,6 +379,7 @@ export default function RainView({ geo, api, start, onClose, onLayer, toast, esc
                 </button>
                 {on && (
                   <div className="rw-pb">
+                    <Proof p={p} tab={tab} onOpen={onOpenIncident} />
                     <FixBox fx={fx} lens={tab} place={p.key} rainId={cur.r.id} def={p.def} />
                     {!fx.url && <p className="rv-muted">Actions are not kept on this preview copy.</p>}
                   </div>
@@ -379,6 +402,53 @@ export default function RainView({ geo, api, start, onClose, onLayer, toast, esc
       </aside>
       <Legend tab={tab} step={cur ? (curArea ? 3 : 2) : 1} sat={sat} left={drag.right} />
     </>
+  );
+}
+
+/** the rain's measurement and where it comes from, with the sources to open */
+function RainProof({ r }: { r: RainWithData }) {
+  const g = r.rain;
+  return (
+    <div className="rw-proof">
+      <b><I n="drop" />Rain measured</b>
+      {g?.mean != null ? (
+        <span>District average <b>{Math.round(g.mean)} mm</b> from <b>{n0(g.gauges)}</b> automatic rain gauges ({n0(g.inChennai)} inside Chennai)
+          {g.wettest ? <>; the wettest, <b>{g.wettest.name}</b>, recorded <b>{Math.round(g.wettest.mm)} mm</b></> : null}.</span>
+      ) : g?.few ? <span>Only {n0(g.gauges)} gauges reported: too few for a district figure.</span> : <span>No gauge figure for this rain.</span>}
+      {r.maxMm != null && <span>IMD station: <b>{Math.round(r.maxMm)} mm</b> at the wettest station.</span>}
+      <span className="rw-src">Sources: <a href={CFM_URL} target="_blank" rel="noopener noreferrer">Chennai Flood Monitor (TN WRD CFM-DSS)<I n="ext" /></a>
+        {r.maxMm != null && <> · <a href={IMD_URL} target="_blank" rel="noopener noreferrer">India Meteorological Department<I n="ext" /></a></>}</span>
+    </div>
+  );
+}
+
+/** the rain measured in the area's wards (the CFM-DSS gauges' figure for each ward) */
+function AreaRain({ r, wards }: { r: RainWithData; wards: number[] }) {
+  const by = new Map((r.rain?.wards ?? []).map((w) => [w.ward, w.mm]));
+  const mm = [...new Set(wards)].map((w) => by.get(w)).filter((x): x is number => x != null);
+  if (!mm.length) return null;
+  const avg = mm.reduce((a, b) => a + b, 0) / mm.length;
+  return <p className="rw-arain"><I n="drop" />Rain in this area: <b>{Math.round(avg)} mm</b> (CFM-DSS gauges, {plural(mm.length, "ward")}; the most, {Math.round(Math.max(...mm))} mm)</p>;
+}
+
+/** the records a place is listed from: each complaint opens in the console, each news report at its outlet */
+function Proof({ p, tab, onOpen }: { p: Place; tab: Tab; onOpen: (id: string) => void }) {
+  return (
+    <div className="rw-proof">
+      <b><I n="doc" />Why it is listed{p.proof.length ? ` · ${plural(p.proof.length, "record")}` : ""}</b>
+      {p.proof.length ? (
+        <ul>
+          {p.proof.slice(0, 8).map((x) => (
+            <li key={x.id}>
+              <span><b>{x.title}</b><small>{x.sub}</small></span>
+              {x.incident ? <button className="rw-open" onClick={() => onOpen(x.incident!)}><I n="doc" />Open</button>
+                : x.url ? <a className="rw-open" href={x.url} target="_blank" rel="noopener noreferrer"><I n="ext" />Read</a> : null}
+            </li>
+          ))}
+        </ul>
+      ) : <span className="rv-muted">{tab === "power" || tab === "metro" ? "From the department's outage and delay log for this rain." : "From the district's flood record for this rain."}</span>}
+      {p.proof.length > 8 && <small className="rv-muted">and {n0(p.proof.length - 8)} more</small>}
+    </div>
   );
 }
 

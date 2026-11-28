@@ -346,7 +346,8 @@ const NEWS_TIERS = "('established', 'regional', 'official')";
 const ROUNDUP = /latest news today|news today live|live updates|top news|news highlights|#gallery/i;
 
 const NEWS_DOC = `d.doc_id, d.story_id, d.story_role, d.title, d.title_en, d.lang, d.url, d.publisher, d.publisher_domain, d.publisher_tier, d.place_text, d.ai_place, d.ai_orgs,
-            d.category_code, d.report_type, d.linked_incident_id, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t`;
+            d.category_code, d.report_type, d.linked_incident_id, DATE_FORMAT(d.published_at, '%Y-%m-%d %H:%i:%s') AS t,
+            CASE WHEN LENGTH(d.body) > 80 THEN 1 ELSE 0 END AS has_body`;
 /**
  * The period's articles from recognised news media, split by the news desk (newsdesk.ts): what belongs on the Collector's desk and what
  * was left out. An article the desk has not read yet follows the rules: linked to an incident or about a category the district handles,
@@ -489,9 +490,13 @@ export async function newsStories(period: Period, now: string) {
       docIds: g.map((r) => String(r.doc_id)),
       headlines: new Set(g.map((r) => english(r).toLowerCase())).size,
       /** power, weather or dengue: a group of routine notices */
-      topic: incident ? null : topicOf(english(lead), String(lead.title))
+      topic: incident ? null : topicOf(english(lead), String(lead.title)),
+      /** at least one of its reports has the whole article, readable in the news preview */
+      full: g.some((r) => Number(r.has_body) === 1)
     };
-  });
+  // 28 Nov (the owner: "if it shows the headline I must be able to read the full article; if not, don't show the news"): a story whose
+  // every report is only a headline or a search snippet (Google News) is left out of the lists
+  }).filter((x) => x.full);
 }
 
 /** A report's headline in English: its own, or the translation of a Tamil headline. */

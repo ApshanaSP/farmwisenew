@@ -357,6 +357,48 @@ export type Pattern = { kind: "spike"; cat: string; zone: number | null; date: s
  * the most unresolved work, unusual spikes, recurring hotspots and places that need checking.
  * Every row opens the detail behind it; nothing here changes the dashboard's filters.
  */
+/**
+ * The taluks, the most open work first. 28 Nov (the owner: the list ran far below "Which problems are rising?" and left a big blank space
+ * beside it): the first eight, as tall as the rising card, and "See all" for the rest, in place.
+ */
+const TALUKS_SHOWN = 8;
+function TalukRows({ ins, c, maxT }: { ins: Insights; c: Console; maxT: number }) {
+  const [all, setAll] = useState(false);
+  const rows = ins.taluks.filter((x) => x.open > 0);
+  const shown = all ? rows : rows.slice(0, TALUKS_SHOWN);
+  return (
+    <div className="fitlist tk-list">
+      {shown.map((x) => {
+        const d = pctChange(x.reported, x.prev); // none on a small base (metrics.ts)
+        return (
+          <button key={x.code} className="tk" onClick={() => c.openList({ status: "open", taluk: x.code, cat: "", dept: "", anyZone: true, scope: "30d", sort: "sev", dir: 1 }, `Still open in ${x.name} taluk, reported in the last 30 days`)}
+            title={`See the open incidents in ${x.name} taluk`}>
+            <span className="tk-l"><b>{x.name}</b><small title={`${METRICS.past_deadline.measure} · ${windowText("reported", "monthly")}`}>{x.severe ? `${x.severe} severe · ` : ""}{x.overdue} past deadline (30 days)</small></span>
+            <span className="tk-b"><i style={{ width: `${(x.open / maxT) * 100}%` }} /></span>
+            <b className="tk-v">{x.open}</b>
+            <span className={`tk-d ${d != null && d > 0 ? "up" : d != null && d < 0 ? "down" : ""}`}
+              title={`${x.reported} incidents reported in the last 30 days, ${x.prev} in the 30 days before`}>{d == null || d === 0 ? "–" : `${d > 0 ? "▲" : "▼"} ${Math.abs(d)}%`}</span>
+          </button>
+        );
+      })}
+      {(all || rows.length <= TALUKS_SHOWN) && ins.talukUnassigned.open > 0 && (
+        <button className="tk" onClick={() => c.openList({ status: "open", place: "notaluk", cat: "", dept: "", anyZone: true, scope: "30d", sort: "sev", dir: 1 }, "Still open with no taluk, reported in the last 30 days")}
+          title="District-wide reports, places that could not be found, and places outside Chennai district">
+          <span className="tk-l"><b>No taluk</b><small>district-wide or unknown{ins.talukUnassigned.severe ? ` · ${ins.talukUnassigned.severe} severe` : ""}</small></span>
+          <span className="tk-b"><i style={{ width: `${(ins.talukUnassigned.open / Math.max(maxT, ins.talukUnassigned.open)) * 100}%`, background: "var(--text-3)" }} /></span>
+          <b className="tk-v">{ins.talukUnassigned.open}</b>
+          <span className="tk-d">–</span>
+        </button>
+      )}
+      {rows.length > TALUKS_SHOWN && (
+        <button type="button" className="tk-more" onClick={() => setAll((v) => !v)} aria-expanded={all}>
+          {all ? "Show the top eight only" : `See all ${rows.length} taluks`}<I n={all ? "up" : "chevd"} />
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function TrendsPage({ ins, c }: { ins: Insights | null; c: Console }) {
   if (!ins) return <section className="p3"><article className="card" style={{ gridColumn: "1 / -1" }}><Loading /></article></section>;
   const maxT = Math.max(1, ...ins.taluks.map((x) => x.open));
@@ -370,31 +412,7 @@ export function TrendsPage({ ins, c }: { ins: Insights | null; c: Console }) {
       <article className="card" style={{ gridColumn: "span 4" }}>
         <div className="ch"><I n="pin" /><h2>Unresolved by taluk <span>· last 30 days</span></h2></div>
         <div className="tk-head"><span>Taluk</span><span>Open incidents</span><span title="Reports in the last 30 days against the 30 days before">Change</span></div>
-        <div className="fitlist">
-          {ins.taluks.filter((x) => x.open > 0).map((x) => {
-            const d = pctChange(x.reported, x.prev); // none on a small base (metrics.ts)
-            return (
-              <button key={x.code} className="tk" onClick={() => c.openList({ status: "open", taluk: x.code, cat: "", dept: "", anyZone: true, scope: "30d", sort: "sev", dir: 1 }, `Still open in ${x.name} taluk, reported in the last 30 days`)}
-                title={`See the open incidents in ${x.name} taluk`}>
-                <span className="tk-l"><b>{x.name}</b><small title={`${METRICS.past_deadline.measure} · ${windowText("reported", "monthly")}`}>{x.severe ? `${x.severe} severe · ` : ""}{x.overdue} past deadline (30 days)</small></span>
-                <span className="tk-b"><i style={{ width: `${(x.open / maxT) * 100}%` }} /></span>
-                <b className="tk-v">{x.open}</b>
-                <span className={`tk-d ${d != null && d > 0 ? "up" : d != null && d < 0 ? "down" : ""}`}
-                  title={`${x.reported} incidents reported in the last 30 days, ${x.prev} in the 30 days before`}>{d == null || d === 0 ? "–" : `${d > 0 ? "▲" : "▼"} ${Math.abs(d)}%`}</span>
-              </button>
-            );
-          })}
-          {/* incidents with no in-district taluk, so the ranking adds up to the district total */}
-          {ins.talukUnassigned.open > 0 && (
-            <button className="tk" onClick={() => c.openList({ status: "open", place: "notaluk", cat: "", dept: "", anyZone: true, scope: "30d", sort: "sev", dir: 1 }, "Still open with no taluk, reported in the last 30 days")}
-              title="District-wide reports, places that could not be found, and places outside Chennai district">
-              <span className="tk-l"><b>No taluk</b><small>district-wide or unknown{ins.talukUnassigned.severe ? ` · ${ins.talukUnassigned.severe} severe` : ""}</small></span>
-              <span className="tk-b"><i style={{ width: `${(ins.talukUnassigned.open / Math.max(maxT, ins.talukUnassigned.open)) * 100}%`, background: "var(--text-3)" }} /></span>
-              <b className="tk-v">{ins.talukUnassigned.open}</b>
-              <span className="tk-d">–</span>
-            </button>
-          )}
-        </div>
+        <TalukRows ins={ins} c={c} maxT={maxT} />
       </article>
 
       <article className="card" style={{ gridColumn: "span 4" }}>
@@ -740,7 +758,7 @@ export function MarketsCard({ ins, c, full }: { ins: Insights | null; c: Console
     <>
       {head}
       <div className={`cb mk-cb${full ? " mk-full" : ""}`}>
-        {view === "list" ? <PriceList m={ins.markets.byMarket} now={ins.now} />
+        {view === "list" ? <PriceList m={ins.markets.byMarket} now={ins.now} full={full} c={c} />
           : view === "markets" ? <ByMarket m={ins.markets.byMarket} now={ins.now} c={c} full={full} market={market} setMarket={setMarket} />
             : <Weekly ins={ins} scope={view} />}
         {view !== "tamilNadu" && <PriceCredit ins={ins} />}
@@ -753,7 +771,15 @@ export function MarketsCard({ ins, c, full }: { ins: Insights | null; c: Console
  * The simple view: one line per vegetable or fruit sold in two or more Chennai markets: the average price, how it moved
  * since the last report, where it is cheapest and dearest, and its last two weeks. Searchable, sortable by movement.
  */
-function PriceList({ m, now }: { m: ByM; now: string }) {
+/** 28 Nov (the owner: "the prices table is very long, make it short, with full screen for the whole"): the card shows this many rows */
+const PRICE_ROWS = 8;
+/** the foot of a shortened prices table: how many more, and the full screen with every row */
+function MoreRows({ n, c }: { n: number; c: Console }) {
+  if (n <= 0) return null;
+  return <button type="button" className="mk-more" onClick={() => c.openMarkets()}><I n="expand" />See all {n + PRICE_ROWS} items in full screen</button>;
+}
+
+function PriceList({ m, now, full, c }: { m: ByM; now: string; full?: boolean; c: Console }) {
   const [find, setFind] = useState("");
   const [sort, setSort] = useState<"name" | "up" | "down">("name");
   if (!m.markets.length) return <Empty>No Chennai market prices yet. Open Data sources and run &ldquo;Tamil Nadu market prices&rdquo;.</Empty>;
@@ -786,7 +812,7 @@ function PriceList({ m, now }: { m: ByM; now: string }) {
         <table className="mk pl">
           <thead><tr><th>Vegetable or fruit</th><th className="r">Average</th><th className="r">Change</th><th>Cheapest at</th><th>Dearest at</th><th>2 weeks</th></tr></thead>
           <tbody>
-            {rows.map((x) => (
+            {(full || find.trim() ? rows : rows.slice(0, PRICE_ROWS)).map((x) => (
               <tr key={x.commodity}>
                 <td className="ev">{x.commodity}<small className="dim"> · {x.markets} markets</small></td>
                 <td className="num r"><b>{kg(x.avg)}</b></td>
@@ -800,6 +826,7 @@ function PriceList({ m, now }: { m: ByM; now: string }) {
         </table>
         {!rows.length && <Empty>{find ? <>No item matches &quot;{find}&quot;.</> : "No item is sold in two or more Chennai markets."}</Empty>}
       </div>
+      {!full && !find.trim() && <MoreRows n={rows.length - PRICE_ROWS} c={c} />}
       <p className="mk-foot">Red ▲ = price went up since the market&apos;s last report (hurts households), green ▼ = went down. &ldquo;Compare markets&rdquo; shows every market side by side.</p>
     </>
   );
@@ -894,7 +921,7 @@ function ByMarket({ m, now, c, full, market, setMarket }: { m: ByM; now: string;
             </tr>
           </thead>
           <tbody>
-            {rows.map((x) => {
+            {(full || find.trim() ? rows : rows.slice(0, PRICE_ROWS)).map((x) => {
               const vals = Object.values(x.prices).map((p) => p.price);
               const lo = Math.min(...vals), hi = Math.max(...vals);
               const chg = x.avg != null && x.avgPrev ? ((x.avg - x.avgPrev) / x.avgPrev) * 100 : null;
@@ -922,6 +949,7 @@ function ByMarket({ m, now, c, full, market, setMarket }: { m: ByM; now: string;
         </table>
         {!rows.length && <Empty>No item matches &quot;{find}&quot;.</Empty>}
       </div>
+      {!full && !find.trim() && <MoreRows n={rows.length - PRICE_ROWS} c={c} />}
       <p className="mk-foot">Click a market name for its full price list. Red = price went up (hurts households), green = went down.</p>
     </>
   );

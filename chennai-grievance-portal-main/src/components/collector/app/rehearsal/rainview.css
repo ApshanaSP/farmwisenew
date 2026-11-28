@@ -352,3 +352,21 @@
 .dic .rw-leg i.ln{flex:none;display:block;width:18px;border-radius:3px}
 .dic .rw-leg i.ring{flex:none;display:block;width:14px;height:14px;border-radius:50%;border:2px dashed;background:transparent}
 .dic .rw-leg i.sat{flex:none;display:block;width:14px;height:10px;border-radius:2px;background:#22D3EE;box-shadow:inset 0 0 0 1px #0891B2}
+
+/* the proof (28 Nov): where the rain figure and each listed place come from, with the records to open */
+.dic .rw-proof{display:flex;flex-direction:column;gap:5px;padding:10px 12px;border-radius:12px;background:var(--surface-2,#F8FAFC);border:1px solid var(--line);font-size:12.5px;color:var(--text-2);line-height:1.45}
+.dic .rw-proof>b{display:flex;align-items:center;gap:6px;font:700 12.5px var(--font-ui);color:var(--text)}
+.dic .rw-proof>b .ic{width:14px;height:14px;color:var(--rv)}
+.dic .rw-proof ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.dic .rw-proof li{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:9px;background:var(--surface);border:1px solid var(--line-2,var(--line))}
+.dic .rw-proof li>span{flex:1;min-width:0;display:flex;flex-direction:column}
+.dic .rw-proof li b{font-size:12.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dic .rw-proof li small{font-size:11px;color:var(--text-3)}
+.dic .rw-open{flex:none;display:inline-flex;align-items:center;gap:4px;height:26px;padding:0 10px;border-radius:999px;border:1px solid var(--rv);color:var(--rv);background:var(--surface);font:700 11.5px var(--font-ui);text-decoration:none;cursor:pointer}
+.dic .rw-open .ic{width:12px;height:12px}
+.dic .rw-src{font-size:11.5px;color:var(--text-3)}
+.dic .rw-src a{color:var(--rv);font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:3px}
+.dic .rw-src a .ic{width:11px;height:11px}
+.dic .rw-arain{display:flex;align-items:center;gap:6px;margin:0;font-size:12.5px;color:var(--text-2)}
+.dic .rw-arain .ic{width:14px;height:14px;color:var(--rv);flex:none}
+.dic .rw-pb .rw-proof{margin-top:10px}

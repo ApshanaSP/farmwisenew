@@ -196,7 +196,7 @@ export default function SatMap(props: Props) {
       map.on("zoomend moveend", declutter);
       // the base map, sharp on any screen: the street map or the imagery with names over it. Its own road and place names wait
       // for zoom 13, so the district view stays uncluttered under the console's zone names.
-      const base = addBasemap(L, map, "map", { labels: true, namesFrom: 13, raster: true });
+      const base = addBasemap(L, map, "map", { labels: true, namesFrom: 13 });
       setTone(base.tone);
       base.onTone(setTone);
 

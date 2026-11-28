@@ -24,7 +24,7 @@ const { clearDesk, deskKey, setVerdict } = await import("./deskbook");
 const NOW = "2026-11-27 10:00:00";
 let n = 0;
 const doc = (o: { title: string; title_en?: string | null; lang?: string; t?: string; story?: string; publisher?: string; domain?: string }) => ({
-  doc_id: `D${++n}`, story_id: o.story ?? `S${n}`, story_role: null, title: o.title, title_en: o.title_en ?? null, lang: o.lang ?? "ta",
+  doc_id: `D${++n}`, has_body: 1, story_id: o.story ?? `S${n}`, story_role: null, title: o.title, title_en: o.title_en ?? null, lang: o.lang ?? "ta",
   url: `https://example.test/${n}`, publisher: o.publisher ?? "Dinamani", publisher_domain: o.domain ?? "dinamani.com", publisher_tier: "established",
   place_text: null, ai_place: null, ai_orgs: null, category_code: "OTHER", report_type: null, linked_incident_id: null, t: o.t ?? "2026-11-27 08:00:00"
 });

@@ -40,3 +40,14 @@
 .dic.ofc.fit .body .mk-scroll,.dic.ofc.fit .body .cb{overflow:visible;max-height:none;min-height:0}
 .dic.ofc.fit .body .att-list>*:nth-child(n+16){display:none}
 .dic.ofc.fit .body .ofc-news .fitlist>.brief:nth-child(n+9){display:none}
+
+/* Trends: the taluk card is as tall as the rising card beside it (its first ten rows, "See all" for the rest) */
+.dic .tk-more{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:6px;padding:8px;border-radius:10px;border:1px dashed var(--line-3,var(--line));
+  background:transparent;color:var(--accent-2,#15803D);font:700 12.5px var(--font-ui,inherit);cursor:pointer}
+.dic .tk-more .ic{width:13px;height:13px}
+.dic .tk-more:hover{background:var(--accent-soft,#ECFDF5)}
+/* the prices card's "See all in full screen" */
+.dic .mk-more{display:flex;align-items:center;justify-content:center;gap:6px;width:calc(100% - 24px);margin:8px 12px 4px;padding:9px;border-radius:10px;border:1px dashed var(--line-3,var(--line));
+  background:transparent;color:var(--accent-2,#15803D);font:700 12.5px var(--font-ui,inherit);cursor:pointer}
+.dic .mk-more .ic{width:13px;height:13px}
+.dic .mk-more:hover{background:var(--accent-soft,#ECFDF5)}
