@@ -245,3 +245,8 @@ html[data-lang="ta"] .cz-tab{padding:0 10px;gap:6px;font-size:13px}
 @media (max-width:639px){.cz-foot-in{justify-content:center;text-align:center;padding:12px}}
 
 @media (prefers-reduced-motion:reduce){.cz-tbtn:active{transform:none}.cz-bbtn.solid:hover{transform:none}.cz-act:hover>svg:last-child,.cz-more:hover svg{transform:none}}
+/* 29 Nov: the greeting stacked: Vanakkam, வணக்கம், then the name */
+.cz-hello{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.cz-hello .cz-hi{display:block;font-size:.62em;font-weight:650;line-height:1.2;opacity:.92}
+.cz-hello .cz-hi.ta{font-size:.56em}
+.cz-hello .cz-hi-name{display:block;line-height:1.15;margin-top:2px}

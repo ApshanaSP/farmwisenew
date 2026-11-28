@@ -1,0 +1,28 @@
+<h1 class="ch" id="c4"><span class="n">Chapter 4</span><span class="t">Every console: layout, maps and filters</span></h1>
+<div class="box oneline"><span class="lb">In one line</span><p>Pages scroll as a whole like the Briefing (no tile scrolls inside itself), every map opens on satellite imagery, and the Data Studio, officer console and citizen portal were tidied for the review.</p></div>
+
+<h2>4.1 Page scroll, not tile scroll</h2>
+<p>One stylesheet (<code>pagescroll.css</code>) makes every page as tall as its content on the Collector and officer consoles. Lists show their full length; long ones show their first rows with "See all". The Overview's map stays in view (sticky) while the cards beside it scroll. Trends shows eight taluks beside the "rising" table with "See all 17 taluks"; the prices card shows eight items with "See all … in full screen".</p>
+
+<h2>4.2 Maps</h2>
+<p>Every console map opens on <b>satellite imagery</b> (the owner's choice, from a screenshot). Rain and Live traffic still switch to the street map while open. "Ask the map" is now called <b>Map Insights</b> on screen, in English and Tamil; spoken commands are unchanged.</p>
+
+<h2>4.3 Data Studio</h2>
+<ul>
+  <li>One <b>Add data</b> panel across the top: "Upload a file" on the left, <b>Fetch from a link</b> with a large Fetch button on the right; sign-in and schedule one link below.</li>
+  <li>Datasets as cards under it; the open dataset below with only <b>Insights</b> and <b>Alerts</b>. AI reading, Rows, Data card and Data Detective tabs were removed; "Fetch now" and "Last fetched 5 h ago · Hourly" are shown clearly; the 23 column chips fold under one line.</li>
+</ul>
+
+<h2>4.4 Department officer console</h2>
+<ul>
+  <li>No Jarvis (Ask District IQ stays); opens on <b>Daily</b>; the last tiles (rain and air quality) are no longer cut off.</li>
+  <li>An incident opens as a <b>full centred pop-up</b> like the Collector's, its sections in two columns.</li>
+  <li>A filter that is set (zone, taluk, department on the Collector) shows as a bright white chip.</li>
+</ul>
+
+<h2>4.5 Citizen portal</h2>
+<ul>
+  <li>The greeting reads Vanakkam, வணக்கம் and the name, one under the other.</li>
+  <li><b>Accounts are kept.</b> Until 28 Nov evening neither copy of the site saved to AWS, so an account registered on the hosted site lived only until the site slept. The hosted copy now saves (and retries after AWS's "too many requests" answer); an account registered at 00:17 on 29 Nov was confirmed in the AWS store.</li>
+</ul>
+<div class="box honest"><span class="lb">Be honest about</span><p>Accounts registered on the hosted site before 28 Nov evening were never saved and must be registered again. The ward polygons are a community copy (DataMeet), not GCC-official; the taluk side is official (Chapter 5).</p></div>

@@ -25,6 +25,10 @@ export function DiffBadge({ s }: { s: StoryConflicts }) {
  * One disagreement: the fact, one sentence saying exactly what differs, what each outlet says side by side, the likely
  * reason and whom to confirm it with.
  */
+/** a single news report, opened in full in the news preview (CollectorApp listens for "diq:open-doc") */
+export const openDoc = (x: { docId: string; publisher?: string | null; t?: string | null; title?: string | null; url?: string | null }) =>
+  window.dispatchEvent(new CustomEvent("diq:open-doc", { detail: x }));
+
 function DiffCard({ d, compact }: { d: Difference; compact?: boolean }) {
   return (
     <li className={`dx${compact ? " sm" : ""}`}>
@@ -39,6 +43,8 @@ function DiffCard({ d, compact }: { d: Difference; compact?: boolean }) {
           <div key={c.docId} className="dx-c">
             <small><b>{c.publisher}</b> · {fmtShort(c.t)}</small>
             <span>{c.says}</span>
+            {/* 29 Nov (the owner: "in Differ I can't see the two articles it was taken from"): each outlet's own article, in full */}
+            <button type="button" className="dx-open" onClick={() => openDoc({ docId: c.docId, publisher: c.publisher, t: c.t, title: `${c.publisher}: ${d.field}` })}><I n="news" />Read this article</button>
           </div>
         ))}
       </div>

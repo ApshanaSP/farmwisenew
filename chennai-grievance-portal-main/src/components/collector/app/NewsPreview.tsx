@@ -39,7 +39,8 @@ export function NewsView({ s, c }: { s: Story; c: Console }) {
           const k = `${a.publisher}|${String(a.title).toLowerCase()}`;
           return seen.has(k) ? false : (seen.add(k), true);
         });
-        list.sort((a, b) => Number(b.id === s.id) - Number(a.id === s.id) || Number(!!b.body) - Number(!!a.body));
+        // 29 Nov (the owner: "some articles show only the headline"): a report with its whole article first, then the story's own report
+        list.sort((a, b) => Number(!!b.body) - Number(!!a.body) || Number(b.id === s.id) - Number(a.id === s.id));
         if (live) { setRows(list); setSel(0); setDept(j.dept ?? null); }
       })
       .catch((e) => live && setErr(e.message));
@@ -52,6 +53,15 @@ export function NewsView({ s, c }: { s: Story; c: Console }) {
     if (rows && !rows.length) { c.closeAll(); c.toast("That story has no report from an official news outlet, so it is not shown.", "alert"); }
   }, [rows]); // eslint-disable-line react-hooks/exhaustive-deps
   const a = rows?.[Math.min(sel, rows.length - 1)];
+  // a report whose article could not be fetched gives way to another report of the story that has its text
+  useEffect(() => {
+    if (!rows || !a || a.body) return;
+    const f = full[a.id];
+    if (f && f !== "loading" && !f.text) {
+      const k = rows.findIndex((r) => r.body || (full[r.id] && full[r.id] !== "loading" && (full[r.id] as Exclude<Full, "loading">).text));
+      if (k >= 0 && k !== sel) setSel(k);
+    }
+  }, [full, a, rows, sel]);
   // the monitor kept only the headline: fetch the article from the outlet once, when it is read
   useEffect(() => {
     if (!a || a.body || full[a.id]) return;

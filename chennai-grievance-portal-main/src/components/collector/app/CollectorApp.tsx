@@ -624,6 +624,18 @@ export default function CollectorApp({ initial, allDepts, user, dev = false }: {
   }, []);
 
   // --------------------------------------------------------- navigation --
+  // 29 Nov: any list that names one news report (Differ, developing stories) opens it in full in the news preview
+  useEffect(() => {
+    const f = (e: Event) => {
+      const x = (e as CustomEvent<{ docId: string; publisher?: string | null; t?: string | null; title?: string | null; url?: string | null }>).detail;
+      if (!x?.docId) return;
+      setInc(null);
+      setModal({ kind: "story", title: "In the news", story: { id: x.docId, title: x.title ?? "News report", original: null, url: x.url ?? null, loc: null, t: x.t ?? "", incident: null, sev: null,
+        grievances: 0, complaints: 0, outletNames: x.publisher ? [x.publisher] : [], docIds: [x.docId], headlines: 1, topic: null } as unknown as Story });
+    };
+    window.addEventListener("diq:open-doc", f);
+    return () => window.removeEventListener("diq:open-doc", f);
+  }, []);
   const closeAll = useCallback(() => {
     setInc(null);
     setModal(null);

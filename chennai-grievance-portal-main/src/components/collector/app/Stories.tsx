@@ -1,5 +1,6 @@
 "use client";
 
+import { openDoc } from "./Conflicts";
 import { useState } from "react";
 import type { Overview as OverviewData } from "@/lib/collector/intel";
 import type { Thread, ThreadStep } from "@/lib/collector/threads";
@@ -191,6 +192,12 @@ function Step({ s, c }: { s: ThreadStep; c: Console }) {
           {s.added && <span className="tg-add">added source</span>}
           {s.incident && <button className="lnk" onClick={() => c.openInc(s.incident!)}>open incident</button>}
         </small>
+        {/* 29 Nov (the owner: "I can only see the headlines, not where they are taken from"): the source named, and its article in full */}
+        <span className="tl2-src">
+          <em>Source</em><b>{s.publisher ?? (s.added ? "An added source" : "News")}</b>
+          {s.doc && !s.doc.startsWith("item-") && <button type="button" className="dx-open" onClick={() => openDoc({ docId: s.doc!, publisher: s.publisher, t: s.t, title: s.title, url: s.url })}><I n="news" />Read the full article</button>}
+          {url && <a className="dx-open" href={url} target="_blank" rel="noopener noreferrer"><I n="ext" />On the outlet&apos;s site</a>}
+        </span>
       </span>
     </div>
   );

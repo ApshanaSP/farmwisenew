@@ -51,7 +51,11 @@ fi
 ( while sleep 60; do bash /app/sync.sh; done ) &
 
 if [ -f /app/farmwisenew/manu_paddle_ocr/server.py ]; then
-  ( cd /app/farmwisenew/manu_paddle_ocr && PYTHONIOENCODING=utf-8 "${PADDLE_PY:-python3}" server.py 2>&1 | sed -u 's/^/[paddle] /' ) &
+  # 29 Nov: PaddleOCR was found stopped on the hosted site (nothing restarted it): it is started again whenever it ends
+  ( cd /app/farmwisenew/manu_paddle_ocr && while true; do
+      PYTHONIOENCODING=utf-8 "${PADDLE_PY:-python3}" server.py 2>&1 | sed -u 's/^/[paddle] /'
+      echo "[paddle] stopped (exit $?): starting it again in 5 s"; sleep 5
+    done ) &
 fi
 
 exec node node_modules/next/dist/bin/next start -H 0.0.0.0 -p 3000

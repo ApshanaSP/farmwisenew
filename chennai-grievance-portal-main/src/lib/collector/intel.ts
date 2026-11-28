@@ -494,9 +494,11 @@ export async function newsStories(period: Period, now: string) {
       /** at least one of its reports has the whole article, readable in the news preview */
       full: g.some((r) => Number(r.has_body) === 1)
     };
-  // 28 Nov (the owner: "if it shows the headline I must be able to read the full article; if not, don't show the news"): a story whose
-  // every report is only a headline or a search snippet (Google News) is left out of the lists
-  }).filter((x) => x.full);
+  // 28 Nov (the owner: "if it shows the headline I must be able to read the full article; if not, don't show the news"): a news-only story
+  // whose every report is only a headline or a search snippet (Google News) is left out of the lists
+  // (29 Nov, the owner: news linked to citizen complaints and department records had gone): a story linked to an incident stays, as it
+  // opens the incident with its complaints and reports, not an article
+  }).filter((x) => x.full || x.incident);
 }
 
 /** A report's headline in English: its own, or the translation of a Tamil headline. */
@@ -1554,7 +1556,7 @@ export async function incident(id: string, opts: { dept?: string | null } = {}) 
   const [members, documents, decisions, contacts, assigned, src, deptReports] = await Promise.all([
     q(
       `SELECT m.incident_id AS inc, m.event_id, m.source, m.channel, DATE_FORMAT(m.reported_at, '%Y-%m-%d %H:%i:%s') AS t, m.title, m.role,
-              m.link_prob, m.link_method, LEFT(e.text, 280) AS text
+              m.link_prob, m.link_method, LEFT(e.text, 2000) AS text
        FROM incident_members m LEFT JOIN events e ON e.event_id = m.event_id
        WHERE m.incident_id IN (?) ORDER BY m.reported_at LIMIT 120`,
       [ids]

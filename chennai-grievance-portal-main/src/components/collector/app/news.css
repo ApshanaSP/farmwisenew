@@ -182,3 +182,19 @@ html[data-lang="ta"] .dic .nw-en,html[data-lang="ta"] .dic .nw-left .nw-left-t .
 .dic .mail-dlg select{width:100%;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--text);padding:0 10px;font:inherit;font-size:13px}
 .dic .mail-dlg .mail-topic{min-height:72px;resize:vertical}
 .dic .mail-draft{align-self:flex-start;margin:2px 0 8px}
+/* 29 Nov: every source in an incident opens in full */
+.dic .ev-open{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+.dic .ev-open>button,.dic .ev-open>a{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--accent-line,#86EFAC);background:var(--surface);
+  color:var(--accent-2,#15803D);font:700 11.5px var(--font-ui,inherit);text-decoration:none;cursor:pointer}
+.dic .ev-open .ic{width:12px;height:12px}
+.dic .ev-open>button:hover,.dic .ev-open>a:hover{background:var(--accent-soft,#ECFDF5)}
+.dic .iv2-grp-b{all:unset;box-sizing:border-box;display:flex;flex-direction:column;width:100%;cursor:pointer}
+.dic .iv2-grp-b:hover b{text-decoration:underline}
+.dic .dx-open{display:inline-flex;align-items:center;gap:4px;align-self:flex-start;margin-top:6px;height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--accent-line,#86EFAC);
+  background:var(--surface);color:var(--accent-2,#15803D);font:700 11.5px var(--font-ui,inherit);cursor:pointer}
+.dic .dx-open .ic{width:12px;height:12px}
+.dic .dx-c{display:flex;flex-direction:column}
+.dic .tl2-src{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:4px;font-size:11.5px;color:var(--text-3)}
+.dic .tl2-src em{font-style:normal}
+.dic .tl2-src b{color:var(--text-2)}
+.dic .tl2-src .dx-open{margin-top:0;text-decoration:none}

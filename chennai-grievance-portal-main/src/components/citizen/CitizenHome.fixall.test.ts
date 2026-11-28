@@ -20,7 +20,8 @@ describe("the citizen home, laid out as the consoles' Overview", () => {
     const band = html.slice(html.indexOf('class="cz-band"'), html.indexOf('class="cz-card"'));
     expect(band).toMatch(/Saturday,? 7 November/);
     expect(html.match(/<h1\b/g)).toHaveLength(1);
-    expect(band).toMatch(/<h1[^>]*>(<!-- -->)?Vanakkam(<!-- -->)?, <span translate="no">Qa<\/span>/);
+    // 29 Nov: Vanakkam, வணக்கம், then the name, one under the other
+    expect(band).toMatch(/<h1[^>]*><span class="cz-hi">Vanakkam<\/span><span class="cz-hi ta" lang="ta">வணக்கம்<\/span><span class="cz-hi-name" translate="no">Qa<\/span>/);
     expect(band).toContain('href="/citizen/file-complaint"');
     expect(band).toContain('href="/citizen/track-complaints"');
     for (const l of ["Total filed", "In progress", "Resolved"]) expect(band).toContain(l);

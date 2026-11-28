@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>District IQ - Value, cost and devices</title>
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; font-family: "Segoe UI", "Nirmala UI", Arial, sans-serif; color: #1d2733; font-size: 10.2pt; line-height: 1.45; }
+.page { width: 210mm; height: 296.5mm; padding: 15mm 16mm 13mm; position: relative; overflow: hidden; page-break-after: always; }
+.page:last-child { page-break-after: auto; }
+.foot { position: absolute; left: 16mm; right: 16mm; bottom: 7mm; display: flex; justify-content: space-between; font-size: 7.8pt; color: #7b8794; }
+h1 { font-size: 23pt; line-height: 1.12; margin: 0 0 4mm; color: #0B3B22; letter-spacing: -.3px; }
+h2 { font-size: 14.5pt; margin: 0 0 3mm; color: #14532D; }
+h3 { font-size: 11pt; margin: 4mm 0 1.5mm; color: #14532D; }
+p { margin: 0 0 2.6mm; }
+.kick { font-size: 8.2pt; letter-spacing: .18em; text-transform: uppercase; color: #15803D; font-weight: 700; margin-bottom: 2mm; }
+.lead { font-size: 11.3pt; color: #33404d; }
+.hero { background: linear-gradient(135deg, #0B3B22, #15803D 70%, #22a35a); color: #fff; margin: -15mm -16mm 7mm; padding: 17mm 16mm 12mm; }
+.hero h1 { color: #fff; font-size: 30pt; }
+.hero h1 span { color: #a7f3c4; display: block; font-size: 17pt; margin-top: 2mm; font-weight: 600; }
+.hero p { color: #dff5e7; font-size: 11.2pt; max-width: 165mm; }
+.logo { display: inline-flex; align-items: center; justify-content: center; gap: .5mm; width: 15mm; height: 15mm; border-radius: 4mm; background: #fff; color: #0B3B22; font: 800 14pt "Segoe UI"; margin-bottom: 6mm; }
+.logo i { font-style: normal; color: #22a35a; font-size: 9pt; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin: 4mm 0 5mm; }
+.stat { background: #ECF7EF; border-radius: 3mm; padding: 3.5mm 4mm; }
+.stat b { display: block; font-size: 19pt; color: #0B3B22; line-height: 1.05; }
+.stat span { font-size: 8.4pt; color: #3f4d5a; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+.card { border: 1px solid #dfe5ea; border-radius: 3mm; padding: 4mm 4.5mm; background: #fff; }
+.card h3 { margin-top: 0; }
+.shot { width: 100%; border-radius: 2.5mm; border: 1px solid #dfe5ea; display: block; }
+.cap { font-size: 8.3pt; color: #5b6775; margin: 1.5mm 0 0; }
+ul { margin: 1mm 0 3mm; padding-left: 5mm; }
+li { margin: 0 0 1.2mm; }
+table { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm; font-size: 9.4pt; }
+th { text-align: left; background: #14532D; color: #fff; padding: 2mm 2.5mm; font-weight: 600; }
+td { padding: 2mm 2.5mm; border-bottom: 1px solid #e6ebef; vertical-align: top; }
+tr:nth-child(even) td { background: #F5FBF6; }
+.num { text-align: right; white-space: nowrap; font-weight: 600; }
+.note { background: #fff7e8; border-left: 3px solid #b45309; padding: 2.5mm 3.5mm; font-size: 8.8pt; color: #5c3d0c; border-radius: 0 2mm 2mm 0; margin: 2mm 0; }
+.ok { background: #ECF7EF; border-left: 3px solid #15803D; padding: 2.5mm 3.5mm; font-size: 9.2pt; border-radius: 0 2mm 2mm 0; margin: 2mm 0; }
+.big { font-size: 26pt; font-weight: 800; color: #0B3B22; line-height: 1; }
+.pill { display: inline-block; padding: 1mm 3mm; border-radius: 10mm; background: #ECF7EF; color: #14532D; font-size: 8.4pt; font-weight: 600; margin: 0 1.5mm 1.5mm 0; }
+</style></head><body>
+
+<!-- page 1 -->
+<section class="page">
+  <div class="hero">
+    <div class="logo">D<i>IQ</i></div>
+    <div class="kick" style="color:#a7f3c4">Team Initiators · FarmwiseAI Campus Product Challenge</div>
+    <h1>District IQ<span>One console for running a district, with proof behind every number</span></h1>
+    <p>District IQ brings a district's citizen complaints, police and department records, newspapers, weather, rain gauges, air quality, lakes and market prices into one place. It joins reports of the same event into one incident, ranks what needs the Collector first, and sends the work to the right department, then follows it until it is done.</p>
+  </div>
+  <div class="stats">
+    <div class="stat"><b>13</b><span>data feeds, read on a schedule</span></div>
+    <div class="stat"><b>200</b><span>wards in 15 zones, placed in 17 revenue taluks</span></div>
+    <div class="stat"><b>26</b><span>department and petition-counter consoles, plus the Collector's</span></div>
+    <div class="stat"><b>2</b><span>languages everywhere: English and Tamil</span></div>
+  </div>
+  <h2>The problem we solve</h2>
+  <div class="grid2">
+    <div class="card"><h3>Today</h3><ul>
+      <li>The same flooded street arrives as a 112 call, three citizen complaints, a PWD field note and a news report, in four different systems.</li>
+      <li>The Collector learns about a problem from the newspaper, after the people affected already know.</li>
+      <li>An instruction sent to a department has no simple follow-up: was it done, and did it hold in the next rain?</li>
+    </ul></div>
+    <div class="card"><h3>With District IQ</h3><ul>
+      <li>One incident, with every report behind it, each one openable.</li>
+      <li>News that needs the Collector is flagged by an AI desk and sent to the officer in one click.</li>
+      <li>Every action is tracked: assigned, reported with photos, verified, and tested by the next comparable rain.</li>
+    </ul></div>
+  </div>
+  <h3>Who uses it</h3>
+  <p><span class="pill">District Collector</span><span class="pill">Department officers</span><span class="pill">Citizens</span><span class="pill">Petition counter (Manu Desk)</span></p>
+  <p>The Collector sees the whole district; each officer sees only their department; citizens file and track complaints; the petition counter turns paper petitions into complaints with OCR (PaddleOCR, then AI).</p>
+  <div class="foot"><span>District IQ · Value, cost and devices</span><span>1 / 5</span></div>
+</section>
+
+<!-- page 2 -->
+<section class="page">
+  <div class="kick">What the judges will see</div>
+  <h1>Built for decisions, not for looking at</h1>
+  <img class="shot" src="img/overview.png" alt="The Collector's Overview">
+  <p class="cap">The Collector's Overview, as it opens: severe events, open complaints, the satellite map of incidents by zone, cases ranked by severity, and the news that matters.</p>
+  <div class="grid2" style="margin-top:4mm">
+    <div><img class="shot" src="img/rain.png" alt="Rain: an area's circle"><p class="cap">Rain: pick a past heavy rain, then an area. The map draws a circle round it and lists each flooded street with Take action and its follow-up. Every figure shows its source.</p></div>
+    <div><img class="shot" src="img/news-act.png" alt="Act on news"><p class="cap">News that needs action: one click drafts the instruction to the right department officer; the Collector reads it and approves it.</p></div>
+  </div>
+  <h3>What makes it different</h3>
+  <ul>
+    <li><b>Proof everywhere.</b> Rainfall shows the gauges that measured it; a flooded street shows the complaint behind it; a headline opens the full article from a named official outlet.</li>
+    <li><b>Jarvis, by voice, in English or Tamil.</b> "Open incident …", "nearest police stations to Avadi", "draft a mail to the Metrowater officer about …". It answers only from the district's records and says when the data does not hold something.</li>
+    <li><b>Closed loop.</b> Every instruction reaches the officer's console, comes back with a report and photos, and is verified by the Collector.</li>
+  </ul>
+  <div class="foot"><span>District IQ · Value, cost and devices</span><span>2 / 5</span></div>
+</section>
+
+<!-- page 3 -->
+<section class="page">
+  <div class="kick">Cost efficiency</div>
+  <h1>What it costs to run, measured</h1>
+  <p class="lead">These figures come from our own records and the hosting bill, read on 29 November 2026. Nothing on this page is a list price we did not pay.</p>
+  <table>
+    <tr><th>What</th><th>Measured</th><th>Where the figure comes from</th></tr>
+    <tr><td>Hosting the whole website, always on, for one full day (28 Nov)</td><td class="num">US$ 2.38</td><td>Modal billing report: $1.71 CPU, $0.67 memory</td></tr>
+    <tr><td>One AI answer with Claude Sonnet (Jarvis and Ask District IQ)</td><td class="num">about US$ 0.016</td><td>Site spend record: $4.02 over 254 calls</td></tr>
+    <tr><td>One AI answer with Claude Haiku (fast steps)</td><td class="num">about US$ 0.0008</td><td>Site spend record: $8.63 over 11,406 calls</td></tr>
+    <tr><td>Text in one answer</td><td class="num">about 6,300 tokens</td><td>Site call ledger, answer engine (9,500 for Jarvis's planner)</td></tr>
+    <tr><td>Speech, speech-to-text, other models</td><td class="num">US$ 0</td><td>Sarvam, Groq and Gemini, used within their free tiers</td></tr>
+  </table>
+  <h2>A day of use: an estimate from the measured costs</h2>
+  <table>
+    <tr><th>If the district asks…</th><th>AI answers (Sonnet)</th><th>Hosting</th><th>Total a day</th><th>Total for 30 days</th></tr>
+    <tr><td>100 questions a day</td><td class="num">$1.60</td><td class="num">$2.38</td><td class="num">$3.98</td><td class="num">about $119</td></tr>
+    <tr><td>300 questions a day</td><td class="num">$4.80</td><td class="num">$2.38</td><td class="num">$7.18</td><td class="num">about $215</td></tr>
+    <tr><td>1,000 questions a day</td><td class="num">$16.00</td><td class="num">$2.38</td><td class="num">$18.38</td><td class="num">about $551</td></tr>
+  </table>
+  <div class="note"><b>How the estimate is made.</b> Questions a day × $0.016 per Sonnet answer, plus one day's measured hosting. A question that needs several steps costs more; with Haiku for answers the AI part is about one-twentieth. Our spend records include our own testing (4,369 of the recorded Claude calls were automated evaluation runs), so they overstate real use. The AWS storage bill (S3, DynamoDB, API Gateway, Lambda) was not read for this sheet.</div>
+  <h3>Why it stays cheap</h3>
+  <ul>
+    <li>Most screens are computed by code from the district's data, with no AI call; the AI is used where it adds understanding (reading news, answering questions, drafting).</li>
+    <li>A topic guard declines off-topic questions with no model call; repeated answers and speech are cached.</li>
+    <li>One small server runs everything; it can sleep when nobody uses it (normal mode), or stay warm for a demo.</li>
+  </ul>
+  <div class="foot"><span>District IQ · Value, cost and devices</span><span>3 / 5</span></div>
+</section>
+
+<!-- page 4 -->
+<section class="page">
+  <div class="kick">Devices</div>
+  <h1>Runs on the computers a Collectorate already has</h1>
+  <div class="ok">Measured on our own laptop (17 Nov): an Intel Core i7-6600U with 2 cores and 16 GB of memory ran the production website, and signed-in clicks answered in under 0.3 s.</div>
+  <table>
+    <tr><th>To use the website</th><th>What it needs</th></tr>
+    <tr><td>Computer</td><td>Any desktop or laptop that runs a current Chrome or Microsoft Edge. Our test laptop: Intel Core i7-6600U, 16 GB memory.</td></tr>
+    <tr><td>Screen</td><td>Laid out for a laptop browser of 1366 × 680 pixels and larger; pages scroll on smaller screens. Phones get their own one-column layout (below 768 pixels wide).</td></tr>
+    <tr><td>Browser</td><td>Chrome or Edge. The sharp street map uses WebGL 2; without it the map falls back to a standard street map, so a map always shows.</td></tr>
+    <tr><td>Jarvis (voice)</td><td>A microphone and speakers. Jarvis's voice is made on the server, so it sounds the same in Chrome and Edge.</td></tr>
+    <tr><td>Network</td><td>An internet connection: the site, the maps and the AI are online.</td></tr>
+  </table>
+  <table>
+    <tr><th>To host it</th><th>What we run today</th></tr>
+    <tr><td>Server</td><td>One container: 1 to 4 CPU cores (2 to 4 when kept warm) and 4 to 12 GB of memory, with the website, PaddleOCR and a browser for the Data Studio inside.</td></tr>
+    <tr><td>Data</td><td>AWS (Mumbai): S3 for the district's data build, DynamoDB for what people do on the site; the website keeps a fast local copy.</td></tr>
+    <tr><td>Data refresh</td><td>An hourly pipeline on GitHub Actions builds the district's data; live feeds (IMD warnings, news) every 10 minutes.</td></tr>
+  </table>
+  <img class="shot" src="img/mail.png" alt="Draft a mail" style="height:58mm;object-fit:cover;object-position:right top">
+  <p class="cap">Draft a mail to any department officer about anything: the AI writes it from the Collector's own words; nothing is sent until the Collector approves it.</p>
+  <div class="foot"><span>District IQ · Value, cost and devices</span><span>4 / 5</span></div>
+</section>
+
+<!-- page 5 -->
+<section class="page">
+  <div class="kick">Why a district should choose District IQ</div>
+  <h1>From a report to a fix, in one place</h1>
+  <div class="grid2">
+    <div class="card"><h3>For the Collector</h3><ul>
+      <li>What needs attention today, ranked, with why.</li>
+      <li>Rain rehearsal: which streets flooded in past rains, and whether last time's fixes held.</li>
+      <li>Ask by voice in English or Tamil; draft and send instructions in seconds.</li>
+    </ul></div>
+    <div class="card"><h3>For departments</h3><ul>
+      <li>Only their own work, with deadlines and the Collector's instructions on the case.</li>
+      <li>Report back with photos from the same screen.</li>
+      <li>News about their department, and what the Collector sent them.</li>
+    </ul></div>
+    <div class="card"><h3>For citizens</h3><ul>
+      <li>File a complaint with a map pin and photos; track it to the end.</li>
+      <li>Tamil and English throughout.</li>
+    </ul></div>
+    <div class="card"><h3>For trust</h3><ul>
+      <li>Every figure links to its source; generated demonstration data is marked as such.</li>
+      <li>Staff accounts by the Collector's office only; password checks before any email goes out; every action audited.</li>
+    </ul></div>
+  </div>
+  <h2 style="margin-top:6mm">The economics in one line</h2>
+  <p class="big">≈ US$ 4 to 7 a day</p>
+  <p>for the whole district at 100 to 300 questions a day, by our measured costs. That is the hosting of one small server plus the AI answers (see page 3 for how it is worked out).</p>
+  <h3>Ready to grow</h3>
+  <ul>
+    <li>Wards, zones, taluks, departments and sources are reference data, not code: another district needs its own boundaries, departments and feeds.</li>
+    <li>The same console serves the Collector, department officers, citizens and the petition counter today.</li>
+  </ul>
+  <div class="ok"><b>Try it:</b> https://arjuncodx--district-iq.us-east.modal.run</div>
+  <div class="foot"><span>District IQ · Value, cost and devices · Team Initiators</span><span>5 / 5</span></div>
+</section>
+</body></html>

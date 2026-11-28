@@ -1,0 +1,27 @@
+<h1 class="ch" id="c3"><span class="n">Chapter 3</span><span class="t">Jarvis, the chatbot and mail</span></h1>
+<div class="box oneline"><span class="lb">In one line</span><p>Jarvis and Ask District IQ now answer with <b>Claude Sonnet</b>, speak with <b>Sarvam's Ritu</b> voice in any browser, can <b>draft a mail to any officer</b>, and handle a few questions in a fixed way so the answer is the same every time.</p></div>
+
+<h2>3.1 Models</h2>
+<table>
+  <tr><th>Setting</th><th>Before</th><th>Now</th></tr>
+  <tr><td>Jarvis's planner (<code>JARVIS_CLAUDE_MODEL</code>)</td><td>Claude Haiku</td><td>Claude Sonnet</td></tr>
+  <tr><td>The shared answer engine for Jarvis and the chatbot (<code>JARVIS_BRAIN_MODEL</code>)</td><td>Claude Haiku</td><td>Claude Sonnet</td></tr>
+  <tr><td>Map Insights (<code>AI_MAP_CLAUDE_MODEL</code>)</td><td>Claude Haiku</td><td>Claude Sonnet</td></tr>
+  <tr><td>Fast steps (routing, drafts)</td><td>Claude Haiku</td><td>Claude Haiku (unchanged)</td></tr>
+</table>
+<p>When Claude is unavailable or the site's own spend limit is reached, the gateway falls back to the other configured models (Groq, Bedrock, Gemini). Answers are still checked: every figure must come from a tool result.</p>
+
+<h2>3.2 Voice</h2>
+<p>Jarvis's voice is now the server's Sarvam text-to-speech (model <code>bulbul:v3</code>, speaker <b>Ritu</b>, chosen by the owner from ten samples). Long answers are split into pieces of about 400 characters, read four at a time and joined, about 1.5 to 2 seconds a sentence. The browser's own voices (Edge's Neerja and Pallavi) are only a fallback when the server cannot speak, so Jarvis speaks the same in Chrome and Edge.</p>
+
+<h2>3.3 Questions answered in one fixed way</h2>
+<ul>
+  <li><b>"Open incident INC-…"</b> opens the console's own incident pop-up, the one a click on a row opens, with no model.</li>
+  <li><b>"Which police station is responsible for Avadi?"</b> is always asked of the map as "the nearest police stations to Avadi". The data holds where stations are (OpenStreetMap), not the area each covers, and the answer says so. Avadi, Poonamallee, Tambaram, Pallavaram, Thiruverkadu and Tiruvallur were added as places just outside the district. The answer engine knows Avadi and Ambattur's T-series stations come under the Avadi City Police Commissionerate and Tambaram under Tambaram's (both formed in January 2022).</li>
+  <li><b>"Jarvis, thank you"</b> gets "You're welcome, Collector." A plain "thank you" within 20 seconds of an answer does too.</li>
+</ul>
+
+<h2>3.4 Draft a mail to any officer</h2>
+<p>From the Menu, the search palette, Jarvis or the chatbot ("draft a mail to the Metrowater officer about …"). The department is guessed from the words; the Collector picks the officer or a staff member from the directory; the AI writes from the Collector's own words only; the Collector edits and approves with a password; it goes under the sandbox rule and reaches the officer console under "From the Collector".</p>
+<div class="box check"><span class="lb">Checked (28 Nov)</span><p>"Draft a mail to the Metrowater officer asking for a status report on the sewage overflow complaints in Royapuram by Monday" chose Chennai Metrowater and wrote a formal mail; the same request to Jarvis opened the same composer.</p></div>
+<div class="box honest"><span class="lb">Be honest about</span><p>Voice reliability was checked with typed questions; spoken use depends on the microphone and the room. Sonnet costs about 20 times more per answer than Haiku (Chapter 6).</p></div>

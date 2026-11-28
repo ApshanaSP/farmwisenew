@@ -9,6 +9,7 @@ import { MEDIA_KIND, SOURCE_KIND, deptIcon, fmtDay, fmtShort, fmtTime, fromManu,
 import type { Console } from "./CollectorApp";
 import { SentNote, TakeAction } from "./TakeAction";
 import { ConflictBox, useStoryConflicts } from "./Conflicts";
+import type { Story } from "./Overview";
 import PetitionOriginal from "@/components/manu/PetitionOriginal";
 import { sevLabel } from "@/lib/sev-label";
 import { CaseLifecycle } from "./CaseLifecycle";
@@ -252,9 +253,18 @@ export function IncidentView({ id, c, startAction }: { id: string; c: Console; s
                             {(!r.inc || r.inc === id) && !r.first && r.link != null && <span className="lk" title={`Merged by ${String(r.method ?? "matching").replace(/_/g, " ")}`}>linked {Math.round(r.link * 100)}%</span>}
                             <time>{fmtTime(r.t)}</time>
                           </div>
-                          <p>{r.url ? <a href={r.url} target="_blank" rel="noreferrer">{r.title} ↗</a> : (r.text || r.title)}</p>
+                          <p>{r.text && r.source !== "news" ? r.text : r.title}</p>
                           {r.title_en && <p className="ev-en">{r.title_en}</p>}
                           {r.ai && <NewsDetails ai={r.ai} />}
+                          {/* 29 Nov (the owner: "wherever the sources are listed, a button that takes me to the whole record"): the article in
+                              full (the news preview), the outlet's own page, or the incident this report was first filed as */}
+                          <div className="ev-open">
+                            {r.source === "news" && r.docId && <button type="button" onClick={() => c.openStory({ id: String(r.docId), title: String(r.title ?? ""), original: null, url: r.url ?? null, loc: null,
+                              t: String(r.t), incident: null, sev: null, grievances: 0, complaints: 0, outletNames: r.publisher ? [String(r.publisher)] : [], docIds: [String(r.docId)], headlines: 1, topic: null } as unknown as Story)}>
+                              <I n="news" />Read the full article</button>}
+                            {r.url && <a href={r.url} target="_blank" rel="noreferrer"><I n="ext" />{r.source === "news" ? "On the outlet's site" : "Open the source"}</a>}
+                            {r.inc && r.inc !== id && <button type="button" onClick={() => c.openInc(String(r.inc))}><I n="doc" />Open the incident it was filed as</button>}
+                          </div>
                         </div>
                       </li>
                     );
@@ -289,7 +299,8 @@ export function IncidentView({ id, c, startAction }: { id: string; c: Console; s
               <ul className="iv2-grp">
                 <li className="on"><b>This incident</b><small data-i18n-ctx="status">{[i.loc, fmtShort(i.t), i.status].filter(Boolean).join(" · ")}</small></li>
                 {group.map((g) => (
-                  <li key={g.id}><b title={g.title}>{g.title}</b><small>{[g.loc, fmtShort(g.t), g.status, g.complaints ? plural(Number(g.complaints), "complaint") : null].filter(Boolean).join(" · ")}</small></li>
+                  <li key={g.id}><button type="button" className="iv2-grp-b" onClick={() => c.openInc(String(g.id))} title="Open this incident in full">
+                    <b title={g.title}>{g.title}</b><small>{[g.loc, fmtShort(g.t), g.status, g.complaints ? plural(Number(g.complaints), "complaint") : null].filter(Boolean).join(" · ")}</small></button></li>
                 ))}
               </ul>
             </div>

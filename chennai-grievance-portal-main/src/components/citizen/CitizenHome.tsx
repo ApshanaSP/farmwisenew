@@ -46,7 +46,10 @@ export default function CitizenHome({ name, stats, recent }: { name: string | nu
               <p className="cz-band-eb"><span suppressHydrationWarning>{today}</span><i aria-hidden="true">·</i><span>Citizen portal</span></p>
               <h1 className="cz-hello">
                 {/* the name as typed: never sent to the translator */}
-                Vanakkam{name ? <>, <span translate="no">{name}</span></> : null} <span className="cz-ta" lang="ta">· வணக்கம்</span>
+                {/* 29 Nov (the owner): the two greetings one above the other, the name under them, nothing to the sides of the name */}
+                <span className="cz-hi">Vanakkam</span>
+                <span className="cz-hi ta" lang="ta">வணக்கம்</span>
+                {name ? <span className="cz-hi-name" translate="no">{name}</span> : null}
               </h1>
               <p className="cz-band-sub">
                 Report a civic issue in your neighbourhood or follow one you have filed. Most complaints reach a department within minutes.

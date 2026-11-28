@@ -1,0 +1,22 @@
+<div class="part" data-part="Under the hood"></div>
+<h1 class="ch" id="c5"><span class="n">Chapter 5</span><span class="t">Data: ward to taluk, and the 28 November round</span></h1>
+<div class="box oneline"><span class="lb">In one line</span><p>Each of the 200 GCC wards is now placed in its revenue taluk from <b>official TNGIS revenue-village boundaries</b>, checked village by village against the Chennai Collectorate's list.</p></div>
+
+<h2>5.1 Where the ward to taluk mapping comes from</h2>
+<ol class="steps">
+  <li><b>Ward side</b>: the console's own ward polygons, a DataMeet community copy of the GCC wards (2011-era numbering in several zones). No official ward-to-taluk table is published anywhere.</li>
+  <li><b>Taluk side (official)</b>: revenue village polygons from TNGIS (Tamil Nadu Geographical Information System, run by TNeGA), public WFS layer <code>tngis_basemap:basemap_revenue_village</code>, each with its taluk.</li>
+  <li><b>Checked</b> against the Chennai District Collectorate's list of 17 taluks and their villages (chennai.nic.in/revenue-administration). 136 of 140 TNGIS villages matched the Collectorate's taluk; Kolathur, Peravallur and Siruvallur moved to the Kolathur taluk formed in 2024.</li>
+  <li><b>Overlay</b>: each ward is sampled on a 25 m grid; each point is placed in a village; the ward's taluk is the taluk holding the largest share of its area. Shares and flags (a near tie, a ward whose official number lies in another taluk) are kept.</li>
+</ol>
+<p>Files: <code>district_intel/reference/ward_taluk.csv</code> (one row per ward), <code>ward_taluk_villages.csv</code>, <code>ward_taluk.meta.json</code>; built by <code>scripts/build_ward_taluk.py</code>. The pipeline only reads the CSV.</p>
+<div class="box honest"><span class="lb">Be honest about</span><p>TNGIS's terms do not allow publishing derived data without TNeGA's approval, and the CSV is in the repository the hourly GitHub run reads. Mention it if asked about licensing.</p></div>
+
+<h2>5.2 Also in the 28 November commit</h2>
+<ul>
+  <li>Duplicate finding with a learned model, and explainable scoring (each case's score shows why).</li>
+  <li>CFM-DSS gauge rain per rain, and satellite flood pictures (Sentinel-1 radar, Sentinel-2 and Landsat optical). Satellite water only counts as a flooded street when it lies on the road; under 20 reporting gauges, no district figure is given.</li>
+  <li>Area-wise rain actions with a tracker: withdraw, move, and a rain floor of 20 mm (ward or district) or 64.5 mm (wettest gauge) before a later rain can test a fix.</li>
+  <li>Case lifecycle: reopen, and generated resolutions for the demonstration data (hidden from the Collector's audit view).</li>
+  <li>Officer, citizen and Manu Desk consoles in the Collector's look; Jarvis compare dashboards; history search.</li>
+</ul>

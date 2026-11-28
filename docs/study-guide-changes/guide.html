@@ -1,0 +1,362 @@
+<!doctype html><html lang='en'><head><meta charset='utf-8'><title>District IQ - What changed since 26 Nov</title><style>@page {
+  size: A4;
+  margin: 13mm 14mm 15mm 14mm;
+  @bottom-left { content: "District IQ · What changed since 26 Nov 2026"; font: 8pt "Segoe UI", sans-serif; color: #7b8794; }
+  @bottom-right { content: "Page " counter(page); font: 8pt "Segoe UI", sans-serif; color: #7b8794; }
+}
+@page :first {
+  margin: 0;
+  @bottom-left { content: none; }
+  @bottom-right { content: none; }
+}
+
+:root {
+  --g9: #0B3B22; --g8: #14532D; --g7: #15803D; --g6: #177A43; --g1: #ECF7EF; --g0: #F5FBF6;
+  --ink: #1d2733; --mute: #5b6775; --line: #dfe5ea;
+  --blue: #1d4ed8; --blue0: #eef4ff; --amber: #b45309; --amber0: #fff7e8;
+  --rose: #be123c; --rose0: #fff1f3; --slate0: #f3f5f8; --coral: #e2624b;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body {
+  margin: 0; color: var(--ink);
+  font-family: "Segoe UI", "Nirmala UI", Arial, sans-serif;
+  font-size: 9.9pt; line-height: 1.47;
+}
+p { margin: 0 0 7pt; }
+ul, ol { margin: 2pt 0 8pt; padding-left: 17pt; }
+li { margin: 0 0 3pt; }
+b, strong { color: #0f1c2b; }
+code, .mono { font-family: "Cascadia Mono", Consolas, monospace; font-size: 8.8pt; background: var(--slate0); padding: 0 3px; border-radius: 3px; color: #233; }
+a { color: var(--g7); text-decoration: none; }
+.mk { position: absolute; left: 0; top: 0; color: #fff; font-size: 3px; line-height: 3px; white-space: nowrap; }
+h1.ch { position: relative; }
+
+/* ---------- cover ---------- */
+.cover {
+  height: 296mm; width: 210mm; position: relative; overflow: hidden;
+  background: linear-gradient(160deg, #0B3B22 0%, #14532D 55%, #177A43 100%);
+  color: #fff; padding: 30mm 22mm; page-break-after: always;
+}
+.cover .dots { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.10) 1.2px, transparent 1.4px); background-size: 16px 16px; }
+.cover .inner { position: relative; }
+.cover .kicker { letter-spacing: 3px; text-transform: uppercase; font-size: 10pt; color: #b9f0cc; }
+.cover h1 { font-size: 44pt; line-height: 1.05; margin: 10mm 0 4mm; font-weight: 800; letter-spacing: -1px; }
+.cover h1 span { color: #9be2b3; }
+.cover .sub { font-size: 15pt; color: #e3f6ea; max-width: 150mm; line-height: 1.4; }
+.cover .meta { margin-top: 18mm; font-size: 10.5pt; color: #d5efdd; line-height: 1.8; }
+.cover .meta b { color: #fff; }
+.cover .pill { display: inline-block; border: 1px solid rgba(255,255,255,.35); border-radius: 20px; padding: 2px 11px; margin: 0 6px 6px 0; font-size: 9.5pt; color: #fff; }
+.cover .foot { position: absolute; left: 22mm; right: 22mm; bottom: 20mm; font-size: 9pt; color: #bfe5cc; border-top: 1px solid rgba(255,255,255,.25); padding-top: 4mm; }
+.cover .logo { width: 22mm; height: 22mm; border-radius: 6mm; background: #fff; color: #0A3524; font-weight: 900; font-size: 28pt; display: flex; align-items: center; justify-content: center; }
+.cover .logo i { color: #76AC40; font-style: normal; font-size: 13pt; margin-left: 1px; }
+
+/* ---------- headings ---------- */
+.part { page-break-before: always; margin: 0 0 2mm; font-size: 8.5pt; letter-spacing: 2.5px; text-transform: uppercase; color: var(--g7); font-weight: 700; }
+.part + h1.ch { page-break-before: avoid; }
+h1.ch { margin: 9mm 0 3mm; padding: 4mm 0 2.5mm; border-top: 3px solid var(--g7); border-bottom: 2px solid var(--g1); break-after: avoid; page-break-after: avoid; }
+.part + h1.ch { margin-top: 0; border-top: none; padding-top: 0; }
+#c0 { border-top: none; margin-top: 0; padding-top: 0; }
+h1.ch .n { display: block; font-size: 9.5pt; font-weight: 700; color: var(--g7); letter-spacing: 1.5px; text-transform: uppercase; }
+h1.ch .t { display: block; font-size: 20pt; line-height: 1.15; color: var(--g9); font-weight: 800; letter-spacing: -0.4px; margin-top: 1mm; }
+.lead { font-size: 10.8pt; color: #2b3a4a; line-height: 1.5; margin-bottom: 3mm; break-before: avoid; }
+h2 { font-size: 13.2pt; color: var(--g8); margin: 5.5mm 0 2mm; padding-left: 12px; position: relative; line-height: 1.25; page-break-after: avoid; break-after: avoid; }
+h3 { font-size: 11pt; color: #12324a; margin: 4mm 0 1.4mm; page-break-after: avoid; break-after: avoid; }
+h4 { font-size: 10.6pt; color: var(--g8); margin: 3.5mm 0 1mm; page-break-after: avoid; break-after: avoid; }
+h2 + p, h3 + p { margin-top: 0; }
+h2, h3, h4 { break-inside: avoid; page-break-inside: avoid; }
+
+/* ---------- boxes ---------- */
+.box { border-radius: 7px; padding: 6px 10px 4px; margin: 6pt 0 7pt; break-inside: avoid; page-break-inside: avoid; border: 1px solid transparent; }
+.box > .lb { display: block; font-size: 7.8pt; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; margin-bottom: 2px; }
+.box p:last-child, .box ul:last-child, .box ol:last-child { margin-bottom: 2pt; }
+.oneline { background: var(--g1); border-color: #cfe9d7; }
+.oneline > .lb { color: var(--g7); }
+.say { background: var(--blue0); border-color: #d6e3ff; }
+.say > .lb { color: var(--blue); }
+.why { background: var(--amber0); border-color: #f6e2bf; }
+.why > .lb { color: var(--amber); }
+.fix { background: var(--rose0); border-color: #fbd5dc; }
+.fix > .lb { color: var(--rose); }
+.num { background: var(--slate0); border-color: #e1e6ec; }
+.num > .lb { color: #334155; }
+.check { background: #fff; border: 1.5px dashed #9fd2b0; }
+.check > .lb { color: var(--g8); }
+.check ol { margin-bottom: 2pt; }
+.honest { background: #fbf7ff; border-color: #eadcff; }
+.honest > .lb { color: #6d28d9; }
+
+/* ---------- tables ---------- */
+table { width: 100%; border-collapse: collapse; margin: 4pt 0 8pt; font-size: 8.6pt; line-height: 1.36; }
+thead { display: table-header-group; }
+th { background: var(--g8); color: #fff; text-align: left; font-weight: 600; padding: 3.5px 5px; vertical-align: bottom; }
+td { padding: 3px 5px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr { break-inside: avoid; page-break-inside: avoid; }
+tbody tr:nth-child(even) td { background: #f7faf8; }
+td:first-child { font-weight: 600; color: #13283b; }
+table.plain td:first-child { font-weight: 400; }
+.tag { display: inline-block; font-size: 7.6pt; font-weight: 700; padding: 0 5px; border-radius: 8px; letter-spacing: .3px; }
+.real { background: #dcfce7; color: #166534; }
+.sim { background: #fde8d8; color: #9a3412; }
+.mix { background: #e0e7ff; color: #3730a3; }
+
+/* ---------- diagrams ---------- */
+.flow { display: flex; align-items: stretch; gap: 0; margin: 6pt 0 10pt; break-inside: avoid; }
+.flow .st { flex: 1; background: var(--g0); border: 1px solid #cde6d5; border-radius: 7px; padding: 6px 7px; font-size: 8.4pt; line-height: 1.35; }
+.flow .st b { display: block; color: var(--g8); font-size: 8.9pt; margin-bottom: 2px; }
+.flow .ar { width: 14px; display: flex; align-items: center; justify-content: center; color: var(--g7); font-weight: 800; font-size: 12pt; }
+.vflow { margin: 6pt 0 10pt; break-inside: avoid; }
+.vflow .row { display: flex; gap: 6px; }
+.vflow .cell { flex: 1; border-radius: 7px; padding: 6px 8px; font-size: 8.5pt; line-height: 1.35; border: 1px solid #d4dde5; background: #fff; }
+.vflow .cell b { display: block; font-size: 9pt; margin-bottom: 1px; }
+.vflow .down { text-align: center; color: var(--g7); font-size: 12pt; line-height: 1; margin: 2px 0; font-weight: 800; }
+.c-src { background: #f2f7ff !important; border-color: #d3e1fb !important; }
+.c-pipe { background: #f0faf3 !important; border-color: #c9e8d3 !important; }
+.c-aws { background: #fff6ea !important; border-color: #f4dcb6 !important; }
+.c-web { background: #f6f3ff !important; border-color: #e1d8fb !important; }
+.c-ai { background: #fff1ee !important; border-color: #f7d3ca !important; }
+
+.steps { counter-reset: s; list-style: none; padding-left: 0; }
+.steps > li { counter-increment: s; position: relative; padding-left: 25px; margin-bottom: 4.5pt; }
+.steps > li::before { content: counter(s); position: absolute; left: 0; top: 1px; width: 17px; height: 17px; border-radius: 50%; background: var(--g7); color: #fff; font-size: 8pt; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 10px; margin: 5pt 0 9pt; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px 9px; margin: 5pt 0 9pt; }
+.card { border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; break-inside: avoid; font-size: 9pt; line-height: 1.42; background: #fff; }
+.card h4 { margin: 0 0 2px; font-size: 9.9pt; }
+.card p { margin: 0 0 3px; }
+
+.kv { display: grid; grid-template-columns: 34mm 1fr; gap: 2px 10px; font-size: 9.4pt; margin: 4pt 0 8pt; }
+.kv > div:nth-child(odd) { font-weight: 700; color: var(--g8); }
+
+/* ---------- contents ---------- */
+.toc { page-break-before: always; }
+.toc h1 { font-size: 22pt; color: var(--g9); margin: 0 0 4mm; }
+.toc .tp { margin: 2.6mm 0 0.6mm; font-size: 8pt; letter-spacing: 2px; text-transform: uppercase; color: var(--g7); font-weight: 700; }
+.toc .te { display: flex; align-items: baseline; font-size: 10pt; padding: 0.75mm 0; border-bottom: 1px dotted #cbd5dc; }
+.toc .te .tn { width: 10mm; color: var(--g7); font-weight: 700; }
+.toc .te .tt { flex: 1; }
+.toc .te .tg { width: 12mm; text-align: right; color: var(--mute); font-variant-numeric: tabular-nums; }
+.toc .te small { color: var(--mute); font-size: 8.6pt; }
+
+.small { font-size: 8.8pt; color: var(--mute); }
+.center { text-align: center; }
+hr.sep { border: none; border-top: 1px solid var(--line); margin: 6mm 0; }
+.avoid { break-inside: avoid; page-break-inside: avoid; }
+.pb { page-break-before: always; }
+.qa dt { font-weight: 700; color: #12324a; margin-top: 5pt; break-after: avoid; }
+.qa dd { margin: 1pt 0 0 0; padding-left: 10px; border-left: 3px solid var(--g1); }
+.qa > div { break-inside: avoid; }
+
+h2::before { content: ""; position: absolute; left: 0; top: 0.12em; height: 1.05em; width: 4px; border-radius: 2px; background: var(--g7); }
+</style></head><body><section class="cover">
+  <div class="dots"></div>
+  <div class="inner">
+    <div class="logo">D<i>IQ</i></div>
+    <div class="kicker" style="margin-top:12mm">FarmwiseAI Campus Product Challenge · Task 6 · Final review</div>
+    <h1>District IQ<br><span>What changed since 26 November</span></h1>
+    <div class="sub">A companion to the Complete Study Guide (which covers work up to 26 November 2026, commit 5634da78). This guide covers only what was built or changed after it, so you can study the new parts quickly before the final review.</div>
+    <div class="meta">
+      <span class="pill">Rain with proof</span><span class="pill">News that needs action</span><span class="pill">Mail to any officer</span><span class="pill">Jarvis on Sonnet</span><span class="pill">Every console</span><span class="pill">Hosting &amp; costs</span><span class="pill">Review Q&amp;A</span><br><br>
+      <b>Team:</b> Team Initiators<br>
+      <b>Covers work from:</b> 26 November 2026 (after 12:08) to 29 November 2026 (code at commit d5a772f9 and the round after it)<br>
+      <b>Live site:</b> https://arjuncodx--district-iq.us-east.modal.run
+    </div>
+  </div>
+  <div class="foot">Private study copy. Every figure in it was read from the code, the commit history, the site's own spend records or the hosting bill on 29 November 2026.</div>
+</section>
+
+<div class="part" data-part="Start here" style="page-break-before:avoid"></div>
+<h1 class="ch" id="c0"><span class="n">Before you begin</span><span class="t">How to use this guide</span><span class="mk">@@c0@@</span></h1>
+<p class="lead">Read the Complete Study Guide first for the foundations (data sources, the pipeline, storage, every screen). This guide is the delta: seven feature commits and one more round of changes in the last three days before the final review. The coloured boxes work as before.</p>
+<div class="grid2">
+  <div class="box oneline" style="margin:0"><span class="lb">In one line</span><p>The one sentence to remember about a change.</p></div>
+  <div class="box say" style="margin:0"><span class="lb">Say it in the review</span><p>Short, accurate words for the judges.</p></div>
+  <div class="box why" style="margin:0"><span class="lb">Why this, not that</span><p>Why we chose it, and what we rejected.</p></div>
+  <div class="box honest" style="margin:0"><span class="lb">Be honest about</span><p>Limits a judge may find. Say them before they do.</p></div>
+</div>
+
+<h2>The changes, in order</h2>
+<table>
+  <tr><th>When</th><th>Commit</th><th>What it brought</th></tr>
+  <tr><td>26 Nov, 18:17</td><td><code>5c72db82</code></td><td>Roomier Briefing cards; Jarvis's bar no longer shrinks pages; the map's Back button visible</td></tr>
+  <tr><td>27 Nov, 15:27</td><td><code>0d1a3de1</code></td><td>Topic guard for every assistant; Jarvis working on the hosted site; Tamil headlines; Uzhavar Sandhai prices; case handover</td></tr>
+  <tr><td>28 Nov, 12:39</td><td><code>48c02a5a</code></td><td>Official ward to taluk overlay; duplicate finding; explainable scoring; CFM-DSS gauges and satellite flood pictures; area-wise rain actions; case lifecycle; officer, citizen and Manu consoles in the Collector's look; Jarvis compare dashboards; history search</td></tr>
+  <tr><td>28 Nov, 19:56</td><td><code>9d6800b7</code></td><td>Simple Rain drill-down with area circles; Act on news; Sarvam voice; page scroll everywhere; clearer Data Studio; officer fixes</td></tr>
+  <tr><td>28 Nov, 20:59</td><td><code>4026ecdc</code></td><td>Proof on Rain; only real heavy rains; officer incident pop-up; shorter Trends and prices; news only with full articles; one verdict for "Needs action"</td></tr>
+  <tr><td>28 Nov, 22:30</td><td><code>56c16049</code></td><td>Satellite map by default; "Map Insights"; draft a mail to any officer; Jarvis answers thanks; Ritu voice</td></tr>
+  <tr><td>29 Nov, 00:37</td><td><code>d5a772f9</code></td><td>Jarvis opens an incident in the dashboard pop-up; police stations for a place; filter chip; non-official stories never open empty</td></tr>
+  <tr><td>29 Nov</td><td>last round</td><td>Sonnet for every answer; clickable sources everywhere (incidents, Differ, developing stories); citizen greeting; full-article fix; linked news back; citizen accounts saved on the hosted site</td></tr>
+</table>
+
+<section class="toc"><h1>Contents</h1><div class="tp">Start here</div><div class="te"><span class="tn">·</span><span class="tt">How to use this guide</span><span class="tg">2</span></div><div class="tp">What the Collector sees</div><div class="te"><span class="tn">1</span><span class="tt">Rain: three steps, a circle on the map, and proof</span><span class="tg">4</span></div><div class="te"><span class="tn">2</span><span class="tt">News: action, proof and only what can be read</span><span class="tg">5</span></div><div class="te"><span class="tn">3</span><span class="tt">Jarvis, the chatbot and mail</span><span class="tg">6</span></div><div class="te"><span class="tn">4</span><span class="tt">Every console: layout, maps and filters</span><span class="tg">7</span></div><div class="tp">Under the hood</div><div class="te"><span class="tn">5</span><span class="tt">Data: ward to taluk, and the 28 November round</span><span class="tg">9</span></div><div class="te"><span class="tn">6</span><span class="tt">Hosting, saving and what it costs</span><span class="tg">9</span></div><div class="tp">For the review</div><div class="te"><span class="tn">7</span><span class="tt">Likely questions on the new parts</span><span class="tg">11</span></div></section>
+<div class="part" data-part="What the Collector sees"></div>
+<h1 class="ch" id="c1"><span class="n">Chapter 1</span><span class="t">Rain: three steps, a circle on the map, and proof</span><span class="mk">@@c1@@</span></h1>
+<div class="box oneline"><span class="lb">In one line</span><p>Rain is now three clicks: <b>a past heavy rain → the areas it hit → one area</b>, where the map zooms into a circle and lists its flooded streets one by one, each with <b>Take action</b> and its follow-up, and every figure shows where it came from.</p></div>
+
+<h2>1.1 The three steps (the same on all four tabs)</h2>
+<ol class="steps">
+  <li><b>Past heavy rains</b>, newest first. Each row: the dates, the district average rainfall (for example "27 mm average"), how many streets (or roads, wards, lines) it hit, and the area hit most.</li>
+  <li><b>One rain</b>: a "Rain measured" box, then the areas it hit, most first. Each area is a zone (Metro: a line).</li>
+  <li><b>One area</b>: the map flies to a dashed circle with the area's name; the panel lists the places one by one. Open one to see <b>why it is listed</b> (the complaints or reports behind it) and its <b>action tracker</b>: assign to a department with a due date and a note, follow what the department reports with photos, verify, and see whether the next comparable rain proved the fix.</li>
+</ol>
+<p>Tabs: <b>Flooding, Traffic, Power, Metro</b>. Satellite water seen in the chosen rain is drawn on every tab and named in the map key. Everything that crowded the old panel (three KPIs, insight sentence, "also in this rain" chips, bulk send, repeated "review and send") was removed.</p>
+
+<h2>1.2 Proof for every figure</h2>
+<div class="box num"><span class="lb">Example (24 Nov rain, read on 29 Nov)</span><p>"District average 27 mm from 26 automatic rain gauges (20 inside Chennai); the wettest, Pozhichalur, recorded 68 mm. IMD station: 35 mm." Sources: Chennai Flood Monitor (TN WRD CFM-DSS) and India Meteorological Department, each a link to the official site. An area shows its own rain, for example "29 mm (CFM-DSS gauges, 3 wards)". A street lists its complaints, each with an <b>Open</b> button.</p></div>
+
+<h2>1.3 Only real heavy rains</h2>
+<p>The pipeline's list of heavy-rain days included days when the gauges recorded almost nothing. 16 November showed "0 mm" with more than 100 flooding reports: the IMD station recorded 0 mm and 25 gauges averaged 0.1 mm (wettest 2 mm). Those were ordinary waterlogging complaints, not a rain.</p>
+<div class="box why"><span class="lb">Why this, not that</span><p>A rain is listed only if the gauges did not find it dry: a district average of at least 15 mm, or one gauge at IMD's 64.5 mm heavy-rain mark. Four days were dropped (18 Jul, 28 Aug, 16 Nov, 27 Nov). Showing them would have made the "proof" contradict itself.</p></div>
+
+<h2>1.4 How the circle is drawn</h2>
+<p>The circle's centre is the average position of the area's places; its radius is the farthest place plus 300 m, between 550 m and 6 km. The camera frames the circle; a place opened from the list or the map gets the camera at street level.</p>
+<div class="box honest"><span class="lb">Be honest about</span><p>Power-cut hours and train delays in heavy rain are <b>generated demonstration logs</b> (marked as such in the sources). Flooding, satellite water, gauges and traffic records are real. Two September rains had only 6 gauges reporting, so they show "Only 6 gauges reported" instead of an average.</p></div>
+<div class="box say"><span class="lb">Say it in the review</span><p>"Every number on the Rain screen opens to its source: the gauges that measured it, and the complaint that put the street on the list. And we removed days the gauges found dry, so a rain on our screen is a rain."</p></div>
+
+<h1 class="ch" id="c2"><span class="n">Chapter 2</span><span class="t">News: action, proof and only what can be read</span><span class="mk">@@c2@@</span></h1>
+<div class="box oneline"><span class="lb">In one line</span><p>News the AI desk marks <b>Needs action</b> now has an <b>Act</b> button that sends it to the right department officer; every story opens to a full article from a listed outlet; and every source names itself and opens in full.</p></div>
+
+<h2>2.1 Act on news that needs action</h2>
+<ul>
+  <li>The department comes from the story's case when it has one, else from the news desk's category (its lead department).</li>
+  <li>The draft names the outlets, what happened and why it needs the department. The Collector reads it, may change it, and approves the send with a password check. Email follows the sandbox rule (the team inbox, not the officer, until live mode).</li>
+  <li>A story on a case is sent on that case: the officer console flags the case and shows the instruction. A news-only story appears in the officer's news card under <b>From the Collector</b>, where the officer writes what was done; the Collector sees that answer on the story ("Department answered: …").</li>
+  <li>A severe case also offers "take action yourself", which opens the incident's own Take action.</li>
+</ul>
+<div class="box check"><span class="lb">Checked end to end (28 Nov)</span><p>A Collector sent a solid-waste story; the SWM officer saw it under "From the Collector", marked it done with a note; the Collector's story showed the note.</p></div>
+
+<h2>2.2 One verdict for "Needs action"</h2>
+<p>The label, the Act button and the "why it matters to you" panel all follow the same AI news-desk verdict. Before, a second AI reading could say "no action needed" on a story labelled "Needs action".</p>
+
+<h2>2.3 Only listed outlets, and only full articles</h2>
+<ul>
+  <li>News comes only from the outlet allowlist (newspapers such as Daily Thanthi, Dinamalar, The Hindu; TV news; news agencies; government sources). Social media pages are never shown.</li>
+  <li>A news-only story whose every report is only a headline or a search snippet is not listed (30 of 183 news-only stories in the month to 28 Nov). A story linked to an incident stays, because it opens the incident with its complaints and reports.</li>
+  <li>The preview opens on a report that has the whole article; if fetching one fails, it moves to another report of the same story.</li>
+</ul>
+
+<h2>2.4 Every source opens in full</h2>
+<ul>
+  <li><b>Incident pop-up</b>: each report in "How it unfolded" has <b>Read the full article</b> (news), <b>On the outlet's site</b>, or <b>Open the incident it was filed as</b> (a merged report); merged incidents open on click; complaint text is shown whole.</li>
+  <li><b>Differ</b>: under each outlet's claim, <b>Read this article</b> opens that outlet's own report.</li>
+  <li><b>Developing stories</b>: each step names its source and opens its article.</li>
+</ul>
+<div class="box say"><span class="lb">Say it in the review</span><p>"If we show a headline, you can read the article it came from, from a named official outlet. And if a story needs the Collector, one click sends it to the officer who answers for it, and the reply comes back to the same story."</p></div>
+
+<h1 class="ch" id="c3"><span class="n">Chapter 3</span><span class="t">Jarvis, the chatbot and mail</span><span class="mk">@@c3@@</span></h1>
+<div class="box oneline"><span class="lb">In one line</span><p>Jarvis and Ask District IQ now answer with <b>Claude Sonnet</b>, speak with <b>Sarvam's Ritu</b> voice in any browser, can <b>draft a mail to any officer</b>, and handle a few questions in a fixed way so the answer is the same every time.</p></div>
+
+<h2>3.1 Models</h2>
+<table>
+  <tr><th>Setting</th><th>Before</th><th>Now</th></tr>
+  <tr><td>Jarvis's planner (<code>JARVIS_CLAUDE_MODEL</code>)</td><td>Claude Haiku</td><td>Claude Sonnet</td></tr>
+  <tr><td>The shared answer engine for Jarvis and the chatbot (<code>JARVIS_BRAIN_MODEL</code>)</td><td>Claude Haiku</td><td>Claude Sonnet</td></tr>
+  <tr><td>Map Insights (<code>AI_MAP_CLAUDE_MODEL</code>)</td><td>Claude Haiku</td><td>Claude Sonnet</td></tr>
+  <tr><td>Fast steps (routing, drafts)</td><td>Claude Haiku</td><td>Claude Haiku (unchanged)</td></tr>
+</table>
+<p>When Claude is unavailable or the site's own spend limit is reached, the gateway falls back to the other configured models (Groq, Bedrock, Gemini). Answers are still checked: every figure must come from a tool result.</p>
+
+<h2>3.2 Voice</h2>
+<p>Jarvis's voice is now the server's Sarvam text-to-speech (model <code>bulbul:v3</code>, speaker <b>Ritu</b>, chosen by the owner from ten samples). Long answers are split into pieces of about 400 characters, read four at a time and joined, about 1.5 to 2 seconds a sentence. The browser's own voices (Edge's Neerja and Pallavi) are only a fallback when the server cannot speak, so Jarvis speaks the same in Chrome and Edge.</p>
+
+<h2>3.3 Questions answered in one fixed way</h2>
+<ul>
+  <li><b>"Open incident INC-…"</b> opens the console's own incident pop-up, the one a click on a row opens, with no model.</li>
+  <li><b>"Which police station is responsible for Avadi?"</b> is always asked of the map as "the nearest police stations to Avadi". The data holds where stations are (OpenStreetMap), not the area each covers, and the answer says so. Avadi, Poonamallee, Tambaram, Pallavaram, Thiruverkadu and Tiruvallur were added as places just outside the district. The answer engine knows Avadi and Ambattur's T-series stations come under the Avadi City Police Commissionerate and Tambaram under Tambaram's (both formed in January 2022).</li>
+  <li><b>"Jarvis, thank you"</b> gets "You're welcome, Collector." A plain "thank you" within 20 seconds of an answer does too.</li>
+</ul>
+
+<h2>3.4 Draft a mail to any officer</h2>
+<p>From the Menu, the search palette, Jarvis or the chatbot ("draft a mail to the Metrowater officer about …"). The department is guessed from the words; the Collector picks the officer or a staff member from the directory; the AI writes from the Collector's own words only; the Collector edits and approves with a password; it goes under the sandbox rule and reaches the officer console under "From the Collector".</p>
+<div class="box check"><span class="lb">Checked (28 Nov)</span><p>"Draft a mail to the Metrowater officer asking for a status report on the sewage overflow complaints in Royapuram by Monday" chose Chennai Metrowater and wrote a formal mail; the same request to Jarvis opened the same composer.</p></div>
+<div class="box honest"><span class="lb">Be honest about</span><p>Voice reliability was checked with typed questions; spoken use depends on the microphone and the room. Sonnet costs about 20 times more per answer than Haiku (Chapter 6).</p></div>
+
+<h1 class="ch" id="c4"><span class="n">Chapter 4</span><span class="t">Every console: layout, maps and filters</span><span class="mk">@@c4@@</span></h1>
+<div class="box oneline"><span class="lb">In one line</span><p>Pages scroll as a whole like the Briefing (no tile scrolls inside itself), every map opens on satellite imagery, and the Data Studio, officer console and citizen portal were tidied for the review.</p></div>
+
+<h2>4.1 Page scroll, not tile scroll</h2>
+<p>One stylesheet (<code>pagescroll.css</code>) makes every page as tall as its content on the Collector and officer consoles. Lists show their full length; long ones show their first rows with "See all". The Overview's map stays in view (sticky) while the cards beside it scroll. Trends shows eight taluks beside the "rising" table with "See all 17 taluks"; the prices card shows eight items with "See all … in full screen".</p>
+
+<h2>4.2 Maps</h2>
+<p>Every console map opens on <b>satellite imagery</b> (the owner's choice, from a screenshot). Rain and Live traffic still switch to the street map while open. "Ask the map" is now called <b>Map Insights</b> on screen, in English and Tamil; spoken commands are unchanged.</p>
+
+<h2>4.3 Data Studio</h2>
+<ul>
+  <li>One <b>Add data</b> panel across the top: "Upload a file" on the left, <b>Fetch from a link</b> with a large Fetch button on the right; sign-in and schedule one link below.</li>
+  <li>Datasets as cards under it; the open dataset below with only <b>Insights</b> and <b>Alerts</b>. AI reading, Rows, Data card and Data Detective tabs were removed; "Fetch now" and "Last fetched 5 h ago · Hourly" are shown clearly; the 23 column chips fold under one line.</li>
+</ul>
+
+<h2>4.4 Department officer console</h2>
+<ul>
+  <li>No Jarvis (Ask District IQ stays); opens on <b>Daily</b>; the last tiles (rain and air quality) are no longer cut off.</li>
+  <li>An incident opens as a <b>full centred pop-up</b> like the Collector's, its sections in two columns.</li>
+  <li>A filter that is set (zone, taluk, department on the Collector) shows as a bright white chip.</li>
+</ul>
+
+<h2>4.5 Citizen portal</h2>
+<ul>
+  <li>The greeting reads Vanakkam, வணக்கம் and the name, one under the other.</li>
+  <li><b>Accounts are kept.</b> Until 28 Nov evening neither copy of the site saved to AWS, so an account registered on the hosted site lived only until the site slept. The hosted copy now saves (and retries after AWS's "too many requests" answer); an account registered at 00:17 on 29 Nov was confirmed in the AWS store.</li>
+</ul>
+<div class="box honest"><span class="lb">Be honest about</span><p>Accounts registered on the hosted site before 28 Nov evening were never saved and must be registered again. The ward polygons are a community copy (DataMeet), not GCC-official; the taluk side is official (Chapter 5).</p></div>
+
+<div class="part" data-part="Under the hood"></div>
+<h1 class="ch" id="c5"><span class="n">Chapter 5</span><span class="t">Data: ward to taluk, and the 28 November round</span><span class="mk">@@c5@@</span></h1>
+<div class="box oneline"><span class="lb">In one line</span><p>Each of the 200 GCC wards is now placed in its revenue taluk from <b>official TNGIS revenue-village boundaries</b>, checked village by village against the Chennai Collectorate's list.</p></div>
+
+<h2>5.1 Where the ward to taluk mapping comes from</h2>
+<ol class="steps">
+  <li><b>Ward side</b>: the console's own ward polygons, a DataMeet community copy of the GCC wards (2011-era numbering in several zones). No official ward-to-taluk table is published anywhere.</li>
+  <li><b>Taluk side (official)</b>: revenue village polygons from TNGIS (Tamil Nadu Geographical Information System, run by TNeGA), public WFS layer <code>tngis_basemap:basemap_revenue_village</code>, each with its taluk.</li>
+  <li><b>Checked</b> against the Chennai District Collectorate's list of 17 taluks and their villages (chennai.nic.in/revenue-administration). 136 of 140 TNGIS villages matched the Collectorate's taluk; Kolathur, Peravallur and Siruvallur moved to the Kolathur taluk formed in 2024.</li>
+  <li><b>Overlay</b>: each ward is sampled on a 25 m grid; each point is placed in a village; the ward's taluk is the taluk holding the largest share of its area. Shares and flags (a near tie, a ward whose official number lies in another taluk) are kept.</li>
+</ol>
+<p>Files: <code>district_intel/reference/ward_taluk.csv</code> (one row per ward), <code>ward_taluk_villages.csv</code>, <code>ward_taluk.meta.json</code>; built by <code>scripts/build_ward_taluk.py</code>. The pipeline only reads the CSV.</p>
+<div class="box honest"><span class="lb">Be honest about</span><p>TNGIS's terms do not allow publishing derived data without TNeGA's approval, and the CSV is in the repository the hourly GitHub run reads. Mention it if asked about licensing.</p></div>
+
+<h2>5.2 Also in the 28 November commit</h2>
+<ul>
+  <li>Duplicate finding with a learned model, and explainable scoring (each case's score shows why).</li>
+  <li>CFM-DSS gauge rain per rain, and satellite flood pictures (Sentinel-1 radar, Sentinel-2 and Landsat optical). Satellite water only counts as a flooded street when it lies on the road; under 20 reporting gauges, no district figure is given.</li>
+  <li>Area-wise rain actions with a tracker: withdraw, move, and a rain floor of 20 mm (ward or district) or 64.5 mm (wettest gauge) before a later rain can test a fix.</li>
+  <li>Case lifecycle: reopen, and generated resolutions for the demonstration data (hidden from the Collector's audit view).</li>
+  <li>Officer, citizen and Manu Desk consoles in the Collector's look; Jarvis compare dashboards; history search.</li>
+</ul>
+
+<h1 class="ch" id="c6"><span class="n">Chapter 6</span><span class="t">Hosting, saving and what it costs</span><span class="mk">@@c6@@</span></h1>
+<div class="box oneline"><span class="lb">In one line</span><p>The public site runs on <b>Modal</b> as one container; it is the one copy that saves to AWS; the 27 November topic guard keeps every assistant on the district's work.</p></div>
+
+<h2>6.1 Hosting</h2>
+<ul>
+  <li>One container (at most one, so the store is saved from one place), 1 to 4 CPU cores (2 to 4 in demo mode) and 4 to 12 GB of memory. Demo mode keeps it running all the time and never preempted; normal mode sleeps after 30 minutes with no visitors.</li>
+  <li>The hosted copy is the only one that saves to AWS; this PC's copy reads only. Two savers would give new rows the same ids.</li>
+</ul>
+
+<h2>6.2 Measured costs</h2>
+<table>
+  <tr><th>Item</th><th>Measured</th><th>Source</th></tr>
+  <tr><td>Hosting, a full day in demo mode (28 Nov)</td><td>$2.38 ($1.71 CPU, $0.67 memory)</td><td>Modal billing report</td></tr>
+  <tr><td>One answer, Claude Haiku</td><td>about $0.0008</td><td>site spend record: $8.63 over 11,406 calls</td></tr>
+  <tr><td>One answer, Claude Sonnet</td><td>about $0.016</td><td>site spend record: $4.02 over 254 calls</td></tr>
+  <tr><td>Tokens per answer</td><td>about 6,300 (answer engine), 9,500 (Jarvis planner)</td><td>site call ledger</td></tr>
+  <tr><td>Hosted copy's Claude spend so far</td><td>$17.14 of the $20 limit set in the site</td><td>hosted spend record, 29 Nov</td></tr>
+</table>
+<div class="box honest"><span class="lb">Be honest about</span><p>The spend records include our own testing: 4,369 of the recorded Claude calls were automated evaluation runs, not real use. The AWS bill (S3, DynamoDB, API Gateway, Lambda) was not read for this guide. Groq, Gemini and Sarvam were used within their free tiers.</p></div>
+
+<h2>6.3 Topic guard (27 Nov)</h2>
+<p>Jarvis, Ask District IQ, the officer chat, Map Insights and the Studio analyst answer only about the district's records, the console and District IQ. A plainly off-topic question (sports, films, jokes, coding) gets one fixed sentence in English, Tamil or Tanglish, with no model call.</p>
+
+<div class="part" data-part="For the review"></div>
+<h1 class="ch" id="c7"><span class="n">Chapter 7</span><span class="t">Likely questions on the new parts</span><span class="mk">@@c7@@</span></h1>
+<table>
+  <tr><th>If they ask</th><th>Answer</th></tr>
+  <tr><td>Where does a flooded street come from?</td><td>From a flooding complaint on it in that rain (open it from the street), or satellite water on the road. Each one is listed under "Why it is listed".</td></tr>
+  <tr><td>How do you know it rained?</td><td>The CFM-DSS gauges' district average and the IMD station figure, both shown with links. Days the gauges found dry are not listed as rains.</td></tr>
+  <tr><td>Which police station covers Avadi?</td><td>We hold station locations, not jurisdictions: Jarvis gives the nearest stations with distances and says so. Avadi is policed by the Avadi City Police Commissionerate.</td></tr>
+  <tr><td>Is the news reliable?</td><td>Only listed official outlets; only stories with a full article; every source opens to the article itself.</td></tr>
+  <tr><td>What does it cost to run?</td><td>Hosting about $2.38 a day always on; about $0.016 per Sonnet answer, $0.0008 per Haiku answer (measured).</td></tr>
+  <tr><td>Can the Collector write to anyone?</td><td>Yes: any department officer or staff in the directory, drafted by AI from the Collector's words, sent only after the Collector approves with a password.</td></tr>
+</table>
+</body></html>
